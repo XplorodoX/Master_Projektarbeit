@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -119,21 +120,12 @@ void drawHeartIcon(int x, int y, int size, bool filled) {
 
 }  // namespace
 
-const char* itemShortLabel(std::string_view itemId) {
-    switch(stoneforge::itemIdFromKey(itemId)) {
-        case stoneforge::ItemId::Wood:
-            return "Wood";
-        case stoneforge::ItemId::Planks:
-            return "Plank";
-        case stoneforge::ItemId::Sticks:
-            return "Stick";
-        case stoneforge::ItemId::Ore:
-            return "Ore";
-        case stoneforge::ItemId::WorkbenchKit:
-            return "Bench";
-        default:
-            return "Item";
+std::string itemShortLabel(std::string_view itemId) {
+    std::string label = stoneforge::itemDisplayName(itemId);
+    if(label.size() > 12) {
+        label.resize(12);
     }
+    return label;
 }
 
 CraftingPreview evaluateCraftingGrid(const std::array<CraftSlot, 9>& slots) {
@@ -188,38 +180,13 @@ void clearCraftingInputs(std::array<CraftSlot, 9>& slots) {
     }
 }
 
-const char* itemGlyph(std::string_view itemId) {
-    switch(stoneforge::itemIdFromKey(itemId)) {
-        case stoneforge::ItemId::Wood:
-            return "W";
-        case stoneforge::ItemId::Planks:
-            return "P";
-        case stoneforge::ItemId::Sticks:
-            return "S";
-        case stoneforge::ItemId::Ore:
-            return "O";
-        case stoneforge::ItemId::WorkbenchKit:
-            return "B";
-        default:
-            return "?";
-    }
+std::string itemGlyph(std::string_view itemId) {
+    return stoneforge::itemGlyphText(itemId);
 }
 
 Color itemTint(std::string_view itemId) {
-    switch(stoneforge::itemIdFromKey(itemId)) {
-        case stoneforge::ItemId::Wood:
-            return Color{156, 109, 71, 255};
-        case stoneforge::ItemId::Planks:
-            return Color{187, 141, 97, 255};
-        case stoneforge::ItemId::Sticks:
-            return Color{136, 99, 72, 255};
-        case stoneforge::ItemId::Ore:
-            return Color{185, 162, 93, 255};
-        case stoneforge::ItemId::WorkbenchKit:
-            return Color{130, 95, 70, 255};
-        default:
-            return Color{92, 112, 148, 255};
-    }
+    const auto rgba = stoneforge::itemTintRgba(itemId);
+    return Color{rgba[0], rgba[1], rgba[2], rgba[3]};
 }
 
 bool drawButton(Rectangle rect, const char* text, bool enabled) {
@@ -300,7 +267,8 @@ void drawBottomVitals(const stoneforge::Simulation& sim, int screenW, int screen
 void drawHotbar(const stoneforge::Simulation& sim, int screenW, int screenH) {
     constexpr int kSlotSize = 52;
     constexpr int kGap = 8;
-    const int totalW = stoneforge::Simulation::kHotbarSlotCount * kSlotSize + (stoneforge::Simulation::kHotbarSlotCount - 1) * kGap;
+    const int hotbarSlots = sim.hotbarSlotCount();
+    const int totalW = hotbarSlots * kSlotSize + (hotbarSlots - 1) * kGap;
     const int startX = (screenW - totalW) / 2;
     const int y = screenH - 108;
 
@@ -311,7 +279,7 @@ void drawHotbar(const stoneforge::Simulation& sim, int screenW, int screenH) {
         Fade(Color{13, 17, 24, 255}, 0.88F)
     );
 
-    for(int i = 0; i < stoneforge::Simulation::kHotbarSlotCount; ++i) {
+    for(int i = 0; i < hotbarSlots; ++i) {
         const int x = startX + i * (kSlotSize + kGap);
         const Rectangle rect{static_cast<float>(x), static_cast<float>(y), static_cast<float>(kSlotSize), static_cast<float>(kSlotSize)};
 
@@ -323,9 +291,9 @@ void drawHotbar(const stoneforge::Simulation& sim, int screenW, int screenH) {
         if(!slot.itemId.empty() && slot.count > 0) {
             const Rectangle inner{rect.x + 6.0F, rect.y + 6.0F, rect.width - 12.0F, rect.height - 12.0F};
             DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.itemId));
-            const char* glyph = itemGlyph(slot.itemId);
-            const int glyphW = MeasureText(glyph, 24);
-            DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 10.0F), 24, WHITE);
+            const std::string glyph = itemGlyph(slot.itemId);
+            const int glyphW = MeasureText(glyph.c_str(), 24);
+            DrawText(glyph.c_str(), static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 10.0F), 24, WHITE);
             DrawText(TextFormat("%d", slot.count), static_cast<int>(rect.x + 7.0F), static_cast<int>(rect.y + rect.height - 17.0F), 15, Color{241, 247, 255, 255});
         }
 
@@ -357,14 +325,15 @@ void drawInventoryPanel(
     DrawText(TextFormat("Slots: %d", sim.inventorySlotCount()), static_cast<int>(panel.x) + 160, static_cast<int>(panel.y) + 122, 18, Color{170, 183, 202, 255});
 
     constexpr int kCols = 8;
-    constexpr int kRows = 3;
     constexpr int kSlotSize = 46;
     constexpr int kSlotGap = 8;
+    const int slotCount = sim.inventorySlotCount();
+    const int kRows = std::max(1, (slotCount + kCols - 1) / kCols);
 
     const int gridX = static_cast<int>(panel.x) + 18;
     const int gridY = static_cast<int>(panel.y) + 154;
 
-    std::array<Rectangle, stoneforge::Simulation::kInventorySlotCount> slotRects{};
+    std::vector<Rectangle> slotRects(static_cast<std::size_t>(sim.inventorySlotCount()));
     std::array<Rectangle, 9> craftRects{};
     int hoveredSlot = -1;
     int hoveredCraftSlot = -1;
@@ -373,10 +342,15 @@ void drawInventoryPanel(
     for(int row = 0; row < kRows; ++row) {
         for(int col = 0; col < kCols; ++col) {
             const int idx = row * kCols + col;
+            if(idx >= slotCount) {
+                continue;
+            }
             const float sx = static_cast<float>(gridX + col * (kSlotSize + kSlotGap));
             const float sy = static_cast<float>(gridY + row * (kSlotSize + kSlotGap));
             const Rectangle rect{sx, sy, static_cast<float>(kSlotSize), static_cast<float>(kSlotSize)};
-            slotRects[static_cast<std::size_t>(idx)] = rect;
+            if(static_cast<std::size_t>(idx) < slotRects.size()) {
+                slotRects[static_cast<std::size_t>(idx)] = rect;
+            }
             if(CheckCollisionPointRec(mouse, rect)) {
                 hoveredSlot = idx;
             }
@@ -457,7 +431,7 @@ void drawInventoryPanel(
         const auto slot = sim.inventorySlot(idx);
         const bool hovered = idx == hoveredSlot;
         const bool selected = idx == dragSourceSlot;
-        const bool hotbarSlot = idx < stoneforge::Simulation::kHotbarSlotCount;
+        const bool hotbarSlot = idx < sim.hotbarSlotCount();
         const bool activeHotbarSlot = hotbarSlot && idx == selectedHotbarSlot;
 
         DrawRectangleRounded(rect, 0.18F, 6, hovered ? Color{50, 64, 84, 255} : Color{36, 44, 58, 255});
@@ -476,12 +450,12 @@ void drawInventoryPanel(
             const Rectangle inner{rect.x + 5.0F, rect.y + 5.0F, rect.width - 10.0F, rect.height - 10.0F};
             DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.itemId));
 
-            const char* glyph = itemGlyph(slot.itemId);
-            const int glyphW = MeasureText(glyph, 24);
-            DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 9.0F), 24, Color{242, 247, 255, 255});
+            const std::string glyph = itemGlyph(slot.itemId);
+            const int glyphW = MeasureText(glyph.c_str(), 24);
+            DrawText(glyph.c_str(), static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 9.0F), 24, Color{242, 247, 255, 255});
 
             DrawText(TextFormat("%d", slot.count), static_cast<int>(rect.x + 8.0F), static_cast<int>(rect.y + rect.height - 18.0F), 16, Color{242, 247, 255, 255});
-            if(slot.count >= stoneforge::Simulation::kInventoryStackLimit) {
+            if(slot.count >= sim.inventoryStackLimit()) {
                 DrawText("MAX", static_cast<int>(rect.x + rect.width - 32.0F), static_cast<int>(rect.y + rect.height - 18.0F), 12, Color{255, 230, 172, 255});
             }
         }
@@ -489,7 +463,7 @@ void drawInventoryPanel(
 
     DrawText("Drag LMB: move/swap | Drag RMB: split", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 318, 16, Color{176, 200, 226, 255});
     DrawText("Drop from inventory into crafting grid", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 338, 16, Color{176, 200, 226, 255});
-    DrawText(TextFormat("Stack limit: %d", stoneforge::Simulation::kInventoryStackLimit), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 358, 16, Color{164, 174, 191, 255});
+    DrawText(TextFormat("Stack limit: %d", sim.inventoryStackLimit()), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 358, 16, Color{164, 174, 191, 255});
 
     if(dragSourceSlot >= 0) {
         const auto src = sim.inventorySlot(dragSourceSlot);
@@ -497,7 +471,8 @@ void drawInventoryPanel(
             const Rectangle ghost{mouse.x + 12.0F, mouse.y + 12.0F, 96.0F, 28.0F};
             DrawRectangleRounded(ghost, 0.2F, 6, Fade(Color{13, 18, 24, 255}, 0.9F));
             DrawRectangleRoundedLinesEx(ghost, 0.2F, 6, 2.0F, Color{118, 171, 220, 255});
-            DrawText(TextFormat("%s x%d", itemShortLabel(src.itemId), src.count), static_cast<int>(ghost.x) + 8, static_cast<int>(ghost.y) + 6, 16, Color{230, 238, 251, 255});
+            const std::string shortLabel = itemShortLabel(src.itemId);
+            DrawText(TextFormat("%s x%d", shortLabel.c_str(), src.count), static_cast<int>(ghost.x) + 8, static_cast<int>(ghost.y) + 6, 16, Color{230, 238, 251, 255});
         }
     }
 
@@ -512,7 +487,8 @@ void drawInventoryPanel(
         if(!isEmpty(cell)) {
             const Rectangle inner{rect.x + 4.0F, rect.y + 4.0F, rect.width - 8.0F, rect.height - 8.0F};
             DrawRectangleRounded(inner, 0.18F, 4, itemTint(cell.itemId));
-            DrawText(itemGlyph(cell.itemId), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
+            const std::string glyph = itemGlyph(cell.itemId);
+            DrawText(glyph.c_str(), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
             DrawText(TextFormat("%d", cell.count), static_cast<int>(rect.x + 6.0F), static_cast<int>(rect.y + rect.height - 16.0F), 12, Color{240, 247, 255, 255});
         }
     }

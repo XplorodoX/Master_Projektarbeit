@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <random>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/item.hpp"
 #include "stoneforge/object.hpp"
 #include "stoneforge/recipe.hpp"
@@ -15,7 +18,145 @@ int manhattanDistance(const Vec2i& a, const Vec2i& b) {
     return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 }
 
-constexpr float kMiningRangeBaseTiles = 4.5F;
+int floorDiv(int value, int divisor) {
+    const int q = value / divisor;
+    const int r = value % divisor;
+    return (r != 0 && ((r > 0) != (divisor > 0))) ? q - 1 : q;
+}
+
+std::int64_t spatialKey(int x, int y, int cellSize) {
+    const int cx = floorDiv(x, cellSize);
+    const int cy = floorDiv(y, cellSize);
+    const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cx));
+    const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cy));
+    return static_cast<std::int64_t>((hi << 32) | lo);
+}
+
+Vec2i randomCardinalStep(std::mt19937_64& rng, float idleChance) {
+    std::uniform_real_distribution<float> chance(0.0F, 1.0F);
+    if(chance(rng) < std::clamp(idleChance, 0.0F, 1.0F)) {
+        return {0, 0};
+    }
+
+    std::uniform_int_distribution<int> dir(0, 3);
+    switch(dir(rng)) {
+        case 0:
+            return {0, -1};
+        case 1:
+            return {0, 1};
+        case 2:
+            return {-1, 0};
+        case 3:
+            return {1, 0};
+        default:
+            return {0, 0};
+    }
+}
+
+Vec2i stepToward(const Vec2i& from, const Vec2i& target) {
+    const int dx = target.x - from.x;
+    const int dy = target.y - from.y;
+
+    if(std::abs(dx) >= std::abs(dy)) {
+        return {dx == 0 ? 0 : (dx > 0 ? 1 : -1), 0};
+    }
+    return {0, dy == 0 ? 0 : (dy > 0 ? 1 : -1)};
+}
+
+Vec2i stepAway(const Vec2i& from, const Vec2i& danger) {
+    const int dx = from.x - danger.x;
+    const int dy = from.y - danger.y;
+
+    if(std::abs(dx) >= std::abs(dy)) {
+        return {dx == 0 ? 0 : (dx > 0 ? 1 : -1), 0};
+    }
+    return {0, dy == 0 ? 0 : (dy > 0 ? 1 : -1)};
+}
+
+struct MobDecision {
+    Vec2i step{0, 0};
+    bool aggro = false;
+};
+
+MobDecision decideZombieStep(const Mob& mob, const MobBehaviorProfile& profile, const Vec2i& player, std::mt19937_64& rng) {
+    const int dist = manhattanDistance(mob.pos, player);
+    bool aggro = mob.aggro;
+
+    if(dist <= profile.detectRange) {
+        aggro = true;
+    } else if(dist > profile.loseRange) {
+        aggro = false;
+    }
+
+    if(aggro) {
+        return {stepToward(mob.pos, player), true};
+    }
+
+    std::uniform_real_distribution<float> chance(0.0F, 1.0F);
+    if(chance(rng) < std::clamp(profile.wanderChance, 0.0F, 1.0F)) {
+        return {randomCardinalStep(rng, profile.idleChance), false};
+    }
+    return {{0, 0}, false};
+}
+
+MobDecision decideAnimalStep(const Mob& mob, const MobBehaviorProfile& profile, const Vec2i& player, std::mt19937_64& rng) {
+    const int dist = manhattanDistance(mob.pos, player);
+    if(profile.preferredDistance > 0 && dist <= profile.preferredDistance) {
+        return {stepAway(mob.pos, player), false};
+    }
+
+    std::uniform_real_distribution<float> chance(0.0F, 1.0F);
+    if(chance(rng) < std::clamp(profile.wanderChance, 0.0F, 1.0F)) {
+        return {randomCardinalStep(rng, profile.idleChance), false};
+    }
+    return {{0, 0}, false};
+}
+
+MobDecision decideBossStep(const Mob& mob, const MobBehaviorProfile& profile, const Vec2i& player, std::mt19937_64& rng) {
+    const int dist = manhattanDistance(mob.pos, player);
+    if(dist <= profile.detectRange) {
+        return {stepToward(mob.pos, player), true};
+    }
+
+    std::uniform_real_distribution<float> chance(0.0F, 1.0F);
+    if(chance(rng) < std::clamp(profile.wanderChance, 0.0F, 1.0F)) {
+        return {randomCardinalStep(rng, profile.idleChance), true};
+    }
+    return {{0, 0}, true};
+}
+
+MobDecision decideMobStep(const Mob& mob, const MobBehaviorProfile& profile, const Vec2i& player, std::mt19937_64& rng) {
+    if(profile.controller == "animal") {
+        return decideAnimalStep(mob, profile, player, rng);
+    }
+    if(profile.controller == "boss") {
+        return decideBossStep(mob, profile, player, rng);
+    }
+    return decideZombieStep(mob, profile, player, rng);
+}
+
+const EntitySpawnEntry& pickSpawnEntry(const GameConfig& cfg, std::mt19937_64& rng) {
+    if(cfg.spawnTable.empty()) {
+        static const EntitySpawnEntry fallback;
+        return fallback;
+    }
+
+    int totalWeight = 0;
+    for(const auto& entry : cfg.spawnTable) {
+        totalWeight += std::max(1, entry.weight);
+    }
+
+    std::uniform_int_distribution<int> dist(1, std::max(1, totalWeight));
+    int r = dist(rng);
+    for(const auto& entry : cfg.spawnTable) {
+        r -= std::max(1, entry.weight);
+        if(r <= 0) {
+            return entry;
+        }
+    }
+
+    return cfg.spawnTable.back();
+}
 
 }  // namespace
 
@@ -24,6 +165,8 @@ Simulation::Simulation() {
 }
 
 void Simulation::reset(std::uint64_t seed) {
+    const auto& cfg = gameConfig();
+
     rng_.seed(seed);
     world_.reset(seed);
 
@@ -32,10 +175,16 @@ void Simulation::reset(std::uint64_t seed) {
 
     hp_ = 10;
     energy_ = 100;
-    for(auto& slot : inventorySlots_) {
-        slot = InventorySlot{};
-    }
+
+    observationRadius_ = std::max(1, cfg.gameplay.observationRadius);
+    maxSteps_ = std::max(1, cfg.gameplay.maxSteps);
+
+    const int inventoryCount = std::max(1, cfg.gameplay.inventorySlots);
+    inventorySlots_.assign(static_cast<std::size_t>(inventoryCount), InventorySlot{});
+    inventoryStackLimit_ = std::max(1, cfg.gameplay.inventoryStackLimit);
+    hotbarSlotCount_ = std::clamp(cfg.gameplay.hotbarSlots, 1, inventoryCount);
     hotbarSelection_ = 0;
+
     axeLevel_ = 0;
     pickaxeLevel_ = 0;
     clearMiningProgress();
@@ -45,17 +194,41 @@ void Simulation::reset(std::uint64_t seed) {
     done_ = false;
     reachedExit_ = false;
 
+    mobSpatialCellSize_ = std::max(1, cfg.mobSpatialCellSize);
     mobs_.clear();
-    std::uniform_int_distribution<int> jitter(-8, 8);
-    for(int i = 0; i < 3; ++i) {
-        Vec2i p{player_.x + 10 + jitter(rng_), player_.y + 10 + jitter(rng_)};
-        for(int attempts = 0; attempts < 20 && !world_.isPassable(p.x, p.y); ++attempts) {
-            p = {player_.x + 10 + jitter(rng_), player_.y + 10 + jitter(rng_)};
-        }
-        if(world_.isPassable(p.x, p.y)) {
-            mobs_.push_back(Mob{p, 1, "stoneforge:mob", false, "default"});
+
+    if(cfg.mobSpawn.count > 0) {
+        std::uniform_int_distribution<int> jitter(cfg.mobSpawn.jitterMin, cfg.mobSpawn.jitterMax);
+        for(int i = 0; i < cfg.mobSpawn.count; ++i) {
+            const auto& entry = pickSpawnEntry(cfg, rng_);
+            Vec2i p{
+                player_.x + cfg.mobSpawn.offsetX + jitter(rng_),
+                player_.y + cfg.mobSpawn.offsetY + jitter(rng_)
+            };
+
+            for(int attempts = 0; attempts < cfg.mobSpawn.passableRetries && !world_.isPassable(p.x, p.y); ++attempts) {
+                p = {
+                    player_.x + cfg.mobSpawn.offsetX + jitter(rng_),
+                    player_.y + cfg.mobSpawn.offsetY + jitter(rng_)
+                };
+            }
+
+            if(!world_.isPassable(p.x, p.y) || p == player_) {
+                continue;
+            }
+
+            std::string behaviorType = entry.behaviorType;
+            if(behaviorType.empty()) {
+                behaviorType = cfg.behaviorTypeForEntity(entry.entityId, "default");
+            }
+
+            const auto* profile = cfg.findMobBehavior(behaviorType);
+            const bool startAggro = entry.aggro || (profile != nullptr && profile->defaultAggro);
+            mobs_.push_back(Mob{p, std::max(1, entry.hp), entry.entityId, behaviorType, startAggro, entry.variant});
         }
     }
+
+    rebuildMobSpatialIndex();
 }
 
 StepResult Simulation::step(Action action) {
@@ -63,6 +236,7 @@ StepResult Simulation::step(Action action) {
         return StepResult{0.0F, true, reachedExit_, steps_};
     }
 
+    const auto& cfg = gameConfig().gameplay;
     const int distanceBefore = manhattanDistance(player_, world_.exitPoint());
     const int hpBefore = hp_;
     const bool idleAction = (action == Action::Wait || action == Action::Noop);
@@ -101,13 +275,11 @@ StepResult Simulation::step(Action action) {
             break;
     }
 
-    // Energy tuning: no hard per-step drain; action costs come from actions,
-    // passive drain is slower and idle recovers a bit.
     if(idleAction) {
-        if(energy_ < 100 && (steps_ % 8 == 0)) {
+        if(energy_ < 100 && (steps_ % std::max(1, cfg.idleEnergyRegenInterval) == 0)) {
             energy_ = std::min(100, energy_ + 1);
         }
-    } else if(steps_ % 18 == 0) {
+    } else if(steps_ % std::max(1, cfg.activeEnergyDrainInterval) == 0) {
         energy_ = std::max(0, energy_ - 1);
     }
 
@@ -115,7 +287,7 @@ StepResult Simulation::step(Action action) {
 
     if(energy_ <= 0) {
         ++starvationTicks_;
-        if(starvationTicks_ >= 18) {
+        if(starvationTicks_ >= std::max(1, cfg.starvationTicksToDamage)) {
             hp_ -= 1;
             starvationTicks_ = 0;
         }
@@ -154,19 +326,17 @@ void Simulation::clearMiningTargetOverride() {
 
 Observation Simulation::getObservation() const {
     Observation out{};
-    out.grid.reserve((2 * kObservationRadius + 1) * (2 * kObservationRadius + 1));
+    const int side = 2 * observationRadius_ + 1;
+    out.grid.reserve(side * side);
 
-    for(int dy = -kObservationRadius; dy <= kObservationRadius; ++dy) {
-        for(int dx = -kObservationRadius; dx <= kObservationRadius; ++dx) {
+    for(int dy = -observationRadius_; dy <= observationRadius_; ++dy) {
+        for(int dx = -observationRadius_; dx <= observationRadius_; ++dx) {
             const int wx = player_.x + dx;
             const int wy = player_.y + dy;
 
             int value = static_cast<int>(world_.tileAt(wx, wy));
-            for(const auto& mob : mobs_) {
-                if(mob.pos.x == wx && mob.pos.y == wy) {
-                    value = 20;
-                    break;
-                }
+            if(hasMobAt(wx, wy)) {
+                value = 20;
             }
 
             if(wx == player_.x && wy == player_.y) {
@@ -198,6 +368,64 @@ TileType Simulation::tileAt(int x, int y) const {
 
 const std::vector<Mob>& Simulation::mobs() const {
     return mobs_;
+}
+
+std::vector<const Mob*> Simulation::mobsInRect(int minX, int minY, int maxX, int maxY) const {
+    if(maxX < minX) {
+        std::swap(minX, maxX);
+    }
+    if(maxY < minY) {
+        std::swap(minY, maxY);
+    }
+
+    std::vector<const Mob*> out;
+    if(mobs_.empty()) {
+        return out;
+    }
+
+    const int cellSize = std::max(1, mobSpatialCellSize_);
+    const int minCx = floorDiv(minX, cellSize);
+    const int maxCx = floorDiv(maxX, cellSize);
+    const int minCy = floorDiv(minY, cellSize);
+    const int maxCy = floorDiv(maxY, cellSize);
+
+    for(int cy = minCy; cy <= maxCy; ++cy) {
+        for(int cx = minCx; cx <= maxCx; ++cx) {
+            const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cx));
+            const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cy));
+            const std::int64_t key = static_cast<std::int64_t>((hi << 32) | lo);
+            const auto it = mobSpatialBuckets_.find(key);
+            if(it == mobSpatialBuckets_.end()) {
+                continue;
+            }
+
+            for(const std::size_t idx : it->second) {
+                if(idx >= mobs_.size()) {
+                    continue;
+                }
+                const auto& mob = mobs_[idx];
+                if(mob.pos.x >= minX && mob.pos.x <= maxX && mob.pos.y >= minY && mob.pos.y <= maxY) {
+                    out.push_back(&mob);
+                }
+            }
+        }
+    }
+
+    return out;
+}
+
+bool Simulation::hasMobAt(int x, int y) const {
+    const auto it = mobSpatialBuckets_.find(spatialKey(x, y, std::max(1, mobSpatialCellSize_)));
+    if(it == mobSpatialBuckets_.end()) {
+        return false;
+    }
+
+    for(const std::size_t idx : it->second) {
+        if(idx < mobs_.size() && mobs_[idx].pos.x == x && mobs_[idx].pos.y == y) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int Simulation::hp() const {
@@ -260,7 +488,7 @@ int Simulation::hotbarSelection() const {
 }
 
 void Simulation::setHotbarSelection(int hotbarIndex) {
-    hotbarSelection_ = std::clamp(hotbarIndex, 0, kHotbarSlotCount - 1);
+    hotbarSelection_ = std::clamp(hotbarIndex, 0, hotbarSlotCount_ - 1);
 }
 
 int Simulation::selectedHotbarSlotIndex() const {
@@ -268,25 +496,33 @@ int Simulation::selectedHotbarSlotIndex() const {
 }
 
 InventorySlot Simulation::hotbarSlot(int hotbarIndex) const {
-    if(hotbarIndex < 0 || hotbarIndex >= kHotbarSlotCount) {
+    if(hotbarIndex < 0 || hotbarIndex >= hotbarSlotCount_) {
         return InventorySlot{};
     }
     return inventorySlot(hotbarIndex);
 }
 
+int Simulation::hotbarSlotCount() const {
+    return hotbarSlotCount_;
+}
+
 int Simulation::inventorySlotCount() const {
-    return kInventorySlotCount;
+    return static_cast<int>(inventorySlots_.size());
+}
+
+int Simulation::inventoryStackLimit() const {
+    return inventoryStackLimit_;
 }
 
 InventorySlot Simulation::inventorySlot(int index) const {
-    if(index < 0 || index >= kInventorySlotCount) {
+    if(index < 0 || index >= inventorySlotCount()) {
         return InventorySlot{};
     }
     return inventorySlots_[static_cast<std::size_t>(index)];
 }
 
 bool Simulation::moveInventoryStack(int fromIndex, int toIndex) {
-    if(fromIndex < 0 || toIndex < 0 || fromIndex >= kInventorySlotCount || toIndex >= kInventorySlotCount || fromIndex == toIndex) {
+    if(fromIndex < 0 || toIndex < 0 || fromIndex >= inventorySlotCount() || toIndex >= inventorySlotCount() || fromIndex == toIndex) {
         return false;
     }
 
@@ -303,7 +539,7 @@ bool Simulation::moveInventoryStack(int fromIndex, int toIndex) {
     }
 
     if(dst.itemId == src.itemId) {
-        const int stackLimit = std::max(1, itemMaxStack(dst.itemId));
+        const int stackLimit = std::min(inventoryStackLimit_, std::max(1, itemMaxStack(dst.itemId)));
         const int room = stackLimit - dst.count;
         if(room <= 0) {
             return false;
@@ -323,7 +559,7 @@ bool Simulation::moveInventoryStack(int fromIndex, int toIndex) {
 }
 
 bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
-    if(fromIndex < 0 || toIndex < 0 || fromIndex >= kInventorySlotCount || toIndex >= kInventorySlotCount || fromIndex == toIndex) {
+    if(fromIndex < 0 || toIndex < 0 || fromIndex >= inventorySlotCount() || toIndex >= inventorySlotCount() || fromIndex == toIndex) {
         return false;
     }
 
@@ -339,7 +575,7 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
 
     int moved = (src.count + 1) / 2;
     if(dst.itemId.empty()) {
-        moved = std::min(moved, std::max(1, itemMaxStack(src.itemId)));
+        moved = std::min(moved, std::min(inventoryStackLimit_, std::max(1, itemMaxStack(src.itemId))));
         dst.itemId = src.itemId;
         dst.count = moved;
         src.count -= moved;
@@ -349,7 +585,7 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
         return moved > 0;
     }
 
-    const int room = std::max(1, itemMaxStack(dst.itemId)) - dst.count;
+    const int room = std::min(inventoryStackLimit_, std::max(1, itemMaxStack(dst.itemId))) - dst.count;
     if(room <= 0) {
         return false;
     }
@@ -562,8 +798,18 @@ TileType Simulation::previewPlacementTileForSelectedHotbar() const {
 }
 
 float Simulation::miningRangeTiles() const {
+    const auto& cfg = gameConfig().gameplay;
     const int bestToolLevel = std::max(axeLevel_, pickaxeLevel_);
-    return kMiningRangeBaseTiles + static_cast<float>(bestToolLevel) * 0.75F;
+    return cfg.miningRangeBaseTiles + static_cast<float>(bestToolLevel) * cfg.miningRangePerToolLevel;
+}
+
+int Simulation::observationRadius() const {
+    return observationRadius_;
+}
+
+int Simulation::observationSize() const {
+    const int side = 2 * observationRadius_ + 1;
+    return side * side + 3;
 }
 
 int Simulation::steps() const {
@@ -583,18 +829,32 @@ bool Simulation::commandSetTile(const Vec2i& target, TileType tile) {
     return true;
 }
 
-bool Simulation::commandSpawnEntity(const std::string& entityId, const Vec2i& target, int hp, bool aggro, const std::string& variant) {
+bool Simulation::commandSpawnEntity(
+    const std::string& entityId,
+    const Vec2i& target,
+    int hp,
+    bool aggro,
+    const std::string& variant,
+    const std::string& behaviorType
+) {
     if(!world_.isPassable(target.x, target.y)) {
         return false;
     }
 
-    for(const auto& mob : mobs_) {
-        if(mob.pos == target) {
-            return false;
-        }
+    if(hasMobAt(target.x, target.y)) {
+        return false;
     }
 
-    mobs_.push_back(Mob{target, std::max(1, hp), entityId, aggro, variant});
+    const auto& cfg = gameConfig();
+    std::string resolvedBehavior = behaviorType;
+    if(resolvedBehavior.empty() || resolvedBehavior == "default") {
+        resolvedBehavior = cfg.behaviorTypeForEntity(entityId, "default");
+    }
+
+    const auto* profile = cfg.findMobBehavior(resolvedBehavior);
+    const bool startAggro = aggro || (profile != nullptr && profile->defaultAggro);
+    mobs_.push_back(Mob{target, std::max(1, hp), entityId, resolvedBehavior, startAggro, variant});
+    rebuildMobSpatialIndex();
     return true;
 }
 
@@ -672,7 +932,6 @@ void Simulation::mineForward() {
     }
 
     world_.setTile(target.x, target.y, TileType::Empty);
-
     clearMiningProgress();
 }
 
@@ -752,7 +1011,7 @@ bool Simulation::addItemByKey(std::string_view itemId, int amount) {
         return false;
     }
 
-    const int stackLimit = std::max(1, itemMaxStack(normalized));
+    const int stackLimit = std::min(inventoryStackLimit_, std::max(1, itemMaxStack(normalized)));
 
     int totalRoom = 0;
     for(const auto& slot : inventorySlots_) {
@@ -867,7 +1126,7 @@ bool Simulation::tryPlaceFromSlotIndex(int slotIndex) {
 }
 
 bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
-    if(slotIndex < 0 || slotIndex >= kInventorySlotCount) {
+    if(slotIndex < 0 || slotIndex >= inventorySlotCount()) {
         return false;
     }
 
@@ -917,64 +1176,40 @@ bool Simulation::isWithinMiningRange(const Vec2i& target) const {
 }
 
 void Simulation::updateMobs() {
-    std::uniform_int_distribution<int> roll(0, 4);
-    for(auto& mob : mobs_) {
-        Vec2i next = mob.pos;
+    const auto& cfg = gameConfig();
 
-        if(mob.aggro) {
-            const int dx = player_.x - mob.pos.x;
-            const int dy = player_.y - mob.pos.y;
-            const int dist = std::abs(dx) + std::abs(dy);
-            if(dist <= 9) {
-                if(std::abs(dx) >= std::abs(dy)) {
-                    next.x += (dx == 0 ? 0 : (dx > 0 ? 1 : -1));
-                } else {
-                    next.y += (dy == 0 ? 0 : (dy > 0 ? 1 : -1));
-                }
-            } else {
-                switch(roll(rng_)) {
-                    case 0:
-                        next.y -= 1;
-                        break;
-                    case 1:
-                        next.y += 1;
-                        break;
-                    case 2:
-                        next.x -= 1;
-                        break;
-                    case 3:
-                        next.x += 1;
-                        break;
-                    case 4:
-                        break;
-                }
-            }
-        } else {
-            switch(roll(rng_)) {
-                case 0:
-                    next.y -= 1;
-                    break;
-                case 1:
-                    next.y += 1;
-                    break;
-                case 2:
-                    next.x -= 1;
-                    break;
-                case 3:
-                    next.x += 1;
-                    break;
-                case 4:
-                    break;
-            }
+    for(auto& mob : mobs_) {
+        const auto* profile = cfg.findMobBehavior(mob.behaviorType);
+        if(profile == nullptr) {
+            continue;
         }
 
-        if(world_.isPassable(next.x, next.y)) {
-            mob.pos = next;
+        if(steps_ % std::max(1, profile->moveInterval) == 0) {
+            const MobDecision decision = decideMobStep(mob, *profile, player_, rng_);
+            mob.aggro = decision.aggro;
+
+            const Vec2i next{mob.pos.x + decision.step.x, mob.pos.y + decision.step.y};
+            if(world_.isPassable(next.x, next.y) && !hasMobAt(next.x, next.y)) {
+                mob.pos = next;
+            }
         }
 
         if(mob.pos == player_) {
-            hp_ -= 1;
+            hp_ -= std::max(0, profile->contactDamage);
         }
+    }
+
+    rebuildMobSpatialIndex();
+}
+
+void Simulation::rebuildMobSpatialIndex() {
+    mobSpatialBuckets_.clear();
+    mobSpatialBuckets_.reserve(mobs_.size());
+
+    const int cellSize = std::max(1, mobSpatialCellSize_);
+    for(std::size_t i = 0; i < mobs_.size(); ++i) {
+        const auto& mob = mobs_[i];
+        mobSpatialBuckets_[spatialKey(mob.pos.x, mob.pos.y, cellSize)].push_back(i);
     }
 }
 

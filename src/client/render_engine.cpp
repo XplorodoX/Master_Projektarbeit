@@ -20,6 +20,7 @@
 #include "stoneforge/mod/object_factory.hpp"
 #include "stoneforge/mod/runtime_registry.hpp"
 #include "stoneforge/mod/script_runtime.hpp"
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/item.hpp"
 #include "stoneforge/simulation.hpp"
 
@@ -47,7 +48,7 @@ constexpr int kWindowW = 1366;
 constexpr int kWindowH = 768;
 constexpr int kBaseTileSize = 30;
 constexpr int kAtlasCell = 16;
-constexpr float kStepIntervalSeconds = 0.12F;
+constexpr float kDefaultStepIntervalSeconds = 0.12F;
 
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
@@ -925,8 +926,8 @@ void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, floa
             4,
             itemTint(heldItemId)
         );
-        const char* glyph = itemGlyph(heldItemId);
-        DrawText(glyph, hx - 4, hy - 6, 12, WHITE);
+        const std::string glyph = itemGlyph(heldItemId);
+        DrawText(glyph.c_str(), hx - 4, hy - 6, 12, WHITE);
     }
 }
 
@@ -955,6 +956,12 @@ int stoneforge::client::RenderEngine::run() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(kWindowW, kWindowH, "Stoneforge 2D - raylib biome client");
     SetTargetFPS(60);
+
+    std::string gameConfigError;
+    if(!stoneforge::loadGameConfigFile("assets/base/game_config.json", &gameConfigError)) {
+        TraceLog(LOG_WARNING, "Game config load failed: %s", gameConfigError.c_str());
+    }
+    const float stepIntervalSeconds = std::max(0.01F, stoneforge::gameConfig().render.stepIntervalSeconds);
 
     stoneforge::mod::ContentRegistry contentRegistry;
     stoneforge::mod::AssetManager assetManager;
@@ -1272,7 +1279,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         stepTimer += dt;
-        if(stepTimer >= kStepIntervalSeconds) {
+        if(stepTimer >= stepIntervalSeconds) {
             stepTimer = 0.0F;
             if(!sim.done()) {
                 stoneforge::Action action = gameplayInputBlocked ? stoneforge::Action::Wait : actionFromInput();
@@ -1456,10 +1463,19 @@ int stoneforge::client::RenderEngine::run() {
         DrawCircleGradient(ex, ey, static_cast<float>(tileSize) * 1.2F, Fade(Color{90, 255, 180, 255}, 0.4F), Fade(Color{90, 255, 180, 0}, 0.0F));
 
         int mobIdx = 0;
-        for(const auto& mob : sim.mobs()) {
+        const auto visibleMobs = sim.mobsInRect(
+            player.x - viewRadiusX - 1,
+            player.y - viewRadiusY - 1,
+            player.x + viewRadiusX + 1,
+            player.y + viewRadiusY + 1
+        );
+        for(const auto* mob : visibleMobs) {
+            if(mob == nullptr) {
+                continue;
+            }
             const int mx = centerX + (mob.pos.x - player.x) * tileSize;
             const int my = centerY + (mob.pos.y - player.y) * tileSize;
-            drawMobSprite(atlas, mob, mx, my, tileSize, t, mobIdx);
+            drawMobSprite(atlas, *mob, mx, my, tileSize, t, mobIdx);
             ++mobIdx;
         }
 

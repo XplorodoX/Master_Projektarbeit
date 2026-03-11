@@ -27,8 +27,8 @@ struct CraftingPreview {
 	std::string label;
 };
 
-const char* itemShortLabel(std::string_view itemId);
-const char* itemGlyph(std::string_view itemId);
+std::string itemShortLabel(std::string_view itemId);
+std::string itemGlyph(std::string_view itemId);
 Color itemTint(std::string_view itemId);
 
 CraftingPreview evaluateCraftingGrid(const std::array<CraftSlot, 9>& slots);
