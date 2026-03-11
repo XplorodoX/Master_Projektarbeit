@@ -20,6 +20,7 @@
 #include "stoneforge/mod/object_factory.hpp"
 #include "stoneforge/mod/runtime_registry.hpp"
 #include "stoneforge/mod/script_runtime.hpp"
+#include "stoneforge/item.hpp"
 #include "stoneforge/simulation.hpp"
 
 using stoneforge::client::CrackInfo;
@@ -963,6 +964,7 @@ int stoneforge::client::RenderEngine::run() {
     if(!modLoader.loadAll("assets/base", "mods", contentRegistry, assetManager, loadedMods, &modError)) {
         TraceLog(LOG_WARNING, "Mod loading failed: %s", modError.c_str());
     }
+    stoneforge::setItemRegistry(&contentRegistry);
 
     stoneforge::mod::ObjectFactory objectFactory;
     objectFactory.buildFromContent(contentRegistry);
