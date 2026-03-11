@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 #include <string_view>
 
 #include <raylib.h>
@@ -10,7 +11,7 @@
 namespace stoneforge::client {
 
 struct CraftSlot {
-	stoneforge::ItemId item = stoneforge::ItemId::None;
+	std::string itemId;
 	int count = 0;
 };
 
@@ -23,7 +24,7 @@ struct CraftingPanelState {
 struct CraftingPreview {
 	bool valid = false;
 	stoneforge::RecipeId recipe = stoneforge::RecipeId::Planks;
-	const char* label = "";
+	std::string label;
 };
 
 const char* itemShortLabel(std::string_view itemId);

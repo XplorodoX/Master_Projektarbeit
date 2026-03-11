@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <array>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "stoneforge/item.hpp"
+#include "stoneforge/recipe.hpp"
 
 namespace stoneforge::client {
 
@@ -29,133 +31,58 @@ constexpr std::array<RecipeEntry, 7> kRecipes{ {
 } };
 
 bool isEmpty(const CraftSlot& slot) {
-    return slot.item == stoneforge::ItemId::None || slot.count <= 0;
+    return slot.itemId.empty() || slot.count <= 0;
 }
 
-int totalCount(const std::array<CraftSlot, 9>& slots, stoneforge::ItemId item) {
-    int out = 0;
-    for(const auto& slot : slots) {
-        if(slot.item == item && slot.count > 0) {
-            out += slot.count;
-        }
-    }
-    return out;
-}
-
-bool hasOnlyItem(const std::array<CraftSlot, 9>& slots, stoneforge::ItemId item) {
+std::unordered_map<std::string, int> slotCounts(const std::array<CraftSlot, 9>& slots) {
+    std::unordered_map<std::string, int> counts;
     for(const auto& slot : slots) {
         if(isEmpty(slot)) {
             continue;
         }
-        if(slot.item != item) {
-            return false;
-        }
-    }
-    return true;
-}
-
-std::vector<int> findStickVerticalPattern(const std::array<CraftSlot, 9>& slots) {
-    for(int col = 0; col < 3; ++col) {
-        for(int row = 0; row < 2; ++row) {
-            const int a = row * 3 + col;
-            const int b = (row + 1) * 3 + col;
-            bool ok = true;
-            for(int i = 0; i < 9; ++i) {
-                if(i == a || i == b) {
-                    if(slots[static_cast<std::size_t>(i)].item != stoneforge::ItemId::Planks || slots[static_cast<std::size_t>(i)].count < 1) {
-                        ok = false;
-                        break;
-                    }
-                } else if(!isEmpty(slots[static_cast<std::size_t>(i)])) {
-                    ok = false;
-                    break;
-                }
-            }
-            if(ok) {
-                return {a, b};
-            }
-        }
-    }
-    return {};
-}
-
-bool matchesToolPattern(
-    const std::array<CraftSlot, 9>& slots,
-    stoneforge::ItemId headMaterial,
-    const std::array<stoneforge::ItemId, 9>& required
-) {
-    for(int i = 0; i < 9; ++i) {
-        const auto need = required[static_cast<std::size_t>(i)];
-        const auto& slot = slots[static_cast<std::size_t>(i)];
-        if(need == stoneforge::ItemId::None) {
-            if(!isEmpty(slot)) {
-                return false;
-            }
+        const std::string id = stoneforge::normalizeItemKey(slot.itemId);
+        if(id.empty()) {
             continue;
         }
+        counts[id] += slot.count;
+    }
+    return counts;
+}
 
-        const stoneforge::ItemId expected = (need == stoneforge::ItemId::Ore) ? headMaterial : need;
-        if(slot.item != expected || slot.count < 1) {
+bool recipeMatchesGrid(const std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe) {
+    const auto* def = stoneforge::recipeCatalog().find(recipe);
+    if(def == nullptr) {
+        return false;
+    }
+
+    std::unordered_map<std::string, int> expected;
+    for(const auto& input : def->inputs()) {
+        const std::string id = stoneforge::normalizeItemKey(input.itemId);
+        if(id.empty() || input.count <= 0) {
+            continue;
+        }
+        expected[id] += input.count;
+    }
+
+    const auto actual = slotCounts(slots);
+    if(actual.size() != expected.size()) {
+        return false;
+    }
+
+    for(const auto& [id, count] : expected) {
+        const auto it = actual.find(id);
+        if(it == actual.end() || it->second != count) {
             return false;
         }
     }
+
     return true;
-}
-
-std::vector<int> recipeSlotsForConsume(const std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe) {
-    const std::array<stoneforge::ItemId, 9> pickPattern{
-        stoneforge::ItemId::Ore, stoneforge::ItemId::Ore, stoneforge::ItemId::Ore,
-        stoneforge::ItemId::None, stoneforge::ItemId::Sticks, stoneforge::ItemId::None,
-        stoneforge::ItemId::None, stoneforge::ItemId::Sticks, stoneforge::ItemId::None
-    };
-
-    const std::array<stoneforge::ItemId, 9> axeLeftPattern{
-        stoneforge::ItemId::Ore, stoneforge::ItemId::Ore, stoneforge::ItemId::None,
-        stoneforge::ItemId::Ore, stoneforge::ItemId::Sticks, stoneforge::ItemId::None,
-        stoneforge::ItemId::None, stoneforge::ItemId::Sticks, stoneforge::ItemId::None
-    };
-
-    const std::array<stoneforge::ItemId, 9> axeRightPattern{
-        stoneforge::ItemId::None, stoneforge::ItemId::Ore, stoneforge::ItemId::Ore,
-        stoneforge::ItemId::None, stoneforge::ItemId::Sticks, stoneforge::ItemId::Ore,
-        stoneforge::ItemId::None, stoneforge::ItemId::Sticks, stoneforge::ItemId::None
-    };
-
-    if(recipe == stoneforge::RecipeId::Sticks) {
-        return findStickVerticalPattern(slots);
-    }
-
-    if(recipe == stoneforge::RecipeId::PickaxeTier1 && matchesToolPattern(slots, stoneforge::ItemId::Planks, pickPattern)) {
-        return {0, 1, 2, 4, 7};
-    }
-    if(recipe == stoneforge::RecipeId::PickaxeTier2 && matchesToolPattern(slots, stoneforge::ItemId::Ore, pickPattern)) {
-        return {0, 1, 2, 4, 7};
-    }
-
-    if(recipe == stoneforge::RecipeId::AxeTier1) {
-        if(matchesToolPattern(slots, stoneforge::ItemId::Planks, axeLeftPattern)) {
-            return {0, 1, 3, 4, 7};
-        }
-        if(matchesToolPattern(slots, stoneforge::ItemId::Planks, axeRightPattern)) {
-            return {1, 2, 4, 5, 7};
-        }
-    }
-    if(recipe == stoneforge::RecipeId::AxeTier2) {
-        if(matchesToolPattern(slots, stoneforge::ItemId::Ore, axeLeftPattern)) {
-            return {0, 1, 3, 4, 7};
-        }
-        if(matchesToolPattern(slots, stoneforge::ItemId::Ore, axeRightPattern)) {
-            return {1, 2, 4, 5, 7};
-        }
-    }
-
-    return {};
 }
 
 void reduceSlot(CraftSlot& slot, int amount) {
     slot.count = std::max(0, slot.count - amount);
     if(slot.count == 0) {
-        slot.item = stoneforge::ItemId::None;
+        slot.itemId.clear();
     }
 }
 

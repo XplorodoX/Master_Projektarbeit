@@ -12,7 +12,7 @@
 namespace stoneforge {
 
 struct ItemStackSpec {
-    ItemId item = ItemId::None;
+    std::string itemId;
     int count = 0;
 };
 

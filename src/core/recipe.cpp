@@ -16,31 +16,54 @@ namespace {
 using json = nlohmann::json;
 
 std::optional<RecipeId> recipeIdFromKey(std::string_view key) {
-    if(key == "planks" || key == "stoneforge:planks") {
+    const std::size_t sep = key.find(':');
+    const std::string_view local = (sep == std::string_view::npos) ? key : key.substr(sep + 1);
+
+    if(local == "planks") {
         return RecipeId::Planks;
     }
-    if(key == "sticks" || key == "stoneforge:sticks") {
+    if(local == "sticks") {
         return RecipeId::Sticks;
     }
-    if(key == "workbench" || key == "stoneforge:workbench") {
+    if(local == "workbench") {
         return RecipeId::Workbench;
     }
-    if(key == "axe_tier1" || key == "stoneforge:axe_tier1") {
+    if(local == "axe_tier1") {
         return RecipeId::AxeTier1;
     }
-    if(key == "pickaxe_tier1" || key == "stoneforge:pickaxe_tier1") {
+    if(local == "pickaxe_tier1") {
         return RecipeId::PickaxeTier1;
     }
-    if(key == "axe_tier2" || key == "stoneforge:axe_tier2") {
+    if(local == "axe_tier2") {
         return RecipeId::AxeTier2;
     }
-    if(key == "pickaxe_tier2" || key == "stoneforge:pickaxe_tier2") {
+    if(local == "pickaxe_tier2") {
         return RecipeId::PickaxeTier2;
     }
     return std::nullopt;
 }
 
-bool parseStackArray(const json& arrayNode, std::vector<ItemStackSpec>& out, std::string* errorMessage) {
+std::string resolveRecipeItemId(const std::string& itemToken, const std::string& sourceNamespace) {
+    if(itemToken.empty()) {
+        return {};
+    }
+
+    if(itemToken.find(':') != std::string::npos) {
+        return itemToken;
+    }
+
+    if(itemIdFromKey(itemToken) != ItemId::None) {
+        return normalizeItemKey(itemToken);
+    }
+
+    if(!sourceNamespace.empty()) {
+        return sourceNamespace + ":" + itemToken;
+    }
+
+    return normalizeItemKey(itemToken);
+}
+
+bool parseStackArray(const json& arrayNode, std::vector<ItemStackSpec>& out, const std::string& sourceNamespace, std::string* errorMessage) {
     if(!arrayNode.is_array()) {
         if(errorMessage) {
             *errorMessage = "recipe stack list must be an array";
@@ -57,14 +80,14 @@ bool parseStackArray(const json& arrayNode, std::vector<ItemStackSpec>& out, std
 
         const std::string itemKey = node.value("item", "");
         const int count = node.value("count", 0);
-        const ItemId item = itemIdFromKey(itemKey);
-        if(item == ItemId::None || count <= 0) {
+        const std::string itemId = resolveRecipeItemId(itemKey, sourceNamespace);
+        if(itemId.empty() || count <= 0) {
             if(errorMessage) {
                 *errorMessage = "invalid item stack in recipe json: item='" + itemKey + "'";
             }
             return false;
         }
-        out.push_back(ItemStackSpec{item, count});
+        out.push_back(ItemStackSpec{itemId, count});
     }
 
     return true;
@@ -217,8 +240,8 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::Planks,
         "stoneforge:planks",
         "Planks x4",
-        std::vector<ItemStackSpec>{{ItemId::Wood, 1}},
-        std::vector<ItemStackSpec>{{ItemId::Planks, 4}},
+        std::vector<ItemStackSpec>{{"stoneforge:wood", 1}},
+        std::vector<ItemStackSpec>{{"stoneforge:planks", 4}},
         false
     ));
 
@@ -226,8 +249,8 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::Sticks,
         "stoneforge:sticks",
         "Sticks x4",
-        std::vector<ItemStackSpec>{{ItemId::Planks, 2}},
-        std::vector<ItemStackSpec>{{ItemId::Sticks, 4}},
+        std::vector<ItemStackSpec>{{"stoneforge:planks", 2}},
+        std::vector<ItemStackSpec>{{"stoneforge:sticks", 4}},
         false
     ));
 
@@ -235,8 +258,8 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::Workbench,
         "stoneforge:workbench",
         "Workbench Kit x1",
-        std::vector<ItemStackSpec>{{ItemId::Planks, 10}},
-        std::vector<ItemStackSpec>{{ItemId::WorkbenchKit, 1}},
+        std::vector<ItemStackSpec>{{"stoneforge:planks", 10}},
+        std::vector<ItemStackSpec>{{"stoneforge:workbench_kit", 1}},
         false
     ));
 
@@ -244,7 +267,7 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::AxeTier1,
         "stoneforge:axe_tier1",
         "Axe Lv1",
-        std::vector<ItemStackSpec>{{ItemId::Planks, 3}, {ItemId::Sticks, 2}},
+        std::vector<ItemStackSpec>{{"stoneforge:planks", 3}, {"stoneforge:sticks", 2}},
         true,
         -1,
         0,
@@ -258,7 +281,7 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::PickaxeTier1,
         "stoneforge:pickaxe_tier1",
         "Pickaxe Lv1",
-        std::vector<ItemStackSpec>{{ItemId::Planks, 3}, {ItemId::Sticks, 2}},
+        std::vector<ItemStackSpec>{{"stoneforge:planks", 3}, {"stoneforge:sticks", 2}},
         true,
         -1,
         -1,
@@ -272,7 +295,7 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::AxeTier2,
         "stoneforge:axe_tier2",
         "Axe Lv2",
-        std::vector<ItemStackSpec>{{ItemId::Ore, 3}, {ItemId::Sticks, 2}},
+        std::vector<ItemStackSpec>{{"stoneforge:ore", 3}, {"stoneforge:sticks", 2}},
         true,
         1,
         1,
@@ -286,7 +309,7 @@ RecipeCatalog::RecipeCatalog() {
         RecipeId::PickaxeTier2,
         "stoneforge:pickaxe_tier2",
         "Pickaxe Lv2",
-        std::vector<ItemStackSpec>{{ItemId::Ore, 3}, {ItemId::Sticks, 2}},
+        std::vector<ItemStackSpec>{{"stoneforge:ore", 3}, {"stoneforge:sticks", 2}},
         true,
         -1,
         -1,
@@ -347,10 +370,10 @@ bool RecipeCatalog::loadJsonFile(const std::filesystem::path& jsonPath, const st
 
         std::vector<ItemStackSpec> inputs;
         std::vector<ItemStackSpec> outputs;
-        if(!parseStackArray(node.value("inputs", json::array()), inputs, errorMessage)) {
+        if(!parseStackArray(node.value("inputs", json::array()), inputs, sourceNamespace, errorMessage)) {
             return false;
         }
-        if(!parseStackArray(node.value("outputs", json::array()), outputs, errorMessage)) {
+        if(!parseStackArray(node.value("outputs", json::array()), outputs, sourceNamespace, errorMessage)) {
             return false;
         }
 

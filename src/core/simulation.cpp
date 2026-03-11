@@ -373,7 +373,7 @@ bool Simulation::canCraft(RecipeId recipe) const {
     }
 
     for(const auto& input : def->inputs()) {
-        if(!hasItemAmount(input.item, input.count)) {
+        if(!hasItemAmountByKey(input.itemId, input.count)) {
             return false;
         }
     }
@@ -396,7 +396,7 @@ bool Simulation::craft(RecipeId recipe) {
     const int pickaxeBefore = pickaxeLevel_;
 
     for(const auto& input : def->inputs()) {
-        if(!removeItem(input.item, input.count)) {
+        if(!removeItemByKey(input.itemId, input.count)) {
             inventorySlots_ = inventoryBefore;
             axeLevel_ = axeBefore;
             pickaxeLevel_ = pickaxeBefore;
@@ -405,7 +405,7 @@ bool Simulation::craft(RecipeId recipe) {
     }
 
     for(const auto& output : def->outputs()) {
-        if(!addItem(output.item, output.count)) {
+        if(!addItemByKey(output.itemId, output.count)) {
             inventorySlots_ = inventoryBefore;
             axeLevel_ = axeBefore;
             pickaxeLevel_ = pickaxeBefore;
