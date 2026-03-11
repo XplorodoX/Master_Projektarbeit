@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/simulation.hpp"
 
 namespace py = pybind11;
@@ -22,6 +23,8 @@ std::vector<int> flattenObservation(const stoneforge::Observation& obs) {
 class StoneforgeCoreEnv {
 public:
     explicit StoneforgeCoreEnv(std::uint64_t baseSeed = 42) : baseSeed_(baseSeed) {
+        std::string configError;
+        (void)stoneforge::loadGameConfigFile("assets/base/game_config.json", &configError);
         sim_.reset(baseSeed_);
     }
 
@@ -53,8 +56,7 @@ public:
     }
 
     int observationSize() const {
-        const int side = 2 * stoneforge::Simulation::kObservationRadius + 1;
-        return side * side + 3;
+        return sim_.observationSize();
     }
 
 private:

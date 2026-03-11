@@ -3,6 +3,7 @@
 #include <random>
 #include <string>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/simulation.hpp"
 
 namespace {
@@ -26,8 +27,13 @@ int parseInt(const char* text, int fallback) {
 }  // namespace
 
 int main(int argc, char** argv) {
+    std::string configError;
+    if(!stoneforge::loadGameConfigFile("assets/base/game_config.json", &configError) && !configError.empty()) {
+        std::cerr << "warning: " << configError << '\n';
+    }
+
     int episodes = 10;
-    int maxSteps = stoneforge::Simulation::kDefaultMaxSteps;
+    int maxSteps = stoneforge::gameConfig().gameplay.maxSteps;
     std::uint64_t seed = 42;
 
     for(int i = 1; i < argc; ++i) {

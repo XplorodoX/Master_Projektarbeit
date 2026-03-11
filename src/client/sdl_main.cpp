@@ -11,6 +11,7 @@
 #error "SDL2 headers not found"
 #endif
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/simulation.hpp"
 
 namespace {
@@ -52,6 +53,9 @@ void fillRect(SDL_Renderer* renderer, int x, int y, int w, int h, Color color) {
 }  // namespace
 
 int main(int, char**) {
+    std::string gameConfigError;
+    (void)stoneforge::loadGameConfigFile("assets/base/game_config.json", &gameConfigError);
+
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         return 1;
     }

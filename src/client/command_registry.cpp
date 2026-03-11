@@ -260,7 +260,7 @@ public:
     }
 
     std::string usage() const override {
-        return "/spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name]";
+        return "/spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]";
     }
 
     std::string shortHelp() const override {
@@ -272,7 +272,7 @@ public:
                "Usage: " + usage() + "\n"
                "Examples:\n"
                "  /spawn stoneforge:zombie\n"
-               "  /spawn stoneforge:zombie 12 7 hp=8 aggro=true variant=alpha\n"
+             "  /spawn stoneforge:zombie 12 7 hp=8 aggro=true variant=alpha behavior=zombie\n"
                "  /summon 2001 hp=20 aggro=1 variant=boss";
     }
 
@@ -281,7 +281,7 @@ public:
             return filterPrefix(ctx.runtimeRegistry.entityIds(), prefix);
         }
         if(argumentIndex >= 3) {
-            return filterPrefix({"hp=", "aggro=true", "aggro=false", "variant="}, prefix);
+            return filterPrefix({"hp=", "aggro=true", "aggro=false", "variant=", "behavior="}, prefix);
         }
         return {};
     }
@@ -316,6 +316,7 @@ public:
         int hp = std::max(1, entity->hp);
         bool aggro = false;
         std::string variant = "default";
+        std::string behavior = entity->kind;
 
         for(std::size_t i = tokenIndex; i < tokens.size(); ++i) {
             std::string key;
@@ -338,12 +339,14 @@ public:
                 aggro = parsedAggro;
             } else if(key == "variant") {
                 variant = value;
+            } else if(key == "behavior" || key == "type") {
+                behavior = value;
             } else {
                 return {false, "Unknown summon parameter: " + key};
             }
         }
 
-        if(!ctx.sim.commandSpawnEntity(entity->id, pos, hp, aggro, variant)) {
+        if(!ctx.sim.commandSpawnEntity(entity->id, pos, hp, aggro, variant, behavior)) {
             return {false, "Spawn failed (target blocked/occupied)."};
         }
 
@@ -525,7 +528,7 @@ CommandRegistry::CommandRegistry() {
         "  /tp <x> <y>\n"
         "  /give <item_id> [count]\n"
         "  /setblock <x> <y> <block_id|runtime_id>\n"
-        "  /spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name]\n"
+        "  /spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]\n"
         "  /block list\n"
         "  /entity list";
 
@@ -540,7 +543,8 @@ CommandRegistry::CommandRegistry() {
         "  hp=<int>\n"
         "  aggro=<true|false|1|0>\n"
         "  variant=<name>\n"
-        "Example: /summon stoneforge:zombie 12 7 hp=20 aggro=true variant=alpha";
+        "  behavior=<zombie|animal|boss|default>\n"
+        "Example: /summon stoneforge:zombie 12 7 hp=20 aggro=true variant=alpha behavior=zombie";
 }
 
 CommandExecutionResult CommandRegistry::execute(const std::string& rawInput, const CommandExecutionContext& ctx) const {

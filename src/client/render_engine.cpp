@@ -48,8 +48,6 @@ constexpr int kWindowW = 1366;
 constexpr int kWindowH = 768;
 constexpr int kBaseTileSize = 30;
 constexpr int kAtlasCell = 16;
-constexpr float kDefaultStepIntervalSeconds = 0.12F;
-
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
     int count = 0;
@@ -1190,6 +1188,7 @@ int stoneforge::client::RenderEngine::run() {
 
         if(!gameplayInputBlocked && !inventoryOpen && std::fabs(wheelMove) > 0.01F && !IsKeyDown(KEY_LEFT_CONTROL) && !IsKeyDown(KEY_RIGHT_CONTROL)) {
             int nextSlot = sim.hotbarSelection();
+            const int hotbarSlots = sim.hotbarSlotCount();
             if(wheelMove > 0.0F) {
                 nextSlot -= 1;
             } else {
@@ -1197,8 +1196,8 @@ int stoneforge::client::RenderEngine::run() {
             }
 
             if(nextSlot < 0) {
-                nextSlot = stoneforge::Simulation::kHotbarSlotCount - 1;
-            } else if(nextSlot >= stoneforge::Simulation::kHotbarSlotCount) {
+                nextSlot = hotbarSlots - 1;
+            } else if(nextSlot >= hotbarSlots) {
                 nextSlot = 0;
             }
 
@@ -1473,8 +1472,8 @@ int stoneforge::client::RenderEngine::run() {
             if(mob == nullptr) {
                 continue;
             }
-            const int mx = centerX + (mob.pos.x - player.x) * tileSize;
-            const int my = centerY + (mob.pos.y - player.y) * tileSize;
+            const int mx = centerX + (mob->pos.x - player.x) * tileSize;
+            const int my = centerY + (mob->pos.y - player.y) * tileSize;
             drawMobSprite(atlas, *mob, mx, my, tileSize, t, mobIdx);
             ++mobIdx;
         }
