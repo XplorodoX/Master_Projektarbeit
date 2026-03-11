@@ -15,7 +15,7 @@ namespace {
 
 constexpr int kWindowW = 1366;
 constexpr int kWindowH = 768;
-constexpr int kBaseTileSize = 28;
+constexpr int kBaseTileSize = 30;
 constexpr int kAtlasCell = 16;
 constexpr float kStepIntervalSeconds = 0.12F;
 
@@ -263,6 +263,19 @@ Texture2D buildSpriteAtlas() {
             putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell + y, Color{147, 106, 74, 255});
         }
     }
+    for(int y = 2; y < kAtlasCell - 2; y += 4) {
+        for(int x = 1; x < kAtlasCell - 1; ++x) {
+            if((x + y) % 5 == 0) {
+                putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell + y, Color{131, 94, 66, 255});
+            }
+        }
+    }
+    for(int i = 0; i < 6; ++i) {
+        const int knotX = 2 * kAtlasCell + 2 + static_cast<int>(hash01(i, 12, 2301) * 11.0F);
+        const int knotY = 4 * kAtlasCell + 2 + static_cast<int>(hash01(12, i, 2303) * 11.0F);
+        putPixel(atlas, knotX, knotY, Color{98, 67, 47, 255});
+        putPixel(atlas, knotX + 1, knotY, Color{172, 128, 91, 255});
+    }
     for(int x = 0; x < kAtlasCell; ++x) {
         putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell, Color{171, 126, 86, 255});
         putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell + kAtlasCell - 1, Color{84, 60, 40, 255});
@@ -280,6 +293,11 @@ Texture2D buildSpriteAtlas() {
             }
         }
     }
+    for(int i = 0; i < 14; ++i) {
+        const int barkX = 3 * kAtlasCell + 1 + static_cast<int>(hash01(i, 31, 2401) * 14.0F);
+        const int barkY = 4 * kAtlasCell + 1 + static_cast<int>(hash01(31, i, 2403) * 14.0F);
+        putPixel(atlas, barkX, barkY, Color{119, 85, 58, 255});
+    }
     const int ringCx = 3 * kAtlasCell + 8;
     const int ringCy = 4 * kAtlasCell + 8;
     for(int y = -4; y <= 4; ++y) {
@@ -290,6 +308,9 @@ Texture2D buildSpriteAtlas() {
             }
             if(d < 2.6F) {
                 putPixel(atlas, ringCx + x, ringCy + y, Color{132, 93, 64, 255});
+            }
+            if(d > 2.8F && d < 3.2F && ((x + y) % 2 == 0)) {
+                putPixel(atlas, ringCx + x, ringCy + y, Color{183, 138, 98, 255});
             }
         }
     }
@@ -333,6 +354,106 @@ void drawSpriteTileRotated(const Texture2D& atlas, SpriteId id, int px, int py, 
     const Rectangle dst = Rectangle{static_cast<float>(px), static_cast<float>(py), static_cast<float>(size), static_cast<float>(size)};
     const Vector2 origin{dst.width * 0.5F, dst.height * 0.5F};
     DrawTexturePro(atlas, src, dst, origin, rotationDeg, tint);
+}
+
+void drawOrganicTree(int wx, int wy, int px, int py, int tileSize, int biome, float t) {
+    const float phase = hash01(wx, wy, 4901) * 6.2831853F;
+    const int sway = static_cast<int>(std::sin(t * 1.15F + phase) * static_cast<float>(std::max(1, tileSize / 14)));
+    const int treeType = static_cast<int>(hashU32(wx, wy, 4919) % 3u);
+
+    Color leafA = Color{84, 145, 80, 255};
+    Color leafB = Color{114, 176, 106, 255};
+    Color leafC = Color{62, 114, 60, 255};
+    if(biome == 1) {
+        leafA = Color{141, 145, 84, 255};
+        leafB = Color{186, 176, 106, 255};
+        leafC = Color{115, 114, 60, 255};
+    } else if(biome == 0) {
+        leafA = Color{90, 124, 101, 255};
+        leafB = Color{118, 154, 130, 255};
+        leafC = Color{70, 100, 82, 255};
+    }
+
+    const int trunkW = std::max(2, tileSize / (treeType == 0 ? 7 : 5));
+    const int trunkH = std::max(6, tileSize / (treeType == 2 ? 2 : 3));
+    const int trunkLean = (treeType == 2) ? (static_cast<int>(hash01(wx, wy, 4921) * 3.0F) - 1) : 0;
+    const int trunkX = px + tileSize / 2 - trunkW / 2 + sway / 2 + trunkLean;
+    const int trunkY = py + tileSize - trunkH - 1;
+
+    DrawRectangle(trunkX, trunkY, trunkW, trunkH, Color{110, 77, 49, 255});
+    DrawRectangle(trunkX, trunkY, std::max(1, trunkW / 3), trunkH, Color{142, 102, 65, 255});
+    DrawRectangle(trunkX + trunkW - std::max(1, trunkW / 3), trunkY, std::max(1, trunkW / 3), trunkH, Color{79, 53, 35, 255});
+
+    const int crownX = px + tileSize / 2 + sway + trunkLean;
+    const int crownY = py + tileSize / 3;
+
+    if(treeType == 0) {
+        const int baseW = std::max(7, tileSize - tileSize / 4);
+        const int tierH = std::max(4, tileSize / 4);
+
+        DrawTriangle(
+            Vector2{static_cast<float>(crownX), static_cast<float>(crownY - tierH - 1)},
+            Vector2{static_cast<float>(crownX - baseW / 2), static_cast<float>(crownY + tierH)},
+            Vector2{static_cast<float>(crownX + baseW / 2), static_cast<float>(crownY + tierH)},
+            leafB
+        );
+        DrawTriangle(
+            Vector2{static_cast<float>(crownX), static_cast<float>(crownY - 1)},
+            Vector2{static_cast<float>(crownX - (baseW / 2 - 2)), static_cast<float>(crownY + tierH + 4)},
+            Vector2{static_cast<float>(crownX + (baseW / 2 - 2)), static_cast<float>(crownY + tierH + 4)},
+            leafA
+        );
+        DrawTriangle(
+            Vector2{static_cast<float>(crownX), static_cast<float>(crownY + tierH - 1)},
+            Vector2{static_cast<float>(crownX - (baseW / 2 - 3)), static_cast<float>(crownY + tierH + 8)},
+            Vector2{static_cast<float>(crownX + (baseW / 2 - 3)), static_cast<float>(crownY + tierH + 8)},
+            leafC
+        );
+
+        DrawLine(crownX, crownY - tierH - 1, crownX - baseW / 2, crownY + tierH, Fade(Color{28, 52, 30, 255}, 0.5F));
+        DrawLine(crownX, crownY - tierH - 1, crownX + baseW / 2, crownY + tierH, Fade(Color{28, 52, 30, 255}, 0.5F));
+    } else if(treeType == 1) {
+        const float rMain = static_cast<float>(std::max(4, tileSize / 3));
+        const float rSide = static_cast<float>(std::max(3, tileSize / 4));
+        const float rTop = static_cast<float>(std::max(3, tileSize / 5));
+
+        DrawCircle(crownX, crownY + tileSize / 14, rMain, leafA);
+        DrawCircle(crownX - tileSize / 5, crownY + tileSize / 9, rSide, leafB);
+        DrawCircle(crownX + tileSize / 5, crownY + tileSize / 10, rSide, leafB);
+        DrawCircle(crownX, crownY - tileSize / 7, rTop, leafB);
+        DrawCircle(crownX - tileSize / 10, crownY, rTop, leafC);
+
+        DrawCircleLines(crownX, crownY + tileSize / 14, rMain, Fade(Color{32, 58, 34, 255}, 0.45F));
+        DrawCircleLines(crownX - tileSize / 5, crownY + tileSize / 9, rSide, Fade(Color{32, 58, 34, 255}, 0.35F));
+        DrawCircleLines(crownX + tileSize / 5, crownY + tileSize / 10, rSide, Fade(Color{32, 58, 34, 255}, 0.35F));
+    } else {
+        const int skew = static_cast<int>(hash01(wx, wy, 4927) * 5.0F) - 2;
+        DrawCircle(crownX - tileSize / 6, crownY + tileSize / 8, static_cast<float>(std::max(4, tileSize / 4)), leafA);
+        DrawCircle(crownX + tileSize / 5 + skew, crownY, static_cast<float>(std::max(3, tileSize / 5)), leafB);
+        DrawCircle(crownX + skew, crownY - tileSize / 6, static_cast<float>(std::max(3, tileSize / 6)), leafC);
+        DrawCircle(crownX - tileSize / 4, crownY - tileSize / 10, static_cast<float>(std::max(2, tileSize / 7)), leafB);
+
+        const int branchY = trunkY + trunkH / 3;
+        DrawLine(trunkX + trunkW / 2, branchY, trunkX + trunkW / 2 + tileSize / 5, branchY - tileSize / 8, Color{95, 67, 42, 255});
+        DrawLine(trunkX + trunkW / 2, branchY + 2, trunkX + trunkW / 2 - tileSize / 6, branchY - 1, Color{95, 67, 42, 255});
+    }
+
+    const int sparkleCount = treeType == 0 ? 3 : 5;
+    for(int i = 0; i < sparkleCount; ++i) {
+        const int ox = static_cast<int>((hash01(wx + i, wy, 4931) - 0.5F) * static_cast<float>(tileSize * 3 / 5));
+        const int oy = static_cast<int>((hash01(wx, wy + i, 4933) - 0.5F) * static_cast<float>(tileSize * 2 / 5));
+        if(hash01(wx + i, wy - i, 4937) > 0.64F) {
+            DrawPixel(crownX + ox, crownY + oy, Fade(Color{216, 243, 177, 255}, 0.55F));
+        }
+    }
+
+    DrawEllipse(
+        px + tileSize / 2,
+        py + tileSize - std::max(2, tileSize / 10),
+        static_cast<float>(tileSize) * (treeType == 0 ? 0.20F : 0.23F),
+        static_cast<float>(tileSize) * 0.08F,
+        Fade(BLACK, 0.22F)
+    );
 }
 
 BiomeWeights biomeWeights(int wx, int wy) {
@@ -437,10 +558,7 @@ void drawStyledTile(const Texture2D& atlas, lecon::TileType type, int wx, int wy
 
     if(type == lecon::TileType::Tree) {
         drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
-        const Color treeTint = (primary == 1)
-                                   ? Color{236, 229, 207, 255}
-                                   : (primary == 2 ? Color{210, 245, 214, 255} : Color{214, 228, 244, 255});
-        drawSpriteTile(atlas, SpriteId::Tree, px, py, tileSize, treeTint);
+        drawOrganicTree(wx, wy, px, py, tileSize, primary, t);
         return;
     }
 
@@ -495,6 +613,90 @@ void drawStyledTile(const Texture2D& atlas, lecon::TileType type, int wx, int wy
         Fade(Color{151, 255, 219, 220}, 0.45F + pulse * 0.4F),
         Fade(Color{151, 255, 219, 0}, 0.0F)
     );
+}
+
+bool isSolidTileForDetail(lecon::TileType type) {
+    return type == lecon::TileType::Wall || type == lecon::TileType::Resource || type == lecon::TileType::Tree ||
+           type == lecon::TileType::Workbench || type == lecon::TileType::WoodWall || type == lecon::TileType::WoodLog;
+}
+
+void drawTileDetailPass(
+    const lecon::Simulation& sim,
+    const lecon::Vec2i& player,
+    int centerX,
+    int centerY,
+    int tileSize,
+    int viewRadiusX,
+    int viewRadiusY,
+    float t
+) {
+    const int edgeThin = std::max(1, tileSize / 10);
+    const int edgeThick = std::max(1, tileSize / 7);
+
+    for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
+        for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
+            const int wx = player.x + vx;
+            const int wy = player.y + vy;
+            const lecon::TileType type = sim.tileAt(wx, wy);
+
+            const bool solid = isSolidTileForDetail(type);
+            const bool northSolid = isSolidTileForDetail(sim.tileAt(wx, wy - 1));
+            const bool southSolid = isSolidTileForDetail(sim.tileAt(wx, wy + 1));
+            const bool westSolid = isSolidTileForDetail(sim.tileAt(wx - 1, wy));
+            const bool eastSolid = isSolidTileForDetail(sim.tileAt(wx + 1, wy));
+
+            const int px = centerX + vx * tileSize;
+            const int py = centerY + vy * tileSize;
+
+            if(solid) {
+                if(!northSolid) {
+                    DrawRectangle(px + 1, py + 1, tileSize - 2, edgeThin, Fade(Color{241, 234, 222, 255}, 0.20F));
+                }
+                if(!westSolid) {
+                    DrawRectangle(px + 1, py + 1, edgeThin, tileSize - 2, Fade(Color{237, 229, 216, 255}, 0.12F));
+                }
+                if(!southSolid) {
+                    DrawRectangle(px + 1, py + tileSize - edgeThick - 1, tileSize - 2, edgeThick, Fade(BLACK, 0.25F));
+                }
+                if(!eastSolid) {
+                    DrawRectangle(px + tileSize - edgeThick - 1, py + 1, edgeThick, tileSize - 2, Fade(BLACK, 0.20F));
+                }
+
+                if(type == lecon::TileType::Tree) {
+                    const float leafWave = 0.45F + 0.55F * std::sin(t * 1.1F + hash01(wx, wy, 3701) * 6.2831853F);
+                    DrawCircle(
+                        px + tileSize / 2,
+                        py + tileSize / 4,
+                        static_cast<float>(std::max(2, tileSize / 8)),
+                        Fade(Color{194, 244, 168, 255}, 0.10F + leafWave * 0.10F)
+                    );
+                } else if(type == lecon::TileType::Resource) {
+                    const float spark = hash01(wx, wy, 3801);
+                    if(spark > 0.80F) {
+                        DrawCircle(
+                            px + tileSize / 2 + static_cast<int>(hash01(wx, wy, 3803) * 5.0F) - 2,
+                            py + tileSize / 2 + static_cast<int>(hash01(wx, wy, 3805) * 5.0F) - 2,
+                            static_cast<float>(std::max(1, tileSize / 12)),
+                            Fade(Color{255, 236, 186, 255}, 0.16F)
+                        );
+                    }
+                }
+            } else {
+                if(northSolid) {
+                    DrawRectangle(px, py, tileSize, edgeThin, Fade(BLACK, 0.11F));
+                }
+                if(westSolid) {
+                    DrawRectangle(px, py, edgeThin, tileSize, Fade(BLACK, 0.09F));
+                }
+                if(southSolid) {
+                    DrawRectangle(px, py + tileSize - edgeThin, tileSize, edgeThin, Fade(Color{255, 236, 196, 255}, 0.06F));
+                }
+                if(eastSolid) {
+                    DrawRectangle(px + tileSize - edgeThin, py, edgeThin, tileSize, Fade(Color{255, 236, 196, 255}, 0.05F));
+                }
+            }
+        }
+    }
 }
 
 lecon::Action actionFromInput() {
@@ -1339,6 +1541,8 @@ int main() {
             }
         }
 
+        drawTileDetailPass(sim, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
+
         const int hoverPx = centerX + (hoverTile.x - player.x) * tileSize;
         const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
 
@@ -1382,6 +1586,15 @@ int main() {
 
         const float dayNight = 0.75F + 0.25F * std::sin(t * 0.11F);
         DrawRectangle(0, 0, screenW, screenH, Fade(Color{12, 15, 24, 255}, 1.0F - dayNight));
+        DrawRectangleGradientV(0, 0, screenW, screenH / 2, Fade(Color{138, 166, 204, 255}, 0.08F), Fade(BLANK, 0.0F));
+        DrawRectangleGradientV(0, screenH / 2, screenW, screenH / 2, Fade(BLANK, 0.0F), Fade(Color{0, 0, 0, 255}, 0.14F));
+        DrawRectangleGradientEx(
+            Rectangle{0.0F, 0.0F, static_cast<float>(screenW), static_cast<float>(screenH)},
+            Fade(BLACK, 0.16F),
+            Fade(BLACK, 0.16F),
+            Fade(BLACK, 0.04F),
+            Fade(BLACK, 0.04F)
+        );
 
         const int ex = centerX + (exit.x - player.x) * tileSize + tileSize / 2;
         const int ey = centerY + (exit.y - player.y) * tileSize + tileSize / 2;
