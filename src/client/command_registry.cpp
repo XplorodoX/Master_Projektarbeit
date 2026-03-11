@@ -485,7 +485,7 @@ public:
 
         std::string out = "Blocks (" + std::to_string(entries.size()) + "): ";
         for(std::size_t i = 0; i < entries.size() && i < 10; ++i) {
-            if(count > 0) {
+            if(i > 0) {
                 out += ", ";
             }
             out += entries[i];
