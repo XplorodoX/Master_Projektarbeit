@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "stoneforge/object.hpp"
+
 namespace stoneforge {
 
 namespace {
@@ -570,9 +572,8 @@ bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
             break;
         }
 
-        // Half cover rule: solid built walls block mining LOS.
         const TileType losTile = world_.tileAt(x0, y0);
-        if(losTile == TileType::Wall || losTile == TileType::WoodWall || losTile == TileType::WoodLog) {
+        if(objectForTile(losTile).blocksLineOfSight()) {
             return false;
         }
     }
@@ -674,25 +675,18 @@ void Simulation::mineForward() {
         return;
     }
 
-    if(tile == TileType::Resource) {
-        if(!addItem(ItemId::Ore, 1)) {
-            clearMiningProgress();
-            return;
-        }
-        world_.setTile(target.x, target.y, TileType::Empty);
-    } else if(tile == TileType::Tree) {
-        if(!addItem(ItemId::Wood, 1)) {
-            clearMiningProgress();
-            return;
-        }
-        world_.setTile(target.x, target.y, TileType::Empty);
-    } else if(tile == TileType::Workbench) {
-        if(!addItem(ItemId::WorkbenchKit, 1)) {
-            clearMiningProgress();
-            return;
-        }
-        world_.setTile(target.x, target.y, TileType::Empty);
+    const auto& object = objectForTile(tile);
+    if(!object.isMineable()) {
+        clearMiningProgress();
+        return;
     }
+
+    if(!addDropItem(object.minedDrop())) {
+        clearMiningProgress();
+        return;
+    }
+
+    world_.setTile(target.x, target.y, TileType::Empty);
 
     clearMiningProgress();
 }
@@ -798,6 +792,21 @@ bool Simulation::addItem(ItemId item, int amount) {
     return left == 0;
 }
 
+bool Simulation::addDropItem(ObjectDrop drop) {
+    switch(drop) {
+        case ObjectDrop::None:
+            return true;
+        case ObjectDrop::Wood:
+            return addItem(ItemId::Wood, 1);
+        case ObjectDrop::Ore:
+            return addItem(ItemId::Ore, 1);
+        case ObjectDrop::WorkbenchKit:
+            return addItem(ItemId::WorkbenchKit, 1);
+        default:
+            return false;
+    }
+}
+
 bool Simulation::removeItem(ItemId item, int amount) {
     if(item == ItemId::None || amount <= 0) {
         return false;
@@ -867,54 +876,15 @@ bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
 }
 
 float Simulation::miningHardness(TileType tile) const {
-    switch(tile) {
-        case TileType::Tree:
-            return 2.2F;
-        case TileType::Resource:
-            return 6.0F;
-        case TileType::Workbench:
-            return 3.6F;
-        default:
-            return 1.0F;
-    }
+    return objectForTile(tile).miningHardness();
 }
 
 float Simulation::miningSpeed(TileType tile) const {
-    if(tile == TileType::Tree) {
-        if(axeLevel_ >= 2) {
-            return 0.78F;
-        }
-        if(axeLevel_ >= 1) {
-            return 0.45F;
-        }
-        return 0.22F;
-    }
-
-    if(tile == TileType::Resource) {
-        if(pickaxeLevel_ >= 2) {
-            return 0.45F;
-        }
-        if(pickaxeLevel_ >= 1) {
-            return 0.22F;
-        }
-        return 0.08F;
-    }
-
-    if(tile == TileType::Workbench) {
-        if(axeLevel_ >= 2) {
-            return 0.65F;
-        }
-        if(axeLevel_ >= 1) {
-            return 0.38F;
-        }
-        return 0.16F;
-    }
-
-    return 0.1F;
+    return objectForTile(tile).miningSpeed(axeLevel_, pickaxeLevel_);
 }
 
 bool Simulation::isMineableTile(TileType tile) const {
-    return tile == TileType::Resource || tile == TileType::Tree || tile == TileType::Workbench;
+    return objectForTile(tile).isMineable();
 }
 
 bool Simulation::isWithinMiningRange(const Vec2i& target) const {

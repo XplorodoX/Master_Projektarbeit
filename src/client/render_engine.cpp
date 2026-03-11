@@ -12,6 +12,10 @@
 #include "stoneforge/client/render_engine.hpp"
 #include "stoneforge/client/render_fx.hpp"
 #include "stoneforge/client/render_ui.hpp"
+#include "stoneforge/mod/asset_manager.hpp"
+#include "stoneforge/mod/content_registry.hpp"
+#include "stoneforge/mod/mod_loader.hpp"
+#include "stoneforge/mod/script_runtime.hpp"
 #include "stoneforge/simulation.hpp"
 
 using stoneforge::client::CrackInfo;
@@ -23,6 +27,8 @@ using stoneforge::client::drawHotbar;
 using stoneforge::client::drawHud;
 using stoneforge::client::drawInventoryPanel;
 using stoneforge::client::drawParticles;
+using stoneforge::client::clearCraftingInputs;
+using stoneforge::client::consumeCraftingInputs;
 using stoneforge::client::itemGlyph;
 using stoneforge::client::itemTint;
 using stoneforge::client::spawnParticles;
@@ -107,6 +113,86 @@ Rectangle spriteSource(SpriteId id) {
     const int x = (idx % cols) * kAtlasCell;
     const int y = (idx / cols) * kAtlasCell;
     return Rectangle{static_cast<float>(x), static_cast<float>(y), static_cast<float>(kAtlasCell), static_cast<float>(kAtlasCell)};
+}
+
+bool spriteIdFromSlotName(const std::string& slotName, SpriteId& out) {
+    if(slotName == "FloorACold") {
+        out = SpriteId::FloorACold;
+    } else if(slotName == "FloorBCold") {
+        out = SpriteId::FloorBCold;
+    } else if(slotName == "WallACold") {
+        out = SpriteId::WallACold;
+    } else if(slotName == "WallBCold") {
+        out = SpriteId::WallBCold;
+    } else if(slotName == "FloorAWarm") {
+        out = SpriteId::FloorAWarm;
+    } else if(slotName == "FloorBWarm") {
+        out = SpriteId::FloorBWarm;
+    } else if(slotName == "WallAWarm") {
+        out = SpriteId::WallAWarm;
+    } else if(slotName == "WallBWarm") {
+        out = SpriteId::WallBWarm;
+    } else if(slotName == "FloorAMoss") {
+        out = SpriteId::FloorAMoss;
+    } else if(slotName == "FloorBMoss") {
+        out = SpriteId::FloorBMoss;
+    } else if(slotName == "WallAMoss") {
+        out = SpriteId::WallAMoss;
+    } else if(slotName == "WallBMoss") {
+        out = SpriteId::WallBMoss;
+    } else if(slotName == "Ore") {
+        out = SpriteId::Ore;
+    } else if(slotName == "Exit") {
+        out = SpriteId::Exit;
+    } else if(slotName == "Player") {
+        out = SpriteId::Player;
+    } else if(slotName == "Mob") {
+        out = SpriteId::Mob;
+    } else if(slotName == "Tree") {
+        out = SpriteId::Tree;
+    } else if(slotName == "Workbench") {
+        out = SpriteId::Workbench;
+    } else if(slotName == "WoodWall") {
+        out = SpriteId::WoodWall;
+    } else if(slotName == "WoodLog") {
+        out = SpriteId::WoodLog;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+void applySpriteTextureOverrides(
+    Texture2D& atlas,
+    const stoneforge::mod::ContentRegistry& registry,
+    const stoneforge::mod::AssetManager& assets
+) {
+    for(const auto& [id, def] : registry.sprites()) {
+        (void)id;
+        SpriteId spriteId = SpriteId::FloorACold;
+        if(!spriteIdFromSlotName(def.slot, spriteId)) {
+            continue;
+        }
+
+        auto texturePathOpt = assets.resolve(def.sourceMod, def.texture);
+        if(!texturePathOpt) {
+            continue;
+        }
+
+        Image image = LoadImage(texturePathOpt->string().c_str());
+        if(!IsImageValid(image)) {
+            continue;
+        }
+
+        ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+        if(image.width != kAtlasCell || image.height != kAtlasCell) {
+            ImageResizeNN(&image, kAtlasCell, kAtlasCell);
+        }
+
+        const Rectangle dst = spriteSource(spriteId);
+        UpdateTextureRec(atlas, dst, image.data);
+        UnloadImage(image);
+    }
 }
 
 Texture2D buildSpriteAtlas() {
@@ -778,8 +864,24 @@ int stoneforge::client::RenderEngine::run() {
     InitWindow(kWindowW, kWindowH, "Stoneforge 2D - raylib biome client");
     SetTargetFPS(60);
 
+    stoneforge::mod::ContentRegistry contentRegistry;
+    stoneforge::mod::AssetManager assetManager;
+    stoneforge::mod::ModLoader modLoader;
+    std::vector<stoneforge::mod::LoadedModInfo> loadedMods;
+    std::string modError;
+    if(!modLoader.loadAll("assets/base", "mods", contentRegistry, assetManager, loadedMods, &modError)) {
+        TraceLog(LOG_WARNING, "Mod loading failed: %s", modError.c_str());
+    }
+
+    stoneforge::mod::ScriptRuntime scriptRuntime;
+    if(!scriptRuntime.initialize()) {
+        TraceLog(LOG_WARNING, "Script runtime disabled: %s", scriptRuntime.lastError().c_str());
+    }
+    scriptRuntime.loadScripts(loadedMods);
+
     stoneforge::Simulation sim;
-    const Texture2D atlas = buildSpriteAtlas();
+    Texture2D atlas = buildSpriteAtlas();
+    applySpriteTextureOverrides(atlas, contentRegistry, assetManager);
 
     ScreenState screenState = ScreenState::Menu;
 
@@ -798,6 +900,7 @@ int stoneforge::client::RenderEngine::run() {
     bool inventoryOpen = false;
     int dragSourceSlot = -1;
     bool dragSplitMode = false;
+    stoneforge::client::CraftingPanelState craftingPanel;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -863,6 +966,7 @@ int stoneforge::client::RenderEngine::run() {
                 inventoryOpen = false;
                 dragSourceSlot = -1;
                 dragSplitMode = false;
+                clearCraftingInputs(craftingPanel.slots);
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -894,6 +998,7 @@ int stoneforge::client::RenderEngine::run() {
             inventoryOpen = false;
             dragSourceSlot = -1;
             dragSplitMode = false;
+            clearCraftingInputs(craftingPanel.slots);
         }
 
         if(IsKeyPressed(KEY_V)) {
@@ -928,28 +1033,6 @@ int stoneforge::client::RenderEngine::run() {
             sim.setHotbarSelection(8);
         }
 
-        if(IsKeyPressed(KEY_F1)) {
-            sim.craft(stoneforge::RecipeId::Planks);
-        }
-        if(IsKeyPressed(KEY_F2)) {
-            sim.craft(stoneforge::RecipeId::Sticks);
-        }
-        if(IsKeyPressed(KEY_F3)) {
-            sim.craft(stoneforge::RecipeId::Workbench);
-        }
-        if(IsKeyPressed(KEY_F4)) {
-            sim.craft(stoneforge::RecipeId::AxeTier1);
-        }
-        if(IsKeyPressed(KEY_F5)) {
-            sim.craft(stoneforge::RecipeId::PickaxeTier1);
-        }
-        if(IsKeyPressed(KEY_F6)) {
-            sim.craft(stoneforge::RecipeId::AxeTier2);
-        }
-        if(IsKeyPressed(KEY_F7)) {
-            sim.craft(stoneforge::RecipeId::PickaxeTier2);
-        }
-
         const stoneforge::Vec2i playerInput = sim.playerPos();
         const int centerXInput = screenW / 2;
         const int centerYInput = screenH / 2;
@@ -977,6 +1060,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         if(!inventoryOpen && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+            const stoneforge::TileType beforeContext = sim.tileAt(hoverTile.x, hoverTile.y);
             if(hoverDx != 0 || hoverDy != 0) {
                 if(std::abs(hoverDx) >= std::abs(hoverDy)) {
                     facing = {hoverDx > 0 ? 1 : -1, 0};
@@ -984,7 +1068,14 @@ int stoneforge::client::RenderEngine::run() {
                     facing = {0, hoverDy > 0 ? 1 : -1};
                 }
             }
-            (void)sim.contextUseAt(hoverTile);
+            const bool used = sim.contextUseAt(hoverTile);
+            if(used) {
+                const stoneforge::TileType afterContext = sim.tileAt(hoverTile.x, hoverTile.y);
+                scriptRuntime.emitEvent("onItemUsed", {{"x", std::to_string(hoverTile.x)}, {"y", std::to_string(hoverTile.y)}});
+                if(beforeContext != afterContext) {
+                    scriptRuntime.emitEvent("onBlockPlaced", {{"x", std::to_string(hoverTile.x)}, {"y", std::to_string(hoverTile.y)}});
+                }
+            }
         }
 
         stepTimer += dt;
@@ -1010,6 +1101,8 @@ int stoneforge::client::RenderEngine::run() {
 
                 stoneforge::TileType beforeMineTile = stoneforge::TileType::Empty;
                 stoneforge::Vec2i mineTarget{playerBefore.x + facing.x, playerBefore.y + facing.y};
+                const stoneforge::Vec2i placeTarget{playerBefore.x + facing.x, playerBefore.y + facing.y};
+                const stoneforge::TileType beforePlaceTile = sim.tileAt(placeTarget.x, placeTarget.y);
                 if(action == stoneforge::Action::Mine) {
                     if(mouseMineActive) {
                         mineTarget = hoverTile;
@@ -1018,6 +1111,18 @@ int stoneforge::client::RenderEngine::run() {
                 }
 
                 sim.step(action);
+                scriptRuntime.emitEvent("onTick", {{"step", std::to_string(sim.steps())}});
+
+                if(action == stoneforge::Action::Place) {
+                    const stoneforge::TileType afterPlaceTile = sim.tileAt(placeTarget.x, placeTarget.y);
+                    if(afterPlaceTile != beforePlaceTile) {
+                        scriptRuntime.emitEvent("onBlockPlaced", {{"x", std::to_string(placeTarget.x)}, {"y", std::to_string(placeTarget.y)}});
+                    }
+                }
+
+                if(action == stoneforge::Action::Use) {
+                    scriptRuntime.emitEvent("onItemUsed", {{"x", std::to_string(playerBefore.x)}, {"y", std::to_string(playerBefore.y)}});
+                }
 
                 const bool minedResource = beforeMineTile == stoneforge::TileType::Resource;
                 const bool minedTree = beforeMineTile == stoneforge::TileType::Tree;
@@ -1045,6 +1150,7 @@ int stoneforge::client::RenderEngine::run() {
                     if(afterMineTile != beforeMineTile) {
                         cracks.erase(tileKey(mineTarget.x, mineTarget.y));
                         spawnParticles(particles, dustPos, 18, burstColor, 2.4F, 0.7F, 1.15F, mineTarget.x * 31 + mineTarget.y * 17);
+                        scriptRuntime.emitEvent("onBlockBroken", {{"x", std::to_string(mineTarget.x)}, {"y", std::to_string(mineTarget.y)}});
                     }
                 }
 
@@ -1175,8 +1281,38 @@ int stoneforge::client::RenderEngine::run() {
         drawHud(sim, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
         drawHotbar(sim, screenW, screenH);
+        craftingPanel.craftRequested = false;
         if(inventoryOpen) {
-            drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode);
+            drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode, craftingPanel);
+            if(craftingPanel.craftRequested && sim.craft(craftingPanel.requestedRecipe)) {
+                consumeCraftingInputs(craftingPanel.slots, craftingPanel.requestedRecipe);
+
+                const char* recipeId = "base:unknown";
+                switch(craftingPanel.requestedRecipe) {
+                    case stoneforge::RecipeId::Planks:
+                        recipeId = "base:planks";
+                        break;
+                    case stoneforge::RecipeId::Sticks:
+                        recipeId = "base:sticks";
+                        break;
+                    case stoneforge::RecipeId::Workbench:
+                        recipeId = "base:workbench";
+                        break;
+                    case stoneforge::RecipeId::AxeTier1:
+                        recipeId = "base:axe_t1";
+                        break;
+                    case stoneforge::RecipeId::PickaxeTier1:
+                        recipeId = "base:pickaxe_t1";
+                        break;
+                    case stoneforge::RecipeId::AxeTier2:
+                        recipeId = "base:axe_t2";
+                        break;
+                    case stoneforge::RecipeId::PickaxeTier2:
+                        recipeId = "base:pickaxe_t2";
+                        break;
+                }
+                scriptRuntime.emitEvent("onCraft", {{"recipe", recipeId}});
+            }
         }
 
         EndDrawing();

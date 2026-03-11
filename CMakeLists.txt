@@ -6,6 +6,7 @@ option(BUILD_RAYLIB_CLIENT "Build the raylib playable client" ON)
 option(BUILD_SDL_CLIENT "Build the SDL2 playable client (legacy fallback)" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings for Gymnasium" ON)
 option(STONEFORGE_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
+option(STONEFORGE_ENABLE_LUA "Enable Lua scripting for mods" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +15,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(CompilerWarnings)
 
+include(FetchContent)
+FetchContent_Declare(
+    nlohmann_json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 add_library(stoneforge_core
+    src/core/object.cpp
     src/core/world.cpp
     src/core/simulation.cpp
 )
@@ -26,6 +36,27 @@ target_include_directories(stoneforge_core
 
 target_compile_features(stoneforge_core PUBLIC cxx_std_20)
 stoneforge_set_warnings(stoneforge_core ${STONEFORGE_WARNINGS_AS_ERRORS})
+
+add_library(stoneforge_modding
+    src/mod/content_registry.cpp
+    src/mod/asset_manager.cpp
+    src/mod/mod_loader.cpp
+    src/mod/script_runtime.cpp
+)
+target_include_directories(stoneforge_modding PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(stoneforge_modding PUBLIC nlohmann_json::nlohmann_json)
+stoneforge_set_warnings(stoneforge_modding ${STONEFORGE_WARNINGS_AS_ERRORS})
+
+if(STONEFORGE_ENABLE_LUA)
+    find_package(Lua QUIET)
+    if(LUA_FOUND)
+        target_compile_definitions(stoneforge_modding PUBLIC STONEFORGE_HAS_LUA)
+        target_include_directories(stoneforge_modding PRIVATE ${LUA_INCLUDE_DIR})
+        target_link_libraries(stoneforge_modding PUBLIC ${LUA_LIBRARIES})
+    else()
+        message(WARNING "Lua not found. Mod scripts will be disabled; data mods still work.")
+    endif()
+endif()
 
 if(BUILD_HEADLESS_RUNNER)
     add_executable(stoneforge_headless src/apps/headless_main.cpp)
@@ -90,7 +121,7 @@ if(BUILD_RAYLIB_CLIENT)
             src/client/render_fx.cpp
             src/client/render_ui.cpp
         )
-        target_link_libraries(stoneforge_client PRIVATE stoneforge_core ${STONEFORGE_RAYLIB_TARGET})
+        target_link_libraries(stoneforge_client PRIVATE stoneforge_core stoneforge_modding ${STONEFORGE_RAYLIB_TARGET})
         stoneforge_set_warnings(stoneforge_client ${STONEFORGE_WARNINGS_AS_ERRORS})
     else()
         message(WARNING "raylib not found. Skipping stoneforge_client target.")

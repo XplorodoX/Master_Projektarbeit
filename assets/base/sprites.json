@@ -1,0 +1,25 @@
+[
+  { "id": "floor_cold_a", "slot": "FloorACold", "texture": "textures/floor_cold_a.png" },
+  { "id": "floor_cold_b", "slot": "FloorBCold", "texture": "textures/floor_cold_b.png" },
+  { "id": "wall_cold_a", "slot": "WallACold", "texture": "textures/wall_cold_a.png" },
+  { "id": "wall_cold_b", "slot": "WallBCold", "texture": "textures/wall_cold_b.png" },
+
+  { "id": "floor_warm_a", "slot": "FloorAWarm", "texture": "textures/floor_warm_a.png" },
+  { "id": "floor_warm_b", "slot": "FloorBWarm", "texture": "textures/floor_warm_b.png" },
+  { "id": "wall_warm_a", "slot": "WallAWarm", "texture": "textures/wall_warm_a.png" },
+  { "id": "wall_warm_b", "slot": "WallBWarm", "texture": "textures/wall_warm_b.png" },
+
+  { "id": "floor_moss_a", "slot": "FloorAMoss", "texture": "textures/floor_moss_a.png" },
+  { "id": "floor_moss_b", "slot": "FloorBMoss", "texture": "textures/floor_moss_b.png" },
+  { "id": "wall_moss_a", "slot": "WallAMoss", "texture": "textures/wall_moss_a.png" },
+  { "id": "wall_moss_b", "slot": "WallBMoss", "texture": "textures/wall_moss_b.png" },
+
+  { "id": "ore", "slot": "Ore", "texture": "textures/ore.png" },
+  { "id": "exit", "slot": "Exit", "texture": "textures/exit.png" },
+  { "id": "player", "slot": "Player", "texture": "textures/player.png" },
+  { "id": "mob", "slot": "Mob", "texture": "textures/mob.png" },
+  { "id": "tree", "slot": "Tree", "texture": "textures/tree.png" },
+  { "id": "workbench", "slot": "Workbench", "texture": "textures/workbench.png" },
+  { "id": "wood_wall", "slot": "WoodWall", "texture": "textures/wood_wall.png" },
+  { "id": "wood_log", "slot": "WoodLog", "texture": "textures/wood_log.png" }
+]

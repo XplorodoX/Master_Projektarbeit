@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "stoneforge/object.hpp"
 #include "stoneforge/types.hpp"
 #include "stoneforge/world.hpp"
 
@@ -115,6 +116,7 @@ private:
     void clearMiningProgress();
     int itemCount(ItemId item) const;
     bool addItem(ItemId item, int amount);
+    bool addDropItem(ObjectDrop drop);
     bool removeItem(ItemId item, int amount);
     bool hasItemAmount(ItemId item, int amount) const;
     bool tryPlaceFromSlotIndex(int slotIndex);

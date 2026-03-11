@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "stoneforge/object.hpp"
+
 namespace stoneforge {
 
 World::World(std::uint64_t seed) {
@@ -40,7 +42,7 @@ void World::setTile(int x, int y, TileType tile) {
 
 bool World::isPassable(int x, int y) const {
     const TileType tile = tileAt(x, y);
-    return tile == TileType::Empty || tile == TileType::Exit;
+    return objectForTile(tile).isPassable();
 }
 
 Vec2i World::spawnPoint() const {
