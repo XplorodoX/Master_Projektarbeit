@@ -87,6 +87,8 @@ if(BUILD_RAYLIB_CLIENT)
         add_executable(stoneforge_client
             src/client/raylib_main.cpp
             src/client/render_engine.cpp
+            src/client/render_fx.cpp
+            src/client/render_ui.cpp
         )
         target_link_libraries(stoneforge_client PRIVATE stoneforge_core ${STONEFORGE_RAYLIB_TARGET})
         stoneforge_set_warnings(stoneforge_client ${STONEFORGE_WARNINGS_AS_ERRORS})

@@ -15,10 +15,14 @@
 
 - `include/stoneforge`: public C++ headers
 - `include/stoneforge/client/render_engine.hpp`: raylib render engine entry interface
+- `include/stoneforge/client/render_ui.hpp`: HUD/menu/inventory rendering API
+- `include/stoneforge/client/render_fx.hpp`: particles/cracks/visual effects API
 - `src/core`: world + simulation logic
 - `src/apps/headless_main.cpp`: fast non-visual runner
 - `src/client/raylib_main.cpp`: minimal executable entrypoint
 - `src/client/render_engine.cpp`: gameplay loop, rendering, input and UI engine implementation
+- `src/client/render_ui.cpp`: UI rendering module (menu, HUD, hotbar, inventory)
+- `src/client/render_fx.cpp`: effects module (particles + crack overlays)
 - `src/python/py_module.cpp`: pybind11 module
 - `python/stoneforge_env.py`: Gymnasium environment wrapper
 - `python/train_ppo.py`: Stable-Baselines3 PPO example
@@ -40,6 +44,8 @@ cmake --build build -j
 The raylib client now follows a simple engine-oriented structure:
 - `raylib_main.cpp` starts the process
 - `RenderEngine::run()` owns update/render loop state
+- `render_ui.cpp` owns HUD/menu/inventory drawing
+- `render_fx.cpp` owns particle/crack effect drawing
 - simulation remains isolated in `src/core`
 
 ### Optional flags
