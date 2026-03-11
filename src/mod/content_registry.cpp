@@ -58,4 +58,12 @@ const EntityDef* ContentRegistry::findEntity(const std::string& id) const {
     return &it->second;
 }
 
+const ItemDef* ContentRegistry::findItem(const std::string& id) const {
+    const auto it = items_.find(id);
+    if(it == items_.end()) {
+        return nullptr;
+    }
+    return &it->second;
+}
+
 }  // namespace stoneforge::mod

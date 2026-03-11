@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <string_view>
 
@@ -7,6 +8,11 @@
 #include "stoneforge/types.hpp"
 
 namespace stoneforge {
+
+namespace mod {
+class ContentRegistry;
+struct ItemDef;
+}  // namespace mod
 
 class ItemBase {
 public:
@@ -82,9 +88,15 @@ private:
 
 const ItemBase& itemById(ItemId item);
 ItemId itemIdFromKey(std::string_view key);
+std::string_view itemKeyFromId(ItemId item);
 std::string normalizeItemKey(std::string_view key);
 std::string itemDisplayName(std::string_view key);
 TileType itemPlacementTile(std::string_view key);
 int itemMaxStack(std::string_view key);
+std::string itemGlyphText(std::string_view key);
+std::array<unsigned char, 4> itemTintRgba(std::string_view key);
+std::string itemIconId(std::string_view key);
+const mod::ItemDef* itemDefinition(std::string_view key);
+void setItemRegistry(const mod::ContentRegistry* registry);
 
 }  // namespace stoneforge

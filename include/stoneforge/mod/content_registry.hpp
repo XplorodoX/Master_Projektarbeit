@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +26,11 @@ struct ItemDef {
     std::string id;
     std::string displayName;
     std::string icon;
+    std::string glyph = "?";
+    std::array<unsigned char, 4> tint{92, 112, 148, 255};
+    int maxStack = 64;
+    std::string placeTile;
+    std::string placeBlockId;
     std::string sourceMod;
 };
 
@@ -65,6 +71,7 @@ public:
 
     const BiomeDef* findBiome(const std::string& id) const;
     const EntityDef* findEntity(const std::string& id) const;
+    const ItemDef* findItem(const std::string& id) const;
 
 private:
     std::unordered_map<std::string, SpriteDef> sprites_;

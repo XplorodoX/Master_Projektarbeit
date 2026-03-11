@@ -1,5 +1,6 @@
 #include "stoneforge/mod/mod_loader.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -40,6 +41,10 @@ std::string namespacedId(const std::string& modId, std::string id) {
         return id;
     }
     return modId + ":" + id;
+}
+
+unsigned char toByteColor(int value) {
+    return static_cast<unsigned char>(std::clamp(value, 0, 255));
 }
 
 bool loadSingleMod(
@@ -133,6 +138,22 @@ bool loadSingleMod(
             item.id = namespacedId(mod.id, node.value("id", ""));
             item.displayName = node.value("name", item.id);
             item.icon = node.value("icon", "");
+            item.glyph = node.value("glyph", "?");
+            item.maxStack = std::max(1, node.value("maxStack", 64));
+            item.placeTile = node.value("placeTile", "");
+            item.placeBlockId = node.value("placeBlock", "");
+            if(!item.placeBlockId.empty()) {
+                item.placeBlockId = namespacedId(mod.id, item.placeBlockId);
+            }
+            if(node.contains("tint") && node["tint"].is_array()) {
+                const auto& tint = node["tint"];
+                if(tint.size() >= 3) {
+                    item.tint[0] = toByteColor(tint[0].get<int>());
+                    item.tint[1] = toByteColor(tint[1].get<int>());
+                    item.tint[2] = toByteColor(tint[2].get<int>());
+                    item.tint[3] = (tint.size() >= 4) ? toByteColor(tint[3].get<int>()) : 255;
+                }
+            }
             item.sourceMod = mod.id;
             if(!item.id.empty()) {
                 registry.registerItem(std::move(item));
