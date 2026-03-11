@@ -45,6 +45,7 @@ add_library(stoneforge_modding
     src/mod/asset_manager.cpp
     src/mod/mod_loader.cpp
     src/mod/object_factory.cpp
+    src/mod/runtime_registry.cpp
     src/mod/script_runtime.cpp
 )
 target_include_directories(stoneforge_modding PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -120,6 +121,7 @@ if(BUILD_RAYLIB_CLIENT)
 
     if(STONEFORGE_RAYLIB_TARGET)
         add_executable(stoneforge_client
+            src/client/command_registry.cpp
             src/client/raylib_main.cpp
             src/client/render_engine.cpp
             src/client/render_fx.cpp

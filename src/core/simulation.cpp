@@ -53,7 +53,7 @@ void Simulation::reset(std::uint64_t seed) {
             p = {player_.x + 10 + jitter(rng_), player_.y + 10 + jitter(rng_)};
         }
         if(world_.isPassable(p.x, p.y)) {
-            mobs_.push_back(Mob{p, 1});
+            mobs_.push_back(Mob{p, 1, "stoneforge:mob", false, "default"});
         }
     }
 }
@@ -582,7 +582,7 @@ bool Simulation::commandSetTile(const Vec2i& target, TileType tile) {
     return true;
 }
 
-bool Simulation::commandSpawnMob(const Vec2i& target, int hp) {
+bool Simulation::commandSpawnEntity(const std::string& entityId, const Vec2i& target, int hp, bool aggro, const std::string& variant) {
     if(!world_.isPassable(target.x, target.y)) {
         return false;
     }
@@ -593,7 +593,7 @@ bool Simulation::commandSpawnMob(const Vec2i& target, int hp) {
         }
     }
 
-    mobs_.push_back(Mob{target, std::max(1, hp)});
+    mobs_.push_back(Mob{target, std::max(1, hp), entityId, aggro, variant});
     return true;
 }
 
@@ -882,21 +882,52 @@ void Simulation::updateMobs() {
     std::uniform_int_distribution<int> roll(0, 4);
     for(auto& mob : mobs_) {
         Vec2i next = mob.pos;
-        switch(roll(rng_)) {
-            case 0:
-                next.y -= 1;
-                break;
-            case 1:
-                next.y += 1;
-                break;
-            case 2:
-                next.x -= 1;
-                break;
-            case 3:
-                next.x += 1;
-                break;
-            case 4:
-                break;
+
+        if(mob.aggro) {
+            const int dx = player_.x - mob.pos.x;
+            const int dy = player_.y - mob.pos.y;
+            const int dist = std::abs(dx) + std::abs(dy);
+            if(dist <= 9) {
+                if(std::abs(dx) >= std::abs(dy)) {
+                    next.x += (dx == 0 ? 0 : (dx > 0 ? 1 : -1));
+                } else {
+                    next.y += (dy == 0 ? 0 : (dy > 0 ? 1 : -1));
+                }
+            } else {
+                switch(roll(rng_)) {
+                    case 0:
+                        next.y -= 1;
+                        break;
+                    case 1:
+                        next.y += 1;
+                        break;
+                    case 2:
+                        next.x -= 1;
+                        break;
+                    case 3:
+                        next.x += 1;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+        } else {
+            switch(roll(rng_)) {
+                case 0:
+                    next.y -= 1;
+                    break;
+                case 1:
+                    next.y += 1;
+                    break;
+                case 2:
+                    next.x -= 1;
+                    break;
+                case 3:
+                    next.x += 1;
+                    break;
+                case 4:
+                    break;
+            }
         }
 
         if(world_.isPassable(next.x, next.y)) {

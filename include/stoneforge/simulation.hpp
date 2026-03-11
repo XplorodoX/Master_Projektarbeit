@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "stoneforge/object.hpp"
@@ -21,6 +22,9 @@ struct Observation {
 struct Mob {
     Vec2i pos{};
     int hp = 1;
+    std::string entityId = "stoneforge:mob";
+    bool aggro = false;
+    std::string variant = "default";
 };
 
 enum class RecipeId : int {
@@ -107,7 +111,7 @@ public:
     bool done() const;
 
     bool commandSetTile(const Vec2i& target, TileType tile);
-    bool commandSpawnMob(const Vec2i& target, int hp = 1);
+    bool commandSpawnEntity(const std::string& entityId, const Vec2i& target, int hp = 1, bool aggro = false, const std::string& variant = "default");
     bool commandGiveItem(ItemId item, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
 

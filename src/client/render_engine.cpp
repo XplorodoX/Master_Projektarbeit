@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -13,13 +12,14 @@
 
 #include "stoneforge/client/render_engine.hpp"
 #include "stoneforge/client/render_fx.hpp"
+#include "stoneforge/client/command_registry.hpp"
 #include "stoneforge/client/render_ui.hpp"
 #include "stoneforge/mod/asset_manager.hpp"
 #include "stoneforge/mod/content_registry.hpp"
 #include "stoneforge/mod/mod_loader.hpp"
 #include "stoneforge/mod/object_factory.hpp"
+#include "stoneforge/mod/runtime_registry.hpp"
 #include "stoneforge/mod/script_runtime.hpp"
-#include "stoneforge/item.hpp"
 #include "stoneforge/simulation.hpp"
 
 using stoneforge::client::CrackInfo;
@@ -890,257 +890,21 @@ stoneforge::Action actionFromInput() {
     return stoneforge::Action::Wait;
 }
 
-std::vector<std::string> tokenizeCommand(const std::string& input) {
-    std::istringstream in(input);
-    std::vector<std::string> out;
-    std::string token;
-    while(in >> token) {
-        out.push_back(std::move(token));
-    }
-    return out;
-}
-
-std::string toLowerCopy(std::string value) {
-    for(char& c : value) {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
-    return value;
-}
-
-bool parseIntStrict(const std::string& value, int& out) {
-    if(value.empty()) {
-        return false;
-    }
-
-    int sign = 1;
-    std::size_t idx = 0;
-    if(value[0] == '-') {
-        sign = -1;
-        idx = 1;
-    }
-    if(idx >= value.size()) {
-        return false;
-    }
-
-    int result = 0;
-    for(; idx < value.size(); ++idx) {
-        const char c = value[idx];
-        if(c < '0' || c > '9') {
-            return false;
-        }
-        result = result * 10 + static_cast<int>(c - '0');
-    }
-
-    out = result * sign;
-    return true;
-}
-
-std::string normalizeRegistryId(std::string id) {
-    if(id.find(':') == std::string::npos) {
-        return "stoneforge:" + id;
-    }
-    return id;
-}
-
-std::string joinRegistryIds(const std::unordered_map<std::string, stoneforge::mod::BiomeDef>& map, std::size_t maxCount) {
-    std::string out;
-    std::size_t count = 0;
-    for(const auto& [id, def] : map) {
-        (void)def;
-        if(count > 0) {
-            out += ", ";
-        }
-        out += id;
-        ++count;
-        if(count >= maxCount) {
-            break;
-        }
-    }
-    if(map.size() > maxCount) {
-        out += ", ...";
-    }
-    return out;
-}
-
-std::string joinEntityIds(const std::unordered_map<std::string, stoneforge::mod::EntityDef>& map, std::size_t maxCount) {
-    std::string out;
-    std::size_t count = 0;
-    for(const auto& [id, def] : map) {
-        (void)def;
-        if(count > 0) {
-            out += ", ";
-        }
-        out += id;
-        ++count;
-        if(count >= maxCount) {
-            break;
-        }
-    }
-    if(map.size() > maxCount) {
-        out += ", ...";
-    }
-    return out;
-}
-
-bool executeConsoleCommand(
-    const std::string& rawInput,
-    stoneforge::Simulation& sim,
-    const stoneforge::mod::ContentRegistry& registry,
-    const stoneforge::mod::ObjectFactory& objectFactory,
-    std::string& feedback
-) {
-    std::string input = rawInput;
-    if(!input.empty() && input[0] == '/') {
-        input.erase(0, 1);
-    }
-
-    const auto tokens = tokenizeCommand(input);
-    if(tokens.empty()) {
-        feedback = "Command is empty.";
-        return false;
-    }
-
-    const std::string cmd = toLowerCopy(tokens[0]);
-
-    if(cmd == "help") {
-        feedback = "Commands: /help, /setblock x y block_id, /spawn entity_id [x y], /summon entity_id [x y], /give item_id [count], /tp x y, /biome list, /entity list";
-        return true;
-    }
-
-    if(cmd == "biome" && tokens.size() >= 2 && toLowerCopy(tokens[1]) == "list") {
-        if(registry.biomes().empty()) {
-            feedback = "No biomes in registry.";
-            return false;
-        }
-        feedback = "Biomes (" + std::to_string(registry.biomes().size()) + "): " + joinRegistryIds(registry.biomes(), 8);
-        return true;
-    }
-
-    if(cmd == "entity" && tokens.size() >= 2 && toLowerCopy(tokens[1]) == "list") {
-        if(registry.entities().empty()) {
-            feedback = "No entities in registry.";
-            return false;
-        }
-        feedback = "Entities (" + std::to_string(registry.entities().size()) + "): " + joinEntityIds(registry.entities(), 8);
-        return true;
-    }
-
-    if(cmd == "tp") {
-        if(tokens.size() < 3) {
-            feedback = "Usage: /tp <x> <y>";
-            return false;
-        }
-        int x = 0;
-        int y = 0;
-        if(!parseIntStrict(tokens[1], x) || !parseIntStrict(tokens[2], y)) {
-            feedback = "Invalid coordinates.";
-            return false;
-        }
-        if(!sim.commandTeleportPlayer({x, y})) {
-            feedback = "Teleport failed (target not passable).";
-            return false;
-        }
-        feedback = "Teleported to " + std::to_string(x) + "," + std::to_string(y);
-        return true;
-    }
-
-    if(cmd == "give") {
-        if(tokens.size() < 2) {
-            feedback = "Usage: /give <item_id> [count]";
-            return false;
-        }
-
-        const stoneforge::ItemId item = stoneforge::itemIdFromKey(normalizeRegistryId(tokens[1]));
-        if(item == stoneforge::ItemId::None) {
-            feedback = "Unknown item id: " + tokens[1];
-            return false;
-        }
-
-        int count = 1;
-        if(tokens.size() >= 3 && !parseIntStrict(tokens[2], count)) {
-            feedback = "Invalid item count.";
-            return false;
-        }
-        count = std::clamp(count, 1, 999);
-        if(!sim.commandGiveItem(item, count)) {
-            feedback = "Give failed (inventory full).";
-            return false;
-        }
-
-        feedback = "Given " + std::to_string(count) + "x " + std::string(stoneforge::itemById(item).displayName());
-        return true;
-    }
-
-    if(cmd == "setblock") {
-        if(tokens.size() < 4) {
-            feedback = "Usage: /setblock <x> <y> <block_id>";
-            return false;
-        }
-
-        int x = 0;
-        int y = 0;
-        if(!parseIntStrict(tokens[1], x) || !parseIntStrict(tokens[2], y)) {
-            feedback = "Invalid coordinates.";
-            return false;
-        }
-
-        const std::string blockId = normalizeRegistryId(tokens[3]);
-        const auto* archetype = objectFactory.find(blockId);
-        if(archetype == nullptr || !archetype->hasTileType) {
-            feedback = "Block not placeable in world tile map: " + blockId;
-            return false;
-        }
-
-        if(!sim.commandSetTile({x, y}, archetype->tileType)) {
-            feedback = "Setblock failed.";
-            return false;
-        }
-        feedback = "Placed " + blockId + " at " + std::to_string(x) + "," + std::to_string(y);
-        return true;
-    }
-
-    if(cmd == "spawn" || cmd == "summon") {
-        if(tokens.size() < 2) {
-            feedback = "Usage: /spawn <entity_id> [x y]";
-            return false;
-        }
-
-        const std::string entityId = normalizeRegistryId(tokens[1]);
-        const auto* entityDef = registry.findEntity(entityId);
-        if(entityDef == nullptr) {
-            feedback = "Unknown entity id: " + entityId;
-            return false;
-        }
-        if(toLowerCopy(entityDef->kind) != "mob") {
-            feedback = "Entity kind not spawnable yet: " + entityDef->kind;
-            return false;
-        }
-
-        stoneforge::Vec2i pos = sim.playerPos();
-        if(tokens.size() >= 4) {
-            if(!parseIntStrict(tokens[2], pos.x) || !parseIntStrict(tokens[3], pos.y)) {
-                feedback = "Invalid coordinates.";
-                return false;
-            }
-        }
-
-        if(!sim.commandSpawnMob(pos, std::max(1, entityDef->hp))) {
-            feedback = "Spawn failed (target blocked/occupied).";
-            return false;
-        }
-
-        feedback = "Spawned " + entityId + " at " + std::to_string(pos.x) + "," + std::to_string(pos.y);
-        return true;
-    }
-
-    feedback = "Unknown command. Use /help";
-    return false;
-}
-
-void drawMobSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, int idx) {
+void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, int py, int tileSize, float t, int idx) {
     const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
-    drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, WHITE);
+
+    Color tint = WHITE;
+    if(mob.variant == "alpha") {
+        tint = Color{206, 235, 255, 255};
+    } else if(mob.variant == "boss") {
+        tint = Color{255, 198, 142, 255};
+    }
+    if(mob.aggro) {
+        tint = Color{255, 165, 165, 255};
+    }
+
+    drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, tint);
 }
 
 void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, const stoneforge::Vec2i& facing, stoneforge::ItemId heldItem) {
@@ -1202,6 +966,9 @@ int stoneforge::client::RenderEngine::run() {
 
     stoneforge::mod::ObjectFactory objectFactory;
     objectFactory.buildFromContent(contentRegistry);
+    stoneforge::mod::RuntimeRegistry runtimeRegistry;
+    runtimeRegistry.build(contentRegistry, objectFactory);
+    stoneforge::client::CommandRegistry commandRegistry;
     std::vector<RuntimeBiome> runtimeBiomes = buildRuntimeBiomes(contentRegistry);
     TraceLog(LOG_INFO, "Object archetypes loaded: %d", static_cast<int>(objectFactory.objects().size()));
     TraceLog(LOG_INFO, "Biome registry loaded: %d", static_cast<int>(contentRegistry.biomes().size()));
@@ -1336,10 +1103,11 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         if(commandMode) {
+            const stoneforge::client::CommandExecutionContext commandCtx{sim, contentRegistry, objectFactory, runtimeRegistry};
             int ch = GetCharPressed();
             while(ch > 0) {
                 const char c = static_cast<char>(ch);
-                const bool allowed = std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == ':' || c == '-' || c == ' ' || c == '/';
+                const bool allowed = std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == ':' || c == '-' || c == ' ' || c == '/' || c == '=' || c == '#';
                 if(allowed && commandInput.size() < 160) {
                     if(!(c == '/' && commandInput == "/")) {
                         commandInput.push_back(c);
@@ -1352,10 +1120,29 @@ int stoneforge::client::RenderEngine::run() {
                 commandInput.pop_back();
             }
 
+            if(IsKeyPressed(KEY_TAB)) {
+                const auto suggestions = commandRegistry.autocomplete(commandInput, commandCtx);
+                if(suggestions.size() == 1) {
+                    commandInput = suggestions.front();
+                } else if(!suggestions.empty()) {
+                    std::string s = "SUGGEST: ";
+                    for(std::size_t i = 0; i < suggestions.size() && i < 6; ++i) {
+                        if(i > 0) {
+                            s += " | ";
+                        }
+                        s += suggestions[i];
+                    }
+                    if(suggestions.size() > 6) {
+                        s += " | ...";
+                    }
+                    commandFeedback = s;
+                    commandFeedbackTtl = 4.0F;
+                }
+            }
+
             if(IsKeyPressed(KEY_ENTER)) {
-                std::string feedback;
-                const bool ok = executeConsoleCommand(commandInput, sim, contentRegistry, objectFactory, feedback);
-                commandFeedback = ok ? "OK: " + feedback : "ERR: " + feedback;
+                const auto result = commandRegistry.execute(commandInput, commandCtx);
+                commandFeedback = result.success ? "OK: " + result.message : "ERR: " + result.message;
                 commandFeedbackTtl = 5.5F;
                 commandMode = false;
                 commandInput.clear();
@@ -1670,7 +1457,7 @@ int stoneforge::client::RenderEngine::run() {
         for(const auto& mob : sim.mobs()) {
             const int mx = centerX + (mob.pos.x - player.x) * tileSize;
             const int my = centerY + (mob.pos.y - player.y) * tileSize;
-            drawMobSprite(atlas, mx, my, tileSize, t, mobIdx);
+            drawMobSprite(atlas, mob, mx, my, tileSize, t, mobIdx);
             ++mobIdx;
         }
 

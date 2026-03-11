@@ -1,5 +1,7 @@
 #include "stoneforge/mod/object_factory.hpp"
 
+#include <string>
+
 namespace stoneforge::mod {
 
 namespace {
@@ -29,6 +31,26 @@ ObjectArchetype vanillaObject(
     return out;
 }
 
+stoneforge::TileType inferTileTypeForBlock(const BlockDef& block) {
+    const std::string id = block.id;
+    if(id.find("tree") != std::string::npos || id.find("log") != std::string::npos) {
+        return stoneforge::TileType::Tree;
+    }
+    if(id.find("ore") != std::string::npos || id.find("resource") != std::string::npos) {
+        return stoneforge::TileType::Resource;
+    }
+    if(id.find("bench") != std::string::npos || id.find("workbench") != std::string::npos) {
+        return stoneforge::TileType::Workbench;
+    }
+    if(id.find("wood_wall") != std::string::npos) {
+        return stoneforge::TileType::WoodWall;
+    }
+    if(id.find("wood") != std::string::npos) {
+        return stoneforge::TileType::WoodLog;
+    }
+    return block.solid ? stoneforge::TileType::Wall : stoneforge::TileType::Empty;
+}
+
 }  // namespace
 
 void ObjectFactory::buildFromContent(const ContentRegistry& registry) {
@@ -44,6 +66,8 @@ void ObjectFactory::buildFromContent(const ContentRegistry& registry) {
         archetype.passable = !block.solid;
         archetype.mineable = true;
         archetype.blocksLineOfSight = block.solid;
+        archetype.hasTileType = true;
+        archetype.tileType = inferTileTypeForBlock(block);
         archetype.sourceMod = block.sourceMod;
         archetype.vanilla = false;
         registerArchetype(std::move(archetype));
