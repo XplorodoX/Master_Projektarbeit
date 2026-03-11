@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "stoneforge/item.hpp"
+
 namespace stoneforge::client {
 
 namespace {
@@ -178,8 +180,8 @@ void drawHeartIcon(int x, int y, int size, bool filled) {
 
 }  // namespace
 
-const char* itemShortLabel(stoneforge::ItemId item) {
-    switch(item) {
+const char* itemShortLabel(std::string_view itemId) {
+    switch(stoneforge::itemIdFromKey(itemId)) {
         case stoneforge::ItemId::Wood:
             return "Wood";
         case stoneforge::ItemId::Planks:
@@ -191,7 +193,7 @@ const char* itemShortLabel(stoneforge::ItemId item) {
         case stoneforge::ItemId::WorkbenchKit:
             return "Bench";
         default:
-            return "-";
+            return "Item";
     }
 }
 
@@ -297,8 +299,8 @@ void clearCraftingInputs(std::array<CraftSlot, 9>& slots) {
     }
 }
 
-const char* itemGlyph(stoneforge::ItemId item) {
-    switch(item) {
+const char* itemGlyph(std::string_view itemId) {
+    switch(stoneforge::itemIdFromKey(itemId)) {
         case stoneforge::ItemId::Wood:
             return "W";
         case stoneforge::ItemId::Planks:
@@ -310,12 +312,12 @@ const char* itemGlyph(stoneforge::ItemId item) {
         case stoneforge::ItemId::WorkbenchKit:
             return "B";
         default:
-            return "";
+            return "?";
     }
 }
 
-Color itemTint(stoneforge::ItemId item) {
-    switch(item) {
+Color itemTint(std::string_view itemId) {
+    switch(stoneforge::itemIdFromKey(itemId)) {
         case stoneforge::ItemId::Wood:
             return Color{156, 109, 71, 255};
         case stoneforge::ItemId::Planks:
@@ -327,7 +329,7 @@ Color itemTint(stoneforge::ItemId item) {
         case stoneforge::ItemId::WorkbenchKit:
             return Color{130, 95, 70, 255};
         default:
-            return Color{80, 86, 100, 255};
+            return Color{92, 112, 148, 255};
     }
 }
 
@@ -429,10 +431,10 @@ void drawHotbar(const stoneforge::Simulation& sim, int screenW, int screenH) {
         DrawRectangleRoundedLinesEx(rect, 0.18F, 6, active ? 3.0F : 2.0F, active ? Color{244, 223, 156, 255} : Color{90, 105, 126, 255});
 
         const auto slot = sim.hotbarSlot(i);
-        if(slot.item != stoneforge::ItemId::None && slot.count > 0) {
+        if(!slot.itemId.empty() && slot.count > 0) {
             const Rectangle inner{rect.x + 6.0F, rect.y + 6.0F, rect.width - 12.0F, rect.height - 12.0F};
-            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.item));
-            const char* glyph = itemGlyph(slot.item);
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.itemId));
+            const char* glyph = itemGlyph(slot.itemId);
             const int glyphW = MeasureText(glyph, 24);
             DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 10.0F), 24, WHITE);
             DrawText(TextFormat("%d", slot.count), static_cast<int>(rect.x + 7.0F), static_cast<int>(rect.y + rect.height - 17.0F), 15, Color{241, 247, 255, 255});
@@ -512,13 +514,13 @@ void drawInventoryPanel(
     if(dragSourceSlot < 0) {
         if(hoveredSlot >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             const auto slot = sim.inventorySlot(hoveredSlot);
-            if(slot.item != stoneforge::ItemId::None && slot.count > 0) {
+            if(!slot.itemId.empty() && slot.count > 0) {
                 dragSourceSlot = hoveredSlot;
                 dragSplitMode = false;
             }
         } else if(hoveredSlot >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
             const auto slot = sim.inventorySlot(hoveredSlot);
-            if(slot.item != stoneforge::ItemId::None && slot.count > 1) {
+            if(!slot.itemId.empty() && slot.count > 1) {
                 dragSourceSlot = hoveredSlot;
                 dragSplitMode = true;
             }
@@ -539,9 +541,10 @@ void drawInventoryPanel(
             if(hoveredCraftSlot >= 0) {
                 const auto src = sim.inventorySlot(dragSourceSlot);
                 auto& dst = crafting.slots[static_cast<std::size_t>(hoveredCraftSlot)];
-                if(src.item != stoneforge::ItemId::None && src.count > 0 && (isEmpty(dst) || dst.item == src.item)) {
+                const stoneforge::ItemId srcLegacy = stoneforge::itemIdFromKey(src.itemId);
+                if(srcLegacy != stoneforge::ItemId::None && src.count > 0 && (isEmpty(dst) || dst.item == srcLegacy)) {
                     const int addCount = splitDrop ? 1 : src.count;
-                    dst.item = src.item;
+                    dst.item = srcLegacy;
                     dst.count = std::min(stoneforge::Simulation::kInventoryStackLimit, dst.count + std::max(1, addCount));
                 }
             } else if(hoveredSlot >= 0 && hoveredSlot != dragSourceSlot) {
@@ -580,11 +583,11 @@ void drawInventoryPanel(
         }
         DrawRectangleRoundedLinesEx(rect, 0.18F, 6, borderW, border);
 
-        if(slot.item != stoneforge::ItemId::None && slot.count > 0) {
+        if(!slot.itemId.empty() && slot.count > 0) {
             const Rectangle inner{rect.x + 5.0F, rect.y + 5.0F, rect.width - 10.0F, rect.height - 10.0F};
-            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.item));
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.itemId));
 
-            const char* glyph = itemGlyph(slot.item);
+            const char* glyph = itemGlyph(slot.itemId);
             const int glyphW = MeasureText(glyph, 24);
             DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 9.0F), 24, Color{242, 247, 255, 255});
 
@@ -601,11 +604,11 @@ void drawInventoryPanel(
 
     if(dragSourceSlot >= 0) {
         const auto src = sim.inventorySlot(dragSourceSlot);
-        if(src.item != stoneforge::ItemId::None && src.count > 0) {
+        if(!src.itemId.empty() && src.count > 0) {
             const Rectangle ghost{mouse.x + 12.0F, mouse.y + 12.0F, 96.0F, 28.0F};
             DrawRectangleRounded(ghost, 0.2F, 6, Fade(Color{13, 18, 24, 255}, 0.9F));
             DrawRectangleRoundedLinesEx(ghost, 0.2F, 6, 2.0F, Color{118, 171, 220, 255});
-            DrawText(TextFormat("%s x%d", itemShortLabel(src.item), src.count), static_cast<int>(ghost.x) + 8, static_cast<int>(ghost.y) + 6, 16, Color{230, 238, 251, 255});
+            DrawText(TextFormat("%s x%d", itemShortLabel(src.itemId), src.count), static_cast<int>(ghost.x) + 8, static_cast<int>(ghost.y) + 6, 16, Color{230, 238, 251, 255});
         }
     }
 
@@ -619,8 +622,8 @@ void drawInventoryPanel(
         DrawRectangleRoundedLinesEx(rect, 0.18F, 6, 2.0F, Color{102, 125, 151, 255});
         if(!isEmpty(cell)) {
             const Rectangle inner{rect.x + 4.0F, rect.y + 4.0F, rect.width - 8.0F, rect.height - 8.0F};
-            DrawRectangleRounded(inner, 0.18F, 4, itemTint(cell.item));
-            DrawText(itemGlyph(cell.item), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(stoneforge::itemById(cell.item).key()));
+            DrawText(itemGlyph(stoneforge::itemById(cell.item).key()), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
             DrawText(TextFormat("%d", cell.count), static_cast<int>(rect.x + 6.0F), static_cast<int>(rect.y + rect.height - 16.0F), 12, Color{240, 247, 255, 255});
         }
     }

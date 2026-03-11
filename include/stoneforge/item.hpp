@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <string_view>
 
 #include "stoneforge/simulation.hpp"
@@ -81,5 +82,9 @@ private:
 
 const ItemBase& itemById(ItemId item);
 ItemId itemIdFromKey(std::string_view key);
+std::string normalizeItemKey(std::string_view key);
+std::string itemDisplayName(std::string_view key);
+TileType itemPlacementTile(std::string_view key);
+int itemMaxStack(std::string_view key);
 
 }  // namespace stoneforge

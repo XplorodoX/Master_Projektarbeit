@@ -217,23 +217,23 @@ int Simulation::inventory() const {
 }
 
 int Simulation::wood() const {
-    return itemCount(ItemId::Wood);
+    return itemCountByKey("stoneforge:wood");
 }
 
 int Simulation::planks() const {
-    return itemCount(ItemId::Planks);
+    return itemCountByKey("stoneforge:planks");
 }
 
 int Simulation::sticks() const {
-    return itemCount(ItemId::Sticks);
+    return itemCountByKey("stoneforge:sticks");
 }
 
 int Simulation::ore() const {
-    return itemCount(ItemId::Ore);
+    return itemCountByKey("stoneforge:ore");
 }
 
 int Simulation::workbenches() const {
-    return itemCount(ItemId::WorkbenchKit);
+    return itemCountByKey("stoneforge:workbench_kit");
 }
 
 int Simulation::axeLevel() const {
@@ -292,18 +292,19 @@ bool Simulation::moveInventoryStack(int fromIndex, int toIndex) {
 
     auto& src = inventorySlots_[static_cast<std::size_t>(fromIndex)];
     auto& dst = inventorySlots_[static_cast<std::size_t>(toIndex)];
-    if(src.item == ItemId::None || src.count <= 0) {
+    if(src.itemId.empty() || src.count <= 0) {
         return false;
     }
 
-    if(dst.item == ItemId::None || dst.count <= 0) {
+    if(dst.itemId.empty() || dst.count <= 0) {
         dst = src;
         src = InventorySlot{};
         return true;
     }
 
-    if(dst.item == src.item) {
-        const int room = kInventoryStackLimit - dst.count;
+    if(dst.itemId == src.itemId) {
+        const int stackLimit = std::max(1, itemMaxStack(dst.itemId));
+        const int room = stackLimit - dst.count;
         if(room <= 0) {
             return false;
         }
@@ -328,18 +329,18 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
 
     auto& src = inventorySlots_[static_cast<std::size_t>(fromIndex)];
     auto& dst = inventorySlots_[static_cast<std::size_t>(toIndex)];
-    if(src.item == ItemId::None || src.count <= 1) {
+    if(src.itemId.empty() || src.count <= 1) {
         return false;
     }
 
-    if(dst.item != ItemId::None && dst.item != src.item) {
+    if(!dst.itemId.empty() && dst.itemId != src.itemId) {
         return false;
     }
 
     int moved = (src.count + 1) / 2;
-    if(dst.item == ItemId::None) {
-        moved = std::min(moved, kInventoryStackLimit);
-        dst.item = src.item;
+    if(dst.itemId.empty()) {
+        moved = std::min(moved, std::max(1, itemMaxStack(src.itemId)));
+        dst.itemId = src.itemId;
         dst.count = moved;
         src.count -= moved;
         if(src.count <= 0) {
@@ -348,7 +349,7 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
         return moved > 0;
     }
 
-    const int room = kInventoryStackLimit - dst.count;
+    const int room = std::max(1, itemMaxStack(dst.itemId)) - dst.count;
     if(room <= 0) {
         return false;
     }
@@ -419,7 +420,7 @@ bool Simulation::craft(RecipeId recipe) {
 }
 
 bool Simulation::placeWorkbenchForward() {
-    if(!hasItemAmount(ItemId::WorkbenchKit, 1)) {
+    if(!hasItemAmountByKey("stoneforge:workbench_kit", 1)) {
         return false;
     }
 
@@ -429,7 +430,7 @@ bool Simulation::placeWorkbenchForward() {
     }
 
     world_.setTile(target.x, target.y, TileType::Workbench);
-    if(!removeItem(ItemId::WorkbenchKit, 1)) {
+    if(!removeItemByKey("stoneforge:workbench_kit", 1)) {
         world_.setTile(target.x, target.y, TileType::Empty);
         return false;
     }
@@ -545,19 +546,19 @@ bool Simulation::canPlaceFromHotbarAt(const Vec2i& target) const {
     }
 
     const auto slot = hotbarSlot(hotbarSelection_);
-    if(slot.item == ItemId::None || slot.count <= 0) {
+    if(slot.itemId.empty() || slot.count <= 0) {
         return false;
     }
 
-    return itemById(slot.item).placementTile() != TileType::Empty;
+    return itemPlacementTile(slot.itemId) != TileType::Empty;
 }
 
 TileType Simulation::previewPlacementTileForSelectedHotbar() const {
     const auto slot = hotbarSlot(hotbarSelection_);
-    if(slot.item == ItemId::None || slot.count <= 0) {
+    if(slot.itemId.empty() || slot.count <= 0) {
         return TileType::Empty;
     }
-    return itemById(slot.item).placementTile();
+    return itemPlacementTile(slot.itemId);
 }
 
 float Simulation::miningRangeTiles() const {
@@ -597,8 +598,8 @@ bool Simulation::commandSpawnEntity(const std::string& entityId, const Vec2i& ta
     return true;
 }
 
-bool Simulation::commandGiveItem(ItemId item, int amount) {
-    return addItem(item, amount);
+bool Simulation::commandGiveItem(std::string_view itemId, int amount) {
+    return addItemByKey(itemId, amount);
 }
 
 bool Simulation::commandTeleportPlayer(const Vec2i& target) {
@@ -717,26 +718,48 @@ void Simulation::clearMiningProgress() {
 }
 
 int Simulation::itemCount(ItemId item) const {
+    if(item == ItemId::None) {
+        return 0;
+    }
+    return itemCountByKey(itemById(item).key());
+}
+
+bool Simulation::addItem(ItemId item, int amount) {
+    if(item == ItemId::None) {
+        return false;
+    }
+    return addItemByKey(itemById(item).key(), amount);
+}
+
+int Simulation::itemCountByKey(std::string_view itemId) const {
+    const std::string normalized = normalizeItemKey(itemId);
+    if(normalized.empty()) {
+        return 0;
+    }
+
     int total = 0;
     for(const auto& slot : inventorySlots_) {
-        if(slot.item == item) {
+        if(slot.itemId == normalized) {
             total += std::max(0, slot.count);
         }
     }
     return total;
 }
 
-bool Simulation::addItem(ItemId item, int amount) {
-    if(item == ItemId::None || amount <= 0) {
+bool Simulation::addItemByKey(std::string_view itemId, int amount) {
+    const std::string normalized = normalizeItemKey(itemId);
+    if(normalized.empty() || amount <= 0) {
         return false;
     }
 
+    const int stackLimit = std::max(1, itemMaxStack(normalized));
+
     int totalRoom = 0;
     for(const auto& slot : inventorySlots_) {
-        if(slot.item == item) {
-            totalRoom += std::max(0, kInventoryStackLimit - slot.count);
-        } else if(slot.item == ItemId::None || slot.count <= 0) {
-            totalRoom += kInventoryStackLimit;
+        if(slot.itemId == normalized) {
+            totalRoom += std::max(0, stackLimit - slot.count);
+        } else if(slot.itemId.empty() || slot.count <= 0) {
+            totalRoom += stackLimit;
         }
     }
 
@@ -749,11 +772,11 @@ bool Simulation::addItem(ItemId item, int amount) {
         if(left <= 0) {
             break;
         }
-        if(slot.item != item) {
+        if(slot.itemId != normalized) {
             continue;
         }
 
-        const int room = std::max(0, kInventoryStackLimit - slot.count);
+        const int room = std::max(0, stackLimit - slot.count);
         const int moved = std::min(room, left);
         slot.count += moved;
         left -= moved;
@@ -763,12 +786,12 @@ bool Simulation::addItem(ItemId item, int amount) {
         if(left <= 0) {
             break;
         }
-        if(slot.item != ItemId::None && slot.count > 0) {
+        if(!slot.itemId.empty() && slot.count > 0) {
             continue;
         }
 
-        const int moved = std::min(kInventoryStackLimit, left);
-        slot.item = item;
+        const int moved = std::min(stackLimit, left);
+        slot.itemId = normalized;
         slot.count = moved;
         left -= moved;
     }
@@ -781,21 +804,29 @@ bool Simulation::addDropItem(ObjectDrop drop) {
         case ObjectDrop::None:
             return true;
         case ObjectDrop::Wood:
-            return addItem(ItemId::Wood, 1);
+            return addItemByKey("stoneforge:wood", 1);
         case ObjectDrop::Ore:
-            return addItem(ItemId::Ore, 1);
+            return addItemByKey("stoneforge:ore", 1);
         case ObjectDrop::WorkbenchKit:
-            return addItem(ItemId::WorkbenchKit, 1);
+            return addItemByKey("stoneforge:workbench_kit", 1);
         default:
             return false;
     }
 }
 
 bool Simulation::removeItem(ItemId item, int amount) {
-    if(item == ItemId::None || amount <= 0) {
+    if(item == ItemId::None) {
         return false;
     }
-    if(!hasItemAmount(item, amount)) {
+    return removeItemByKey(itemById(item).key(), amount);
+}
+
+bool Simulation::removeItemByKey(std::string_view itemId, int amount) {
+    const std::string normalized = normalizeItemKey(itemId);
+    if(normalized.empty() || amount <= 0) {
+        return false;
+    }
+    if(!hasItemAmountByKey(normalized, amount)) {
         return false;
     }
 
@@ -804,7 +835,7 @@ bool Simulation::removeItem(ItemId item, int amount) {
         if(left <= 0) {
             break;
         }
-        if(slot.item != item || slot.count <= 0) {
+        if(slot.itemId != normalized || slot.count <= 0) {
             continue;
         }
 
@@ -820,7 +851,14 @@ bool Simulation::removeItem(ItemId item, int amount) {
 }
 
 bool Simulation::hasItemAmount(ItemId item, int amount) const {
-    return itemCount(item) >= amount;
+    if(item == ItemId::None) {
+        return false;
+    }
+    return hasItemAmountByKey(itemById(item).key(), amount);
+}
+
+bool Simulation::hasItemAmountByKey(std::string_view itemId, int amount) const {
+    return itemCountByKey(itemId) >= amount;
 }
 
 bool Simulation::tryPlaceFromSlotIndex(int slotIndex) {
@@ -842,11 +880,11 @@ bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
     }
 
     auto& slot = inventorySlots_[static_cast<std::size_t>(slotIndex)];
-    if(slot.item == ItemId::None || slot.count <= 0) {
+    if(slot.itemId.empty() || slot.count <= 0) {
         return false;
     }
 
-    const TileType placeTile = itemById(slot.item).placementTile();
+    const TileType placeTile = itemPlacementTile(slot.itemId);
     if(placeTile == TileType::Empty) {
         return false;
     }

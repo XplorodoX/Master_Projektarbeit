@@ -183,10 +183,7 @@ public:
             return {false, "Usage: " + usage()};
         }
 
-        const stoneforge::ItemId item = stoneforge::itemIdFromKey(normalizeRegistryId(tokens[1]));
-        if(item == stoneforge::ItemId::None) {
-            return {false, "Unknown/unsupported item id for vanilla inventory: " + tokens[1]};
-        }
+        const std::string itemId = normalizeRegistryId(tokens[1]);
 
         int count = 1;
         if(tokens.size() >= 3 && !parseIntStrict(tokens[2], count)) {
@@ -194,10 +191,10 @@ public:
         }
         count = std::clamp(count, 1, 999);
 
-        if(!ctx.sim.commandGiveItem(item, count)) {
+        if(!ctx.sim.commandGiveItem(itemId, count)) {
             return {false, "Inventory full."};
         }
-        return {true, "Given " + std::to_string(count) + "x " + std::string(stoneforge::itemById(item).displayName())};
+        return {true, "Given " + std::to_string(count) + "x " + stoneforge::itemDisplayName(itemId)};
     }
 };
 

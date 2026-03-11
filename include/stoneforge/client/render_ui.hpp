@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string_view>
 
 #include <raylib.h>
 
@@ -25,9 +26,9 @@ struct CraftingPreview {
 	const char* label = "";
 };
 
-const char* itemShortLabel(stoneforge::ItemId item);
-const char* itemGlyph(stoneforge::ItemId item);
-Color itemTint(stoneforge::ItemId item);
+const char* itemShortLabel(std::string_view itemId);
+const char* itemGlyph(std::string_view itemId);
+Color itemTint(std::string_view itemId);
 
 CraftingPreview evaluateCraftingGrid(const std::array<CraftSlot, 9>& slots);
 void consumeCraftingInputs(std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe);

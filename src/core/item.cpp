@@ -1,5 +1,9 @@
 #include "stoneforge/item.hpp"
 
+#include <algorithm>
+#include <cctype>
+#include <string>
+
 #include "stoneforge/simulation.hpp"
 
 namespace stoneforge {
@@ -107,6 +111,63 @@ ItemId itemIdFromKey(std::string_view key) {
         return ItemId::WorkbenchKit;
     }
     return ItemId::None;
+}
+
+std::string normalizeItemKey(std::string_view key) {
+    if(key.empty()) {
+        return {};
+    }
+
+    std::string out(key);
+    if(out.find(':') == std::string::npos) {
+        out = "stoneforge:" + out;
+    }
+    return out;
+}
+
+std::string itemDisplayName(std::string_view key) {
+    const ItemId vanilla = itemIdFromKey(key);
+    if(vanilla != ItemId::None) {
+        return std::string(itemById(vanilla).displayName());
+    }
+
+    std::string normalized = normalizeItemKey(key);
+    if(normalized.empty()) {
+        return "None";
+    }
+
+    const std::size_t sep = normalized.find(':');
+    std::string label = (sep == std::string::npos) ? normalized : normalized.substr(sep + 1);
+    std::replace(label.begin(), label.end(), '_', ' ');
+
+    bool capitalizeNext = true;
+    for(char& c : label) {
+        if(std::isspace(static_cast<unsigned char>(c))) {
+            capitalizeNext = true;
+            continue;
+        }
+        if(capitalizeNext) {
+            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            capitalizeNext = false;
+        }
+    }
+    return label;
+}
+
+TileType itemPlacementTile(std::string_view key) {
+    const ItemId vanilla = itemIdFromKey(key);
+    if(vanilla == ItemId::None) {
+        return TileType::Empty;
+    }
+    return itemById(vanilla).placementTile();
+}
+
+int itemMaxStack(std::string_view key) {
+    const ItemId vanilla = itemIdFromKey(key);
+    if(vanilla == ItemId::None) {
+        return 64;
+    }
+    return std::max(1, itemById(vanilla).maxStack());
 }
 
 }  // namespace stoneforge

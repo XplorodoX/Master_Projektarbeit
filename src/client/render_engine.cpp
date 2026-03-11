@@ -907,12 +907,12 @@ void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, i
     drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, tint);
 }
 
-void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, const stoneforge::Vec2i& facing, stoneforge::ItemId heldItem) {
+void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, const stoneforge::Vec2i& facing, const std::string& heldItemId) {
     const int bob = static_cast<int>(std::sin(t * 7.0F) * 1.6F);
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.28F, tileSize * 0.11F, Fade(BLACK, 0.35F));
     drawSpriteTile(atlas, SpriteId::Player, px, py + bob, tileSize, WHITE);
 
-    if(heldItem != stoneforge::ItemId::None) {
+    if(!heldItemId.empty()) {
         const int handOffsetX = facing.x * (tileSize / 3);
         const int handOffsetY = facing.y * (tileSize / 3);
         const int hx = px + tileSize / 2 + handOffsetX;
@@ -922,9 +922,9 @@ void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, floa
             Rectangle{static_cast<float>(hx - s / 2), static_cast<float>(hy - s / 2), static_cast<float>(s), static_cast<float>(s)},
             0.25F,
             4,
-            itemTint(heldItem)
+            itemTint(heldItemId)
         );
-        const char* glyph = itemGlyph(heldItem);
+        const char* glyph = itemGlyph(heldItemId);
         DrawText(glyph, hx - 4, hy - 6, 12, WHITE);
     }
 }
@@ -1461,7 +1461,7 @@ int stoneforge::client::RenderEngine::run() {
             ++mobIdx;
         }
 
-        drawPlayerSprite(atlas, centerX, centerY, tileSize, t, facing, sim.hotbarSlot(sim.hotbarSelection()).item);
+        drawPlayerSprite(atlas, centerX, centerY, tileSize, t, facing, sim.hotbarSlot(sim.hotbarSelection()).itemId);
         drawParticles(particles, player, centerX, centerY, tileSize);
 
         if(hitFlash > 0.01F) {

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <random>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "stoneforge/object.hpp"
@@ -47,7 +48,7 @@ enum class ItemId : int {
 };
 
 struct InventorySlot {
-    ItemId item = ItemId::None;
+    std::string itemId;
     int count = 0;
 };
 
@@ -112,7 +113,7 @@ public:
 
     bool commandSetTile(const Vec2i& target, TileType tile);
     bool commandSpawnEntity(const std::string& entityId, const Vec2i& target, int hp = 1, bool aggro = false, const std::string& variant = "default");
-    bool commandGiveItem(ItemId item, int amount);
+    bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
 
 private:
@@ -128,6 +129,10 @@ private:
     bool addDropItem(ObjectDrop drop);
     bool removeItem(ItemId item, int amount);
     bool hasItemAmount(ItemId item, int amount) const;
+    int itemCountByKey(std::string_view itemId) const;
+    bool addItemByKey(std::string_view itemId, int amount);
+    bool removeItemByKey(std::string_view itemId, int amount);
+    bool hasItemAmountByKey(std::string_view itemId, int amount) const;
     bool tryPlaceFromSlotIndex(int slotIndex);
     bool tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target);
     float miningHardness(TileType tile) const;
