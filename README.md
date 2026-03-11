@@ -87,6 +87,8 @@ Controls:
 The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome transition blending with dedicated floor/wall sets per biome, animated portal glow, crack overlays for mining, particle effects for mining and combat hits, and a subtle day/night light pass.
 
 Trees now spawn in biome regions and can be mined for wood.
+Mining is progressive (hold `Z`), and speed depends on your tool levels.
+Use `C` to craft and upgrade axe/pickaxe from collected materials.
 
 It also includes a main menu with seed input, New Run, and Continue.
 

@@ -44,6 +44,12 @@ public:
     int inventory() const;
     int wood() const;
     int ore() const;
+    int axeLevel() const;
+    int pickaxeLevel() const;
+    bool isMining() const;
+    Vec2i miningTarget() const;
+    TileType miningTile() const;
+    float miningProgress01() const;
     int steps() const;
     bool done() const;
 
@@ -54,6 +60,9 @@ private:
     void placeForward();
     void useAction();
     void updateMobs();
+    void clearMiningProgress();
+    float miningHardness(TileType tile) const;
+    float miningSpeed(TileType tile) const;
 
     float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance) const;
 
@@ -68,6 +77,13 @@ private:
     int inventory_ = 0;
     int wood_ = 0;
     int ore_ = 0;
+    int axeLevel_ = 0;
+    int pickaxeLevel_ = 0;
+
+    bool miningActive_ = false;
+    Vec2i miningTarget_{};
+    TileType miningTile_ = TileType::Empty;
+    float miningProgress_ = 0.0F;
 
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;

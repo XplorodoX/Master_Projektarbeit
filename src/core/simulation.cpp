@@ -29,6 +29,9 @@ void Simulation::reset(std::uint64_t seed) {
     inventory_ = 0;
     wood_ = 0;
     ore_ = 0;
+    axeLevel_ = 0;
+    pickaxeLevel_ = 0;
+    clearMiningProgress();
 
     steps_ = 0;
     done_ = false;
@@ -57,28 +60,35 @@ StepResult Simulation::step(Action action) {
 
     switch(action) {
         case Action::MoveUp:
+            clearMiningProgress();
             tryMove({0, -1});
             break;
         case Action::MoveDown:
+            clearMiningProgress();
             tryMove({0, 1});
             break;
         case Action::MoveLeft:
+            clearMiningProgress();
             tryMove({-1, 0});
             break;
         case Action::MoveRight:
+            clearMiningProgress();
             tryMove({1, 0});
             break;
         case Action::Mine:
             mineForward();
             break;
         case Action::Place:
+            clearMiningProgress();
             placeForward();
             break;
         case Action::Use:
+            clearMiningProgress();
             useAction();
             break;
         case Action::Wait:
         case Action::Noop:
+            clearMiningProgress();
             break;
     }
 
@@ -177,6 +187,34 @@ int Simulation::ore() const {
     return ore_;
 }
 
+int Simulation::axeLevel() const {
+    return axeLevel_;
+}
+
+int Simulation::pickaxeLevel() const {
+    return pickaxeLevel_;
+}
+
+bool Simulation::isMining() const {
+    return miningActive_;
+}
+
+Vec2i Simulation::miningTarget() const {
+    return miningTarget_;
+}
+
+TileType Simulation::miningTile() const {
+    return miningTile_;
+}
+
+float Simulation::miningProgress01() const {
+    if(!miningActive_) {
+        return 0.0F;
+    }
+    const float hardness = std::max(0.001F, miningHardness(miningTile_));
+    return std::clamp(miningProgress_ / hardness, 0.0F, 1.0F);
+}
+
 int Simulation::steps() const {
     return steps_;
 }
@@ -215,17 +253,36 @@ void Simulation::mineForward() {
     const Vec2i target{player_.x + facing_.x, player_.y + facing_.y};
     const TileType tile = world_.tileAt(target.x, target.y);
 
+    if(tile != TileType::Resource && tile != TileType::Tree) {
+        clearMiningProgress();
+        return;
+    }
+
+    if(!miningActive_ || !(miningTarget_ == target) || miningTile_ != tile) {
+        miningActive_ = true;
+        miningTarget_ = target;
+        miningTile_ = tile;
+        miningProgress_ = 0.0F;
+    }
+
+    miningProgress_ += miningSpeed(tile);
+    energy_ = std::max(0, energy_ - 1);
+
+    if(miningProgress_ < miningHardness(tile)) {
+        return;
+    }
+
     if(tile == TileType::Resource) {
         world_.setTile(target.x, target.y, TileType::Empty);
         ore_ += 1;
-        inventory_ += 1;
-        energy_ = std::max(0, energy_ - 1);
+        inventory_ = wood_ + ore_;
     } else if(tile == TileType::Tree) {
         world_.setTile(target.x, target.y, TileType::Empty);
         wood_ += 1;
-        inventory_ += 1;
-        energy_ = std::max(0, energy_ - 1);
+        inventory_ = wood_ + ore_;
     }
+
+    clearMiningProgress();
 }
 
 void Simulation::placeForward() {
@@ -249,8 +306,67 @@ void Simulation::placeForward() {
 }
 
 void Simulation::useAction() {
-    // Placeholder for future interaction actions (crafting, switches, doors).
+    // Craft tools from inventory; better tools speed up mining.
+    if(axeLevel_ < 1 && wood_ >= 4) {
+        wood_ -= 4;
+        axeLevel_ = 1;
+    } else if(pickaxeLevel_ < 1 && wood_ >= 5) {
+        wood_ -= 5;
+        pickaxeLevel_ = 1;
+    } else if(pickaxeLevel_ < 2 && wood_ >= 2 && ore_ >= 6) {
+        wood_ -= 2;
+        ore_ -= 6;
+        pickaxeLevel_ = 2;
+    } else if(axeLevel_ < 2 && wood_ >= 2 && ore_ >= 4) {
+        wood_ -= 2;
+        ore_ -= 4;
+        axeLevel_ = 2;
+    }
+
+    inventory_ = wood_ + ore_;
     energy_ = std::max(0, energy_ - 1);
+}
+
+void Simulation::clearMiningProgress() {
+    miningActive_ = false;
+    miningTarget_ = {0, 0};
+    miningTile_ = TileType::Empty;
+    miningProgress_ = 0.0F;
+}
+
+float Simulation::miningHardness(TileType tile) const {
+    switch(tile) {
+        case TileType::Tree:
+            return 2.2F;
+        case TileType::Resource:
+            return 6.0F;
+        default:
+            return 1.0F;
+    }
+}
+
+float Simulation::miningSpeed(TileType tile) const {
+    if(tile == TileType::Tree) {
+        if(axeLevel_ >= 2) {
+            return 0.78F;
+        }
+        if(axeLevel_ >= 1) {
+            return 0.45F;
+        }
+        return 0.22F;
+    }
+
+    if(tile == TileType::Resource) {
+        if(pickaxeLevel_ >= 2) {
+            return 0.45F;
+        }
+        if(pickaxeLevel_ >= 1) {
+            return 0.22F;
+        }
+        return 0.08F;
+    }
+
+    return 0.1F;
 }
 
 void Simulation::updateMobs() {

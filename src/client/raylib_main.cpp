@@ -557,7 +557,7 @@ bool drawButton(Rectangle rect, const char* text, bool enabled) {
 }
 
 void drawHud(const lecon::Simulation& sim, int screenH, int tileSize) {
-    const Rectangle panel = {18.0F, 18.0F, 420.0F, 152.0F};
+    const Rectangle panel = {18.0F, 18.0F, 520.0F, 152.0F};
     DrawRectangleRounded(panel, 0.2F, 8, Fade(Color{18, 21, 27, 255}, 0.85F));
     DrawRectangleRoundedLinesEx(panel, 0.2F, 8, 2.0F, Color{60, 68, 82, 255});
 
@@ -568,10 +568,11 @@ void drawHud(const lecon::Simulation& sim, int screenH, int tileSize) {
     DrawText(TextFormat("Inventory: %d", sim.inventory()), 210, 122, 20, Color{216, 226, 241, 255});
 
     DrawText(TextFormat("Tile: %dpx", tileSize), 298, 36, 20, Color{210, 220, 235, 255});
-    DrawText("Biome transitions + FX", 252, 66, 18, Color{172, 225, 196, 255});
-    DrawText("Trees: mine for wood", 252, 90, 18, Color{184, 214, 170, 255});
+    DrawText(TextFormat("Axe Lvl: %d", sim.axeLevel()), 298, 66, 20, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Pickaxe Lvl: %d", sim.pickaxeLevel()), 298, 92, 20, Color{236, 198, 102, 255});
+    DrawText("Press C to craft/upgrade tools", 298, 118, 18, Color{184, 214, 170, 255});
 
-    const std::string info = "WASD/Arrows move | Z mine | X place | C use | R reset | ESC menu | Mouse wheel zoom";
+    const std::string info = "WASD/Arrows move | Z mine (hold) | X place | C craft tools | R reset | ESC menu | Mouse wheel zoom";
     DrawText(info.c_str(), 18, screenH - 34, 18, Color{196, 206, 220, 255});
 }
 
