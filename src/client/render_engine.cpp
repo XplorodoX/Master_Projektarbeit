@@ -479,12 +479,20 @@ Texture2D buildSpriteAtlas() {
 }
 
 SpriteId floorVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx, int wy) {
+    if(biomes.empty()) {
+        const bool altFallback = hash01(wx, wy, 1401) > 0.5F;
+        return altFallback ? SpriteId::FloorBCold : SpriteId::FloorACold;
+    }
     const bool alt = hash01(wx, wy, 1401) > 0.5F;
     const int idx = std::clamp(biome, 0, static_cast<int>(biomes.size()) - 1);
     return alt ? biomes[static_cast<std::size_t>(idx)].floorB : biomes[static_cast<std::size_t>(idx)].floorA;
 }
 
 SpriteId wallVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx, int wy) {
+    if(biomes.empty()) {
+        const bool altFallback = hash01(wx, wy, 1409) > 0.5F;
+        return altFallback ? SpriteId::WallBCold : SpriteId::WallACold;
+    }
     const bool alt = hash01(wx, wy, 1409) > 0.5F;
     const int idx = std::clamp(biome, 0, static_cast<int>(biomes.size()) - 1);
     return alt ? biomes[static_cast<std::size_t>(idx)].wallB : biomes[static_cast<std::size_t>(idx)].wallA;
@@ -882,6 +890,253 @@ stoneforge::Action actionFromInput() {
     return stoneforge::Action::Wait;
 }
 
+std::vector<std::string> tokenizeCommand(const std::string& input) {
+    std::istringstream in(input);
+    std::vector<std::string> out;
+    std::string token;
+    while(in >> token) {
+        out.push_back(std::move(token));
+    }
+    return out;
+}
+
+std::string toLowerCopy(std::string value) {
+    for(char& c : value) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    return value;
+}
+
+bool parseIntStrict(const std::string& value, int& out) {
+    if(value.empty()) {
+        return false;
+    }
+
+    int sign = 1;
+    std::size_t idx = 0;
+    if(value[0] == '-') {
+        sign = -1;
+        idx = 1;
+    }
+    if(idx >= value.size()) {
+        return false;
+    }
+
+    int result = 0;
+    for(; idx < value.size(); ++idx) {
+        const char c = value[idx];
+        if(c < '0' || c > '9') {
+            return false;
+        }
+        result = result * 10 + static_cast<int>(c - '0');
+    }
+
+    out = result * sign;
+    return true;
+}
+
+std::string normalizeRegistryId(std::string id) {
+    if(id.find(':') == std::string::npos) {
+        return "stoneforge:" + id;
+    }
+    return id;
+}
+
+std::string joinRegistryIds(const std::unordered_map<std::string, stoneforge::mod::BiomeDef>& map, std::size_t maxCount) {
+    std::string out;
+    std::size_t count = 0;
+    for(const auto& [id, def] : map) {
+        (void)def;
+        if(count > 0) {
+            out += ", ";
+        }
+        out += id;
+        ++count;
+        if(count >= maxCount) {
+            break;
+        }
+    }
+    if(map.size() > maxCount) {
+        out += ", ...";
+    }
+    return out;
+}
+
+std::string joinEntityIds(const std::unordered_map<std::string, stoneforge::mod::EntityDef>& map, std::size_t maxCount) {
+    std::string out;
+    std::size_t count = 0;
+    for(const auto& [id, def] : map) {
+        (void)def;
+        if(count > 0) {
+            out += ", ";
+        }
+        out += id;
+        ++count;
+        if(count >= maxCount) {
+            break;
+        }
+    }
+    if(map.size() > maxCount) {
+        out += ", ...";
+    }
+    return out;
+}
+
+bool executeConsoleCommand(
+    const std::string& rawInput,
+    stoneforge::Simulation& sim,
+    const stoneforge::mod::ContentRegistry& registry,
+    const stoneforge::mod::ObjectFactory& objectFactory,
+    std::string& feedback
+) {
+    std::string input = rawInput;
+    if(!input.empty() && input[0] == '/') {
+        input.erase(0, 1);
+    }
+
+    const auto tokens = tokenizeCommand(input);
+    if(tokens.empty()) {
+        feedback = "Command is empty.";
+        return false;
+    }
+
+    const std::string cmd = toLowerCopy(tokens[0]);
+
+    if(cmd == "help") {
+        feedback = "Commands: /help, /setblock x y block_id, /spawn entity_id [x y], /summon entity_id [x y], /give item_id [count], /tp x y, /biome list, /entity list";
+        return true;
+    }
+
+    if(cmd == "biome" && tokens.size() >= 2 && toLowerCopy(tokens[1]) == "list") {
+        if(registry.biomes().empty()) {
+            feedback = "No biomes in registry.";
+            return false;
+        }
+        feedback = "Biomes (" + std::to_string(registry.biomes().size()) + "): " + joinRegistryIds(registry.biomes(), 8);
+        return true;
+    }
+
+    if(cmd == "entity" && tokens.size() >= 2 && toLowerCopy(tokens[1]) == "list") {
+        if(registry.entities().empty()) {
+            feedback = "No entities in registry.";
+            return false;
+        }
+        feedback = "Entities (" + std::to_string(registry.entities().size()) + "): " + joinEntityIds(registry.entities(), 8);
+        return true;
+    }
+
+    if(cmd == "tp") {
+        if(tokens.size() < 3) {
+            feedback = "Usage: /tp <x> <y>";
+            return false;
+        }
+        int x = 0;
+        int y = 0;
+        if(!parseIntStrict(tokens[1], x) || !parseIntStrict(tokens[2], y)) {
+            feedback = "Invalid coordinates.";
+            return false;
+        }
+        if(!sim.commandTeleportPlayer({x, y})) {
+            feedback = "Teleport failed (target not passable).";
+            return false;
+        }
+        feedback = "Teleported to " + std::to_string(x) + "," + std::to_string(y);
+        return true;
+    }
+
+    if(cmd == "give") {
+        if(tokens.size() < 2) {
+            feedback = "Usage: /give <item_id> [count]";
+            return false;
+        }
+
+        const stoneforge::ItemId item = stoneforge::itemIdFromKey(normalizeRegistryId(tokens[1]));
+        if(item == stoneforge::ItemId::None) {
+            feedback = "Unknown item id: " + tokens[1];
+            return false;
+        }
+
+        int count = 1;
+        if(tokens.size() >= 3 && !parseIntStrict(tokens[2], count)) {
+            feedback = "Invalid item count.";
+            return false;
+        }
+        count = std::clamp(count, 1, 999);
+        if(!sim.commandGiveItem(item, count)) {
+            feedback = "Give failed (inventory full).";
+            return false;
+        }
+
+        feedback = "Given " + std::to_string(count) + "x " + std::string(stoneforge::itemById(item).displayName());
+        return true;
+    }
+
+    if(cmd == "setblock") {
+        if(tokens.size() < 4) {
+            feedback = "Usage: /setblock <x> <y> <block_id>";
+            return false;
+        }
+
+        int x = 0;
+        int y = 0;
+        if(!parseIntStrict(tokens[1], x) || !parseIntStrict(tokens[2], y)) {
+            feedback = "Invalid coordinates.";
+            return false;
+        }
+
+        const std::string blockId = normalizeRegistryId(tokens[3]);
+        const auto* archetype = objectFactory.find(blockId);
+        if(archetype == nullptr || !archetype->hasTileType) {
+            feedback = "Block not placeable in world tile map: " + blockId;
+            return false;
+        }
+
+        if(!sim.commandSetTile({x, y}, archetype->tileType)) {
+            feedback = "Setblock failed.";
+            return false;
+        }
+        feedback = "Placed " + blockId + " at " + std::to_string(x) + "," + std::to_string(y);
+        return true;
+    }
+
+    if(cmd == "spawn" || cmd == "summon") {
+        if(tokens.size() < 2) {
+            feedback = "Usage: /spawn <entity_id> [x y]";
+            return false;
+        }
+
+        const std::string entityId = normalizeRegistryId(tokens[1]);
+        const auto* entityDef = registry.findEntity(entityId);
+        if(entityDef == nullptr) {
+            feedback = "Unknown entity id: " + entityId;
+            return false;
+        }
+        if(toLowerCopy(entityDef->kind) != "mob") {
+            feedback = "Entity kind not spawnable yet: " + entityDef->kind;
+            return false;
+        }
+
+        stoneforge::Vec2i pos = sim.playerPos();
+        if(tokens.size() >= 4) {
+            if(!parseIntStrict(tokens[2], pos.x) || !parseIntStrict(tokens[3], pos.y)) {
+                feedback = "Invalid coordinates.";
+                return false;
+            }
+        }
+
+        if(!sim.commandSpawnMob(pos, std::max(1, entityDef->hp))) {
+            feedback = "Spawn failed (target blocked/occupied).";
+            return false;
+        }
+
+        feedback = "Spawned " + entityId + " at " + std::to_string(pos.x) + "," + std::to_string(pos.y);
+        return true;
+    }
+
+    feedback = "Unknown command. Use /help";
+    return false;
+}
+
 void drawMobSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, int idx) {
     const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
@@ -947,7 +1202,10 @@ int stoneforge::client::RenderEngine::run() {
 
     stoneforge::mod::ObjectFactory objectFactory;
     objectFactory.buildFromContent(contentRegistry);
+    std::vector<RuntimeBiome> runtimeBiomes = buildRuntimeBiomes(contentRegistry);
     TraceLog(LOG_INFO, "Object archetypes loaded: %d", static_cast<int>(objectFactory.objects().size()));
+    TraceLog(LOG_INFO, "Biome registry loaded: %d", static_cast<int>(contentRegistry.biomes().size()));
+    TraceLog(LOG_INFO, "Entity registry loaded: %d", static_cast<int>(contentRegistry.entities().size()));
 
     stoneforge::mod::ScriptRuntime scriptRuntime;
     if(!scriptRuntime.initialize()) {
@@ -977,6 +1235,10 @@ int stoneforge::client::RenderEngine::run() {
     int dragSourceSlot = -1;
     bool dragSplitMode = false;
     stoneforge::client::CraftingPanelState craftingPanel;
+    bool commandMode = false;
+    std::string commandInput;
+    std::string commandFeedback;
+    float commandFeedbackTtl = 0.0F;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -994,6 +1256,7 @@ int stoneforge::client::RenderEngine::run() {
         }
         zoom = std::clamp(zoom, 0.70F, 1.70F);
         const int tileSize = std::clamp(static_cast<int>(std::round(static_cast<float>(kBaseTileSize) * zoom)), 16, 48);
+        commandFeedbackTtl = std::max(0.0F, commandFeedbackTtl - dt);
 
         if(screenState == ScreenState::Menu) {
             int ch = GetCharPressed();
@@ -1046,22 +1309,65 @@ int stoneforge::client::RenderEngine::run() {
                 dragSourceSlot = -1;
                 dragSplitMode = false;
                 clearCraftingInputs(craftingPanel.slots);
+                commandMode = false;
+                commandInput.clear();
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
+                commandMode = false;
+                commandInput.clear();
                 screenState = ScreenState::Playing;
             }
 
             continue;
         }
 
-        if(IsKeyPressed(KEY_ESCAPE)) {
+        if(!commandMode && IsKeyPressed(KEY_ESCAPE)) {
             screenState = ScreenState::Menu;
             dragSourceSlot = -1;
             dragSplitMode = false;
+            commandMode = false;
+            commandInput.clear();
         }
 
-        if(IsKeyPressed(KEY_TAB)) {
+        if(!commandMode && IsKeyPressed(KEY_SLASH)) {
+            commandMode = true;
+            commandInput = "/";
+        }
+
+        if(commandMode) {
+            int ch = GetCharPressed();
+            while(ch > 0) {
+                const char c = static_cast<char>(ch);
+                const bool allowed = std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == ':' || c == '-' || c == ' ' || c == '/';
+                if(allowed && commandInput.size() < 160) {
+                    if(!(c == '/' && commandInput == "/")) {
+                        commandInput.push_back(c);
+                    }
+                }
+                ch = GetCharPressed();
+            }
+
+            if(IsKeyPressed(KEY_BACKSPACE) && !commandInput.empty()) {
+                commandInput.pop_back();
+            }
+
+            if(IsKeyPressed(KEY_ENTER)) {
+                std::string feedback;
+                const bool ok = executeConsoleCommand(commandInput, sim, contentRegistry, objectFactory, feedback);
+                commandFeedback = ok ? "OK: " + feedback : "ERR: " + feedback;
+                commandFeedbackTtl = 5.5F;
+                commandMode = false;
+                commandInput.clear();
+            } else if(IsKeyPressed(KEY_ESCAPE)) {
+                commandMode = false;
+                commandInput.clear();
+            }
+        }
+
+        const bool gameplayInputBlocked = commandMode;
+
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_TAB)) {
             inventoryOpen = !inventoryOpen;
             if(!inventoryOpen) {
                 dragSourceSlot = -1;
@@ -1069,7 +1375,7 @@ int stoneforge::client::RenderEngine::run() {
             }
         }
 
-        if(IsKeyPressed(KEY_R)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_R)) {
             sim.reset(currentSeed);
             particles.clear();
             cracks.clear();
@@ -1078,13 +1384,15 @@ int stoneforge::client::RenderEngine::run() {
             dragSourceSlot = -1;
             dragSplitMode = false;
             clearCraftingInputs(craftingPanel.slots);
+            commandMode = false;
+            commandInput.clear();
         }
 
-        if(IsKeyPressed(KEY_V)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
             sim.placeWorkbenchForward();
         }
 
-        if(!inventoryOpen && std::fabs(wheelMove) > 0.01F && !IsKeyDown(KEY_LEFT_CONTROL) && !IsKeyDown(KEY_RIGHT_CONTROL)) {
+        if(!gameplayInputBlocked && !inventoryOpen && std::fabs(wheelMove) > 0.01F && !IsKeyDown(KEY_LEFT_CONTROL) && !IsKeyDown(KEY_RIGHT_CONTROL)) {
             int nextSlot = sim.hotbarSelection();
             if(wheelMove > 0.0F) {
                 nextSlot -= 1;
@@ -1101,31 +1409,31 @@ int stoneforge::client::RenderEngine::run() {
             sim.setHotbarSelection(nextSlot);
         }
 
-        if(IsKeyPressed(KEY_ONE)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_ONE)) {
             sim.setHotbarSelection(0);
         }
-        if(IsKeyPressed(KEY_TWO)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_TWO)) {
             sim.setHotbarSelection(1);
         }
-        if(IsKeyPressed(KEY_THREE)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_THREE)) {
             sim.setHotbarSelection(2);
         }
-        if(IsKeyPressed(KEY_FOUR)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_FOUR)) {
             sim.setHotbarSelection(3);
         }
-        if(IsKeyPressed(KEY_FIVE)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_FIVE)) {
             sim.setHotbarSelection(4);
         }
-        if(IsKeyPressed(KEY_SIX)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_SIX)) {
             sim.setHotbarSelection(5);
         }
-        if(IsKeyPressed(KEY_SEVEN)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_SEVEN)) {
             sim.setHotbarSelection(6);
         }
-        if(IsKeyPressed(KEY_EIGHT)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_EIGHT)) {
             sim.setHotbarSelection(7);
         }
-        if(IsKeyPressed(KEY_NINE)) {
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_NINE)) {
             sim.setHotbarSelection(8);
         }
 
@@ -1147,7 +1455,7 @@ int stoneforge::client::RenderEngine::run() {
         const bool hoverLineOfSight = hoverMineable ? sim.hasLineOfSightTo(hoverTile) : false;
         const bool hoverCanPlace = hasPlacePreview ? sim.canPlaceFromHotbarAt(hoverTile) : false;
         const bool hoverCanMine = hoverMineable ? sim.canMineTarget(hoverTile) : false;
-        const bool mouseMineActive = !inventoryOpen && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
+        const bool mouseMineActive = !gameplayInputBlocked && !inventoryOpen && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
 
         if(mouseMineActive) {
             sim.setMiningTargetOverride(hoverTile);
@@ -1155,7 +1463,7 @@ int stoneforge::client::RenderEngine::run() {
             sim.clearMiningTargetOverride();
         }
 
-        if(!inventoryOpen && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        if(!gameplayInputBlocked && !inventoryOpen && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
             const stoneforge::TileType beforeContext = sim.tileAt(hoverTile.x, hoverTile.y);
             if(hoverDx != 0 || hoverDy != 0) {
                 if(std::abs(hoverDx) >= std::abs(hoverDy)) {
@@ -1178,7 +1486,7 @@ int stoneforge::client::RenderEngine::run() {
         if(stepTimer >= kStepIntervalSeconds) {
             stepTimer = 0.0F;
             if(!sim.done()) {
-                stoneforge::Action action = actionFromInput();
+                stoneforge::Action action = gameplayInputBlocked ? stoneforge::Action::Wait : actionFromInput();
                 if(mouseMineActive) {
                     action = stoneforge::Action::Mine;
                 }
@@ -1295,7 +1603,7 @@ int stoneforge::client::RenderEngine::run() {
                 const int px = centerX + vx * tileSize;
                 const int py = centerY + vy * tileSize;
 
-                drawStyledTile(atlas, sim.tileAt(wx, wy), wx, wy, px, py, tileSize, t);
+                drawStyledTile(atlas, sim.tileAt(wx, wy), wx, wy, px, py, tileSize, t, runtimeBiomes);
             }
         }
 
@@ -1305,7 +1613,7 @@ int stoneforge::client::RenderEngine::run() {
         const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
 
         if(!inventoryOpen && hasPlacePreview) {
-            drawStyledTile(atlas, previewPlaceTile, hoverTile.x, hoverTile.y, hoverPx, hoverPy, tileSize, t);
+            drawStyledTile(atlas, previewPlaceTile, hoverTile.x, hoverTile.y, hoverPx, hoverPy, tileSize, t, runtimeBiomes);
             const Color overlay = hoverCanPlace ? Fade(Color{126, 236, 156, 255}, 0.42F) : Fade(Color{236, 116, 116, 255}, 0.45F);
             DrawRectangle(hoverPx, hoverPy, tileSize, tileSize, overlay);
             DrawRectangleLinesEx(
@@ -1408,6 +1716,25 @@ int stoneforge::client::RenderEngine::run() {
                         break;
                 }
                 scriptRuntime.emitEvent("onCraft", {{"recipe", recipeId}});
+            }
+        }
+
+        if(commandFeedbackTtl > 0.0F) {
+            const Rectangle msgBox{24.0F, static_cast<float>(screenH - 174), static_cast<float>(screenW - 48), 32.0F};
+            DrawRectangleRounded(msgBox, 0.15F, 6, Fade(Color{16, 22, 31, 255}, 0.85F));
+            DrawRectangleRoundedLinesEx(msgBox, 0.15F, 6, 1.0F, Color{89, 115, 146, 255});
+            DrawText(commandFeedback.c_str(), 34, screenH - 165, 18, Color{213, 228, 248, 255});
+        }
+
+        if(commandMode) {
+            const Rectangle cmdBox{24.0F, static_cast<float>(screenH - 136), static_cast<float>(screenW - 48), 40.0F};
+            DrawRectangleRounded(cmdBox, 0.15F, 6, Fade(Color{12, 18, 26, 255}, 0.95F));
+            DrawRectangleRoundedLinesEx(cmdBox, 0.15F, 6, 2.0F, Color{132, 176, 229, 255});
+            const std::string shown = commandInput.empty() ? "/" : commandInput;
+            DrawText(shown.c_str(), 36, screenH - 126, 22, Color{233, 242, 255, 255});
+            if((static_cast<int>(t * 2.0F) % 2) == 0) {
+                const int tw = MeasureText(shown.c_str(), 22);
+                DrawText("_", 36 + tw + 2, screenH - 126, 22, Color{233, 242, 255, 255});
             }
         }
 
