@@ -68,7 +68,9 @@ Controls:
 - `R`: reset episode
 - Mouse wheel: zoom in/out (see more world or more detail)
 
-The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome color tints, animated portal glow, and a subtle day/night light pass.
+The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome transition blending with dedicated floor/wall sets per biome, animated portal glow, crack overlays for mining, particle effects for mining and combat hits, and a subtle day/night light pass.
+
+It also includes a main menu with seed input, New Run, and Continue.
 
 ## Python RL setup
 
