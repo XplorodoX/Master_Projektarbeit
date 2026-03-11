@@ -13,6 +13,21 @@ int manhattanDistance(const Vec2i& a, const Vec2i& b) {
 
 constexpr float kMiningRangeBaseTiles = 4.5F;
 
+TileType placementTileForItem(ItemId item) {
+    switch(item) {
+        case ItemId::WorkbenchKit:
+            return TileType::Workbench;
+        case ItemId::Planks:
+            return TileType::WoodWall;
+        case ItemId::Wood:
+            return TileType::WoodLog;
+        case ItemId::Ore:
+            return TileType::Wall;
+        default:
+            return TileType::Empty;
+    }
+}
+
 }  // namespace
 
 Simulation::Simulation() {
@@ -37,6 +52,7 @@ void Simulation::reset(std::uint64_t seed) {
     clearMiningProgress();
 
     steps_ = 0;
+    starvationTicks_ = 0;
     done_ = false;
     reachedExit_ = false;
 
@@ -60,6 +76,7 @@ StepResult Simulation::step(Action action) {
 
     const int distanceBefore = manhattanDistance(player_, world_.exitPoint());
     const int hpBefore = hp_;
+    const bool idleAction = (action == Action::Wait || action == Action::Noop);
 
     switch(action) {
         case Action::MoveUp:
@@ -95,11 +112,26 @@ StepResult Simulation::step(Action action) {
             break;
     }
 
-    energy_ = std::max(0, energy_ - 1);
+    // Energy tuning: no hard per-step drain; action costs come from actions,
+    // passive drain is slower and idle recovers a bit.
+    if(idleAction) {
+        if(energy_ < 100 && (steps_ % 8 == 0)) {
+            energy_ = std::min(100, energy_ + 1);
+        }
+    } else if(steps_ % 18 == 0) {
+        energy_ = std::max(0, energy_ - 1);
+    }
+
     updateMobs();
 
     if(energy_ <= 0) {
-        hp_ -= 1;
+        ++starvationTicks_;
+        if(starvationTicks_ >= 18) {
+            hp_ -= 1;
+            starvationTicks_ = 0;
+        }
+    } else {
+        starvationTicks_ = 0;
     }
 
     if(player_ == world_.exitPoint()) {
@@ -457,7 +489,7 @@ bool Simulation::placeWorkbenchForward() {
 }
 
 bool Simulation::placeFromHotbarAt(const Vec2i& target) {
-    if(!isWithinMiningRange(target) || !hasLineOfSightTo(target)) {
+    if(!canPlaceFromHotbarAt(target)) {
         return false;
     }
 
@@ -538,8 +570,9 @@ bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
             break;
         }
 
-        // Half cover rule: only solid walls block mining LOS.
-        if(world_.tileAt(x0, y0) == TileType::Wall) {
+        // Half cover rule: solid built walls block mining LOS.
+        const TileType losTile = world_.tileAt(x0, y0);
+        if(losTile == TileType::Wall || losTile == TileType::WoodWall || losTile == TileType::WoodLog) {
             return false;
         }
     }
@@ -550,6 +583,33 @@ bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
 bool Simulation::canMineTarget(const Vec2i& target) const {
     const TileType tile = world_.tileAt(target.x, target.y);
     return isMineableTile(tile) && isWithinMiningRange(target) && hasLineOfSightTo(target);
+}
+
+bool Simulation::canPlaceFromHotbarAt(const Vec2i& target) const {
+    if(target == player_) {
+        return false;
+    }
+    if(!isWithinMiningRange(target) || !hasLineOfSightTo(target)) {
+        return false;
+    }
+    if(world_.tileAt(target.x, target.y) != TileType::Empty) {
+        return false;
+    }
+
+    const auto slot = hotbarSlot(hotbarSelection_);
+    if(slot.item == ItemId::None || slot.count <= 0) {
+        return false;
+    }
+
+    return placementTileForItem(slot.item) != TileType::Empty;
+}
+
+TileType Simulation::previewPlacementTileForSelectedHotbar() const {
+    const auto slot = hotbarSlot(hotbarSelection_);
+    if(slot.item == ItemId::None || slot.count <= 0) {
+        return TileType::Empty;
+    }
+    return placementTileForItem(slot.item);
 }
 
 float Simulation::miningRangeTiles() const {
@@ -780,6 +840,10 @@ bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
         return false;
     }
 
+    if(target == player_) {
+        return false;
+    }
+
     if(world_.tileAt(target.x, target.y) != TileType::Empty) {
         return false;
     }
@@ -789,18 +853,9 @@ bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
         return false;
     }
 
-    TileType placeTile = TileType::Empty;
-    switch(slot.item) {
-        case ItemId::WorkbenchKit:
-            placeTile = TileType::Workbench;
-            break;
-        case ItemId::Wood:
-        case ItemId::Planks:
-        case ItemId::Ore:
-            placeTile = TileType::Wall;
-            break;
-        default:
-            return false;
+    const TileType placeTile = placementTileForItem(slot.item);
+    if(placeTile == TileType::Empty) {
+        return false;
     }
 
     world_.setTile(target.x, target.y, placeTile);

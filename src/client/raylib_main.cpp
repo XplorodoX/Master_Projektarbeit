@@ -15,7 +15,7 @@ namespace {
 
 constexpr int kWindowW = 1366;
 constexpr int kWindowH = 768;
-constexpr int kBaseTileSize = 24;
+constexpr int kBaseTileSize = 28;
 constexpr int kAtlasCell = 16;
 constexpr float kStepIntervalSeconds = 0.12F;
 
@@ -58,7 +58,9 @@ enum class SpriteId : int {
     Player = 14,
     Mob = 15,
     Tree = 16,
-    Workbench = 17
+    Workbench = 17,
+    WoodWall = 18,
+    WoodLog = 19
 };
 
 enum class ScreenState {
@@ -255,6 +257,43 @@ Texture2D buildSpriteAtlas() {
     fillRect(atlas, kAtlasCell + 3, 4 * kAtlasCell + 13, 2, 3, Color{92, 61, 41, 255});
     fillRect(atlas, kAtlasCell + 11, 4 * kAtlasCell + 13, 2, 3, Color{92, 61, 41, 255});
 
+    fillRect(atlas, 2 * kAtlasCell, 4 * kAtlasCell, kAtlasCell, kAtlasCell, Color{116, 82, 56, 255});
+    for(int y = 1; y < kAtlasCell - 1; y += 4) {
+        for(int x = 1; x < kAtlasCell - 1; ++x) {
+            putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell + y, Color{147, 106, 74, 255});
+        }
+    }
+    for(int x = 0; x < kAtlasCell; ++x) {
+        putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell, Color{171, 126, 86, 255});
+        putPixel(atlas, 2 * kAtlasCell + x, 4 * kAtlasCell + kAtlasCell - 1, Color{84, 60, 40, 255});
+    }
+    for(int y = 0; y < kAtlasCell; ++y) {
+        putPixel(atlas, 2 * kAtlasCell, 4 * kAtlasCell + y, Color{159, 116, 80, 255});
+        putPixel(atlas, 2 * kAtlasCell + kAtlasCell - 1, 4 * kAtlasCell + y, Color{88, 63, 42, 255});
+    }
+
+    fillRect(atlas, 3 * kAtlasCell, 4 * kAtlasCell, kAtlasCell, kAtlasCell, Color{102, 72, 49, 255});
+    for(int x = 1; x < kAtlasCell - 1; ++x) {
+        if(x % 3 == 0) {
+            for(int y = 1; y < kAtlasCell - 1; ++y) {
+                putPixel(atlas, 3 * kAtlasCell + x, 4 * kAtlasCell + y, Color{133, 95, 65, 255});
+            }
+        }
+    }
+    const int ringCx = 3 * kAtlasCell + 8;
+    const int ringCy = 4 * kAtlasCell + 8;
+    for(int y = -4; y <= 4; ++y) {
+        for(int x = -4; x <= 4; ++x) {
+            const float d = std::sqrt(static_cast<float>(x * x + y * y));
+            if(d < 4.2F) {
+                putPixel(atlas, ringCx + x, ringCy + y, Color{165, 120, 82, 255});
+            }
+            if(d < 2.6F) {
+                putPixel(atlas, ringCx + x, ringCy + y, Color{132, 93, 64, 255});
+            }
+        }
+    }
+
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     SetTextureFilter(atlasTexture, TEXTURE_FILTER_POINT);
@@ -287,6 +326,13 @@ void drawSpriteTile(const Texture2D& atlas, SpriteId id, int px, int py, int siz
     const Rectangle src = spriteSource(id);
     const Rectangle dst = Rectangle{static_cast<float>(px), static_cast<float>(py), static_cast<float>(size), static_cast<float>(size)};
     DrawTexturePro(atlas, src, dst, Vector2{0.0F, 0.0F}, 0.0F, tint);
+}
+
+void drawSpriteTileRotated(const Texture2D& atlas, SpriteId id, int px, int py, int size, float rotationDeg, Color tint) {
+    const Rectangle src = spriteSource(id);
+    const Rectangle dst = Rectangle{static_cast<float>(px), static_cast<float>(py), static_cast<float>(size), static_cast<float>(size)};
+    const Vector2 origin{dst.width * 0.5F, dst.height * 0.5F};
+    DrawTexturePro(atlas, src, dst, origin, rotationDeg, tint);
 }
 
 BiomeWeights biomeWeights(int wx, int wy) {
@@ -401,6 +447,40 @@ void drawStyledTile(const Texture2D& atlas, lecon::TileType type, int wx, int wy
     if(type == lecon::TileType::Workbench) {
         drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
         drawSpriteTile(atlas, SpriteId::Workbench, px, py, tileSize, WHITE);
+        return;
+    }
+
+    if(type == lecon::TileType::WoodWall) {
+        drawSpriteTile(atlas, SpriteId::WoodWall, px, py, tileSize, WHITE);
+        return;
+    }
+
+    if(type == lecon::TileType::WoodLog) {
+        const int rotVariant = static_cast<int>(hashU32(wx, wy, 2241) & 3u);
+        const float rot = static_cast<float>(rotVariant) * 90.0F;
+        const unsigned char tintC = static_cast<unsigned char>(220 + static_cast<int>(hash01(wx, wy, 2243) * 32.0F));
+        drawSpriteTileRotated(atlas, SpriteId::WoodLog, px, py, tileSize, rot, Color{tintC, tintC, tintC, 255});
+
+        const int pattern = static_cast<int>(hashU32(wx, wy, 2249) % 4u);
+        const Color dark = Fade(Color{56, 38, 26, 255}, 0.35F);
+        const Color light = Fade(Color{178, 137, 96, 255}, 0.30F);
+        if(pattern == 0) {
+            const int x = px + tileSize / 3;
+            DrawLine(x, py + 3, x, py + tileSize - 3, dark);
+            DrawLine(x + tileSize / 4, py + 4, x + tileSize / 4, py + tileSize - 4, light);
+        } else if(pattern == 1) {
+            const int y = py + tileSize / 3;
+            DrawLine(px + 3, y, px + tileSize - 3, y, dark);
+            DrawLine(px + 4, y + tileSize / 4, px + tileSize - 4, y + tileSize / 4, light);
+        } else if(pattern == 2) {
+            const int kx = px + tileSize / 2;
+            const int ky = py + tileSize / 2;
+            DrawCircleLines(kx, ky, static_cast<float>(std::max(2, tileSize / 6)), dark);
+            DrawCircleLines(kx, ky, static_cast<float>(std::max(1, tileSize / 9)), light);
+        } else {
+            DrawLine(px + 4, py + tileSize - 5, px + tileSize - 5, py + 4, dark);
+            DrawLine(px + 5, py + tileSize - 4, px + tileSize - 4, py + 5, light);
+        }
         return;
     }
 
@@ -683,6 +763,58 @@ void drawHud(const lecon::Simulation& sim, int screenH, int tileSize, bool inven
 
     const std::string info = "WASD move | Mouse mine | RMB tile: context place/use | 1-9 hotbar | X/C use selected slot | F1-F7 craft | TAB inventory";
     DrawText(info.c_str(), 18, screenH - 56, 18, Color{196, 206, 220, 255});
+}
+
+void drawHeartIcon(int x, int y, int size, bool filled) {
+    const Color fill = filled ? Color{230, 74, 74, 255} : Color{72, 52, 56, 255};
+    const Color edge = filled ? Color{255, 172, 172, 255} : Color{103, 82, 90, 255};
+
+    DrawCircle(x + size / 4, y + size / 4, static_cast<float>(size) * 0.26F, fill);
+    DrawCircle(x + (3 * size) / 4, y + size / 4, static_cast<float>(size) * 0.26F, fill);
+    DrawTriangle(
+        Vector2{static_cast<float>(x + size / 2), static_cast<float>(y + size)},
+        Vector2{static_cast<float>(x), static_cast<float>(y + size / 3)},
+        Vector2{static_cast<float>(x + size), static_cast<float>(y + size / 3)},
+        fill
+    );
+
+    DrawCircleLines(x + size / 4, y + size / 4, static_cast<float>(size) * 0.26F, edge);
+    DrawCircleLines(x + (3 * size) / 4, y + size / 4, static_cast<float>(size) * 0.26F, edge);
+    DrawLine(x, y + size / 3, x + size / 2, y + size, edge);
+    DrawLine(x + size, y + size / 3, x + size / 2, y + size, edge);
+}
+
+void drawBottomVitals(const lecon::Simulation& sim, int screenW, int screenH) {
+    constexpr int kHeartCount = 10;
+    constexpr int kHeartSize = 18;
+    constexpr int kHeartGap = 4;
+
+    const int hotbarY = screenH - 108;
+    const int heartsY = hotbarY - 40;
+    const int heartsW = kHeartCount * kHeartSize + (kHeartCount - 1) * kHeartGap;
+    const int heartsX = screenW / 2 - heartsW / 2;
+
+    DrawRectangleRounded(
+        Rectangle{static_cast<float>(heartsX - 14), static_cast<float>(heartsY - 10), static_cast<float>(heartsW + 28), 66.0F},
+        0.2F,
+        8,
+        Fade(Color{13, 17, 24, 255}, 0.84F)
+    );
+
+    const int hpClamped = std::clamp(sim.hp(), 0, kHeartCount);
+    for(int i = 0; i < kHeartCount; ++i) {
+        const int x = heartsX + i * (kHeartSize + kHeartGap);
+        drawHeartIcon(x, heartsY, kHeartSize, i < hpClamped);
+    }
+
+    const int barW = heartsW;
+    const int barH = 10;
+    const int barX = heartsX;
+    const int barY = heartsY + 28;
+    DrawRectangleRounded(Rectangle{static_cast<float>(barX), static_cast<float>(barY), static_cast<float>(barW), static_cast<float>(barH)}, 0.35F, 8, Color{44, 56, 72, 255});
+    const float energy01 = std::clamp(static_cast<float>(sim.energy()) / 100.0F, 0.0F, 1.0F);
+    DrawRectangleRounded(Rectangle{static_cast<float>(barX), static_cast<float>(barY), static_cast<float>(barW) * energy01, static_cast<float>(barH)}, 0.35F, 8, Color{95, 179, 255, 255});
+    DrawText(TextFormat("Energy %d", sim.energy()), barX + barW / 2 - 42, barY - 2, 14, Color{218, 231, 247, 255});
 }
 
 void drawHotbar(const lecon::Simulation& sim, int screenW, int screenH) {
@@ -1070,10 +1202,13 @@ int main() {
         const lecon::Vec2i hoverTile{playerInput.x + hoverDx, playerInput.y + hoverDy};
         const lecon::TileType hoverType = sim.tileAt(hoverTile.x, hoverTile.y);
         const bool hoverMineable = hoverType == lecon::TileType::Resource || hoverType == lecon::TileType::Tree || hoverType == lecon::TileType::Workbench;
+        const lecon::TileType previewPlaceTile = sim.previewPlacementTileForSelectedHotbar();
+        const bool hasPlacePreview = previewPlaceTile != lecon::TileType::Empty;
         const float miningRangeTiles = sim.miningRangeTiles();
         const float hoverDist2 = static_cast<float>(hoverDx * hoverDx + hoverDy * hoverDy);
         const bool hoverInRange = hoverDist2 <= (miningRangeTiles * miningRangeTiles);
         const bool hoverLineOfSight = hoverMineable ? sim.hasLineOfSightTo(hoverTile) : false;
+        const bool hoverCanPlace = hasPlacePreview ? sim.canPlaceFromHotbarAt(hoverTile) : false;
         const bool hoverCanMine = hoverMineable ? sim.canMineTarget(hoverTile) : false;
         const bool mouseMineActive = !inventoryOpen && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
 
@@ -1206,6 +1341,22 @@ int main() {
 
         const int hoverPx = centerX + (hoverTile.x - player.x) * tileSize;
         const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
+
+        if(!inventoryOpen && hasPlacePreview) {
+            drawStyledTile(atlas, previewPlaceTile, hoverTile.x, hoverTile.y, hoverPx, hoverPy, tileSize, t);
+            const Color overlay = hoverCanPlace ? Fade(Color{126, 236, 156, 255}, 0.42F) : Fade(Color{236, 116, 116, 255}, 0.45F);
+            DrawRectangle(hoverPx, hoverPy, tileSize, tileSize, overlay);
+            DrawRectangleLinesEx(
+                Rectangle{static_cast<float>(hoverPx), static_cast<float>(hoverPy), static_cast<float>(tileSize), static_cast<float>(tileSize)},
+                hoverCanPlace ? 3.0F : 2.0F,
+                hoverCanPlace ? Color{126, 236, 156, 235} : Color{236, 116, 116, 235}
+            );
+            if(!hoverCanPlace) {
+                DrawLine(hoverPx + 4, hoverPy + 4, hoverPx + tileSize - 4, hoverPy + tileSize - 4, Color{236, 116, 116, 235});
+                DrawLine(hoverPx + tileSize - 4, hoverPy + 4, hoverPx + 4, hoverPy + tileSize - 4, Color{236, 116, 116, 235});
+            }
+        }
+
         if(hoverMineable) {
             Color hoverColor = Color{236, 116, 116, 220};
             if(hoverCanMine) {
@@ -1253,6 +1404,7 @@ int main() {
 
         const bool nearWorkbench = sim.isNearWorkbench();
         drawHud(sim, screenH, tileSize, inventoryOpen, nearWorkbench);
+        drawBottomVitals(sim, screenW, screenH);
         drawHotbar(sim, screenW, screenH);
         if(inventoryOpen) {
             drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode);

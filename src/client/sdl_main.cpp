@@ -35,6 +35,10 @@ Color tileColor(lecon::TileType type) {
             return {91, 148, 78};
         case lecon::TileType::Workbench:
             return {156, 111, 72};
+        case lecon::TileType::WoodWall:
+            return {164, 118, 79};
+        case lecon::TileType::WoodLog:
+            return {136, 97, 66};
     }
     return {255, 0, 0};
 }

@@ -59,7 +59,9 @@ if(BUILD_RAYLIB_CLIENT)
         include(FetchContent)
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+        set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
         set(SUPPORT_MODULE_RAUDIO OFF CACHE BOOL "" FORCE)
+        set(SUPPORT_FILEFORMAT_MOD OFF CACHE BOOL "" FORCE)
         FetchContent_Declare(
             raylib
             URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
@@ -71,6 +73,13 @@ if(BUILD_RAYLIB_CLIENT)
             set(LECON_RAYLIB_TARGET raylib)
         elseif(TARGET raylib::raylib)
             set(LECON_RAYLIB_TARGET raylib::raylib)
+        endif()
+
+        if(TARGET raylib)
+            if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+                # Suppress known GCC false positives from bundled third-party decoder sources.
+                target_compile_options(raylib PRIVATE -Wno-stringop-overflow -Wno-array-bounds)
+            endif()
         endif()
     endif()
 

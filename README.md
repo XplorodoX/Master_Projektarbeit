@@ -80,6 +80,7 @@ Controls:
 - WASD or Arrow keys: move
 - Mouse left or `Z`: mine target tile
 - Mouse right on tile: context-sensitive place/use with selected hotbar item
+- Ghost preview on hover: green = placeable, red = blocked
 - `1`..`9`: select hotbar slot
 - `X`: place using selected hotbar item
 - `C`: use selected hotbar item (or quick auto-craft fallback)
@@ -90,6 +91,10 @@ Controls:
 - `R`: reset episode
 - `ESC`: back to main menu
 - Mouse wheel: zoom in/out (see more world or more detail)
+
+Vitals are also shown Minecraft-style above the hotbar:
+- Hearts for HP
+- Energy bar
 
 The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome transition blending with dedicated floor/wall sets per biome, animated portal glow, crack overlays for mining, particle effects for mining and combat hits, and a subtle day/night light pass.
 
@@ -107,6 +112,16 @@ Inventory is now a real slot grid (24 slots) with a per-slot stack limit of 64.
 You can move/swap stacks with drag-and-drop and split stacks via right mouse drag.
 The first 9 slots are mirrored as a bottom hotbar for quick place/use access.
 The selected hotbar item is shown as an active hand item near the player sprite.
+
+Energy drain has been tuned down:
+- No hard loss every simulation tick
+- Slow passive drain over time
+- Small idle regeneration
+- Starvation damage applies less frequently
+
+Building material visuals:
+- Wood places log-like wooden blocks
+- Planks place dedicated smooth wooden walls (not stone-looking walls)
 
 Crafting supports recipe chains similar to sandbox survival games:
 - 1 wood -> 4 planks

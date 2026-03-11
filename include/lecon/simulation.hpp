@@ -99,6 +99,8 @@ public:
     float miningProgress01() const;
     bool hasLineOfSightTo(const Vec2i& target) const;
     bool canMineTarget(const Vec2i& target) const;
+    bool canPlaceFromHotbarAt(const Vec2i& target) const;
+    TileType previewPlacementTileForSelectedHotbar() const;
     float miningRangeTiles() const;
     int steps() const;
     bool done() const;
@@ -146,6 +148,7 @@ private:
 
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;
+    int starvationTicks_ = 0;
 
     bool done_ = false;
     bool reachedExit_ = false;
