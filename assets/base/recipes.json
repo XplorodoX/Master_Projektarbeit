@@ -1,0 +1,92 @@
+[
+  {
+    "id": "planks",
+    "type": "item",
+    "label": "Planks x4",
+    "requiresWorkbench": false,
+    "inputs": [
+      { "item": "wood", "count": 1 }
+    ],
+    "outputs": [
+      { "item": "planks", "count": 4 }
+    ]
+  },
+  {
+    "id": "sticks",
+    "type": "item",
+    "label": "Sticks x4",
+    "requiresWorkbench": false,
+    "inputs": [
+      { "item": "planks", "count": 2 }
+    ],
+    "outputs": [
+      { "item": "sticks", "count": 4 }
+    ]
+  },
+  {
+    "id": "workbench",
+    "type": "item",
+    "label": "Workbench Kit x1",
+    "requiresWorkbench": false,
+    "inputs": [
+      { "item": "planks", "count": 10 }
+    ],
+    "outputs": [
+      { "item": "workbench_kit", "count": 1 }
+    ]
+  },
+  {
+    "id": "axe_tier1",
+    "type": "tool_upgrade",
+    "label": "Axe Lv1",
+    "requiresWorkbench": true,
+    "inputs": [
+      { "item": "planks", "count": 3 },
+      { "item": "sticks", "count": 2 }
+    ],
+    "outputs": [],
+    "maxAxeLevel": 0,
+    "setAxeLevel": 1
+  },
+  {
+    "id": "pickaxe_tier1",
+    "type": "tool_upgrade",
+    "label": "Pickaxe Lv1",
+    "requiresWorkbench": true,
+    "inputs": [
+      { "item": "planks", "count": 3 },
+      { "item": "sticks", "count": 2 }
+    ],
+    "outputs": [],
+    "maxPickaxeLevel": 0,
+    "setPickaxeLevel": 1
+  },
+  {
+    "id": "axe_tier2",
+    "type": "tool_upgrade",
+    "label": "Axe Lv2",
+    "requiresWorkbench": true,
+    "inputs": [
+      { "item": "ore", "count": 3 },
+      { "item": "sticks", "count": 2 }
+    ],
+    "outputs": [],
+    "minAxeLevel": 1,
+    "maxAxeLevel": 1,
+    "setAxeLevel": 2
+  },
+  {
+    "id": "pickaxe_tier2",
+    "type": "tool_upgrade",
+    "label": "Pickaxe Lv2",
+    "requiresWorkbench": true,
+    "inputs": [
+      { "item": "ore", "count": 3 },
+      { "item": "sticks", "count": 2 }
+    ],
+    "outputs": [],
+    "minPickaxeLevel": 1,
+    "maxPickaxeLevel": 1,
+    "setPickaxeLevel": 2
+  }
+]

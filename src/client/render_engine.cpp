@@ -15,6 +15,7 @@
 #include "stoneforge/mod/asset_manager.hpp"
 #include "stoneforge/mod/content_registry.hpp"
 #include "stoneforge/mod/mod_loader.hpp"
+#include "stoneforge/mod/object_factory.hpp"
 #include "stoneforge/mod/script_runtime.hpp"
 #include "stoneforge/simulation.hpp"
 
@@ -872,6 +873,10 @@ int stoneforge::client::RenderEngine::run() {
     if(!modLoader.loadAll("assets/base", "mods", contentRegistry, assetManager, loadedMods, &modError)) {
         TraceLog(LOG_WARNING, "Mod loading failed: %s", modError.c_str());
     }
+
+    stoneforge::mod::ObjectFactory objectFactory;
+    objectFactory.buildFromContent(contentRegistry);
+    TraceLog(LOG_INFO, "Object archetypes loaded: %d", static_cast<int>(objectFactory.objects().size()));
 
     stoneforge::mod::ScriptRuntime scriptRuntime;
     if(!scriptRuntime.initialize()) {

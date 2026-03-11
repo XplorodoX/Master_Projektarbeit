@@ -1,0 +1,85 @@
+#pragma once
+
+#include <string_view>
+
+#include "stoneforge/simulation.hpp"
+#include "stoneforge/types.hpp"
+
+namespace stoneforge {
+
+class ItemBase {
+public:
+    virtual ~ItemBase() = default;
+
+    virtual ItemId id() const = 0;
+    virtual std::string_view key() const = 0;
+    virtual std::string_view displayName() const = 0;
+
+    virtual bool isPlaceable() const {
+        return false;
+    }
+
+    virtual TileType placementTile() const {
+        return TileType::Empty;
+    }
+
+    virtual bool isTool() const {
+        return false;
+    }
+
+    virtual int maxStack() const {
+        return 64;
+    }
+};
+
+class PlaceableItem final : public ItemBase {
+public:
+    PlaceableItem(ItemId id, std::string_view key, std::string_view displayName, TileType placeTile);
+
+    ItemId id() const override;
+    std::string_view key() const override;
+    std::string_view displayName() const override;
+    bool isPlaceable() const override;
+    TileType placementTile() const override;
+
+private:
+    ItemId id_ = ItemId::None;
+    std::string_view key_;
+    std::string_view displayName_;
+    TileType placeTile_ = TileType::Empty;
+};
+
+class MaterialItem final : public ItemBase {
+public:
+    MaterialItem(ItemId id, std::string_view key, std::string_view displayName);
+
+    ItemId id() const override;
+    std::string_view key() const override;
+    std::string_view displayName() const override;
+
+private:
+    ItemId id_ = ItemId::None;
+    std::string_view key_;
+    std::string_view displayName_;
+};
+
+class ToolItem final : public ItemBase {
+public:
+    ToolItem(ItemId id, std::string_view key, std::string_view displayName);
+
+    ItemId id() const override;
+    std::string_view key() const override;
+    std::string_view displayName() const override;
+    bool isTool() const override;
+    int maxStack() const override;
+
+private:
+    ItemId id_ = ItemId::None;
+    std::string_view key_;
+    std::string_view displayName_;
+};
+
+const ItemBase& itemById(ItemId item);
+ItemId itemIdFromKey(std::string_view key);
+
+}  // namespace stoneforge

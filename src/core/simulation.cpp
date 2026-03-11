@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include "stoneforge/item.hpp"
 #include "stoneforge/object.hpp"
+#include "stoneforge/recipe.hpp"
 
 namespace stoneforge {
 
@@ -14,21 +16,6 @@ int manhattanDistance(const Vec2i& a, const Vec2i& b) {
 }
 
 constexpr float kMiningRangeBaseTiles = 4.5F;
-
-TileType placementTileForItem(ItemId item) {
-    switch(item) {
-        case ItemId::WorkbenchKit:
-            return TileType::Workbench;
-        case ItemId::Planks:
-            return TileType::WoodWall;
-        case ItemId::Wood:
-            return TileType::WoodLog;
-        case ItemId::Ore:
-            return TileType::Wall;
-        default:
-            return TileType::Empty;
-    }
-}
 
 }  // namespace
 
@@ -375,24 +362,22 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
 }
 
 bool Simulation::canCraft(RecipeId recipe) const {
-    switch(recipe) {
-        case RecipeId::Planks:
-            return hasItemAmount(ItemId::Wood, 1);
-        case RecipeId::Sticks:
-            return hasItemAmount(ItemId::Planks, 2);
-        case RecipeId::Workbench:
-            return hasItemAmount(ItemId::Planks, 10);
-        case RecipeId::AxeTier1:
-            return axeLevel_ < 1 && hasItemAmount(ItemId::Planks, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
-        case RecipeId::PickaxeTier1:
-            return pickaxeLevel_ < 1 && hasItemAmount(ItemId::Planks, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
-        case RecipeId::AxeTier2:
-            return axeLevel_ < 2 && axeLevel_ >= 1 && hasItemAmount(ItemId::Ore, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
-        case RecipeId::PickaxeTier2:
-            return pickaxeLevel_ < 2 && pickaxeLevel_ >= 1 && hasItemAmount(ItemId::Ore, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
-        default:
-            return false;
+    const RecipeBase* def = recipeCatalog().find(recipe);
+    if(def == nullptr) {
+        return false;
     }
+
+    if(def->requiresWorkbench() && !isNearWorkbench()) {
+        return false;
+    }
+
+    for(const auto& input : def->inputs()) {
+        if(!hasItemAmount(input.item, input.count)) {
+            return false;
+        }
+    }
+
+    return def->canCraftWithTools(axeLevel_, pickaxeLevel_);
 }
 
 bool Simulation::craft(RecipeId recipe) {
@@ -400,72 +385,34 @@ bool Simulation::craft(RecipeId recipe) {
         return false;
     }
 
+    const RecipeBase* def = recipeCatalog().find(recipe);
+    if(def == nullptr) {
+        return false;
+    }
+
     const auto inventoryBefore = inventorySlots_;
     const int axeBefore = axeLevel_;
     const int pickaxeBefore = pickaxeLevel_;
 
-    switch(recipe) {
-        case RecipeId::Planks:
-            if(!removeItem(ItemId::Wood, 1) || !addItem(ItemId::Planks, 4)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            break;
-        case RecipeId::Sticks:
-            if(!removeItem(ItemId::Planks, 2) || !addItem(ItemId::Sticks, 4)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            break;
-        case RecipeId::Workbench:
-            if(!removeItem(ItemId::Planks, 10) || !addItem(ItemId::WorkbenchKit, 1)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            break;
-        case RecipeId::AxeTier1:
-            if(!removeItem(ItemId::Planks, 3) || !removeItem(ItemId::Sticks, 2)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            axeLevel_ = 1;
-            break;
-        case RecipeId::PickaxeTier1:
-            if(!removeItem(ItemId::Planks, 3) || !removeItem(ItemId::Sticks, 2)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            pickaxeLevel_ = 1;
-            break;
-        case RecipeId::AxeTier2:
-            if(!removeItem(ItemId::Ore, 3) || !removeItem(ItemId::Sticks, 2)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            axeLevel_ = 2;
-            break;
-        case RecipeId::PickaxeTier2:
-            if(!removeItem(ItemId::Ore, 3) || !removeItem(ItemId::Sticks, 2)) {
-                inventorySlots_ = inventoryBefore;
-                axeLevel_ = axeBefore;
-                pickaxeLevel_ = pickaxeBefore;
-                return false;
-            }
-            pickaxeLevel_ = 2;
-            break;
+    for(const auto& input : def->inputs()) {
+        if(!removeItem(input.item, input.count)) {
+            inventorySlots_ = inventoryBefore;
+            axeLevel_ = axeBefore;
+            pickaxeLevel_ = pickaxeBefore;
+            return false;
+        }
     }
+
+    for(const auto& output : def->outputs()) {
+        if(!addItem(output.item, output.count)) {
+            inventorySlots_ = inventoryBefore;
+            axeLevel_ = axeBefore;
+            pickaxeLevel_ = pickaxeBefore;
+            return false;
+        }
+    }
+
+    def->applyToolUpgrades(axeLevel_, pickaxeLevel_);
 
     energy_ = std::max(0, energy_ - 1);
     return true;
@@ -602,7 +549,7 @@ bool Simulation::canPlaceFromHotbarAt(const Vec2i& target) const {
         return false;
     }
 
-    return placementTileForItem(slot.item) != TileType::Empty;
+    return itemById(slot.item).placementTile() != TileType::Empty;
 }
 
 TileType Simulation::previewPlacementTileForSelectedHotbar() const {
@@ -610,7 +557,7 @@ TileType Simulation::previewPlacementTileForSelectedHotbar() const {
     if(slot.item == ItemId::None || slot.count <= 0) {
         return TileType::Empty;
     }
-    return placementTileForItem(slot.item);
+    return itemById(slot.item).placementTile();
 }
 
 float Simulation::miningRangeTiles() const {
@@ -862,7 +809,7 @@ bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
         return false;
     }
 
-    const TileType placeTile = placementTileForItem(slot.item);
+    const TileType placeTile = itemById(slot.item).placementTile();
     if(placeTile == TileType::Empty) {
         return false;
     }

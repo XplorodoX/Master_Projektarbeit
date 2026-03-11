@@ -6,6 +6,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "stoneforge/recipe.hpp"
+
 namespace stoneforge::mod {
 
 namespace {
@@ -135,6 +137,13 @@ bool loadSingleMod(
             if(!item.id.empty()) {
                 registry.registerItem(std::move(item));
             }
+        }
+    }
+
+    const auto recipesPath = modPath / "recipes.json";
+    if(std::filesystem::exists(recipesPath)) {
+        if(!stoneforge::recipeCatalog().loadJsonFile(recipesPath, mod.id, errorMessage)) {
+            return false;
         }
     }
 

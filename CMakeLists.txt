@@ -24,7 +24,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json)
 
 add_library(stoneforge_core
+    src/core/item.cpp
     src/core/object.cpp
+    src/core/recipe.cpp
     src/core/world.cpp
     src/core/simulation.cpp
 )
@@ -35,12 +37,14 @@ target_include_directories(stoneforge_core
 )
 
 target_compile_features(stoneforge_core PUBLIC cxx_std_20)
+target_link_libraries(stoneforge_core PUBLIC nlohmann_json::nlohmann_json)
 stoneforge_set_warnings(stoneforge_core ${STONEFORGE_WARNINGS_AS_ERRORS})
 
 add_library(stoneforge_modding
     src/mod/content_registry.cpp
     src/mod/asset_manager.cpp
     src/mod/mod_loader.cpp
+    src/mod/object_factory.cpp
     src/mod/script_runtime.cpp
 )
 target_include_directories(stoneforge_modding PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
