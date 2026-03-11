@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/object.hpp"
 
 namespace stoneforge {
@@ -14,8 +15,9 @@ void World::reset(std::uint64_t seed) {
     seed_ = seed;
     chunks_.clear();
 
-    spawn_ = {0, 0};
-    exit_ = {64, 64};
+    const auto& cfg = gameConfig().world;
+    spawn_ = cfg.spawn;
+    exit_ = cfg.exit;
 
     carveGuaranteedPath();
 }
@@ -109,42 +111,43 @@ World::Chunk& World::ensureChunk(int cx, int cy) const {
 }
 
 void World::generateChunk(int cx, int cy, Chunk& chunk) const {
+    const auto& cfg = gameConfig().world;
     for(int ly = 0; ly < kChunkSize; ++ly) {
         for(int lx = 0; lx < kChunkSize; ++lx) {
             const int wx = cx * kChunkSize + lx;
             const int wy = cy * kChunkSize + ly;
 
-            const double biome = noise01(wx / 4, wy / 4, 0xabcddcbaULL);
-            const double density = noise01(wx, wy, 0x10203040ULL);
-            const double ore = noise01(wx, wy, 0x99887766ULL);
-            const double trees = noise01(wx, wy, 0x55443322ULL);
+            const double biome = noise01(wx / 4, wy / 4, cfg.biomeSalt);
+            const double density = noise01(wx, wy, cfg.densitySalt);
+            const double ore = noise01(wx, wy, cfg.oreSalt);
+            const double trees = noise01(wx, wy, cfg.treeSalt);
 
             TileType tile = TileType::Empty;
-            if(biome < 0.33) {
-                if(density < 0.11) {
+            if(biome < cfg.coldBiomeMax) {
+                if(density < cfg.coldWallThreshold) {
                     tile = TileType::Wall;
                 }
-                if(ore < 0.03) {
+                if(ore < cfg.coldOreThreshold) {
                     tile = TileType::Resource;
                 }
-            } else if(biome < 0.66) {
-                if(density < 0.16) {
+            } else if(biome < cfg.warmBiomeMax) {
+                if(density < cfg.warmWallThreshold) {
                     tile = TileType::Wall;
                 }
-                if(ore < 0.05) {
+                if(ore < cfg.warmOreThreshold) {
                     tile = TileType::Resource;
                 }
-                if(tile == TileType::Empty && trees < 0.11) {
+                if(tile == TileType::Empty && trees < cfg.warmTreeThreshold) {
                     tile = TileType::Tree;
                 }
             } else {
-                if(density < 0.08) {
+                if(density < cfg.mossWallThreshold) {
                     tile = TileType::Wall;
                 }
-                if(ore < 0.02) {
+                if(ore < cfg.mossOreThreshold) {
                     tile = TileType::Resource;
                 }
-                if(tile == TileType::Empty && trees < 0.15) {
+                if(tile == TileType::Empty && trees < cfg.mossTreeThreshold) {
                     tile = TileType::Tree;
                 }
             }
@@ -155,6 +158,7 @@ void World::generateChunk(int cx, int cy, Chunk& chunk) const {
 }
 
 void World::carveGuaranteedPath() {
+    const auto& cfg = gameConfig().world;
     int x = spawn_.x;
     int y = spawn_.y;
 
@@ -171,15 +175,15 @@ void World::carveGuaranteedPath() {
     }
 
     // Keep a small clear area around spawn for stable RL starts.
-    for(int dy = -2; dy <= 2; ++dy) {
-        for(int dx = -2; dx <= 2; ++dx) {
+    for(int dy = -cfg.spawnClearRadius; dy <= cfg.spawnClearRadius; ++dy) {
+        for(int dx = -cfg.spawnClearRadius; dx <= cfg.spawnClearRadius; ++dx) {
             setTile(spawn_.x + dx, spawn_.y + dy, TileType::Empty);
         }
     }
 
     // Keep the final goal clearly reachable.
-    for(int dy = -1; dy <= 1; ++dy) {
-        for(int dx = -1; dx <= 1; ++dx) {
+    for(int dy = -cfg.exitClearRadius; dy <= cfg.exitClearRadius; ++dy) {
+        for(int dx = -cfg.exitClearRadius; dx <= cfg.exitClearRadius; ++dx) {
             setTile(exit_.x + dx, exit_.y + dy, TileType::Empty);
         }
     }

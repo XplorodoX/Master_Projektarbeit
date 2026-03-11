@@ -1,0 +1,138 @@
+{
+  "worldgen": {
+    "spawn": [0, 0],
+    "exit": [64, 64],
+    "coldBiomeMax": 0.33,
+    "warmBiomeMax": 0.66,
+    "coldWallThreshold": 0.11,
+    "warmWallThreshold": 0.16,
+    "mossWallThreshold": 0.08,
+    "coldOreThreshold": 0.03,
+    "warmOreThreshold": 0.05,
+    "mossOreThreshold": 0.02,
+    "warmTreeThreshold": 0.11,
+    "mossTreeThreshold": 0.15,
+    "spawnClearRadius": 2,
+    "exitClearRadius": 1,
+    "noiseSalts": {
+      "biome": 2882395322,
+      "density": 270544960,
+      "ore": 2575857510,
+      "tree": 1430532898
+    }
+  },
+  "gameplay": {
+    "observationRadius": 5,
+    "maxSteps": 2500,
+    "inventorySlots": 24,
+    "inventoryStackLimit": 64,
+    "hotbarSlots": 9,
+    "miningRangeBaseTiles": 4.5,
+    "miningRangePerToolLevel": 0.75,
+    "idleEnergyRegenInterval": 8,
+    "activeEnergyDrainInterval": 18,
+    "starvationTicksToDamage": 18,
+    "mobSpatialCellSize": 8,
+    "mobSpawn": {
+      "count": 3,
+      "offsetX": 10,
+      "offsetY": 10,
+      "jitterMin": -8,
+      "jitterMax": 8,
+      "passableRetries": 20
+    }
+  },
+  "render": {
+    "stepIntervalSeconds": 0.12
+  },
+  "entityBehaviorProfiles": [
+    {
+      "id": "default",
+      "controller": "zombie",
+      "detectRange": 8,
+      "loseRange": 12,
+      "preferredDistance": 0,
+      "wanderChance": 0.55,
+      "idleChance": 0.25,
+      "moveInterval": 1,
+      "contactDamage": 1,
+      "defaultAggro": false
+    },
+    {
+      "id": "zombie",
+      "controller": "zombie",
+      "detectRange": 10,
+      "loseRange": 14,
+      "preferredDistance": 0,
+      "wanderChance": 0.45,
+      "idleChance": 0.15,
+      "moveInterval": 1,
+      "contactDamage": 1,
+      "defaultAggro": true
+    },
+    {
+      "id": "animal",
+      "controller": "animal",
+      "detectRange": 5,
+      "loseRange": 8,
+      "preferredDistance": 4,
+      "wanderChance": 0.75,
+      "idleChance": 0.2,
+      "moveInterval": 1,
+      "contactDamage": 1,
+      "defaultAggro": false
+    },
+    {
+      "id": "boss",
+      "controller": "boss",
+      "detectRange": 16,
+      "loseRange": 20,
+      "preferredDistance": 0,
+      "wanderChance": 0.25,
+      "idleChance": 0.05,
+      "moveInterval": 1,
+      "contactDamage": 2,
+      "defaultAggro": true
+    }
+  ],
+  "entityBehaviorMap": {
+    "stoneforge:mob": "zombie",
+    "stoneforge:zombie": "zombie",
+    "stoneforge:animal": "animal",
+    "stoneforge:boss": "boss"
+  },
+  "spawnTable": [
+    {
+      "entityId": "stoneforge:mob",
+      "behaviorType": "zombie",
+      "hp": 1,
+      "aggro": false,
+      "variant": "default",
+      "weight": 6
+    },
+    {
+      "entityId": "stoneforge:zombie",
+      "behaviorType": "zombie",
+      "hp": 2,
+      "aggro": true,
+      "variant": "default",
+      "weight": 4
+    },
+    {
+      "entityId": "stoneforge:animal",
+      "behaviorType": "animal",
+      "hp": 1,
+      "aggro": false,
+      "variant": "default",
+      "weight": 2
+    },
+    {
+      "entityId": "stoneforge:boss",
+      "behaviorType": "boss",
+      "hp": 4,
+      "aggro": true,
+      "variant": "boss",
+      "weight": 1
+    }
+  ]
+}

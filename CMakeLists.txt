@@ -24,6 +24,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json)
 
 add_library(stoneforge_core
+    src/core/game_config.cpp
     src/core/item.cpp
     src/core/object.cpp
     src/core/recipe.cpp
@@ -65,7 +66,7 @@ endif()
 
 if(BUILD_HEADLESS_RUNNER)
     add_executable(stoneforge_headless src/apps/headless_main.cpp)
-    target_link_libraries(stoneforge_headless PRIVATE stoneforge_core)
+    target_link_libraries(stoneforge_headless PRIVATE stoneforge_core stoneforge_modding)
     stoneforge_set_warnings(stoneforge_headless ${STONEFORGE_WARNINGS_AS_ERRORS})
 endif()
 
@@ -161,7 +162,7 @@ if(BUILD_PYTHON_BINDINGS)
         FetchContent_MakeAvailable(pybind11)
 
         pybind11_add_module(stoneforge_sim src/python/py_module.cpp)
-        target_link_libraries(stoneforge_sim PRIVATE stoneforge_core)
+        target_link_libraries(stoneforge_sim PRIVATE stoneforge_core stoneforge_modding)
         target_include_directories(stoneforge_sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         set_target_properties(stoneforge_sim PROPERTIES PREFIX "" SUFFIX ".so")
         stoneforge_set_warnings(stoneforge_sim ${STONEFORGE_WARNINGS_AS_ERRORS})

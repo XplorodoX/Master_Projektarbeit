@@ -5,6 +5,7 @@
 #include <random>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "stoneforge/object.hpp"
@@ -24,6 +25,7 @@ struct Mob {
     Vec2i pos{};
     int hp = 1;
     std::string entityId = "stoneforge:mob";
+    std::string behaviorType = "default";
     bool aggro = false;
     std::string variant = "default";
 };
@@ -44,12 +46,12 @@ struct InventorySlot {
 
 class Simulation {
 public:
-    static constexpr int kObservationRadius = 5;
     static constexpr int kActionCount = 9;
+    static constexpr int kDefaultObservationRadius = 5;
     static constexpr int kDefaultMaxSteps = 2500;
-    static constexpr int kInventorySlotCount = 24;
-    static constexpr int kInventoryStackLimit = 64;
-    static constexpr int kHotbarSlotCount = 9;
+    static constexpr int kDefaultInventorySlotCount = 24;
+    static constexpr int kDefaultInventoryStackLimit = 64;
+    static constexpr int kDefaultHotbarSlotCount = 9;
 
     Simulation();
 
@@ -64,6 +66,8 @@ public:
     Vec2i exitPos() const;
     TileType tileAt(int x, int y) const;
     const std::vector<Mob>& mobs() const;
+    std::vector<const Mob*> mobsInRect(int minX, int minY, int maxX, int maxY) const;
+    bool hasMobAt(int x, int y) const;
 
     int hp() const;
     int energy() const;
@@ -80,7 +84,9 @@ public:
     void setHotbarSelection(int hotbarIndex);
     int selectedHotbarSlotIndex() const;
     InventorySlot hotbarSlot(int hotbarIndex) const;
+    int hotbarSlotCount() const;
     int inventorySlotCount() const;
+    int inventoryStackLimit() const;
     InventorySlot inventorySlot(int index) const;
     bool moveInventoryStack(int fromIndex, int toIndex);
     bool splitInventoryStack(int fromIndex, int toIndex);
@@ -98,11 +104,20 @@ public:
     bool canPlaceFromHotbarAt(const Vec2i& target) const;
     TileType previewPlacementTileForSelectedHotbar() const;
     float miningRangeTiles() const;
+    int observationRadius() const;
+    int observationSize() const;
     int steps() const;
     bool done() const;
 
     bool commandSetTile(const Vec2i& target, TileType tile);
-    bool commandSpawnEntity(const std::string& entityId, const Vec2i& target, int hp = 1, bool aggro = false, const std::string& variant = "default");
+    bool commandSpawnEntity(
+        const std::string& entityId,
+        const Vec2i& target,
+        int hp = 1,
+        bool aggro = false,
+        const std::string& variant = "default",
+        const std::string& behaviorType = "default"
+    );
     bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
 
@@ -129,6 +144,7 @@ private:
     float miningSpeed(TileType tile) const;
     bool isMineableTile(TileType tile) const;
     bool isWithinMiningRange(const Vec2i& target) const;
+    void rebuildMobSpatialIndex();
 
     float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance) const;
 
@@ -140,8 +156,11 @@ private:
 
     int hp_ = 10;
     int energy_ = 100;
-    std::array<InventorySlot, kInventorySlotCount> inventorySlots_{};
+    std::vector<InventorySlot> inventorySlots_{};
     int hotbarSelection_ = 0;
+    int hotbarSlotCount_ = kDefaultHotbarSlotCount;
+    int inventoryStackLimit_ = kDefaultInventoryStackLimit;
+    int observationRadius_ = kDefaultObservationRadius;
     int axeLevel_ = 0;
     int pickaxeLevel_ = 0;
 
@@ -160,6 +179,8 @@ private:
     bool reachedExit_ = false;
 
     std::vector<Mob> mobs_;
+    int mobSpatialCellSize_ = 8;
+    std::unordered_map<std::int64_t, std::vector<std::size_t>> mobSpatialBuckets_;
 };
 
 }  // namespace stoneforge
