@@ -31,6 +31,8 @@ public:
 
     void reset(std::uint64_t seed);
     StepResult step(Action action);
+    void setMiningTargetOverride(const Vec2i& target);
+    void clearMiningTargetOverride();
 
     Observation getObservation() const;
 
@@ -50,6 +52,8 @@ public:
     Vec2i miningTarget() const;
     TileType miningTile() const;
     float miningProgress01() const;
+    bool hasLineOfSightTo(const Vec2i& target) const;
+    bool canMineTarget(const Vec2i& target) const;
     int steps() const;
     bool done() const;
 
@@ -63,6 +67,8 @@ private:
     void clearMiningProgress();
     float miningHardness(TileType tile) const;
     float miningSpeed(TileType tile) const;
+    bool isMineableTile(TileType tile) const;
+    bool isWithinMiningRange(const Vec2i& target) const;
 
     float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance) const;
 
@@ -84,6 +90,8 @@ private:
     Vec2i miningTarget_{};
     TileType miningTile_ = TileType::Empty;
     float miningProgress_ = 0.0F;
+    bool miningTargetOverrideActive_ = false;
+    Vec2i miningTargetOverride_{};
 
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;

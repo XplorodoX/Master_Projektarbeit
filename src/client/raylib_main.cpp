@@ -18,6 +18,7 @@ constexpr int kWindowH = 768;
 constexpr int kBaseTileSize = 24;
 constexpr int kAtlasCell = 16;
 constexpr float kStepIntervalSeconds = 0.12F;
+constexpr float kMouseMineRangeTiles = 4.5F;
 
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
@@ -572,7 +573,7 @@ void drawHud(const lecon::Simulation& sim, int screenH, int tileSize) {
     DrawText(TextFormat("Pickaxe Lvl: %d", sim.pickaxeLevel()), 298, 92, 20, Color{236, 198, 102, 255});
     DrawText("Press C to craft/upgrade tools", 298, 118, 18, Color{184, 214, 170, 255});
 
-    const std::string info = "WASD/Arrows move | Z mine (hold) | X place | C craft tools | R reset | ESC menu | Mouse wheel zoom";
+    const std::string info = "WASD move | Mouse Left mine | Z mine forward | X place | C craft tools | R reset | ESC menu | Wheel zoom";
     DrawText(info.c_str(), 18, screenH - 34, 18, Color{196, 206, 220, 255});
 }
 
@@ -701,11 +702,36 @@ int main() {
             facing = {1, 0};
         }
 
+        const lecon::Vec2i playerInput = sim.playerPos();
+        const int centerXInput = screenW / 2;
+        const int centerYInput = screenH / 2;
+
+        const Vector2 mouse = GetMousePosition();
+        const int hoverDx = static_cast<int>(std::floor((mouse.x - static_cast<float>(centerXInput)) / static_cast<float>(tileSize)));
+        const int hoverDy = static_cast<int>(std::floor((mouse.y - static_cast<float>(centerYInput)) / static_cast<float>(tileSize)));
+        const lecon::Vec2i hoverTile{playerInput.x + hoverDx, playerInput.y + hoverDy};
+        const lecon::TileType hoverType = sim.tileAt(hoverTile.x, hoverTile.y);
+        const bool hoverMineable = hoverType == lecon::TileType::Resource || hoverType == lecon::TileType::Tree;
+        const float hoverDist2 = static_cast<float>(hoverDx * hoverDx + hoverDy * hoverDy);
+        const bool hoverInRange = hoverDist2 <= (kMouseMineRangeTiles * kMouseMineRangeTiles);
+        const bool hoverLineOfSight = hoverMineable ? sim.hasLineOfSightTo(hoverTile) : false;
+        const bool hoverCanMine = hoverMineable ? sim.canMineTarget(hoverTile) : false;
+        const bool mouseMineActive = IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
+
+        if(mouseMineActive) {
+            sim.setMiningTargetOverride(hoverTile);
+        } else {
+            sim.clearMiningTargetOverride();
+        }
+
         stepTimer += dt;
         if(stepTimer >= kStepIntervalSeconds) {
             stepTimer = 0.0F;
             if(!sim.done()) {
-                const lecon::Action action = actionFromInput();
+                lecon::Action action = actionFromInput();
+                if(mouseMineActive) {
+                    action = lecon::Action::Mine;
+                }
                 const lecon::Vec2i playerBefore = sim.playerPos();
                 const int hpBefore = sim.hp();
 
@@ -722,6 +748,9 @@ int main() {
                 lecon::TileType beforeMineTile = lecon::TileType::Empty;
                 lecon::Vec2i mineTarget{playerBefore.x + facing.x, playerBefore.y + facing.y};
                 if(action == lecon::Action::Mine) {
+                    if(mouseMineActive) {
+                        mineTarget = hoverTile;
+                    }
                     beforeMineTile = sim.tileAt(mineTarget.x, mineTarget.y);
                 }
 
@@ -797,6 +826,29 @@ int main() {
                 drawStyledTile(atlas, sim.tileAt(wx, wy), wx, wy, px, py, tileSize, t);
             }
         }
+
+        const int hoverPx = centerX + (hoverTile.x - player.x) * tileSize;
+        const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
+        if(hoverMineable) {
+            Color hoverColor = Color{236, 116, 116, 220};
+            if(hoverCanMine) {
+                hoverColor = Color{126, 236, 156, 220};
+            } else if(hoverInRange && !hoverLineOfSight) {
+                hoverColor = Color{246, 186, 92, 220};
+            }
+            DrawRectangleLinesEx(
+                Rectangle{static_cast<float>(hoverPx), static_cast<float>(hoverPy), static_cast<float>(tileSize), static_cast<float>(tileSize)},
+                2.0F,
+                hoverColor
+            );
+        }
+
+        DrawCircleLines(
+            centerX + tileSize / 2,
+            centerY + tileSize / 2,
+            static_cast<float>(tileSize) * kMouseMineRangeTiles,
+            Fade(Color{170, 200, 255, 255}, 0.20F)
+        );
 
         drawCracks(cracks, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
 

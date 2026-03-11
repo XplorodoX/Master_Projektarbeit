@@ -11,6 +11,8 @@ int manhattanDistance(const Vec2i& a, const Vec2i& b) {
     return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 }
 
+constexpr float kMiningRangeTiles = 4.5F;
+
 }  // namespace
 
 Simulation::Simulation() {
@@ -119,6 +121,15 @@ StepResult Simulation::step(Action action) {
     return StepResult{reward, done_, reachedExit_, steps_};
 }
 
+void Simulation::setMiningTargetOverride(const Vec2i& target) {
+    miningTargetOverrideActive_ = true;
+    miningTargetOverride_ = target;
+}
+
+void Simulation::clearMiningTargetOverride() {
+    miningTargetOverrideActive_ = false;
+}
+
 Observation Simulation::getObservation() const {
     Observation out{};
     out.grid.reserve((2 * kObservationRadius + 1) * (2 * kObservationRadius + 1));
@@ -215,6 +226,46 @@ float Simulation::miningProgress01() const {
     return std::clamp(miningProgress_ / hardness, 0.0F, 1.0F);
 }
 
+bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
+    int x0 = player_.x;
+    int y0 = player_.y;
+    const int x1 = target.x;
+    const int y1 = target.y;
+
+    int dx = std::abs(x1 - x0);
+    const int sx = x0 < x1 ? 1 : -1;
+    int dy = -std::abs(y1 - y0);
+    const int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy;
+
+    while(!(x0 == x1 && y0 == y1)) {
+        const int e2 = 2 * err;
+        if(e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        }
+        if(e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        }
+
+        if(x0 == x1 && y0 == y1) {
+            break;
+        }
+
+        if(world_.tileAt(x0, y0) == TileType::Wall) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Simulation::canMineTarget(const Vec2i& target) const {
+    const TileType tile = world_.tileAt(target.x, target.y);
+    return isMineableTile(tile) && isWithinMiningRange(target) && hasLineOfSightTo(target);
+}
+
 int Simulation::steps() const {
     return steps_;
 }
@@ -250,10 +301,10 @@ Vec2i Simulation::actionDelta(Action action) const {
 }
 
 void Simulation::mineForward() {
-    const Vec2i target{player_.x + facing_.x, player_.y + facing_.y};
+    const Vec2i target = miningTargetOverrideActive_ ? miningTargetOverride_ : Vec2i{player_.x + facing_.x, player_.y + facing_.y};
     const TileType tile = world_.tileAt(target.x, target.y);
 
-    if(tile != TileType::Resource && tile != TileType::Tree) {
+    if(!canMineTarget(target)) {
         clearMiningProgress();
         return;
     }
@@ -367,6 +418,16 @@ float Simulation::miningSpeed(TileType tile) const {
     }
 
     return 0.1F;
+}
+
+bool Simulation::isMineableTile(TileType tile) const {
+    return tile == TileType::Resource || tile == TileType::Tree;
+}
+
+bool Simulation::isWithinMiningRange(const Vec2i& target) const {
+    const float dx = static_cast<float>(target.x - player_.x);
+    const float dy = static_cast<float>(target.y - player_.y);
+    return (dx * dx + dy * dy) <= (kMiningRangeTiles * kMiningRangeTiles);
 }
 
 void Simulation::updateMobs() {
