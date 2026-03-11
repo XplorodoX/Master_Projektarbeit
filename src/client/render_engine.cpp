@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,6 +19,7 @@
 #include "stoneforge/mod/mod_loader.hpp"
 #include "stoneforge/mod/object_factory.hpp"
 #include "stoneforge/mod/script_runtime.hpp"
+#include "stoneforge/item.hpp"
 #include "stoneforge/simulation.hpp"
 
 using stoneforge::client::CrackInfo;
@@ -47,6 +50,7 @@ constexpr float kStepIntervalSeconds = 0.12F;
 
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
+    int count = 0;
 };
 
 enum class SpriteId : int {
@@ -78,6 +82,17 @@ enum class SpriteId : int {
 enum class ScreenState {
     Menu,
     Playing
+};
+
+struct RuntimeBiome {
+    std::string id;
+    float center = 0.5F;
+    float span = 0.34F;
+    SpriteId floorA = SpriteId::FloorACold;
+    SpriteId floorB = SpriteId::FloorBCold;
+    SpriteId wallA = SpriteId::WallACold;
+    SpriteId wallB = SpriteId::WallBCold;
+    int paletteHint = 0;
 };
 
 std::uint32_t hashU32(int x, int y, std::uint32_t salt) {
@@ -161,6 +176,62 @@ bool spriteIdFromSlotName(const std::string& slotName, SpriteId& out) {
         return false;
     }
     return true;
+}
+
+int paletteHintFromBiomeId(const std::string& biomeId) {
+    if(biomeId.find("warm") != std::string::npos || biomeId.find("desert") != std::string::npos) {
+        return 1;
+    }
+    if(biomeId.find("moss") != std::string::npos || biomeId.find("forest") != std::string::npos) {
+        return 2;
+    }
+    return 0;
+}
+
+std::vector<RuntimeBiome> defaultRuntimeBiomes() {
+    return {
+        RuntimeBiome{"stoneforge:cold", 0.18F, 0.34F, SpriteId::FloorACold, SpriteId::FloorBCold, SpriteId::WallACold, SpriteId::WallBCold, 0},
+        RuntimeBiome{"stoneforge:warm", 0.50F, 0.34F, SpriteId::FloorAWarm, SpriteId::FloorBWarm, SpriteId::WallAWarm, SpriteId::WallBWarm, 1},
+        RuntimeBiome{"stoneforge:moss", 0.82F, 0.34F, SpriteId::FloorAMoss, SpriteId::FloorBMoss, SpriteId::WallAMoss, SpriteId::WallBMoss, 2}
+    };
+}
+
+std::vector<RuntimeBiome> buildRuntimeBiomes(const stoneforge::mod::ContentRegistry& registry) {
+    std::vector<RuntimeBiome> out;
+    out.reserve(registry.biomes().size());
+
+    for(const auto& [id, def] : registry.biomes()) {
+        SpriteId floorA = SpriteId::FloorACold;
+        SpriteId floorB = SpriteId::FloorBCold;
+        SpriteId wallA = SpriteId::WallACold;
+        SpriteId wallB = SpriteId::WallBCold;
+        if(!spriteIdFromSlotName(def.floorA, floorA) || !spriteIdFromSlotName(def.floorB, floorB) || !spriteIdFromSlotName(def.wallA, wallA) || !spriteIdFromSlotName(def.wallB, wallB)) {
+            continue;
+        }
+
+        RuntimeBiome biome;
+        biome.id = id;
+        biome.center = std::clamp(def.center, 0.0F, 1.0F);
+        biome.span = std::max(0.05F, def.span);
+        biome.floorA = floorA;
+        biome.floorB = floorB;
+        biome.wallA = wallA;
+        biome.wallB = wallB;
+        biome.paletteHint = paletteHintFromBiomeId(id);
+        out.push_back(std::move(biome));
+    }
+
+    if(out.empty()) {
+        return defaultRuntimeBiomes();
+    }
+
+    std::sort(out.begin(), out.end(), [](const RuntimeBiome& a, const RuntimeBiome& b) {
+        return a.center < b.center;
+    });
+    if(static_cast<int>(out.size()) > 3) {
+        out.resize(3);
+    }
+    return out;
 }
 
 void applySpriteTextureOverrides(
@@ -407,26 +478,16 @@ Texture2D buildSpriteAtlas() {
     return atlasTexture;
 }
 
-SpriteId floorVariant(int biome, int wx, int wy) {
+SpriteId floorVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx, int wy) {
     const bool alt = hash01(wx, wy, 1401) > 0.5F;
-    if(biome == 0) {
-        return alt ? SpriteId::FloorBCold : SpriteId::FloorACold;
-    }
-    if(biome == 1) {
-        return alt ? SpriteId::FloorBWarm : SpriteId::FloorAWarm;
-    }
-    return alt ? SpriteId::FloorBMoss : SpriteId::FloorAMoss;
+    const int idx = std::clamp(biome, 0, static_cast<int>(biomes.size()) - 1);
+    return alt ? biomes[static_cast<std::size_t>(idx)].floorB : biomes[static_cast<std::size_t>(idx)].floorA;
 }
 
-SpriteId wallVariant(int biome, int wx, int wy) {
+SpriteId wallVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx, int wy) {
     const bool alt = hash01(wx, wy, 1409) > 0.5F;
-    if(biome == 0) {
-        return alt ? SpriteId::WallBCold : SpriteId::WallACold;
-    }
-    if(biome == 1) {
-        return alt ? SpriteId::WallBWarm : SpriteId::WallAWarm;
-    }
-    return alt ? SpriteId::WallBMoss : SpriteId::WallAMoss;
+    const int idx = std::clamp(biome, 0, static_cast<int>(biomes.size()) - 1);
+    return alt ? biomes[static_cast<std::size_t>(idx)].wallB : biomes[static_cast<std::size_t>(idx)].wallA;
 }
 
 void drawSpriteTile(const Texture2D& atlas, SpriteId id, int px, int py, int size, Color tint) {
@@ -542,22 +603,21 @@ void drawOrganicTree(int wx, int wy, int px, int py, int tileSize, int biome, fl
     );
 }
 
-BiomeWeights biomeWeights(int wx, int wy) {
+BiomeWeights biomeWeights(int wx, int wy, const std::vector<RuntimeBiome>& biomes) {
     const float n = hash01(wx / 8, wy / 8, 303);
-    const float c0 = 0.18F;
-    const float c1 = 0.50F;
-    const float c2 = 0.82F;
-    const float span = 0.34F;
-
-    auto weight = [&](float c) {
-        const float d = std::fabs(n - c);
-        return std::max(0.0F, 1.0F - d / span);
-    };
-
     BiomeWeights out{};
-    out.w[0] = weight(c0);
-    out.w[1] = weight(c1);
-    out.w[2] = weight(c2);
+    out.count = std::min(3, static_cast<int>(biomes.size()));
+    if(out.count <= 0) {
+        out.w[0] = 1.0F;
+        out.count = 1;
+        return out;
+    }
+
+    for(int i = 0; i < out.count; ++i) {
+        const auto& biome = biomes[static_cast<std::size_t>(i)];
+        const float d = std::fabs(n - biome.center);
+        out.w[static_cast<std::size_t>(i)] = std::max(0.0F, 1.0F - d / biome.span);
+    }
 
     const float sum = out.w[0] + out.w[1] + out.w[2];
     if(sum > 0.0001F) {
@@ -573,11 +633,11 @@ BiomeWeights biomeWeights(int wx, int wy) {
 
 void dominantBiomes(const BiomeWeights& bw, int& primary, int& secondary, float& secondaryWeight) {
     primary = 0;
-    secondary = 1;
+    secondary = bw.count > 1 ? 1 : 0;
     float best = -1.0F;
     float second = -1.0F;
 
-    for(int i = 0; i < 3; ++i) {
+    for(int i = 0; i < std::max(1, bw.count); ++i) {
         if(bw.w[i] > best) {
             second = best;
             secondary = primary;
@@ -611,28 +671,39 @@ void drawParallaxBackground(int screenW, int screenH, float t) {
     }
 }
 
-void drawStyledTile(const Texture2D& atlas, stoneforge::TileType type, int wx, int wy, int px, int py, int tileSize, float t) {
-    const BiomeWeights bw = biomeWeights(wx, wy);
+void drawStyledTile(
+    const Texture2D& atlas,
+    stoneforge::TileType type,
+    int wx,
+    int wy,
+    int px,
+    int py,
+    int tileSize,
+    float t,
+    const std::vector<RuntimeBiome>& biomes
+) {
+    const BiomeWeights bw = biomeWeights(wx, wy, biomes);
 
     int primary = 0;
     int secondary = 1;
     float secondaryWeight = 0.0F;
     dominantBiomes(bw, primary, secondary, secondaryWeight);
+    const int paletteHint = biomes.empty() ? 0 : biomes[static_cast<std::size_t>(std::clamp(primary, 0, static_cast<int>(biomes.size()) - 1))].paletteHint;
 
     if(type == stoneforge::TileType::Empty) {
-        drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
         const float blend = std::clamp(secondaryWeight * 1.2F - 0.15F, 0.0F, 0.65F);
         if(blend > 0.02F) {
-            drawSpriteTile(atlas, floorVariant(secondary, wx + 13, wy + 7), px, py, tileSize, Fade(WHITE, blend));
+            drawSpriteTile(atlas, floorVariant(biomes, secondary, wx + 13, wy + 7), px, py, tileSize, Fade(WHITE, blend));
         }
         return;
     }
 
     if(type == stoneforge::TileType::Wall) {
-        drawSpriteTile(atlas, wallVariant(primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, wallVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
         const float blend = std::clamp(secondaryWeight * 1.2F - 0.12F, 0.0F, 0.60F);
         if(blend > 0.02F) {
-            drawSpriteTile(atlas, wallVariant(secondary, wx + 3, wy + 11), px, py, tileSize, Fade(WHITE, blend));
+            drawSpriteTile(atlas, wallVariant(biomes, secondary, wx + 3, wy + 11), px, py, tileSize, Fade(WHITE, blend));
         }
         return;
     }
@@ -643,13 +714,13 @@ void drawStyledTile(const Texture2D& atlas, stoneforge::TileType type, int wx, i
     }
 
     if(type == stoneforge::TileType::Tree) {
-        drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
-        drawOrganicTree(wx, wy, px, py, tileSize, primary, t);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
+        drawOrganicTree(wx, wy, px, py, tileSize, paletteHint, t);
         return;
     }
 
     if(type == stoneforge::TileType::Workbench) {
-        drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
         drawSpriteTile(atlas, SpriteId::Workbench, px, py, tileSize, WHITE);
         return;
     }
@@ -912,12 +983,15 @@ int stoneforge::client::RenderEngine::run() {
         const int screenH = GetScreenHeight();
         const float t = static_cast<float>(GetTime());
         const float dt = GetFrameTime();
+        const float wheelMove = GetMouseWheelMove();
 
         updateParticles(particles, dt);
         updateCracks(cracks, dt);
         hitFlash = std::max(0.0F, hitFlash - dt * 2.0F);
 
-        zoom += GetMouseWheelMove() * 0.08F;
+        if(IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
+            zoom += wheelMove * 0.08F;
+        }
         zoom = std::clamp(zoom, 0.70F, 1.70F);
         const int tileSize = std::clamp(static_cast<int>(std::round(static_cast<float>(kBaseTileSize) * zoom)), 16, 48);
 
@@ -1008,6 +1082,23 @@ int stoneforge::client::RenderEngine::run() {
 
         if(IsKeyPressed(KEY_V)) {
             sim.placeWorkbenchForward();
+        }
+
+        if(!inventoryOpen && std::fabs(wheelMove) > 0.01F && !IsKeyDown(KEY_LEFT_CONTROL) && !IsKeyDown(KEY_RIGHT_CONTROL)) {
+            int nextSlot = sim.hotbarSelection();
+            if(wheelMove > 0.0F) {
+                nextSlot -= 1;
+            } else {
+                nextSlot += 1;
+            }
+
+            if(nextSlot < 0) {
+                nextSlot = stoneforge::Simulation::kHotbarSlotCount - 1;
+            } else if(nextSlot >= stoneforge::Simulation::kHotbarSlotCount) {
+                nextSlot = 0;
+            }
+
+            sim.setHotbarSelection(nextSlot);
         }
 
         if(IsKeyPressed(KEY_ONE)) {
@@ -1283,7 +1374,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         const bool nearWorkbench = sim.isNearWorkbench();
-        drawHud(sim, screenH, tileSize, inventoryOpen, nearWorkbench);
+        drawHud(sim, screenW, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
         drawHotbar(sim, screenW, screenH);
         craftingPanel.craftRequested = false;

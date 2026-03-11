@@ -347,30 +347,30 @@ bool drawButton(Rectangle rect, const char* text, bool enabled) {
     return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }
 
-void drawHud(const stoneforge::Simulation& sim, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench) {
-    const Rectangle panel = {18.0F, 18.0F, 560.0F, 188.0F};
-    DrawRectangleRounded(panel, 0.2F, 8, Fade(Color{18, 21, 27, 255}, 0.85F));
-    DrawRectangleRoundedLinesEx(panel, 0.2F, 8, 2.0F, Color{60, 68, 82, 255});
+void drawHud(const stoneforge::Simulation& sim, int screenW, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench) {
+    const int hotbarY = screenH - 108;
+    const Rectangle panel = {
+        static_cast<float>(screenW / 2 - 430),
+        static_cast<float>(hotbarY - 94),
+        860.0F,
+        56.0F
+    };
 
-    DrawText(TextFormat("HP: %d", sim.hp()), 34, 36, 24, Color{225, 80, 80, 255});
-    DrawText(TextFormat("Energy: %d", sim.energy()), 34, 66, 24, Color{95, 179, 255, 255});
-    DrawText(TextFormat("Wood: %d", sim.wood()), 34, 96, 20, Color{201, 156, 94, 255});
-    DrawText(TextFormat("Planks: %d", sim.planks()), 34, 120, 20, Color{216, 179, 129, 255});
-    DrawText(TextFormat("Sticks: %d", sim.sticks()), 34, 144, 20, Color{190, 150, 108, 255});
-    DrawText(TextFormat("Ore: %d", sim.ore()), 220, 96, 20, Color{236, 198, 102, 255});
-    DrawText(TextFormat("Workbench Kits: %d", sim.workbenches()), 220, 120, 20, Color{190, 165, 127, 255});
-    DrawText(TextFormat("Inventory Total: %d", sim.inventory()), 220, 144, 20, Color{216, 226, 241, 255});
+    DrawRectangleRounded(panel, 0.28F, 10, Fade(Color{13, 18, 24, 255}, 0.88F));
+    DrawRectangleRoundedLinesEx(panel, 0.28F, 10, 2.0F, Color{90, 108, 132, 255});
 
-    DrawText(TextFormat("Tile: %dpx", tileSize), 402, 36, 20, Color{210, 220, 235, 255});
-    DrawText(TextFormat("Axe Lvl: %d", sim.axeLevel()), 402, 66, 20, Color{201, 156, 94, 255});
-    DrawText(TextFormat("Pickaxe Lvl: %d", sim.pickaxeLevel()), 402, 92, 20, Color{236, 198, 102, 255});
-    DrawText(TextFormat("Mine Range: %.2f", sim.miningRangeTiles()), 402, 118, 18, Color{178, 209, 245, 255});
-    DrawText(nearWorkbench ? "Workbench nearby: YES" : "Workbench nearby: NO", 402, 142, 18, nearWorkbench ? Color{149, 232, 166, 255} : Color{233, 145, 136, 255});
-    DrawText(inventoryOpen ? "Inventory: OPEN (TAB)" : "Inventory: CLOSED (TAB)", 402, 164, 16, Color{190, 212, 241, 255});
-    DrawText(TextFormat("Hotbar Slot: %d", sim.hotbarSelection() + 1), 402, 182, 16, Color{244, 223, 156, 255});
+    DrawText(TextFormat("Tile %dpx", tileSize), static_cast<int>(panel.x) + 16, static_cast<int>(panel.y) + 11, 18, Color{170, 190, 216, 255});
+    DrawText(TextFormat("Axe %d", sim.axeLevel()), static_cast<int>(panel.x) + 112, static_cast<int>(panel.y) + 11, 18, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Pick %d", sim.pickaxeLevel()), static_cast<int>(panel.x) + 186, static_cast<int>(panel.y) + 11, 18, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Range %.2f", sim.miningRangeTiles()), static_cast<int>(panel.x) + 271, static_cast<int>(panel.y) + 11, 18, Color{178, 209, 245, 255});
 
-    const std::string info = "WASD move | Mouse mine | RMB tile: context place/use | 1-9 hotbar | X/C use selected slot | TAB inventory + crafting grid";
-    DrawText(info.c_str(), 18, screenH - 56, 18, Color{196, 206, 220, 255});
+    DrawText(nearWorkbench ? "Workbench: in range" : "Workbench: none", static_cast<int>(panel.x) + 398, static_cast<int>(panel.y) + 11, 18, nearWorkbench ? Color{149, 232, 166, 255} : Color{233, 145, 136, 255});
+    DrawText(inventoryOpen ? "Inventory open" : "Inventory closed", static_cast<int>(panel.x) + 578, static_cast<int>(panel.y) + 11, 18, Color{186, 206, 235, 255});
+    DrawText(TextFormat("Slot %d", sim.hotbarSelection() + 1), static_cast<int>(panel.x) + 736, static_cast<int>(panel.y) + 11, 18, Color{244, 223, 156, 255});
+
+    const std::string info = "Wheel hotbar | 1-9 direct select | RMB context | TAB inventory/crafting | Ctrl+Wheel zoom";
+    const int infoW = MeasureText(info.c_str(), 16);
+    DrawText(info.c_str(), screenW / 2 - infoW / 2, static_cast<int>(panel.y) + 34, 16, Color{184, 197, 214, 255});
 }
 
 void drawBottomVitals(const stoneforge::Simulation& sim, int screenW, int screenH) {

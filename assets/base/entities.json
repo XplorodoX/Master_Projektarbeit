@@ -1,0 +1,16 @@
+[
+  {
+    "id": "mob",
+    "name": "Vanilla Mob",
+    "kind": "mob",
+    "spriteSlot": "Mob",
+    "hp": 1
+  },
+  {
+    "id": "zombie",
+    "name": "Zombie",
+    "kind": "mob",
+    "spriteSlot": "Mob",
+    "hp": 2
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "cold",
+    "name": "Cold Biome",
+    "floorA": "FloorACold",
+    "floorB": "FloorBCold",
+    "wallA": "WallACold",
+    "wallB": "WallBCold",
+    "center": 0.18,
+    "span": 0.34
+  },
+  {
+    "id": "warm",
+    "name": "Warm Biome",
+    "floorA": "FloorAWarm",
+    "floorB": "FloorBWarm",
+    "wallA": "WallAWarm",
+    "wallB": "WallBWarm",
+    "center": 0.50,
+    "span": 0.34
+  },
+  {
+    "id": "moss",
+    "name": "Moss Biome",
+    "floorA": "FloorAMoss",
+    "floorB": "FloorBMoss",
+    "wallA": "WallAMoss",
+    "wallB": "WallBMoss",
+    "center": 0.82,
+    "span": 0.34
+  }
+]

@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "stoneforge/mod/content_registry.hpp"
+#include "stoneforge/types.hpp"
 
 namespace stoneforge::mod {
 
@@ -15,6 +16,8 @@ struct ObjectArchetype {
     bool passable = false;
     bool mineable = false;
     bool blocksLineOfSight = true;
+    bool hasTileType = false;
+    stoneforge::TileType tileType = stoneforge::TileType::Empty;
     std::string sourceMod;
     bool vanilla = false;
 };

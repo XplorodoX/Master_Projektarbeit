@@ -140,6 +140,55 @@ bool loadSingleMod(
         }
     }
 
+    const auto biomesPath = modPath / "biomes.json";
+    if(std::filesystem::exists(biomesPath)) {
+        auto biomesJsonOpt = readJsonFile(biomesPath, errorMessage);
+        if(!biomesJsonOpt) {
+            return false;
+        }
+        for(const auto& node : *biomesJsonOpt) {
+            if(!node.is_object()) {
+                continue;
+            }
+            BiomeDef biome;
+            biome.id = namespacedId(mod.id, node.value("id", ""));
+            biome.displayName = node.value("name", biome.id);
+            biome.floorA = node.value("floorA", "FloorACold");
+            biome.floorB = node.value("floorB", "FloorBCold");
+            biome.wallA = node.value("wallA", "WallACold");
+            biome.wallB = node.value("wallB", "WallBCold");
+            biome.center = node.value("center", 0.5F);
+            biome.span = node.value("span", 0.34F);
+            biome.sourceMod = mod.id;
+            if(!biome.id.empty()) {
+                registry.registerBiome(std::move(biome));
+            }
+        }
+    }
+
+    const auto entitiesPath = modPath / "entities.json";
+    if(std::filesystem::exists(entitiesPath)) {
+        auto entitiesJsonOpt = readJsonFile(entitiesPath, errorMessage);
+        if(!entitiesJsonOpt) {
+            return false;
+        }
+        for(const auto& node : *entitiesJsonOpt) {
+            if(!node.is_object()) {
+                continue;
+            }
+            EntityDef entity;
+            entity.id = namespacedId(mod.id, node.value("id", ""));
+            entity.displayName = node.value("name", entity.id);
+            entity.kind = node.value("kind", "mob");
+            entity.spriteSlot = node.value("spriteSlot", "Mob");
+            entity.hp = node.value("hp", 1);
+            entity.sourceMod = mod.id;
+            if(!entity.id.empty()) {
+                registry.registerEntity(std::move(entity));
+            }
+        }
+    }
+
     const auto recipesPath = modPath / "recipes.json";
     if(std::filesystem::exists(recipesPath)) {
         if(!stoneforge::recipeCatalog().loadJsonFile(recipesPath, mod.id, errorMessage)) {

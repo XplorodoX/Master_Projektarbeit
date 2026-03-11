@@ -106,6 +106,11 @@ public:
     int steps() const;
     bool done() const;
 
+    bool commandSetTile(const Vec2i& target, TileType tile);
+    bool commandSpawnMob(const Vec2i& target, int hp = 1);
+    bool commandGiveItem(ItemId item, int amount);
+    bool commandTeleportPlayer(const Vec2i& target);
+
 private:
     bool tryMove(const Vec2i& delta);
     Vec2i actionDelta(Action action) const;

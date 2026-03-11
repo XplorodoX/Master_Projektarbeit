@@ -35,7 +35,7 @@ void clearCraftingInputs(std::array<CraftSlot, 9>& slots);
 
 bool drawButton(Rectangle rect, const char* text, bool enabled);
 
-void drawHud(const stoneforge::Simulation& sim, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench);
+void drawHud(const stoneforge::Simulation& sim, int screenW, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench);
 void drawBottomVitals(const stoneforge::Simulation& sim, int screenW, int screenH);
 void drawHotbar(const stoneforge::Simulation& sim, int screenW, int screenH);
 void drawInventoryPanel(

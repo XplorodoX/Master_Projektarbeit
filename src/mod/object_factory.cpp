@@ -11,7 +11,8 @@ ObjectArchetype vanillaObject(
     bool solid,
     bool passable,
     bool mineable,
-    bool blocksLineOfSight
+    bool blocksLineOfSight,
+    stoneforge::TileType tileType
 ) {
     ObjectArchetype out;
     out.id = std::move(id);
@@ -21,6 +22,8 @@ ObjectArchetype vanillaObject(
     out.passable = passable;
     out.mineable = mineable;
     out.blocksLineOfSight = blocksLineOfSight;
+    out.hasTileType = true;
+    out.tileType = tileType;
     out.sourceMod = "stoneforge";
     out.vanilla = true;
     return out;
@@ -60,14 +63,14 @@ const std::unordered_map<std::string, ObjectArchetype>& ObjectFactory::objects()
 }
 
 void ObjectFactory::registerVanillaDefaults() {
-    registerArchetype(vanillaObject("stoneforge:empty", "Empty", "base:floor_cold_a", false, true, false, false));
-    registerArchetype(vanillaObject("stoneforge:exit", "Exit", "base:exit", false, true, false, false));
-    registerArchetype(vanillaObject("stoneforge:wall", "Wall", "base:wall_cold_a", true, false, false, true));
-    registerArchetype(vanillaObject("stoneforge:resource", "Resource", "base:ore", true, false, true, true));
-    registerArchetype(vanillaObject("stoneforge:tree", "Tree", "base:tree", true, false, true, true));
-    registerArchetype(vanillaObject("stoneforge:workbench", "Workbench", "base:workbench", true, false, true, false));
-    registerArchetype(vanillaObject("stoneforge:wood_wall", "Wood Wall", "base:wood_wall", true, false, false, true));
-    registerArchetype(vanillaObject("stoneforge:wood_log", "Wood Log", "base:wood_log", true, false, false, true));
+    registerArchetype(vanillaObject("stoneforge:empty", "Empty", "base:floor_cold_a", false, true, false, false, stoneforge::TileType::Empty));
+    registerArchetype(vanillaObject("stoneforge:exit", "Exit", "base:exit", false, true, false, false, stoneforge::TileType::Exit));
+    registerArchetype(vanillaObject("stoneforge:wall", "Wall", "base:wall_cold_a", true, false, false, true, stoneforge::TileType::Wall));
+    registerArchetype(vanillaObject("stoneforge:resource", "Resource", "base:ore", true, false, true, true, stoneforge::TileType::Resource));
+    registerArchetype(vanillaObject("stoneforge:tree", "Tree", "base:tree", true, false, true, true, stoneforge::TileType::Tree));
+    registerArchetype(vanillaObject("stoneforge:workbench", "Workbench", "base:workbench", true, false, true, false, stoneforge::TileType::Workbench));
+    registerArchetype(vanillaObject("stoneforge:wood_wall", "Wood Wall", "base:wood_wall", true, false, false, true, stoneforge::TileType::WoodWall));
+    registerArchetype(vanillaObject("stoneforge:wood_log", "Wood Log", "base:wood_log", true, false, false, true, stoneforge::TileType::WoodLog));
 }
 
 void ObjectFactory::registerArchetype(ObjectArchetype archetype) {

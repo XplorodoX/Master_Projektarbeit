@@ -573,6 +573,43 @@ bool Simulation::done() const {
     return done_;
 }
 
+bool Simulation::commandSetTile(const Vec2i& target, TileType tile) {
+    if(target == player_ && tile != TileType::Empty) {
+        return false;
+    }
+
+    world_.setTile(target.x, target.y, tile);
+    return true;
+}
+
+bool Simulation::commandSpawnMob(const Vec2i& target, int hp) {
+    if(!world_.isPassable(target.x, target.y)) {
+        return false;
+    }
+
+    for(const auto& mob : mobs_) {
+        if(mob.pos == target) {
+            return false;
+        }
+    }
+
+    mobs_.push_back(Mob{target, std::max(1, hp)});
+    return true;
+}
+
+bool Simulation::commandGiveItem(ItemId item, int amount) {
+    return addItem(item, amount);
+}
+
+bool Simulation::commandTeleportPlayer(const Vec2i& target) {
+    if(!world_.isPassable(target.x, target.y)) {
+        return false;
+    }
+    player_ = target;
+    clearMiningProgress();
+    return true;
+}
+
 bool Simulation::tryMove(const Vec2i& delta) {
     const Vec2i candidate{player_.x + delta.x, player_.y + delta.y};
     facing_ = delta;
