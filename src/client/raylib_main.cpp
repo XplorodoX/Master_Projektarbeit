@@ -18,7 +18,6 @@ constexpr int kWindowH = 768;
 constexpr int kBaseTileSize = 24;
 constexpr int kAtlasCell = 16;
 constexpr float kStepIntervalSeconds = 0.12F;
-constexpr float kMouseMineRangeTiles = 4.5F;
 
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
@@ -58,7 +57,8 @@ enum class SpriteId : int {
     Exit = 13,
     Player = 14,
     Mob = 15,
-    Tree = 16
+    Tree = 16,
+    Workbench = 17
 };
 
 enum class ScreenState {
@@ -247,6 +247,14 @@ Texture2D buildSpriteAtlas() {
         putPixel(atlas, tx, 4 * kAtlasCell + ty, Color{67, 110, 59, 255});
     }
 
+    fillRect(atlas, kAtlasCell, 4 * kAtlasCell, kAtlasCell, kAtlasCell, BLANK);
+    fillRect(atlas, kAtlasCell + 2, 4 * kAtlasCell + 4, 12, 9, Color{116, 79, 52, 255});
+    fillRect(atlas, kAtlasCell + 1, 4 * kAtlasCell + 3, 14, 2, Color{149, 103, 67, 255});
+    fillRect(atlas, kAtlasCell + 3, 4 * kAtlasCell + 6, 10, 1, Color{88, 58, 38, 255});
+    fillRect(atlas, kAtlasCell + 3, 4 * kAtlasCell + 9, 10, 1, Color{88, 58, 38, 255});
+    fillRect(atlas, kAtlasCell + 3, 4 * kAtlasCell + 13, 2, 3, Color{92, 61, 41, 255});
+    fillRect(atlas, kAtlasCell + 11, 4 * kAtlasCell + 13, 2, 3, Color{92, 61, 41, 255});
+
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     SetTextureFilter(atlasTexture, TEXTURE_FILTER_POINT);
@@ -390,6 +398,12 @@ void drawStyledTile(const Texture2D& atlas, lecon::TileType type, int wx, int wy
         return;
     }
 
+    if(type == lecon::TileType::Workbench) {
+        drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, SpriteId::Workbench, px, py, tileSize, WHITE);
+        return;
+    }
+
     drawSpriteTile(atlas, SpriteId::Exit, px, py, tileSize, WHITE);
     const float pulse = 0.5F + 0.5F * std::sin(t * 3.0F + static_cast<float>((wx + wy) % 9));
     const int cx = px + tileSize / 2;
@@ -529,16 +543,35 @@ void drawCracks(
     }
 }
 
+const char* itemGlyph(lecon::ItemId item);
+Color itemTint(lecon::ItemId item);
+
 void drawMobSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, int idx) {
     const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
     drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, WHITE);
 }
 
-void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t) {
+void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, const lecon::Vec2i& facing, lecon::ItemId heldItem) {
     const int bob = static_cast<int>(std::sin(t * 7.0F) * 1.6F);
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.28F, tileSize * 0.11F, Fade(BLACK, 0.35F));
     drawSpriteTile(atlas, SpriteId::Player, px, py + bob, tileSize, WHITE);
+
+    if(heldItem != lecon::ItemId::None) {
+        const int handOffsetX = facing.x * (tileSize / 3);
+        const int handOffsetY = facing.y * (tileSize / 3);
+        const int hx = px + tileSize / 2 + handOffsetX;
+        const int hy = py + tileSize / 2 + bob + handOffsetY;
+        const int s = std::max(8, tileSize / 3);
+        DrawRectangleRounded(
+            Rectangle{static_cast<float>(hx - s / 2), static_cast<float>(hy - s / 2), static_cast<float>(s), static_cast<float>(s)},
+            0.25F,
+            4,
+            itemTint(heldItem)
+        );
+        const char* glyph = itemGlyph(heldItem);
+        DrawText(glyph, hx - 4, hy - 6, 12, WHITE);
+    }
 }
 
 bool drawButton(Rectangle rect, const char* text, bool enabled) {
@@ -557,24 +590,276 @@ bool drawButton(Rectangle rect, const char* text, bool enabled) {
     return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }
 
-void drawHud(const lecon::Simulation& sim, int screenH, int tileSize) {
-    const Rectangle panel = {18.0F, 18.0F, 520.0F, 152.0F};
+struct RecipeEntry {
+    lecon::RecipeId recipe;
+    const char* keyHint;
+    const char* name;
+    const char* cost;
+    bool requiresWorkbench;
+};
+
+const char* itemShortLabel(lecon::ItemId item) {
+    switch(item) {
+        case lecon::ItemId::Wood:
+            return "Wood";
+        case lecon::ItemId::Planks:
+            return "Plank";
+        case lecon::ItemId::Sticks:
+            return "Stick";
+        case lecon::ItemId::Ore:
+            return "Ore";
+        case lecon::ItemId::WorkbenchKit:
+            return "Bench";
+        default:
+            return "-";
+    }
+}
+
+const char* itemGlyph(lecon::ItemId item) {
+    switch(item) {
+        case lecon::ItemId::Wood:
+            return "W";
+        case lecon::ItemId::Planks:
+            return "P";
+        case lecon::ItemId::Sticks:
+            return "S";
+        case lecon::ItemId::Ore:
+            return "O";
+        case lecon::ItemId::WorkbenchKit:
+            return "B";
+        default:
+            return "";
+    }
+}
+
+Color itemTint(lecon::ItemId item) {
+    switch(item) {
+        case lecon::ItemId::Wood:
+            return Color{156, 109, 71, 255};
+        case lecon::ItemId::Planks:
+            return Color{187, 141, 97, 255};
+        case lecon::ItemId::Sticks:
+            return Color{136, 99, 72, 255};
+        case lecon::ItemId::Ore:
+            return Color{185, 162, 93, 255};
+        case lecon::ItemId::WorkbenchKit:
+            return Color{130, 95, 70, 255};
+        default:
+            return Color{80, 86, 100, 255};
+    }
+}
+
+constexpr std::array<RecipeEntry, 7> kRecipes{ {
+    {lecon::RecipeId::Planks, "[F1]", "Planks x4", "1 Wood", false},
+    {lecon::RecipeId::Sticks, "[F2]", "Sticks x4", "2 Planks", false},
+    {lecon::RecipeId::Workbench, "[F3]", "Workbench Kit x1", "10 Planks", false},
+    {lecon::RecipeId::AxeTier1, "[F4]", "Axe Lv1", "3 Planks + 2 Sticks", true},
+    {lecon::RecipeId::PickaxeTier1, "[F5]", "Pickaxe Lv1", "3 Planks + 2 Sticks", true},
+    {lecon::RecipeId::AxeTier2, "[F6]", "Axe Lv2", "3 Ore + 2 Sticks", true},
+    {lecon::RecipeId::PickaxeTier2, "[F7]", "Pickaxe Lv2", "3 Ore + 2 Sticks", true},
+} };
+
+void drawHud(const lecon::Simulation& sim, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench) {
+    const Rectangle panel = {18.0F, 18.0F, 560.0F, 188.0F};
     DrawRectangleRounded(panel, 0.2F, 8, Fade(Color{18, 21, 27, 255}, 0.85F));
     DrawRectangleRoundedLinesEx(panel, 0.2F, 8, 2.0F, Color{60, 68, 82, 255});
 
     DrawText(TextFormat("HP: %d", sim.hp()), 34, 36, 24, Color{225, 80, 80, 255});
     DrawText(TextFormat("Energy: %d", sim.energy()), 34, 66, 24, Color{95, 179, 255, 255});
-    DrawText(TextFormat("Wood: %d", sim.wood()), 34, 96, 22, Color{201, 156, 94, 255});
-    DrawText(TextFormat("Ore: %d", sim.ore()), 34, 122, 22, Color{236, 198, 102, 255});
-    DrawText(TextFormat("Inventory: %d", sim.inventory()), 210, 122, 20, Color{216, 226, 241, 255});
+    DrawText(TextFormat("Wood: %d", sim.wood()), 34, 96, 20, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Planks: %d", sim.planks()), 34, 120, 20, Color{216, 179, 129, 255});
+    DrawText(TextFormat("Sticks: %d", sim.sticks()), 34, 144, 20, Color{190, 150, 108, 255});
+    DrawText(TextFormat("Ore: %d", sim.ore()), 220, 96, 20, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Workbench Kits: %d", sim.workbenches()), 220, 120, 20, Color{190, 165, 127, 255});
+    DrawText(TextFormat("Inventory Total: %d", sim.inventory()), 220, 144, 20, Color{216, 226, 241, 255});
 
-    DrawText(TextFormat("Tile: %dpx", tileSize), 298, 36, 20, Color{210, 220, 235, 255});
-    DrawText(TextFormat("Axe Lvl: %d", sim.axeLevel()), 298, 66, 20, Color{201, 156, 94, 255});
-    DrawText(TextFormat("Pickaxe Lvl: %d", sim.pickaxeLevel()), 298, 92, 20, Color{236, 198, 102, 255});
-    DrawText("Press C to craft/upgrade tools", 298, 118, 18, Color{184, 214, 170, 255});
+    DrawText(TextFormat("Tile: %dpx", tileSize), 402, 36, 20, Color{210, 220, 235, 255});
+    DrawText(TextFormat("Axe Lvl: %d", sim.axeLevel()), 402, 66, 20, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Pickaxe Lvl: %d", sim.pickaxeLevel()), 402, 92, 20, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Mine Range: %.2f", sim.miningRangeTiles()), 402, 118, 18, Color{178, 209, 245, 255});
+    DrawText(nearWorkbench ? "Workbench nearby: YES" : "Workbench nearby: NO", 402, 142, 18, nearWorkbench ? Color{149, 232, 166, 255} : Color{233, 145, 136, 255});
+    DrawText(inventoryOpen ? "Inventory: OPEN (TAB)" : "Inventory: CLOSED (TAB)", 402, 164, 16, Color{190, 212, 241, 255});
+    DrawText(TextFormat("Hotbar Slot: %d", sim.hotbarSelection() + 1), 402, 182, 16, Color{244, 223, 156, 255});
 
-    const std::string info = "WASD move | Mouse Left mine | Z mine forward | X place | C craft tools | R reset | ESC menu | Wheel zoom";
-    DrawText(info.c_str(), 18, screenH - 34, 18, Color{196, 206, 220, 255});
+    const std::string info = "WASD move | Mouse mine | RMB tile: context place/use | 1-9 hotbar | X/C use selected slot | F1-F7 craft | TAB inventory";
+    DrawText(info.c_str(), 18, screenH - 56, 18, Color{196, 206, 220, 255});
+}
+
+void drawHotbar(const lecon::Simulation& sim, int screenW, int screenH) {
+    constexpr int kSlotSize = 52;
+    constexpr int kGap = 8;
+    const int totalW = lecon::Simulation::kHotbarSlotCount * kSlotSize + (lecon::Simulation::kHotbarSlotCount - 1) * kGap;
+    const int startX = (screenW - totalW) / 2;
+    const int y = screenH - 108;
+
+    DrawRectangleRounded(
+        Rectangle{static_cast<float>(startX - 14), static_cast<float>(y - 10), static_cast<float>(totalW + 28), 72.0F},
+        0.2F,
+        8,
+        Fade(Color{13, 17, 24, 255}, 0.88F)
+    );
+
+    for(int i = 0; i < lecon::Simulation::kHotbarSlotCount; ++i) {
+        const int x = startX + i * (kSlotSize + kGap);
+        const Rectangle rect{static_cast<float>(x), static_cast<float>(y), static_cast<float>(kSlotSize), static_cast<float>(kSlotSize)};
+
+        const bool active = i == sim.hotbarSelection();
+        DrawRectangleRounded(rect, 0.18F, 6, active ? Color{60, 82, 109, 255} : Color{34, 44, 58, 255});
+        DrawRectangleRoundedLinesEx(rect, 0.18F, 6, active ? 3.0F : 2.0F, active ? Color{244, 223, 156, 255} : Color{90, 105, 126, 255});
+
+        const auto slot = sim.hotbarSlot(i);
+        if(slot.item != lecon::ItemId::None && slot.count > 0) {
+            const Rectangle inner{rect.x + 6.0F, rect.y + 6.0F, rect.width - 12.0F, rect.height - 12.0F};
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.item));
+            const char* glyph = itemGlyph(slot.item);
+            const int glyphW = MeasureText(glyph, 24);
+            DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 10.0F), 24, WHITE);
+            DrawText(TextFormat("%d", slot.count), static_cast<int>(rect.x + 7.0F), static_cast<int>(rect.y + rect.height - 17.0F), 15, Color{241, 247, 255, 255});
+        }
+
+        DrawText(TextFormat("%d", i + 1), static_cast<int>(rect.x + rect.width - 14.0F), static_cast<int>(rect.y + 4.0F), 12, Color{180, 192, 210, 255});
+    }
+}
+
+void drawInventoryPanel(lecon::Simulation& sim, int screenW, bool nearWorkbench, int selectedHotbarSlot, int& dragSourceSlot, bool& dragSplitMode) {
+    const Rectangle panel = {static_cast<float>(screenW - 496), 18.0F, 474.0F, 560.0F};
+    DrawRectangleRounded(panel, 0.16F, 8, Fade(Color{14, 18, 23, 255}, 0.92F));
+    DrawRectangleRoundedLinesEx(panel, 0.16F, 8, 2.0F, Color{72, 84, 100, 255});
+
+    DrawText("Inventory + Crafting", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 14, 28, Color{224, 237, 255, 255});
+    DrawText(nearWorkbench ? "Workbench in range" : "No workbench nearby", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 50, 18, nearWorkbench ? Color{149, 232, 166, 255} : Color{233, 145, 136, 255});
+
+    DrawText(TextFormat("Wood: %d", sim.wood()), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 78, 18, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Planks: %d", sim.planks()), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 100, 18, Color{216, 179, 129, 255});
+    DrawText(TextFormat("Sticks: %d", sim.sticks()), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 122, 18, Color{190, 150, 108, 255});
+    DrawText(TextFormat("Ore: %d", sim.ore()), static_cast<int>(panel.x) + 160, static_cast<int>(panel.y) + 78, 18, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Bench Kits: %d", sim.workbenches()), static_cast<int>(panel.x) + 160, static_cast<int>(panel.y) + 100, 18, Color{190, 165, 127, 255});
+    DrawText(TextFormat("Slots: %d", sim.inventorySlotCount()), static_cast<int>(panel.x) + 160, static_cast<int>(panel.y) + 122, 18, Color{170, 183, 202, 255});
+
+    constexpr int kCols = 8;
+    constexpr int kRows = 3;
+    constexpr int kSlotSize = 46;
+    constexpr int kSlotGap = 8;
+
+    const int gridX = static_cast<int>(panel.x) + 18;
+    const int gridY = static_cast<int>(panel.y) + 154;
+
+    std::array<Rectangle, lecon::Simulation::kInventorySlotCount> slotRects{};
+    int hoveredSlot = -1;
+    const Vector2 mouse = GetMousePosition();
+
+    for(int row = 0; row < kRows; ++row) {
+        for(int col = 0; col < kCols; ++col) {
+            const int idx = row * kCols + col;
+            const float sx = static_cast<float>(gridX + col * (kSlotSize + kSlotGap));
+            const float sy = static_cast<float>(gridY + row * (kSlotSize + kSlotGap));
+            const Rectangle rect{sx, sy, static_cast<float>(kSlotSize), static_cast<float>(kSlotSize)};
+            slotRects[static_cast<std::size_t>(idx)] = rect;
+            if(CheckCollisionPointRec(mouse, rect)) {
+                hoveredSlot = idx;
+            }
+        }
+    }
+
+    if(dragSourceSlot < 0) {
+        if(hoveredSlot >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            const auto slot = sim.inventorySlot(hoveredSlot);
+            if(slot.item != lecon::ItemId::None && slot.count > 0) {
+                dragSourceSlot = hoveredSlot;
+                dragSplitMode = false;
+            }
+        } else if(hoveredSlot >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+            const auto slot = sim.inventorySlot(hoveredSlot);
+            if(slot.item != lecon::ItemId::None && slot.count > 1) {
+                dragSourceSlot = hoveredSlot;
+                dragSplitMode = true;
+            }
+        }
+    } else {
+        if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_RIGHT)) {
+            const bool splitDrop = dragSplitMode || IsMouseButtonReleased(MOUSE_BUTTON_RIGHT);
+            if(hoveredSlot >= 0 && hoveredSlot != dragSourceSlot) {
+                if(splitDrop) {
+                    (void)sim.splitInventoryStack(dragSourceSlot, hoveredSlot);
+                } else {
+                    (void)sim.moveInventoryStack(dragSourceSlot, hoveredSlot);
+                }
+            }
+            dragSourceSlot = -1;
+            dragSplitMode = false;
+        }
+        if(IsKeyPressed(KEY_Q)) {
+            dragSourceSlot = -1;
+            dragSplitMode = false;
+        }
+    }
+
+    for(int idx = 0; idx < sim.inventorySlotCount(); ++idx) {
+        const auto rect = slotRects[static_cast<std::size_t>(idx)];
+        const auto slot = sim.inventorySlot(idx);
+        const bool hovered = idx == hoveredSlot;
+        const bool selected = idx == dragSourceSlot;
+        const bool hotbarSlot = idx < lecon::Simulation::kHotbarSlotCount;
+        const bool activeHotbarSlot = hotbarSlot && idx == selectedHotbarSlot;
+
+        DrawRectangleRounded(rect, 0.18F, 6, hovered ? Color{50, 64, 84, 255} : Color{36, 44, 58, 255});
+        Color border = selected ? Color{132, 205, 240, 255} : Color{83, 98, 121, 255};
+        float borderW = 2.0F;
+        if(hotbarSlot) {
+            border = Color{141, 154, 177, 255};
+        }
+        if(activeHotbarSlot) {
+            border = Color{244, 223, 156, 255};
+            borderW = 3.0F;
+        }
+        DrawRectangleRoundedLinesEx(rect, 0.18F, 6, borderW, border);
+
+        if(slot.item != lecon::ItemId::None && slot.count > 0) {
+            const Rectangle inner{rect.x + 5.0F, rect.y + 5.0F, rect.width - 10.0F, rect.height - 10.0F};
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(slot.item));
+
+            const char* glyph = itemGlyph(slot.item);
+            const int glyphW = MeasureText(glyph, 24);
+            DrawText(glyph, static_cast<int>(rect.x + (rect.width - static_cast<float>(glyphW)) * 0.5F), static_cast<int>(rect.y + 9.0F), 24, Color{242, 247, 255, 255});
+
+            DrawText(TextFormat("%d", slot.count), static_cast<int>(rect.x + 8.0F), static_cast<int>(rect.y + rect.height - 18.0F), 16, Color{242, 247, 255, 255});
+            if(slot.count >= lecon::Simulation::kInventoryStackLimit) {
+                DrawText("MAX", static_cast<int>(rect.x + rect.width - 32.0F), static_cast<int>(rect.y + rect.height - 18.0F), 12, Color{255, 230, 172, 255});
+            }
+        }
+    }
+
+    DrawText("Drag LMB: move/swap | Drag RMB: split", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 318, 16, Color{176, 200, 226, 255});
+    DrawText(TextFormat("Stack limit: %d", lecon::Simulation::kInventoryStackLimit), static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 338, 16, Color{164, 174, 191, 255});
+
+    if(dragSourceSlot >= 0) {
+        const auto src = sim.inventorySlot(dragSourceSlot);
+        if(src.item != lecon::ItemId::None && src.count > 0) {
+            const Rectangle ghost{mouse.x + 12.0F, mouse.y + 12.0F, 96.0F, 28.0F};
+            DrawRectangleRounded(ghost, 0.2F, 6, Fade(Color{13, 18, 24, 255}, 0.9F));
+            DrawRectangleRoundedLinesEx(ghost, 0.2F, 6, 2.0F, Color{118, 171, 220, 255});
+            DrawText(TextFormat("%s x%d", itemShortLabel(src.item), src.count), static_cast<int>(ghost.x) + 8, static_cast<int>(ghost.y) + 6, 16, Color{230, 238, 251, 255});
+        }
+    }
+
+    DrawText("Recipes", static_cast<int>(panel.x) + 18, static_cast<int>(panel.y) + 362, 22, Color{208, 223, 246, 255});
+
+    for(int i = 0; i < static_cast<int>(kRecipes.size()); ++i) {
+        const auto& recipe = kRecipes[static_cast<std::size_t>(i)];
+        const bool craftable = sim.canCraft(recipe.recipe);
+        const bool needsBenchNow = recipe.requiresWorkbench && !nearWorkbench;
+        Color textColor = craftable ? Color{158, 239, 177, 255} : Color{175, 183, 197, 255};
+        if(needsBenchNow) {
+            textColor = Color{232, 185, 115, 255};
+        }
+
+        const int y = static_cast<int>(panel.y) + 390 + i * 16;
+        DrawText(TextFormat("%s %s", recipe.keyHint, recipe.name), static_cast<int>(panel.x) + 18, y, 16, textColor);
+        DrawText(recipe.cost, static_cast<int>(panel.x) + 258, y, 16, Color{170, 180, 194, 255});
+        if(recipe.requiresWorkbench) {
+            DrawText("WB", static_cast<int>(panel.x) + 432, y, 16, Color{202, 162, 118, 255});
+        }
+    }
 }
 
 std::uint64_t parseSeed(const std::string& text, std::uint64_t fallback) {
@@ -620,6 +905,9 @@ int main() {
 
     lecon::Vec2i facing{1, 0};
     float hitFlash = 0.0F;
+    bool inventoryOpen = false;
+    int dragSourceSlot = -1;
+    bool dragSplitMode = false;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -682,6 +970,9 @@ int main() {
                 particles.clear();
                 cracks.clear();
                 facing = {1, 0};
+                inventoryOpen = false;
+                dragSourceSlot = -1;
+                dragSplitMode = false;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -693,6 +984,16 @@ int main() {
 
         if(IsKeyPressed(KEY_ESCAPE)) {
             screenState = ScreenState::Menu;
+            dragSourceSlot = -1;
+            dragSplitMode = false;
+        }
+
+        if(IsKeyPressed(KEY_TAB)) {
+            inventoryOpen = !inventoryOpen;
+            if(!inventoryOpen) {
+                dragSourceSlot = -1;
+                dragSplitMode = false;
+            }
         }
 
         if(IsKeyPressed(KEY_R)) {
@@ -700,6 +1001,63 @@ int main() {
             particles.clear();
             cracks.clear();
             facing = {1, 0};
+            inventoryOpen = false;
+            dragSourceSlot = -1;
+            dragSplitMode = false;
+        }
+
+        if(IsKeyPressed(KEY_V)) {
+            sim.placeWorkbenchForward();
+        }
+
+        if(IsKeyPressed(KEY_ONE)) {
+            sim.setHotbarSelection(0);
+        }
+        if(IsKeyPressed(KEY_TWO)) {
+            sim.setHotbarSelection(1);
+        }
+        if(IsKeyPressed(KEY_THREE)) {
+            sim.setHotbarSelection(2);
+        }
+        if(IsKeyPressed(KEY_FOUR)) {
+            sim.setHotbarSelection(3);
+        }
+        if(IsKeyPressed(KEY_FIVE)) {
+            sim.setHotbarSelection(4);
+        }
+        if(IsKeyPressed(KEY_SIX)) {
+            sim.setHotbarSelection(5);
+        }
+        if(IsKeyPressed(KEY_SEVEN)) {
+            sim.setHotbarSelection(6);
+        }
+        if(IsKeyPressed(KEY_EIGHT)) {
+            sim.setHotbarSelection(7);
+        }
+        if(IsKeyPressed(KEY_NINE)) {
+            sim.setHotbarSelection(8);
+        }
+
+        if(IsKeyPressed(KEY_F1)) {
+            sim.craft(lecon::RecipeId::Planks);
+        }
+        if(IsKeyPressed(KEY_F2)) {
+            sim.craft(lecon::RecipeId::Sticks);
+        }
+        if(IsKeyPressed(KEY_F3)) {
+            sim.craft(lecon::RecipeId::Workbench);
+        }
+        if(IsKeyPressed(KEY_F4)) {
+            sim.craft(lecon::RecipeId::AxeTier1);
+        }
+        if(IsKeyPressed(KEY_F5)) {
+            sim.craft(lecon::RecipeId::PickaxeTier1);
+        }
+        if(IsKeyPressed(KEY_F6)) {
+            sim.craft(lecon::RecipeId::AxeTier2);
+        }
+        if(IsKeyPressed(KEY_F7)) {
+            sim.craft(lecon::RecipeId::PickaxeTier2);
         }
 
         const lecon::Vec2i playerInput = sim.playerPos();
@@ -711,17 +1069,29 @@ int main() {
         const int hoverDy = static_cast<int>(std::floor((mouse.y - static_cast<float>(centerYInput)) / static_cast<float>(tileSize)));
         const lecon::Vec2i hoverTile{playerInput.x + hoverDx, playerInput.y + hoverDy};
         const lecon::TileType hoverType = sim.tileAt(hoverTile.x, hoverTile.y);
-        const bool hoverMineable = hoverType == lecon::TileType::Resource || hoverType == lecon::TileType::Tree;
+        const bool hoverMineable = hoverType == lecon::TileType::Resource || hoverType == lecon::TileType::Tree || hoverType == lecon::TileType::Workbench;
+        const float miningRangeTiles = sim.miningRangeTiles();
         const float hoverDist2 = static_cast<float>(hoverDx * hoverDx + hoverDy * hoverDy);
-        const bool hoverInRange = hoverDist2 <= (kMouseMineRangeTiles * kMouseMineRangeTiles);
+        const bool hoverInRange = hoverDist2 <= (miningRangeTiles * miningRangeTiles);
         const bool hoverLineOfSight = hoverMineable ? sim.hasLineOfSightTo(hoverTile) : false;
         const bool hoverCanMine = hoverMineable ? sim.canMineTarget(hoverTile) : false;
-        const bool mouseMineActive = IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
+        const bool mouseMineActive = !inventoryOpen && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
 
         if(mouseMineActive) {
             sim.setMiningTargetOverride(hoverTile);
         } else {
             sim.clearMiningTargetOverride();
+        }
+
+        if(!inventoryOpen && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+            if(hoverDx != 0 || hoverDy != 0) {
+                if(std::abs(hoverDx) >= std::abs(hoverDy)) {
+                    facing = {hoverDx > 0 ? 1 : -1, 0};
+                } else {
+                    facing = {0, hoverDy > 0 ? 1 : -1};
+                }
+            }
+            (void)sim.contextUseAt(hoverTile);
         }
 
         stepTimer += dt;
@@ -758,15 +1128,20 @@ int main() {
 
                 const bool minedResource = beforeMineTile == lecon::TileType::Resource;
                 const bool minedTree = beforeMineTile == lecon::TileType::Tree;
-                if(action == lecon::Action::Mine && (minedResource || minedTree)) {
+                const bool minedWorkbench = beforeMineTile == lecon::TileType::Workbench;
+                if(action == lecon::Action::Mine && (minedResource || minedTree || minedWorkbench)) {
                     const lecon::TileType afterMineTile = sim.tileAt(mineTarget.x, mineTarget.y);
                     const Vector2 dustPos{
                         static_cast<float>(mineTarget.x) + 0.5F,
                         static_cast<float>(mineTarget.y) + 0.5F
                     };
 
-                    const Color chipColor = minedTree ? Color{183, 133, 82, 255} : Color{238, 194, 109, 255};
-                    const Color burstColor = minedTree ? Color{220, 176, 132, 255} : Color{255, 223, 145, 255};
+                    const Color chipColor = minedTree
+                                                ? Color{183, 133, 82, 255}
+                                                : (minedWorkbench ? Color{166, 116, 82, 255} : Color{238, 194, 109, 255});
+                    const Color burstColor = minedTree
+                                                 ? Color{220, 176, 132, 255}
+                                                 : (minedWorkbench ? Color{215, 169, 134, 255} : Color{255, 223, 145, 255});
 
                     auto& crack = cracks[tileKey(mineTarget.x, mineTarget.y)];
                     crack.strength = std::min(1.0F, crack.strength + 0.32F);
@@ -796,6 +1171,8 @@ int main() {
                             " HP=" + std::to_string(sim.hp()) +
                             " Energy=" + std::to_string(sim.energy()) +
                             " Wood=" + std::to_string(sim.wood()) +
+                            " Planks=" + std::to_string(sim.planks()) +
+                            " Ore=" + std::to_string(sim.ore()) +
                             " Inv=" + std::to_string(sim.inventory()) +
                             " Steps=" + std::to_string(sim.steps());
         if(sim.done()) {
@@ -846,7 +1223,7 @@ int main() {
         DrawCircleLines(
             centerX + tileSize / 2,
             centerY + tileSize / 2,
-            static_cast<float>(tileSize) * kMouseMineRangeTiles,
+            static_cast<float>(tileSize) * miningRangeTiles,
             Fade(Color{170, 200, 255, 255}, 0.20F)
         );
 
@@ -867,14 +1244,19 @@ int main() {
             ++mobIdx;
         }
 
-        drawPlayerSprite(atlas, centerX, centerY, tileSize, t);
+        drawPlayerSprite(atlas, centerX, centerY, tileSize, t, facing, sim.hotbarSlot(sim.hotbarSelection()).item);
         drawParticles(particles, player, centerX, centerY, tileSize);
 
         if(hitFlash > 0.01F) {
             DrawRectangle(0, 0, screenW, screenH, Fade(Color{255, 60, 60, 255}, std::clamp(hitFlash, 0.0F, 0.35F)));
         }
 
-        drawHud(sim, screenH, tileSize);
+        const bool nearWorkbench = sim.isNearWorkbench();
+        drawHud(sim, screenH, tileSize, inventoryOpen, nearWorkbench);
+        drawHotbar(sim, screenW, screenH);
+        if(inventoryOpen) {
+            drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode);
+        }
 
         EndDrawing();
     }

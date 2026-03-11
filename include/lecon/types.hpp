@@ -18,7 +18,8 @@ enum class TileType : std::uint8_t {
     Wall = 1,
     Resource = 2,
     Exit = 3,
-    Tree = 4
+    Tree = 4,
+    Workbench = 5
 };
 
 enum class Action : int {

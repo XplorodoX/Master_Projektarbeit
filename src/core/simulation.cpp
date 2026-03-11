@@ -11,7 +11,7 @@ int manhattanDistance(const Vec2i& a, const Vec2i& b) {
     return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 }
 
-constexpr float kMiningRangeTiles = 4.5F;
+constexpr float kMiningRangeBaseTiles = 4.5F;
 
 }  // namespace
 
@@ -28,9 +28,10 @@ void Simulation::reset(std::uint64_t seed) {
 
     hp_ = 10;
     energy_ = 100;
-    inventory_ = 0;
-    wood_ = 0;
-    ore_ = 0;
+    for(auto& slot : inventorySlots_) {
+        slot = InventorySlot{};
+    }
+    hotbarSelection_ = 0;
     axeLevel_ = 0;
     pickaxeLevel_ = 0;
     clearMiningProgress();
@@ -157,7 +158,7 @@ Observation Simulation::getObservation() const {
 
     out.hp = hp_;
     out.energy = energy_;
-    out.inventory = inventory_;
+    out.inventory = inventory();
 
     return out;
 }
@@ -187,15 +188,31 @@ int Simulation::energy() const {
 }
 
 int Simulation::inventory() const {
-    return inventory_;
+    int total = 0;
+    for(const auto& slot : inventorySlots_) {
+        total += std::max(0, slot.count);
+    }
+    return total;
 }
 
 int Simulation::wood() const {
-    return wood_;
+    return itemCount(ItemId::Wood);
+}
+
+int Simulation::planks() const {
+    return itemCount(ItemId::Planks);
+}
+
+int Simulation::sticks() const {
+    return itemCount(ItemId::Sticks);
 }
 
 int Simulation::ore() const {
-    return ore_;
+    return itemCount(ItemId::Ore);
+}
+
+int Simulation::workbenches() const {
+    return itemCount(ItemId::WorkbenchKit);
 }
 
 int Simulation::axeLevel() const {
@@ -204,6 +221,274 @@ int Simulation::axeLevel() const {
 
 int Simulation::pickaxeLevel() const {
     return pickaxeLevel_;
+}
+
+bool Simulation::isNearWorkbench() const {
+    for(int dy = -2; dy <= 2; ++dy) {
+        for(int dx = -2; dx <= 2; ++dx) {
+            if(world_.tileAt(player_.x + dx, player_.y + dy) == TileType::Workbench) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int Simulation::hotbarSelection() const {
+    return hotbarSelection_;
+}
+
+void Simulation::setHotbarSelection(int hotbarIndex) {
+    hotbarSelection_ = std::clamp(hotbarIndex, 0, kHotbarSlotCount - 1);
+}
+
+int Simulation::selectedHotbarSlotIndex() const {
+    return hotbarSelection_;
+}
+
+InventorySlot Simulation::hotbarSlot(int hotbarIndex) const {
+    if(hotbarIndex < 0 || hotbarIndex >= kHotbarSlotCount) {
+        return InventorySlot{};
+    }
+    return inventorySlot(hotbarIndex);
+}
+
+int Simulation::inventorySlotCount() const {
+    return kInventorySlotCount;
+}
+
+InventorySlot Simulation::inventorySlot(int index) const {
+    if(index < 0 || index >= kInventorySlotCount) {
+        return InventorySlot{};
+    }
+    return inventorySlots_[static_cast<std::size_t>(index)];
+}
+
+bool Simulation::moveInventoryStack(int fromIndex, int toIndex) {
+    if(fromIndex < 0 || toIndex < 0 || fromIndex >= kInventorySlotCount || toIndex >= kInventorySlotCount || fromIndex == toIndex) {
+        return false;
+    }
+
+    auto& src = inventorySlots_[static_cast<std::size_t>(fromIndex)];
+    auto& dst = inventorySlots_[static_cast<std::size_t>(toIndex)];
+    if(src.item == ItemId::None || src.count <= 0) {
+        return false;
+    }
+
+    if(dst.item == ItemId::None || dst.count <= 0) {
+        dst = src;
+        src = InventorySlot{};
+        return true;
+    }
+
+    if(dst.item == src.item) {
+        const int room = kInventoryStackLimit - dst.count;
+        if(room <= 0) {
+            return false;
+        }
+
+        const int moved = std::min(room, src.count);
+        dst.count += moved;
+        src.count -= moved;
+        if(src.count <= 0) {
+            src = InventorySlot{};
+        }
+        return moved > 0;
+    }
+
+    std::swap(src, dst);
+    return true;
+}
+
+bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
+    if(fromIndex < 0 || toIndex < 0 || fromIndex >= kInventorySlotCount || toIndex >= kInventorySlotCount || fromIndex == toIndex) {
+        return false;
+    }
+
+    auto& src = inventorySlots_[static_cast<std::size_t>(fromIndex)];
+    auto& dst = inventorySlots_[static_cast<std::size_t>(toIndex)];
+    if(src.item == ItemId::None || src.count <= 1) {
+        return false;
+    }
+
+    if(dst.item != ItemId::None && dst.item != src.item) {
+        return false;
+    }
+
+    int moved = (src.count + 1) / 2;
+    if(dst.item == ItemId::None) {
+        moved = std::min(moved, kInventoryStackLimit);
+        dst.item = src.item;
+        dst.count = moved;
+        src.count -= moved;
+        if(src.count <= 0) {
+            src = InventorySlot{};
+        }
+        return moved > 0;
+    }
+
+    const int room = kInventoryStackLimit - dst.count;
+    if(room <= 0) {
+        return false;
+    }
+    moved = std::min(moved, room);
+    dst.count += moved;
+    src.count -= moved;
+    if(src.count <= 0) {
+        src = InventorySlot{};
+    }
+    return moved > 0;
+}
+
+bool Simulation::canCraft(RecipeId recipe) const {
+    switch(recipe) {
+        case RecipeId::Planks:
+            return hasItemAmount(ItemId::Wood, 1);
+        case RecipeId::Sticks:
+            return hasItemAmount(ItemId::Planks, 2);
+        case RecipeId::Workbench:
+            return hasItemAmount(ItemId::Planks, 10);
+        case RecipeId::AxeTier1:
+            return axeLevel_ < 1 && hasItemAmount(ItemId::Planks, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
+        case RecipeId::PickaxeTier1:
+            return pickaxeLevel_ < 1 && hasItemAmount(ItemId::Planks, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
+        case RecipeId::AxeTier2:
+            return axeLevel_ < 2 && axeLevel_ >= 1 && hasItemAmount(ItemId::Ore, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
+        case RecipeId::PickaxeTier2:
+            return pickaxeLevel_ < 2 && pickaxeLevel_ >= 1 && hasItemAmount(ItemId::Ore, 3) && hasItemAmount(ItemId::Sticks, 2) && isNearWorkbench();
+        default:
+            return false;
+    }
+}
+
+bool Simulation::craft(RecipeId recipe) {
+    if(!canCraft(recipe)) {
+        return false;
+    }
+
+    const auto inventoryBefore = inventorySlots_;
+    const int axeBefore = axeLevel_;
+    const int pickaxeBefore = pickaxeLevel_;
+
+    switch(recipe) {
+        case RecipeId::Planks:
+            if(!removeItem(ItemId::Wood, 1) || !addItem(ItemId::Planks, 4)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            break;
+        case RecipeId::Sticks:
+            if(!removeItem(ItemId::Planks, 2) || !addItem(ItemId::Sticks, 4)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            break;
+        case RecipeId::Workbench:
+            if(!removeItem(ItemId::Planks, 10) || !addItem(ItemId::WorkbenchKit, 1)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            break;
+        case RecipeId::AxeTier1:
+            if(!removeItem(ItemId::Planks, 3) || !removeItem(ItemId::Sticks, 2)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            axeLevel_ = 1;
+            break;
+        case RecipeId::PickaxeTier1:
+            if(!removeItem(ItemId::Planks, 3) || !removeItem(ItemId::Sticks, 2)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            pickaxeLevel_ = 1;
+            break;
+        case RecipeId::AxeTier2:
+            if(!removeItem(ItemId::Ore, 3) || !removeItem(ItemId::Sticks, 2)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            axeLevel_ = 2;
+            break;
+        case RecipeId::PickaxeTier2:
+            if(!removeItem(ItemId::Ore, 3) || !removeItem(ItemId::Sticks, 2)) {
+                inventorySlots_ = inventoryBefore;
+                axeLevel_ = axeBefore;
+                pickaxeLevel_ = pickaxeBefore;
+                return false;
+            }
+            pickaxeLevel_ = 2;
+            break;
+    }
+
+    energy_ = std::max(0, energy_ - 1);
+    return true;
+}
+
+bool Simulation::placeWorkbenchForward() {
+    if(!hasItemAmount(ItemId::WorkbenchKit, 1)) {
+        return false;
+    }
+
+    const Vec2i target{player_.x + facing_.x, player_.y + facing_.y};
+    if(world_.tileAt(target.x, target.y) != TileType::Empty) {
+        return false;
+    }
+
+    world_.setTile(target.x, target.y, TileType::Workbench);
+    if(!removeItem(ItemId::WorkbenchKit, 1)) {
+        world_.setTile(target.x, target.y, TileType::Empty);
+        return false;
+    }
+    energy_ = std::max(0, energy_ - 1);
+    return true;
+}
+
+bool Simulation::placeFromHotbarAt(const Vec2i& target) {
+    if(!isWithinMiningRange(target) || !hasLineOfSightTo(target)) {
+        return false;
+    }
+
+    if(!tryPlaceFromSlotIndexAt(selectedHotbarSlotIndex(), target)) {
+        return false;
+    }
+
+    energy_ = std::max(0, energy_ - 1);
+    return true;
+}
+
+bool Simulation::contextUseAt(const Vec2i& target) {
+    if(!isWithinMiningRange(target) || !hasLineOfSightTo(target)) {
+        return false;
+    }
+
+    const TileType tile = world_.tileAt(target.x, target.y);
+    if(tile == TileType::Empty) {
+        return placeFromHotbarAt(target);
+    }
+
+    if(tile == TileType::Workbench) {
+        const int energyBefore = energy_;
+        const int invBefore = inventory();
+        const int axeBefore = axeLevel_;
+        const int pickaxeBefore = pickaxeLevel_;
+        useAction();
+        return energy_ != energyBefore || inventory() != invBefore || axeLevel_ != axeBefore || pickaxeLevel_ != pickaxeBefore;
+    }
+
+    return false;
 }
 
 bool Simulation::isMining() const {
@@ -253,6 +538,7 @@ bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
             break;
         }
 
+        // Half cover rule: only solid walls block mining LOS.
         if(world_.tileAt(x0, y0) == TileType::Wall) {
             return false;
         }
@@ -264,6 +550,11 @@ bool Simulation::hasLineOfSightTo(const Vec2i& target) const {
 bool Simulation::canMineTarget(const Vec2i& target) const {
     const TileType tile = world_.tileAt(target.x, target.y);
     return isMineableTile(tile) && isWithinMiningRange(target) && hasLineOfSightTo(target);
+}
+
+float Simulation::miningRangeTiles() const {
+    const int bestToolLevel = std::max(axeLevel_, pickaxeLevel_);
+    return kMiningRangeBaseTiles + static_cast<float>(bestToolLevel) * 0.75F;
 }
 
 int Simulation::steps() const {
@@ -324,58 +615,60 @@ void Simulation::mineForward() {
     }
 
     if(tile == TileType::Resource) {
+        if(!addItem(ItemId::Ore, 1)) {
+            clearMiningProgress();
+            return;
+        }
         world_.setTile(target.x, target.y, TileType::Empty);
-        ore_ += 1;
-        inventory_ = wood_ + ore_;
     } else if(tile == TileType::Tree) {
+        if(!addItem(ItemId::Wood, 1)) {
+            clearMiningProgress();
+            return;
+        }
         world_.setTile(target.x, target.y, TileType::Empty);
-        wood_ += 1;
-        inventory_ = wood_ + ore_;
+    } else if(tile == TileType::Workbench) {
+        if(!addItem(ItemId::WorkbenchKit, 1)) {
+            clearMiningProgress();
+            return;
+        }
+        world_.setTile(target.x, target.y, TileType::Empty);
     }
 
     clearMiningProgress();
 }
 
 void Simulation::placeForward() {
-    if(inventory_ <= 0) {
+    if(!tryPlaceFromSlotIndex(selectedHotbarSlotIndex())) {
         return;
     }
-
-    const Vec2i target{player_.x + facing_.x, player_.y + facing_.y};
-    const TileType tile = world_.tileAt(target.x, target.y);
-
-    if(tile == TileType::Empty) {
-        world_.setTile(target.x, target.y, TileType::Wall);
-        if(wood_ > 0) {
-            wood_ -= 1;
-        } else if(ore_ > 0) {
-            ore_ -= 1;
-        }
-        inventory_ = std::max(0, wood_ + ore_);
-        energy_ = std::max(0, energy_ - 1);
-    }
+    energy_ = std::max(0, energy_ - 1);
 }
 
 void Simulation::useAction() {
-    // Craft tools from inventory; better tools speed up mining.
-    if(axeLevel_ < 1 && wood_ >= 4) {
-        wood_ -= 4;
-        axeLevel_ = 1;
-    } else if(pickaxeLevel_ < 1 && wood_ >= 5) {
-        wood_ -= 5;
-        pickaxeLevel_ = 1;
-    } else if(pickaxeLevel_ < 2 && wood_ >= 2 && ore_ >= 6) {
-        wood_ -= 2;
-        ore_ -= 6;
-        pickaxeLevel_ = 2;
-    } else if(axeLevel_ < 2 && wood_ >= 2 && ore_ >= 4) {
-        wood_ -= 2;
-        ore_ -= 4;
-        axeLevel_ = 2;
+    if(tryPlaceFromSlotIndex(selectedHotbarSlotIndex())) {
+        energy_ = std::max(0, energy_ - 1);
+        return;
     }
 
-    inventory_ = wood_ + ore_;
-    energy_ = std::max(0, energy_ - 1);
+    if(craft(RecipeId::PickaxeTier2)) {
+        return;
+    }
+    if(craft(RecipeId::AxeTier2)) {
+        return;
+    }
+    if(craft(RecipeId::PickaxeTier1)) {
+        return;
+    }
+    if(craft(RecipeId::AxeTier1)) {
+        return;
+    }
+    if(craft(RecipeId::Workbench)) {
+        return;
+    }
+    if(craft(RecipeId::Sticks)) {
+        return;
+    }
+    (void)craft(RecipeId::Planks);
 }
 
 void Simulation::clearMiningProgress() {
@@ -385,12 +678,147 @@ void Simulation::clearMiningProgress() {
     miningProgress_ = 0.0F;
 }
 
+int Simulation::itemCount(ItemId item) const {
+    int total = 0;
+    for(const auto& slot : inventorySlots_) {
+        if(slot.item == item) {
+            total += std::max(0, slot.count);
+        }
+    }
+    return total;
+}
+
+bool Simulation::addItem(ItemId item, int amount) {
+    if(item == ItemId::None || amount <= 0) {
+        return false;
+    }
+
+    int totalRoom = 0;
+    for(const auto& slot : inventorySlots_) {
+        if(slot.item == item) {
+            totalRoom += std::max(0, kInventoryStackLimit - slot.count);
+        } else if(slot.item == ItemId::None || slot.count <= 0) {
+            totalRoom += kInventoryStackLimit;
+        }
+    }
+
+    if(totalRoom < amount) {
+        return false;
+    }
+
+    int left = amount;
+    for(auto& slot : inventorySlots_) {
+        if(left <= 0) {
+            break;
+        }
+        if(slot.item != item) {
+            continue;
+        }
+
+        const int room = std::max(0, kInventoryStackLimit - slot.count);
+        const int moved = std::min(room, left);
+        slot.count += moved;
+        left -= moved;
+    }
+
+    for(auto& slot : inventorySlots_) {
+        if(left <= 0) {
+            break;
+        }
+        if(slot.item != ItemId::None && slot.count > 0) {
+            continue;
+        }
+
+        const int moved = std::min(kInventoryStackLimit, left);
+        slot.item = item;
+        slot.count = moved;
+        left -= moved;
+    }
+
+    return left == 0;
+}
+
+bool Simulation::removeItem(ItemId item, int amount) {
+    if(item == ItemId::None || amount <= 0) {
+        return false;
+    }
+    if(!hasItemAmount(item, amount)) {
+        return false;
+    }
+
+    int left = amount;
+    for(auto& slot : inventorySlots_) {
+        if(left <= 0) {
+            break;
+        }
+        if(slot.item != item || slot.count <= 0) {
+            continue;
+        }
+
+        const int removed = std::min(slot.count, left);
+        slot.count -= removed;
+        left -= removed;
+        if(slot.count <= 0) {
+            slot = InventorySlot{};
+        }
+    }
+
+    return left == 0;
+}
+
+bool Simulation::hasItemAmount(ItemId item, int amount) const {
+    return itemCount(item) >= amount;
+}
+
+bool Simulation::tryPlaceFromSlotIndex(int slotIndex) {
+    const Vec2i target{player_.x + facing_.x, player_.y + facing_.y};
+    return tryPlaceFromSlotIndexAt(slotIndex, target);
+}
+
+bool Simulation::tryPlaceFromSlotIndexAt(int slotIndex, const Vec2i& target) {
+    if(slotIndex < 0 || slotIndex >= kInventorySlotCount) {
+        return false;
+    }
+
+    if(world_.tileAt(target.x, target.y) != TileType::Empty) {
+        return false;
+    }
+
+    auto& slot = inventorySlots_[static_cast<std::size_t>(slotIndex)];
+    if(slot.item == ItemId::None || slot.count <= 0) {
+        return false;
+    }
+
+    TileType placeTile = TileType::Empty;
+    switch(slot.item) {
+        case ItemId::WorkbenchKit:
+            placeTile = TileType::Workbench;
+            break;
+        case ItemId::Wood:
+        case ItemId::Planks:
+        case ItemId::Ore:
+            placeTile = TileType::Wall;
+            break;
+        default:
+            return false;
+    }
+
+    world_.setTile(target.x, target.y, placeTile);
+    slot.count -= 1;
+    if(slot.count <= 0) {
+        slot = InventorySlot{};
+    }
+    return true;
+}
+
 float Simulation::miningHardness(TileType tile) const {
     switch(tile) {
         case TileType::Tree:
             return 2.2F;
         case TileType::Resource:
             return 6.0F;
+        case TileType::Workbench:
+            return 3.6F;
         default:
             return 1.0F;
     }
@@ -417,17 +845,28 @@ float Simulation::miningSpeed(TileType tile) const {
         return 0.08F;
     }
 
+    if(tile == TileType::Workbench) {
+        if(axeLevel_ >= 2) {
+            return 0.65F;
+        }
+        if(axeLevel_ >= 1) {
+            return 0.38F;
+        }
+        return 0.16F;
+    }
+
     return 0.1F;
 }
 
 bool Simulation::isMineableTile(TileType tile) const {
-    return tile == TileType::Resource || tile == TileType::Tree;
+    return tile == TileType::Resource || tile == TileType::Tree || tile == TileType::Workbench;
 }
 
 bool Simulation::isWithinMiningRange(const Vec2i& target) const {
     const float dx = static_cast<float>(target.x - player_.x);
     const float dy = static_cast<float>(target.y - player_.y);
-    return (dx * dx + dy * dy) <= (kMiningRangeTiles * kMiningRangeTiles);
+    const float range = miningRangeTiles();
+    return (dx * dx + dy * dy) <= (range * range);
 }
 
 void Simulation::updateMobs() {

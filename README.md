@@ -78,17 +78,43 @@ git push origin v1.0.0
 Controls:
 
 - WASD or Arrow keys: move
-- `Z`: mine in facing direction
-- `X`: place block in facing direction
-- `C`: use (placeholder)
+- Mouse left or `Z`: mine target tile
+- Mouse right on tile: context-sensitive place/use with selected hotbar item
+- `1`..`9`: select hotbar slot
+- `X`: place using selected hotbar item
+- `C`: use selected hotbar item (or quick auto-craft fallback)
+- `V`: place workbench kit from inventory (utility shortcut)
+- `F1`..`F7`: craft recipes
+- `TAB`: toggle expanded inventory + recipe panel
+- Inventory panel: drag stack with left mouse, split stack with right mouse
 - `R`: reset episode
+- `ESC`: back to main menu
 - Mouse wheel: zoom in/out (see more world or more detail)
 
 The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome transition blending with dedicated floor/wall sets per biome, animated portal glow, crack overlays for mining, particle effects for mining and combat hits, and a subtle day/night light pass.
 
 Trees now spawn in biome regions and can be mined for wood.
-Mining is progressive (hold `Z`), and speed depends on your tool levels.
-Use `C` to craft and upgrade axe/pickaxe from collected materials.
+Mining is progressive (hold mouse or `Z`), and speed depends on your tool levels.
+
+Inventory now tracks multiple material stacks:
+- Wood logs
+- Planks
+- Sticks
+- Ore
+- Workbench kits (placeable)
+
+Inventory is now a real slot grid (24 slots) with a per-slot stack limit of 64.
+You can move/swap stacks with drag-and-drop and split stacks via right mouse drag.
+The first 9 slots are mirrored as a bottom hotbar for quick place/use access.
+The selected hotbar item is shown as an active hand item near the player sprite.
+
+Crafting supports recipe chains similar to sandbox survival games:
+- 1 wood -> 4 planks
+- 2 planks -> 4 sticks
+- 10 planks -> 1 workbench kit
+- Tool recipes (axe/pickaxe tier 1 and tier 2) require a nearby placed workbench
+
+Workbench stations can be placed into the world and mined back into inventory.
 
 It also includes a main menu with seed input, New Run, and Continue.
 
@@ -140,7 +166,6 @@ python python/train_ppo.py
 
 ## Next V1 extensions
 
-- Crafting recipes
 - Better mob behaviors
 - Multiple biome-specific resources
 - Save/load chunk cache
