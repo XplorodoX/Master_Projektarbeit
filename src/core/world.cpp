@@ -1,8 +1,8 @@
-#include "lecon/world.hpp"
+#include "stoneforge/world.hpp"
 
 #include <algorithm>
 
-namespace lecon {
+namespace stoneforge {
 
 World::World(std::uint64_t seed) {
     reset(seed);
@@ -185,4 +185,4 @@ void World::carveGuaranteedPath() {
     setTile(exit_.x, exit_.y, TileType::Exit);
 }
 
-}  // namespace lecon
+}  // namespace stoneforge

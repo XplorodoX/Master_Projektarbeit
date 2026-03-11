@@ -11,7 +11,7 @@
 #error "SDL2 headers not found"
 #endif
 
-#include "lecon/simulation.hpp"
+#include "stoneforge/simulation.hpp"
 
 namespace {
 
@@ -21,23 +21,23 @@ struct Color {
     std::uint8_t b = 0;
 };
 
-Color tileColor(lecon::TileType type) {
+Color tileColor(stoneforge::TileType type) {
     switch(type) {
-        case lecon::TileType::Empty:
+        case stoneforge::TileType::Empty:
             return {40, 47, 56};
-        case lecon::TileType::Wall:
+        case stoneforge::TileType::Wall:
             return {85, 88, 97};
-        case lecon::TileType::Resource:
+        case stoneforge::TileType::Resource:
             return {183, 134, 45};
-        case lecon::TileType::Exit:
+        case stoneforge::TileType::Exit:
             return {46, 204, 113};
-        case lecon::TileType::Tree:
+        case stoneforge::TileType::Tree:
             return {91, 148, 78};
-        case lecon::TileType::Workbench:
+        case stoneforge::TileType::Workbench:
             return {156, 111, 72};
-        case lecon::TileType::WoodWall:
+        case stoneforge::TileType::WoodWall:
             return {164, 118, 79};
-        case lecon::TileType::WoodLog:
+        case stoneforge::TileType::WoodLog:
             return {136, 97, 66};
     }
     return {255, 0, 0};
@@ -63,7 +63,7 @@ int main(int, char**) {
     constexpr int kViewRadiusY = 14;
 
     SDL_Window* window = SDL_CreateWindow(
-        "Lecon 2D",
+        "Stoneforge 2D",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         kWindowW,
@@ -83,7 +83,7 @@ int main(int, char**) {
         return 1;
     }
 
-    lecon::Simulation sim;
+    stoneforge::Simulation sim;
     sim.reset(42);
 
     bool running = true;
@@ -105,29 +105,29 @@ int main(int, char**) {
             lastStepTicks = now;
 
             const Uint8* state = SDL_GetKeyboardState(nullptr);
-            lecon::Action action = lecon::Action::Wait;
+            stoneforge::Action action = stoneforge::Action::Wait;
 
             if(state[SDL_SCANCODE_UP]) {
-                action = lecon::Action::MoveUp;
+                action = stoneforge::Action::MoveUp;
             } else if(state[SDL_SCANCODE_DOWN]) {
-                action = lecon::Action::MoveDown;
+                action = stoneforge::Action::MoveDown;
             } else if(state[SDL_SCANCODE_LEFT]) {
-                action = lecon::Action::MoveLeft;
+                action = stoneforge::Action::MoveLeft;
             } else if(state[SDL_SCANCODE_RIGHT]) {
-                action = lecon::Action::MoveRight;
+                action = stoneforge::Action::MoveRight;
             } else if(state[SDL_SCANCODE_Z]) {
-                action = lecon::Action::Mine;
+                action = stoneforge::Action::Mine;
             } else if(state[SDL_SCANCODE_X]) {
-                action = lecon::Action::Place;
+                action = stoneforge::Action::Place;
             } else if(state[SDL_SCANCODE_C]) {
-                action = lecon::Action::Use;
+                action = stoneforge::Action::Use;
             }
 
             if(!sim.done()) {
                 sim.step(action);
             }
 
-            std::string title = "Lecon 2D | HP=" + std::to_string(sim.hp()) +
+            std::string title = "Stoneforge 2D | HP=" + std::to_string(sim.hp()) +
                                 " Energy=" + std::to_string(sim.energy()) +
                                 " Inv=" + std::to_string(sim.inventory()) +
                                 " Steps=" + std::to_string(sim.steps());
@@ -140,7 +140,7 @@ int main(int, char**) {
         SDL_SetRenderDrawColor(renderer, 20, 22, 28, 255);
         SDL_RenderClear(renderer);
 
-        const lecon::Vec2i player = sim.playerPos();
+        const stoneforge::Vec2i player = sim.playerPos();
         const int centerX = kWindowW / 2;
         const int centerY = kWindowH / 2;
 
@@ -156,7 +156,7 @@ int main(int, char**) {
             }
         }
 
-        const lecon::Vec2i exit = sim.exitPos();
+        const stoneforge::Vec2i exit = sim.exitPos();
         fillRect(
             renderer,
             centerX + (exit.x - player.x) * kTileSize,

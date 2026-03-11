@@ -9,21 +9,21 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-lecon_sim = importlib.import_module("lecon_sim")
+stoneforge_sim = importlib.import_module("stoneforge_sim")
 
 
 @dataclass
-class LeconConfig:
+class StoneforgeConfig:
     base_seed: int = 42
 
 
-class LeconWorldEnv(gym.Env[np.ndarray, int]):
+class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
     metadata = {"render_modes": []}
 
-    def __init__(self, config: LeconConfig | None = None) -> None:
+    def __init__(self, config: StoneforgeConfig | None = None) -> None:
         super().__init__()
-        self.config = config or LeconConfig()
-        self.core = lecon_sim.LeconCoreEnv(self.config.base_seed)
+        self.config = config or StoneforgeConfig()
+        self.core = stoneforge_sim.StoneforgeCoreEnv(self.config.base_seed)
 
         self.action_space = spaces.Discrete(self.core.action_space_n())
         self.observation_space = spaces.Box(

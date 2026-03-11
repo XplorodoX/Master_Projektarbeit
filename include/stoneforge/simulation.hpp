@@ -5,10 +5,10 @@
 #include <random>
 #include <vector>
 
-#include "lecon/types.hpp"
-#include "lecon/world.hpp"
+#include "stoneforge/types.hpp"
+#include "stoneforge/world.hpp"
 
-namespace lecon {
+namespace stoneforge {
 
 struct Observation {
     std::vector<int> grid;
@@ -156,4 +156,4 @@ private:
     std::vector<Mob> mobs_;
 };
 
-}  // namespace lecon
+}  // namespace stoneforge

@@ -1,9 +1,9 @@
-#include "lecon/simulation.hpp"
+#include "stoneforge/simulation.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace lecon {
+namespace stoneforge {
 
 namespace {
 
@@ -975,4 +975,4 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     return reward;
 }
 
-}  // namespace lecon
+}  // namespace stoneforge

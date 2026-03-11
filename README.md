@@ -1,4 +1,4 @@
-# LeconProjekt
+# StoneforgeFrontier
 
 2D top-down, Minecraft-like prototype focused on deterministic procedural generation and RL-first simulation.
 
@@ -13,12 +13,14 @@
 
 ## Project layout
 
-- `include/lecon`: public C++ headers
+- `include/stoneforge`: public C++ headers
+- `include/stoneforge/client/render_engine.hpp`: raylib render engine entry interface
 - `src/core`: world + simulation logic
 - `src/apps/headless_main.cpp`: fast non-visual runner
-- `src/client/raylib_main.cpp`: playable raylib client
+- `src/client/raylib_main.cpp`: minimal executable entrypoint
+- `src/client/render_engine.cpp`: gameplay loop, rendering, input and UI engine implementation
 - `src/python/py_module.cpp`: pybind11 module
-- `python/lecon_env.py`: Gymnasium environment wrapper
+- `python/stoneforge_env.py`: Gymnasium environment wrapper
 - `python/train_ppo.py`: Stable-Baselines3 PPO example
 
 ## Build
@@ -34,6 +36,11 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```bash
 cmake --build build -j
 ```
+
+The raylib client now follows a simple engine-oriented structure:
+- `raylib_main.cpp` starts the process
+- `RenderEngine::run()` owns update/render loop state
+- simulation remains isolated in `src/core`
 
 ### Optional flags
 
@@ -66,13 +73,13 @@ git push origin v1.0.0
 ### Headless random policy smoke test
 
 ```bash
-./build/lecon_headless --episodes 5 --max-steps 1500 --seed 42
+./build/stoneforge_headless --episodes 5 --max-steps 1500 --seed 42
 ```
 
 ### raylib client (if built)
 
 ```bash
-./build/lecon_client
+./build/stoneforge_client
 ```
 
 Controls:

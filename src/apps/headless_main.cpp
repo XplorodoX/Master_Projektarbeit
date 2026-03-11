@@ -3,7 +3,7 @@
 #include <random>
 #include <string>
 
-#include "lecon/simulation.hpp"
+#include "stoneforge/simulation.hpp"
 
 namespace {
 
@@ -27,7 +27,7 @@ int parseInt(const char* text, int fallback) {
 
 int main(int argc, char** argv) {
     int episodes = 10;
-    int maxSteps = lecon::Simulation::kDefaultMaxSteps;
+    int maxSteps = stoneforge::Simulation::kDefaultMaxSteps;
     std::uint64_t seed = 42;
 
     for(int i = 1; i < argc; ++i) {
@@ -42,18 +42,18 @@ int main(int argc, char** argv) {
     }
 
     std::mt19937 rng(static_cast<unsigned int>(seed));
-    std::uniform_int_distribution<int> actionDist(0, lecon::Simulation::kActionCount - 1);
+    std::uniform_int_distribution<int> actionDist(0, stoneforge::Simulation::kActionCount - 1);
 
     int successCount = 0;
     for(int episode = 0; episode < episodes; ++episode) {
-        lecon::Simulation sim;
+        stoneforge::Simulation sim;
         sim.reset(seed + static_cast<std::uint64_t>(episode));
 
         float totalReward = 0.0F;
         bool reached = false;
 
         for(int step = 0; step < maxSteps && !sim.done(); ++step) {
-            const auto action = static_cast<lecon::Action>(actionDist(rng));
+            const auto action = static_cast<stoneforge::Action>(actionDist(rng));
             const auto result = sim.step(action);
             totalReward += result.reward;
             reached = reached || result.reachedExit;

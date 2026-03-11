@@ -3,11 +3,11 @@ from __future__ import annotations
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 
-from lecon_env import LeconWorldEnv
+from stoneforge_env import StoneforgeWorldEnv
 
 
 def main() -> None:
-    env = make_vec_env(lambda: LeconWorldEnv(), n_envs=8)
+    env = make_vec_env(lambda: StoneforgeWorldEnv(), n_envs=8)
 
     model = PPO(
         "MlpPolicy",
@@ -19,7 +19,7 @@ def main() -> None:
         gamma=0.99,
     )
     model.learn(total_timesteps=500_000)
-    model.save("ppo_lecon_v1")
+    model.save("ppo_stoneforge_v1")
 
 
 if __name__ == "__main__":

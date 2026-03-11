@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <unordered_map>
 
-#include "lecon/types.hpp"
+#include "stoneforge/types.hpp"
 
-namespace lecon {
+namespace stoneforge {
 
 class World {
 public:
@@ -46,4 +46,4 @@ private:
     mutable std::unordered_map<std::int64_t, Chunk> chunks_;
 };
 
-}  // namespace lecon
+}  // namespace stoneforge

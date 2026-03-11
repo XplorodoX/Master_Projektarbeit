@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace lecon {
+namespace stoneforge {
 
 struct Vec2i {
     int x = 0;
@@ -43,4 +43,4 @@ struct StepResult {
     int step = 0;
 };
 
-}  // namespace lecon
+}  // namespace stoneforge
