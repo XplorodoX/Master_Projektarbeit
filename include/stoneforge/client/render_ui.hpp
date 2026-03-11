@@ -18,12 +18,12 @@ struct CraftSlot {
 struct CraftingPanelState {
 	std::array<CraftSlot, 9> slots{};
 	bool craftRequested = false;
-	stoneforge::RecipeId requestedRecipe = stoneforge::RecipeId::Planks;
+	std::string requestedRecipe = "stoneforge:planks";
 };
 
 struct CraftingPreview {
 	bool valid = false;
-	stoneforge::RecipeId recipe = stoneforge::RecipeId::Planks;
+	std::string recipe;
 	std::string label;
 };
 
@@ -32,7 +32,7 @@ const char* itemGlyph(std::string_view itemId);
 Color itemTint(std::string_view itemId);
 
 CraftingPreview evaluateCraftingGrid(const std::array<CraftSlot, 9>& slots);
-void consumeCraftingInputs(std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe);
+void consumeCraftingInputs(std::array<CraftSlot, 9>& slots, std::string_view recipeId);
 void clearCraftingInputs(std::array<CraftSlot, 9>& slots);
 
 bool drawButton(Rectangle rect, const char* text, bool enabled);

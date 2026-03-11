@@ -362,8 +362,8 @@ bool Simulation::splitInventoryStack(int fromIndex, int toIndex) {
     return moved > 0;
 }
 
-bool Simulation::canCraft(RecipeId recipe) const {
-    const RecipeBase* def = recipeCatalog().find(recipe);
+bool Simulation::canCraft(std::string_view recipeId) const {
+    const RecipeBase* def = recipeCatalog().find(recipeId);
     if(def == nullptr) {
         return false;
     }
@@ -381,12 +381,12 @@ bool Simulation::canCraft(RecipeId recipe) const {
     return def->canCraftWithTools(axeLevel_, pickaxeLevel_);
 }
 
-bool Simulation::craft(RecipeId recipe) {
-    if(!canCraft(recipe)) {
+bool Simulation::craft(std::string_view recipeId) {
+    if(!canCraft(recipeId)) {
         return false;
     }
 
-    const RecipeBase* def = recipeCatalog().find(recipe);
+    const RecipeBase* def = recipeCatalog().find(recipeId);
     if(def == nullptr) {
         return false;
     }
@@ -689,25 +689,25 @@ void Simulation::useAction() {
         return;
     }
 
-    if(craft(RecipeId::PickaxeTier2)) {
+    if(craft("stoneforge:pickaxe_tier2")) {
         return;
     }
-    if(craft(RecipeId::AxeTier2)) {
+    if(craft("stoneforge:axe_tier2")) {
         return;
     }
-    if(craft(RecipeId::PickaxeTier1)) {
+    if(craft("stoneforge:pickaxe_tier1")) {
         return;
     }
-    if(craft(RecipeId::AxeTier1)) {
+    if(craft("stoneforge:axe_tier1")) {
         return;
     }
-    if(craft(RecipeId::Workbench)) {
+    if(craft("stoneforge:workbench")) {
         return;
     }
-    if(craft(RecipeId::Sticks)) {
+    if(craft("stoneforge:sticks")) {
         return;
     }
-    (void)craft(RecipeId::Planks);
+    (void)craft("stoneforge:planks");
 }
 
 void Simulation::clearMiningProgress() {

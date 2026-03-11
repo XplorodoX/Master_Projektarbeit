@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -12,23 +13,6 @@
 namespace stoneforge::client {
 
 namespace {
-
-struct RecipeEntry {
-    stoneforge::RecipeId recipe;
-    const char* name;
-    const char* cost;
-    bool requiresWorkbench;
-};
-
-constexpr std::array<RecipeEntry, 7> kRecipes{ {
-    {stoneforge::RecipeId::Planks, "Planks x4", "1 Wood", false},
-    {stoneforge::RecipeId::Sticks, "Sticks x4", "2 Planks vertical", false},
-    {stoneforge::RecipeId::Workbench, "Workbench Kit x1", "10 Planks", false},
-    {stoneforge::RecipeId::AxeTier1, "Axe Lv1", "Axe shape (Planks+Sticks)", true},
-    {stoneforge::RecipeId::PickaxeTier1, "Pickaxe Lv1", "Pick shape (Planks+Sticks)", true},
-    {stoneforge::RecipeId::AxeTier2, "Axe Lv2", "Axe shape (Ore+Sticks)", true},
-    {stoneforge::RecipeId::PickaxeTier2, "Pickaxe Lv2", "Pick shape (Ore+Sticks)", true},
-} };
 
 bool isEmpty(const CraftSlot& slot) {
     return slot.itemId.empty() || slot.count <= 0;
@@ -49,8 +33,8 @@ std::unordered_map<std::string, int> slotCounts(const std::array<CraftSlot, 9>& 
     return counts;
 }
 
-bool recipeMatchesGrid(const std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe) {
-    const auto* def = stoneforge::recipeCatalog().find(recipe);
+bool recipeMatchesGrid(const std::array<CraftSlot, 9>& slots, std::string_view recipeId) {
+    const auto* def = stoneforge::recipeCatalog().find(recipeId);
     if(def == nullptr) {
         return false;
     }
@@ -77,6 +61,34 @@ bool recipeMatchesGrid(const std::array<CraftSlot, 9>& slots, stoneforge::Recipe
     }
 
     return true;
+}
+
+std::vector<const stoneforge::RecipeBase*> uiRecipes() {
+    auto recipes = stoneforge::recipeCatalog().all();
+    std::sort(recipes.begin(), recipes.end(), [](const stoneforge::RecipeBase* a, const stoneforge::RecipeBase* b) {
+        if(a->requiresWorkbench() != b->requiresWorkbench()) {
+            return !a->requiresWorkbench();
+        }
+        return a->id() < b->id();
+    });
+    return recipes;
+}
+
+std::string recipeCostLabel(const stoneforge::RecipeBase& recipe) {
+    if(recipe.inputs().empty()) {
+        return "Free";
+    }
+
+    std::ostringstream out;
+    bool first = true;
+    for(const auto& input : recipe.inputs()) {
+        if(!first) {
+            out << ", ";
+        }
+        first = false;
+        out << input.count << " " << stoneforge::itemDisplayName(input.itemId);
+    }
+    return out.str();
 }
 
 void reduceSlot(CraftSlot& slot, int amount) {
@@ -127,96 +139,46 @@ const char* itemShortLabel(std::string_view itemId) {
 CraftingPreview evaluateCraftingGrid(const std::array<CraftSlot, 9>& slots) {
     CraftingPreview out{};
 
-    int occupied = 0;
-    int woodSlot = -1;
-    for(int i = 0; i < 9; ++i) {
-        if(!isEmpty(slots[static_cast<std::size_t>(i)])) {
-            ++occupied;
-            if(slots[static_cast<std::size_t>(i)].item == stoneforge::ItemId::Wood) {
-                woodSlot = i;
-            }
+    for(const auto* def : uiRecipes()) {
+        if(def == nullptr) {
+            continue;
         }
-    }
-
-    if(occupied == 1 && woodSlot >= 0 && slots[static_cast<std::size_t>(woodSlot)].count >= 1) {
+        if(!recipeMatchesGrid(slots, def->id())) {
+            continue;
+        }
         out.valid = true;
-        out.recipe = stoneforge::RecipeId::Planks;
-        out.label = "Planks x4";
-        return out;
-    }
-
-    if(!findStickVerticalPattern(slots).empty()) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::Sticks;
-        out.label = "Sticks x4";
-        return out;
-    }
-
-    if(hasOnlyItem(slots, stoneforge::ItemId::Planks) && totalCount(slots, stoneforge::ItemId::Planks) >= 10) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::Workbench;
-        out.label = "Workbench Kit x1";
-        return out;
-    }
-
-    if(!recipeSlotsForConsume(slots, stoneforge::RecipeId::AxeTier1).empty()) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::AxeTier1;
-        out.label = "Axe Lv1";
-        return out;
-    }
-    if(!recipeSlotsForConsume(slots, stoneforge::RecipeId::PickaxeTier1).empty()) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::PickaxeTier1;
-        out.label = "Pickaxe Lv1";
-        return out;
-    }
-    if(!recipeSlotsForConsume(slots, stoneforge::RecipeId::AxeTier2).empty()) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::AxeTier2;
-        out.label = "Axe Lv2";
-        return out;
-    }
-    if(!recipeSlotsForConsume(slots, stoneforge::RecipeId::PickaxeTier2).empty()) {
-        out.valid = true;
-        out.recipe = stoneforge::RecipeId::PickaxeTier2;
-        out.label = "Pickaxe Lv2";
+        out.recipe = std::string(def->id());
+        out.label = std::string(def->label());
         return out;
     }
 
     return out;
 }
 
-void consumeCraftingInputs(std::array<CraftSlot, 9>& slots, stoneforge::RecipeId recipe) {
-    if(recipe == stoneforge::RecipeId::Planks) {
-        for(auto& slot : slots) {
-            if(slot.item == stoneforge::ItemId::Wood && slot.count > 0) {
-                reduceSlot(slot, 1);
-                return;
-            }
-        }
+void consumeCraftingInputs(std::array<CraftSlot, 9>& slots, std::string_view recipeId) {
+    const auto* def = stoneforge::recipeCatalog().find(recipeId);
+    if(def == nullptr) {
         return;
     }
 
-    if(recipe == stoneforge::RecipeId::Workbench) {
-        int remaining = 10;
+    for(const auto& input : def->inputs()) {
+        const std::string wanted = stoneforge::normalizeItemKey(input.itemId);
+        int remaining = input.count;
         for(auto& slot : slots) {
-            if(slot.item != stoneforge::ItemId::Planks || slot.count <= 0 || remaining <= 0) {
+            if(remaining <= 0) {
+                break;
+            }
+            if(isEmpty(slot)) {
                 continue;
             }
+            if(stoneforge::normalizeItemKey(slot.itemId) != wanted) {
+                continue;
+            }
+
             const int take = std::min(slot.count, remaining);
             reduceSlot(slot, take);
             remaining -= take;
         }
-        return;
-    }
-
-    const auto indices = recipeSlotsForConsume(slots, recipe);
-    if(indices.empty()) {
-        return;
-    }
-    for(int idx : indices) {
-        reduceSlot(slots[static_cast<std::size_t>(idx)], 1);
     }
 }
 
@@ -468,11 +430,11 @@ void drawInventoryPanel(
             if(hoveredCraftSlot >= 0) {
                 const auto src = sim.inventorySlot(dragSourceSlot);
                 auto& dst = crafting.slots[static_cast<std::size_t>(hoveredCraftSlot)];
-                const stoneforge::ItemId srcLegacy = stoneforge::itemIdFromKey(src.itemId);
-                if(srcLegacy != stoneforge::ItemId::None && src.count > 0 && (isEmpty(dst) || dst.item == srcLegacy)) {
+                if(!src.itemId.empty() && src.count > 0 && (isEmpty(dst) || stoneforge::normalizeItemKey(dst.itemId) == stoneforge::normalizeItemKey(src.itemId))) {
                     const int addCount = splitDrop ? 1 : src.count;
-                    dst.item = srcLegacy;
-                    dst.count = std::min(stoneforge::Simulation::kInventoryStackLimit, dst.count + std::max(1, addCount));
+                    dst.itemId = stoneforge::normalizeItemKey(src.itemId);
+                    const int maxStack = std::max(1, stoneforge::itemMaxStack(dst.itemId));
+                    dst.count = std::min(maxStack, dst.count + std::max(1, addCount));
                 }
             } else if(hoveredSlot >= 0 && hoveredSlot != dragSourceSlot) {
                 if(splitDrop) {
@@ -549,8 +511,8 @@ void drawInventoryPanel(
         DrawRectangleRoundedLinesEx(rect, 0.18F, 6, 2.0F, Color{102, 125, 151, 255});
         if(!isEmpty(cell)) {
             const Rectangle inner{rect.x + 4.0F, rect.y + 4.0F, rect.width - 8.0F, rect.height - 8.0F};
-            DrawRectangleRounded(inner, 0.18F, 4, itemTint(stoneforge::itemById(cell.item).key()));
-            DrawText(itemGlyph(stoneforge::itemById(cell.item).key()), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
+            DrawRectangleRounded(inner, 0.18F, 4, itemTint(cell.itemId));
+            DrawText(itemGlyph(cell.itemId), static_cast<int>(rect.x + 14.0F), static_cast<int>(rect.y + 8.0F), 20, WHITE);
             DrawText(TextFormat("%d", cell.count), static_cast<int>(rect.x + 6.0F), static_cast<int>(rect.y + rect.height - 16.0F), 12, Color{240, 247, 255, 255});
         }
     }
@@ -599,25 +561,32 @@ void drawInventoryPanel(
         clearCraftingInputs(crafting.slots);
     }
 
-    const char* previewLabel = preview.valid ? preview.label : "No valid recipe";
+    const char* previewLabel = preview.valid ? preview.label.c_str() : "No valid recipe";
     DrawText(previewLabel, craftGridX + 170, craftGridY + 78, 16, canCraftNow ? Color{158, 239, 177, 255} : Color{186, 196, 212, 255});
     if(preview.valid && !canCraftNow) {
         DrawText("Missing resources / workbench", craftGridX + 170, craftGridY + 94, 14, Color{232, 185, 115, 255});
     }
 
-    for(int i = 0; i < static_cast<int>(kRecipes.size()); ++i) {
-        const auto& recipe = kRecipes[static_cast<std::size_t>(i)];
-        const bool craftable = sim.canCraft(recipe.recipe);
-        const bool needsBenchNow = recipe.requiresWorkbench && !nearWorkbench;
+    const auto recipeList = uiRecipes();
+    for(int i = 0; i < static_cast<int>(recipeList.size()) && i < 7; ++i) {
+        const auto* recipe = recipeList[static_cast<std::size_t>(i)];
+        if(recipe == nullptr) {
+            continue;
+        }
+
+        const bool craftable = sim.canCraft(recipe->id());
+        const bool needsBenchNow = recipe->requiresWorkbench() && !nearWorkbench;
         Color textColor = craftable ? Color{158, 239, 177, 255} : Color{175, 183, 197, 255};
         if(needsBenchNow) {
             textColor = Color{232, 185, 115, 255};
         }
 
         const int y = static_cast<int>(panel.y) + 548 + i * 14;
-        DrawText(recipe.name, static_cast<int>(panel.x) + 18, y, 14, textColor);
-        DrawText(recipe.cost, static_cast<int>(panel.x) + 250, y, 14, Color{170, 180, 194, 255});
-        if(recipe.requiresWorkbench) {
+        const std::string label(recipe->label());
+        const std::string cost = recipeCostLabel(*recipe);
+        DrawText(label.c_str(), static_cast<int>(panel.x) + 18, y, 14, textColor);
+        DrawText(cost.c_str(), static_cast<int>(panel.x) + 250, y, 14, Color{170, 180, 194, 255});
+        if(recipe->requiresWorkbench()) {
             DrawText("WB", static_cast<int>(panel.x) + 430, y, 14, Color{202, 162, 118, 255});
         }
     }

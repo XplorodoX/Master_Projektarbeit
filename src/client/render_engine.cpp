@@ -1477,32 +1477,7 @@ int stoneforge::client::RenderEngine::run() {
             drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode, craftingPanel);
             if(craftingPanel.craftRequested && sim.craft(craftingPanel.requestedRecipe)) {
                 consumeCraftingInputs(craftingPanel.slots, craftingPanel.requestedRecipe);
-
-                const char* recipeId = "base:unknown";
-                switch(craftingPanel.requestedRecipe) {
-                    case stoneforge::RecipeId::Planks:
-                        recipeId = "base:planks";
-                        break;
-                    case stoneforge::RecipeId::Sticks:
-                        recipeId = "base:sticks";
-                        break;
-                    case stoneforge::RecipeId::Workbench:
-                        recipeId = "base:workbench";
-                        break;
-                    case stoneforge::RecipeId::AxeTier1:
-                        recipeId = "base:axe_t1";
-                        break;
-                    case stoneforge::RecipeId::PickaxeTier1:
-                        recipeId = "base:pickaxe_t1";
-                        break;
-                    case stoneforge::RecipeId::AxeTier2:
-                        recipeId = "base:axe_t2";
-                        break;
-                    case stoneforge::RecipeId::PickaxeTier2:
-                        recipeId = "base:pickaxe_t2";
-                        break;
-                }
-                scriptRuntime.emitEvent("onCraft", {{"recipe", recipeId}});
+                scriptRuntime.emitEvent("onCraft", {{"recipe", craftingPanel.requestedRecipe}});
             }
         }
 

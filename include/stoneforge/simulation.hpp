@@ -28,16 +28,6 @@ struct Mob {
     std::string variant = "default";
 };
 
-enum class RecipeId : int {
-    Planks = 0,
-    Sticks = 1,
-    Workbench = 2,
-    AxeTier1 = 3,
-    PickaxeTier1 = 4,
-    AxeTier2 = 5,
-    PickaxeTier2 = 6
-};
-
 enum class ItemId : int {
     None = 0,
     Wood = 1,
@@ -94,8 +84,8 @@ public:
     InventorySlot inventorySlot(int index) const;
     bool moveInventoryStack(int fromIndex, int toIndex);
     bool splitInventoryStack(int fromIndex, int toIndex);
-    bool canCraft(RecipeId recipe) const;
-    bool craft(RecipeId recipe);
+    bool canCraft(std::string_view recipeId) const;
+    bool craft(std::string_view recipeId);
     bool placeWorkbenchForward();
     bool placeFromHotbarAt(const Vec2i& target);
     bool contextUseAt(const Vec2i& target);
