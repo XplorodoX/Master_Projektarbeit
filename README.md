@@ -45,6 +45,22 @@ cmake --build build -j
 
 If raylib/SDL2 or Python dev headers are missing, those targets are skipped automatically.
 
+## Release CI/CD (GitHub Actions)
+
+This repository contains a multi-platform release workflow in `.github/workflows/release-build.yml`.
+
+- It builds artifacts for macOS, Linux, and Windows.
+- It uploads executables as downloadable release assets.
+- It runs only for stable tags in the form `vX.Y.Z`.
+- Tags with a hyphen (for example `v1.2.0-rc1`, `v1.2.0-beta1`) are treated as pre-release tags and are ignored by the release jobs.
+
+Example stable release tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 ## Run
 
 ### Headless random policy smoke test
@@ -69,6 +85,8 @@ Controls:
 - Mouse wheel: zoom in/out (see more world or more detail)
 
 The raylib client now uses a runtime pixel-art sprite atlas (tile sprites + character sprites), biome transition blending with dedicated floor/wall sets per biome, animated portal glow, crack overlays for mining, particle effects for mining and combat hits, and a subtle day/night light pass.
+
+Trees now spawn in biome regions and can be mined for wood.
 
 It also includes a main menu with seed input, New Run, and Continue.
 

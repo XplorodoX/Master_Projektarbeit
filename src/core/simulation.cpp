@@ -27,6 +27,8 @@ void Simulation::reset(std::uint64_t seed) {
     hp_ = 10;
     energy_ = 100;
     inventory_ = 0;
+    wood_ = 0;
+    ore_ = 0;
 
     steps_ = 0;
     done_ = false;
@@ -167,6 +169,14 @@ int Simulation::inventory() const {
     return inventory_;
 }
 
+int Simulation::wood() const {
+    return wood_;
+}
+
+int Simulation::ore() const {
+    return ore_;
+}
+
 int Simulation::steps() const {
     return steps_;
 }
@@ -207,6 +217,12 @@ void Simulation::mineForward() {
 
     if(tile == TileType::Resource) {
         world_.setTile(target.x, target.y, TileType::Empty);
+        ore_ += 1;
+        inventory_ += 1;
+        energy_ = std::max(0, energy_ - 1);
+    } else if(tile == TileType::Tree) {
+        world_.setTile(target.x, target.y, TileType::Empty);
+        wood_ += 1;
         inventory_ += 1;
         energy_ = std::max(0, energy_ - 1);
     }
@@ -222,7 +238,12 @@ void Simulation::placeForward() {
 
     if(tile == TileType::Empty) {
         world_.setTile(target.x, target.y, TileType::Wall);
-        inventory_ -= 1;
+        if(wood_ > 0) {
+            wood_ -= 1;
+        } else if(ore_ > 0) {
+            ore_ -= 1;
+        }
+        inventory_ = std::max(0, wood_ + ore_);
         energy_ = std::max(0, energy_ - 1);
     }
 }

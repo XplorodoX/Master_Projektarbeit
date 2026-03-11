@@ -42,6 +42,8 @@ public:
     int hp() const;
     int energy() const;
     int inventory() const;
+    int wood() const;
+    int ore() const;
     int steps() const;
     bool done() const;
 
@@ -64,6 +66,8 @@ private:
     int hp_ = 10;
     int energy_ = 100;
     int inventory_ = 0;
+    int wood_ = 0;
+    int ore_ = 0;
 
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;

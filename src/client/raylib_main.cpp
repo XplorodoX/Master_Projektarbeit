@@ -56,7 +56,8 @@ enum class SpriteId : int {
     Ore = 12,
     Exit = 13,
     Player = 14,
-    Mob = 15
+    Mob = 15,
+    Tree = 16
 };
 
 enum class ScreenState {
@@ -107,7 +108,7 @@ Rectangle spriteSource(SpriteId id) {
 }
 
 Texture2D buildSpriteAtlas() {
-    Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 4, BLANK);
+    Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 5, BLANK);
 
     auto paintFloor = [&](int sx, int sy, Color baseA, Color speckA, Color speckB) {
         fillRect(atlas, sx, sy, kAtlasCell, kAtlasCell, baseA);
@@ -223,6 +224,27 @@ Texture2D buildSpriteAtlas() {
     putPixel(atlas, 3 * kAtlasCell + 10, 3 * kAtlasCell + 7, WHITE);
     putPixel(atlas, 3 * kAtlasCell + 6, 3 * kAtlasCell + 8, BLACK);
     putPixel(atlas, 3 * kAtlasCell + 10, 3 * kAtlasCell + 8, BLACK);
+
+    fillRect(atlas, 0, 4 * kAtlasCell, kAtlasCell, kAtlasCell, BLANK);
+    fillRect(atlas, 6, 4 * kAtlasCell + 9, 4, 6, Color{121, 83, 49, 255});
+    fillRect(atlas, 5, 4 * kAtlasCell + 8, 6, 1, Color{142, 98, 56, 255});
+    fillRect(atlas, 7, 4 * kAtlasCell + 6, 2, 2, Color{154, 107, 63, 255});
+
+    for(int y = 1; y <= 10; ++y) {
+        for(int x = 1; x <= 14; ++x) {
+            const float dx = static_cast<float>(x - 8) / 6.0F;
+            const float dy = static_cast<float>(y - 5) / 4.8F;
+            if(dx * dx + dy * dy <= 1.0F) {
+                const bool highlight = y < 4;
+                putPixel(atlas, x, 4 * kAtlasCell + y, highlight ? Color{121, 179, 109, 255} : Color{86, 143, 76, 255});
+            }
+        }
+    }
+    for(int i = 0; i < 14; ++i) {
+        const int tx = static_cast<int>(hash01(i, 99, 1901) * 14.0F) + 1;
+        const int ty = static_cast<int>(hash01(77, i, 1903) * 9.0F) + 1;
+        putPixel(atlas, tx, 4 * kAtlasCell + ty, Color{67, 110, 59, 255});
+    }
 
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
@@ -355,6 +377,15 @@ void drawStyledTile(const Texture2D& atlas, lecon::TileType type, int wx, int wy
 
     if(type == lecon::TileType::Resource) {
         drawSpriteTile(atlas, SpriteId::Ore, px, py, tileSize, WHITE);
+        return;
+    }
+
+    if(type == lecon::TileType::Tree) {
+        drawSpriteTile(atlas, floorVariant(primary, wx, wy), px, py, tileSize, WHITE);
+        const Color treeTint = (primary == 1)
+                                   ? Color{236, 229, 207, 255}
+                                   : (primary == 2 ? Color{210, 245, 214, 255} : Color{214, 228, 244, 255});
+        drawSpriteTile(atlas, SpriteId::Tree, px, py, tileSize, treeTint);
         return;
     }
 
@@ -526,16 +557,19 @@ bool drawButton(Rectangle rect, const char* text, bool enabled) {
 }
 
 void drawHud(const lecon::Simulation& sim, int screenH, int tileSize) {
-    const Rectangle panel = {18.0F, 18.0F, 420.0F, 124.0F};
+    const Rectangle panel = {18.0F, 18.0F, 420.0F, 152.0F};
     DrawRectangleRounded(panel, 0.2F, 8, Fade(Color{18, 21, 27, 255}, 0.85F));
     DrawRectangleRoundedLinesEx(panel, 0.2F, 8, 2.0F, Color{60, 68, 82, 255});
 
     DrawText(TextFormat("HP: %d", sim.hp()), 34, 36, 24, Color{225, 80, 80, 255});
     DrawText(TextFormat("Energy: %d", sim.energy()), 34, 66, 24, Color{95, 179, 255, 255});
-    DrawText(TextFormat("Inventory: %d", sim.inventory()), 34, 96, 24, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Wood: %d", sim.wood()), 34, 96, 22, Color{201, 156, 94, 255});
+    DrawText(TextFormat("Ore: %d", sim.ore()), 34, 122, 22, Color{236, 198, 102, 255});
+    DrawText(TextFormat("Inventory: %d", sim.inventory()), 210, 122, 20, Color{216, 226, 241, 255});
 
     DrawText(TextFormat("Tile: %dpx", tileSize), 298, 36, 20, Color{210, 220, 235, 255});
-    DrawText("Biome transitions + FX", 298, 66, 18, Color{172, 225, 196, 255});
+    DrawText("Biome transitions + FX", 252, 66, 18, Color{172, 225, 196, 255});
+    DrawText("Trees: mine for wood", 252, 90, 18, Color{184, 214, 170, 255});
 
     const std::string info = "WASD/Arrows move | Z mine | X place | C use | R reset | ESC menu | Mouse wheel zoom";
     DrawText(info.c_str(), 18, screenH - 34, 18, Color{196, 206, 220, 255});
@@ -692,22 +726,27 @@ int main() {
 
                 sim.step(action);
 
-                if(action == lecon::Action::Mine && beforeMineTile == lecon::TileType::Resource) {
+                const bool minedResource = beforeMineTile == lecon::TileType::Resource;
+                const bool minedTree = beforeMineTile == lecon::TileType::Tree;
+                if(action == lecon::Action::Mine && (minedResource || minedTree)) {
                     const lecon::TileType afterMineTile = sim.tileAt(mineTarget.x, mineTarget.y);
                     const Vector2 dustPos{
                         static_cast<float>(mineTarget.x) + 0.5F,
                         static_cast<float>(mineTarget.y) + 0.5F
                     };
 
+                    const Color chipColor = minedTree ? Color{183, 133, 82, 255} : Color{238, 194, 109, 255};
+                    const Color burstColor = minedTree ? Color{220, 176, 132, 255} : Color{255, 223, 145, 255};
+
                     auto& crack = cracks[tileKey(mineTarget.x, mineTarget.y)];
                     crack.strength = std::min(1.0F, crack.strength + 0.32F);
                     crack.ttl = 1.2F;
 
-                    spawnParticles(particles, dustPos, 6, Color{238, 194, 109, 255}, 1.3F, 0.45F, 0.9F, mineTarget.x ^ mineTarget.y);
+                    spawnParticles(particles, dustPos, 6, chipColor, 1.3F, 0.45F, 0.9F, mineTarget.x ^ mineTarget.y);
 
-                    if(afterMineTile != lecon::TileType::Resource) {
+                    if(afterMineTile != beforeMineTile) {
                         cracks.erase(tileKey(mineTarget.x, mineTarget.y));
-                        spawnParticles(particles, dustPos, 18, Color{255, 223, 145, 255}, 2.4F, 0.7F, 1.15F, mineTarget.x * 31 + mineTarget.y * 17);
+                        spawnParticles(particles, dustPos, 18, burstColor, 2.4F, 0.7F, 1.15F, mineTarget.x * 31 + mineTarget.y * 17);
                     }
                 }
 
@@ -726,6 +765,7 @@ int main() {
         std::string title = "Lecon 2D | Seed=" + std::to_string(currentSeed) +
                             " HP=" + std::to_string(sim.hp()) +
                             " Energy=" + std::to_string(sim.energy()) +
+                            " Wood=" + std::to_string(sim.wood()) +
                             " Inv=" + std::to_string(sim.inventory()) +
                             " Steps=" + std::to_string(sim.steps());
         if(sim.done()) {

@@ -115,6 +115,7 @@ void World::generateChunk(int cx, int cy, Chunk& chunk) const {
             const double biome = noise01(wx / 4, wy / 4, 0xabcddcbaULL);
             const double density = noise01(wx, wy, 0x10203040ULL);
             const double ore = noise01(wx, wy, 0x99887766ULL);
+            const double trees = noise01(wx, wy, 0x55443322ULL);
 
             TileType tile = TileType::Empty;
             if(biome < 0.33) {
@@ -131,12 +132,18 @@ void World::generateChunk(int cx, int cy, Chunk& chunk) const {
                 if(ore < 0.05) {
                     tile = TileType::Resource;
                 }
+                if(tile == TileType::Empty && trees < 0.11) {
+                    tile = TileType::Tree;
+                }
             } else {
                 if(density < 0.08) {
                     tile = TileType::Wall;
                 }
                 if(ore < 0.02) {
                     tile = TileType::Resource;
+                }
+                if(tile == TileType::Empty && trees < 0.15) {
+                    tile = TileType::Tree;
                 }
             }
 
