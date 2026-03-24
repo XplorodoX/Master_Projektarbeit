@@ -22,7 +22,7 @@
 \section{Projektidee}
 Wir planen in unserer Projektarbeit die Entwicklung eines 2D-Top-Down-Spiels (im Stil von Minecraft), welches als experimentelle Testumgebung f\"ur K\"unstliche Intelligenz (Reinforcement Learning) konzipiert ist. 
 
-Im Gegensatz zu Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten "Chunk"-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeing\"ultige L\"osungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
+Im Gegensatz zu Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten \glqq Chunk\grqq-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeing\"ultige L\"osungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
 
 \section{Kurzes Glossar: Wichtige Fachbegriffe}
 Damit die Konzepte im restlichen Expos\'e nachvollziehbar bleiben, werden hier die zentralen Fachbegriffe kurz erkl\"art:
@@ -30,14 +30,14 @@ Damit die Konzepte im restlichen Expos\'e nachvollziehbar bleiben, werden hier d
     \item \textbf{Reinforcement Learning (RL):} Eine Technik der K\"unstlichen Intelligenz, die durch Interaktion lernt. F\"ur n\"utzliche Aktionen gibt es eine Belohnung (Reward), f\"ur unvorteilhafte Aktionen nicht (vergleichbar mit Konditionierung).
     \item \textbf{Prozedurale Generierung \& Seed:} Die Spielwelt wird nicht vorab modelliert, sondern bei jedem Start von einem Algorithmus generiert. Der \textit{Seed} ist dabei der zuf\"allige Startwert: Gibt man denselben Startwert ein, baut der Algorithmus exakt dieselbe Welt auf.
     \item \textbf{Observation Space:} Der Eingabevektor der KI. Die KI empf\"angt eine Tabelle aus Zahlen, die beschreibt, was in der lokalen Umgebung passiert und wie der innere Zustand ist.
-    \item \textbf{Headless-Modus \& Vektorisiert:} "Headless" bedeutet, dass das Spiel ohne Grafikausgabe im Hintergrund simuliert wird, um Berechnungszeit zu sparen. "Vektorisiert" hei\ss{}t, dass das Spiel mehrfach instanziiert wird, sodass viele KI-Agenten parallel trainieren k\"onnen.
-    \item \textbf{Sparse vs. Dense Rewards:} "Sparse" (selten) bedeutet, es gibt die Belohnung erst am Ende der Episode, wenn das Level gel\"ost wurde. "Dense" (dicht) bedeutet, es werden auch Zwischenschritte (z.B. der Abbau von B\"aumen) mit kleineren Belohnungen honoriert.
+    \item \textbf{Headless-Modus \& Vektorisiert:} \glqq Headless\grqq{} (kopflos) bedeutet, dass das Spiel ohne Grafikausgabe im Hintergrund simuliert wird, um Berechnungszeit zu sparen. \glqq Vektorisiert\grqq{} hei\ss{}t, dass das Spiel mehrfach instanziiert wird, sodass viele KI-Agenten parallel trainieren k\"onnen.
+    \item \textbf{Sparse vs. Dense Rewards:} \glqq Sparse\grqq{} (selten) bedeutet, es gibt die Belohnung erst am Ende der Episode, wenn das Level gel\"ost wurde. \glqq Dense\grqq{} (dicht) bedeutet, es werden auch Zwischenschritte (z.B. der Abbau von B\"aumen) mit kleineren Belohnungen honoriert.
 \end{itemize}
 
 \section{Methodische Visualisierung: Das Spielkonzept}
 Um die Schnittstelle zwischen der grafischen Darstellung (f\"ur menschliche Spieler) und den Rohdaten (f\"ur die KI) zu verdeutlichen, zeigt die folgende Skizze das Kernlayout der Engine (\textit{StoneforgeFrontier}). 
 
-W\"ahrend der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erh\"alt der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erh\"alt der Agent zus\"atzlich „globale“ Statusinformationen in Form eines Richtungsvektors zum Ziel sowie den aktuellen Inventar- und Gesundheitsstatus.
+W\"ahrend der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erh\"alt der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erh\"alt der Agent zus\"atzlich globale Statusinformationen in Form eines Richtungsvektors zum Ziel sowie den aktuellen Inventar- und Gesundheitsstatus.
 
 \vspace{0.5cm}
 \begin{center}
@@ -110,7 +110,7 @@ F\"ur das CPU-intensive KI-Training verzichten wir auf vorgefertigte Game-Engine
 
 \subsection{Engine und Schnittstellen}
 \begin{itemize}
-    \item \textbf{C++20 (Core Engine):} Die Spielmechanik wird in C++ implementiert. Das erm\"oglicht einen "Headless"-Modus, durch den die KI das Rendern von Grafiken \"uberspringen kann. Dies erlaubt es, mehrere Instanzen parallel auszuf\"uhren (\textit{Vectorized Environments}), was den Trainingsprozess beschleunigt.
+    \item \textbf{C++20 (Core Engine):} Die Spielmechanik wird in C++ implementiert. Das erm\"oglicht einen \glqq Headless\grqq-Modus, durch den die KI das Rendern von Grafiken \"uberspringen kann. Dies erlaubt es, mehrere Instanzen parallel auszuf\"uhren (\textit{Vectorized Environments}), was den Trainingsprozess beschleunigt.
     \item \textbf{Python-Bindings (Pybind11 \& Gymnasium):} Um die C++-Engine mit den KI-Algorithmen zu verbinden, programmieren wir Schnittstellen via \textit{pybind11}. Das Spiel wird dadurch als standardisiertes \textit{Gymnasium}-Environment in Python ladbar.
 \end{itemize}
 
