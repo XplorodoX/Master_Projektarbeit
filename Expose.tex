@@ -22,7 +22,7 @@
 \section{Projektidee}
 Wir planen in unserer Projektarbeit die Entwicklung eines 2D-Top-Down-Spiels (im Stil von Minecraft), welches als experimentelle Testumgebung f\"ur K\"unstliche Intelligenz (Reinforcement Learning) konzipiert ist. 
 
-Im Gegensatz zu Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten \glqq Chunk\grqq-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeing\"ultige L\"osungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
+Im Gegensatz zu Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten \glqq Chunk\grqq-Welt basieren. Dieser Ansatz dient der F\"orderung der Generalisierungsf\"ahigkeit des KI-Agenten \cite{cobbe2020procgen, risi2020increasing}. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeing\"ultige L\"osungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
 
 \section{Kurzes Glossar: Wichtige Fachbegriffe}
 Damit die Konzepte im restlichen Expos\'e nachvollziehbar bleiben, werden hier die zentralen Fachbegriffe kurz erkl\"art:
@@ -37,7 +37,7 @@ Damit die Konzepte im restlichen Expos\'e nachvollziehbar bleiben, werden hier d
 \section{Methodische Visualisierung: Das Spielkonzept}
 Um die Schnittstelle zwischen der grafischen Darstellung (f\"ur menschliche Spieler) und den Rohdaten (f\"ur die KI) zu verdeutlichen, zeigt die folgende Skizze das Kernlayout der Engine (\textit{StoneforgeFrontier}). 
 
-W\"ahrend der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erh\"alt der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erh\"alt der Agent zus\"atzlich globale Statusinformationen in Form eines Richtungsvektors zum Ziel sowie den aktuellen Inventar- und Gesundheitsstatus.
+W\"ahrend der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erh\"alt der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erh\"alt der Agent zus\"atzlich globale Statusinformationen in Form eines Richtungsvektors zum Ziel sowie den aktuellen Inventar- und Gesundheitsstatus. Das Handlungsmodell (\textit{Action Space}) des Agenten wird dabei diskret auf ein Gitter-Modell abgebildet und umfasst elementare Bewegungs- sowie Interaktionsbefehle (Bauen, Abbauen, Benutzen).
 
 \vspace{0.5cm}
 \begin{center}
@@ -115,7 +115,7 @@ F\"ur das CPU-intensive KI-Training verzichten wir auf vorgefertigte Game-Engine
 \end{itemize}
 
 \subsection{Prozedurale Weltengenerierung}
-Die Architektur der Welten ben\"otigt eine Balance aus Varianz und Struktur. Daf\"ur setzen wir auf einen hybriden Ansatz:
+Die Architektur der Welten ben\"otigt eine Balance aus Varianz und Struktur (PCG-Taxonomie nach \cite{togelius2011search}). Daf\"ur setzen wir auf einen hybriden Ansatz:
 \begin{itemize}
     \item \textbf{Layered Noise \& Cellular Automata:} Die Basis f\"ur Biom-Struktur und Ressourcenverteilung bildet Rauschen (Noise). Um definierte Hindernisse und H\"ohlensysteme zu schaffen, gl\"atten wir diese Struktur mit Zellul\"aren Automaten.
     \item \textbf{Flood-Fill Validierung:} Wir implementieren einen Flood-Fill-Algorithmus, der sicherstellt, dass Zielpunkte physisch erreichbar bleiben. Ein unl\"osbarer Seed w\"urde das KI-Training andernfalls blockieren.
@@ -131,7 +131,7 @@ F\"ur das Training in den prozeduralen Umgebungen nutzen wir folgendes RL-Setup:
 \end{itemize}
 
 \subsection{Reward Design und Evaluierung}
-Das Design der Belohnungsfunktion (Reward Function) hat Einfluss auf das Verhalten des Agenten. Um stark verz\"ogerten Belohnungen (\textit{Sparse Rewards}) entgegenzuwirken, setzen wir auf ein hybrides Modell: Der Agent erh\"alt einen \textit{Sparse Reward} f\"ur das Erreichen des Ziels, gest\"utzt durch kleinere \textit{Dense Rewards} f\"ur progressionsf\"ordernde Aktionen (z.B. den Abbau ben\"otigter Ressourcen oder die Reduzierung der Distanz).
+Das Design der Belohnungsfunktion (Reward Function) hat Einfluss auf das Verhalten des Agenten. Um stark verz\"ogerten Belohnungen (\textit{Sparse Rewards}) entgegenzuwirken, setzen wir auf ein hybrides Modell: Der Agent erh\"alt einen \textit{Sparse Reward} f\"ur das Erreichen des Ziels, gest\"utzt durch kleinere \textit{Dense Rewards} f\"ur progressionsf\"ordernde Aktionen (z.B. den Abbau ben\"otigter Ressourcen oder die Reduzierung der Distanz). Durch gezieltes \textit{Reward Shaping} – etwa durch zeitliche Abstrafung oder Begrenzung der Belohnung f\"ur Rohstoffsammlung – wird dabei sichergestellt, dass der Agent eine zielf\"uhrende Strategie entwickelt und Fehlverhalten (z.B. reines Ressourcen-Sammeln ohne Exploration des Ziels) vermieden wird.
 
 Als Evaluierungsmetrik definieren wir eine \textbf{Success Rate von $\ge 90\%$} \"uber ein Set von 100 \textit{unbekannten} Seeds. Des Weiteren betrachten wir die L\"ange der gefundenen Pfade anhand der Minimierung der \textit{Steps per Episode}.
 
