@@ -7,37 +7,37 @@
 \usepackage{geometry}
 \usepackage{pgfgantt}
 \usepackage{tikz}
-\usepackage{graphicx} % Für \rotatebox
-\usepackage[colorlinks=true, allcolors=blue]{hyperref} % Für klickbare Links
+\usepackage{graphicx} % F\"ur \rotatebox
+\usepackage[colorlinks=true, allcolors=blue]{hyperref} % F\"ur klickbare Links
 \geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
 
-\title{\textbf{Exposé für die Projektarbeit} \\ Entwicklung einer Custom-Engine für generative Spielwelten und Reinforcement Learning}
+\title{\textbf{Expos\'e f\"ur die Projektarbeit} \\ Entwicklung einer Custom-Engine f\"ur generative Spielwelten und Reinforcement Learning}
 \author{Florian Merlau \and Laurin [Nachname]}
-\date{März 2026}
+\date{M\"arz 2026}
 
 \begin{document}
 
 \maketitle
 
 \section{Projektidee}
-Wir planen in unserer Projektarbeit die Entwicklung eines 2D-Top-Down-Spiels (im Stil von Minecraft), welches primär als experimentelle Testumgebung für Künstliche Intelligenz (Reinforcement Learning) konzipiert ist. 
+Wir planen in unserer Projektarbeit die Entwicklung eines 2D-Top-Down-Spiels (im Stil von Minecraft), welches als experimentelle Testumgebung f\"ur K\"unstliche Intelligenz (Reinforcement Learning) konzipiert ist. 
 
-Im Gegensatz zu vielen bestehenden Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten "Chunk"-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeingültige Lösungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
+Im Gegensatz zu Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten "Chunk"-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeing\"ultige L\"osungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
 
 \section{Kurzes Glossar: Wichtige Fachbegriffe}
-Damit die Konzepte im restlichen Exposé anschaulich und gut verständlich bleiben, hier die wichtigsten Fachbegriffe kurz und einfach erklärt:
+Damit die Konzepte im restlichen Expos\'e nachvollziehbar bleiben, werden hier die zentralen Fachbegriffe kurz erkl\"art:
 \begin{itemize}
-    \item \textbf{Reinforcement Learning (RL):} Eine Technik der Künstlichen Intelligenz, die durch pures "Ausprobieren" lernt – vergleichbar mit dem Training eines Hundes. Für nützliche Aktionen gibt es eine Belohnung (Reward), für sinnlose Aktionen nicht.
-    \item \textbf{Prozedurale Generierung \& Seed:} Die Spielwelt wird nicht von Menschen vorgebaut, sondern bei jedem Start von einem Algorithmus neu "gewürfelt". Der \textit{Seed} ist dabei der zufällige Startcode: Gibt man denselben Code ein, baut der Algorithmus exakt dieselbe Welt wieder auf.
-    \item \textbf{Observation Space:} Quasi die "Augen" der KI. Anstatt bunte Bilder zu sehen, empfängt die KI eine flache Tabelle aus Zahlen, die beschreibt, was gerade um sie herum passiert und wie ihr Zustand ist.
-    \item \textbf{Headless-Modus \& Vektorisiert:} "Headless" (kopflos) bedeutet, dass das Spiel ohne echte Grafik völlig unsichtbar im Hintergrund simuliert wird. Dadurch ist es extrem schnell. "Vektorisiert" heißt, wir kopieren dieses unsichtbare Spiel gleich zigfach und lassen dutzende KIs gleichzeitig in Parallelwelten trainieren.
-    \item \textbf{Sparse vs. Dense Rewards:} "Sparse" (selten) bedeutet, es gibt die Belohnung erst ganz am Ende, wenn das Level geschafft ist. Das ist am Anfang oft zu schwer. "Dense" (dicht) bedeutet, es gibt schon für richtige Zwischenschritte (wie Bäume fällen) kleine Belohnungshäppchen.
+    \item \textbf{Reinforcement Learning (RL):} Eine Technik der K\"unstlichen Intelligenz, die durch Interaktion lernt. F\"ur n\"utzliche Aktionen gibt es eine Belohnung (Reward), f\"ur unvorteilhafte Aktionen nicht (vergleichbar mit Konditionierung).
+    \item \textbf{Prozedurale Generierung \& Seed:} Die Spielwelt wird nicht vorab modelliert, sondern bei jedem Start von einem Algorithmus generiert. Der \textit{Seed} ist dabei der zuf\"allige Startwert: Gibt man denselben Startwert ein, baut der Algorithmus exakt dieselbe Welt auf.
+    \item \textbf{Observation Space:} Der Eingabevektor der KI. Die KI empf\"angt eine Tabelle aus Zahlen, die beschreibt, was in der lokalen Umgebung passiert und wie der innere Zustand ist.
+    \item \textbf{Headless-Modus \& Vektorisiert:} "Headless" bedeutet, dass das Spiel ohne Grafikausgabe im Hintergrund simuliert wird, um Berechnungszeit zu sparen. "Vektorisiert" hei\ss{}t, dass das Spiel mehrfach instanziiert wird, sodass viele KI-Agenten parallel trainieren k\"onnen.
+    \item \textbf{Sparse vs. Dense Rewards:} "Sparse" (selten) bedeutet, es gibt die Belohnung erst am Ende der Episode, wenn das Level gel\"ost wurde. "Dense" (dicht) bedeutet, es werden auch Zwischenschritte (z.B. der Abbau von B\"aumen) mit kleineren Belohnungen honoriert.
 \end{itemize}
 
 \section{Methodische Visualisierung: Das Spielkonzept}
-Um die Schnittstelle zwischen der grafischen Darstellung (für menschliche Spieler) und den Rohdaten (für die Künstliche Intelligenz) zu verdeutlichen, zeigt die folgende Skizze das Kernlayout der Engine (\textit{StoneforgeFrontier}). 
+Um die Schnittstelle zwischen der grafischen Darstellung (f\"ur menschliche Spieler) und den Rohdaten (f\"ur die KI) zu verdeutlichen, zeigt die folgende Skizze das Kernlayout der Engine (\textit{StoneforgeFrontier}). 
 
-Während der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erhält der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erhält der Agent zusätzlich zwingend „globale“ Statusinformationen in Form eines Richtungsvektors zum generierten Ziel sowie den aktuellen Inventar- und Gesundheitsstatus.
+W\"ahrend der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erh\"alt der KI-Agent als Eingabe (\textit{Observation Space}) in erster Linie einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt). Um zielloses Umherirren in der prozeduralen Welt zu verhindern, erh\"alt der Agent zus\"atzlich „globale“ Statusinformationen in Form eines Richtungsvektors zum Ziel sowie den aktuellen Inventar- und Gesundheitsstatus.
 
 \vspace{0.5cm}
 \begin{center}
@@ -57,12 +57,12 @@ Während der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Ene
     % Grid World (7x7 example)
     \draw[step=1cm, gray!40, thin] (1, 0) grid (8, 7);
     
-    % Wände/Stein (Graue Kisten)
+    % W\"ande/Stein (Graue Kisten)
     \fill[gray!60] (1,6) rectangle (2,7); \node[font=\footnotesize] at (1.5, 6.5) {Stein};
     \fill[gray!60] (2,6) rectangle (3,7); \node[font=\footnotesize] at (2.5, 6.5) {Stein};
     \fill[gray!60] (1,5) rectangle (2,6); \node[font=\footnotesize] at (1.5, 5.5) {Stein};
 
-    % Bäume (Grüne Kisten)
+    % B\"aume (Gr\"une Kisten)
     \fill[green!50!black, rounded corners=3pt] (6.1, 5.1) rectangle (6.9, 5.9);
     \node[white, font=\tiny] at (6.5, 5.5) {Baum};
     \fill[green!50!black, rounded corners=3pt] (7.1, 4.1) rectangle (7.9, 4.9);
@@ -80,7 +80,7 @@ Während der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Ene
     \fill[blue!50] (4.2, 3.2) rectangle (4.8, 3.8);
     \node[white, font=\bfseries] at (4.5, 3.5) {P};
     
-    % Ausgerüstetes Tool (Axt)
+    % Ausger\"ustetes Tool (Axt)
     \draw[ultra thick, brown] (4.8, 3.5) -- (5.3, 3.5);
     \node[font=\tiny] at (5.5, 3.5) {Axt};
 
@@ -106,51 +106,51 @@ Während der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Ene
 \vspace{0.5cm}
 
 \section{Technologien und Architektur}
-Um maximale Performance für das CPU-intensive KI-Training zu gewährleisten, verzichten wir auf vorgefertigte Game-Engines (wie Unity) und entwickeln eine performante, maßgeschneiderte Datenarchitektur:
+F\"ur das CPU-intensive KI-Training verzichten wir auf vorgefertigte Game-Engines (wie Unity) und entwickeln eine eigene Datenarchitektur:
 
 \subsection{Engine und Schnittstellen}
 \begin{itemize}
-    \item \textbf{C++20 (Core Engine):} Die komplette Spielmechanik wird hochperformant in C++ geschrieben. Das ermöglicht einen "Headless"-Modus, durch den die KI extrem schnell trainieren kann. Dies erlaubt es, dutzende Instanzen parallel laufen zu lassen (\textit{Vectorized Environments}), wovon das Training massiv profitiert.
+    \item \textbf{C++20 (Core Engine):} Die Spielmechanik wird in C++ implementiert. Das erm\"oglicht einen "Headless"-Modus, durch den die KI das Rendern von Grafiken \"uberspringen kann. Dies erlaubt es, mehrere Instanzen parallel auszuf\"uhren (\textit{Vectorized Environments}), was den Trainingsprozess beschleunigt.
     \item \textbf{Python-Bindings (Pybind11 \& Gymnasium):} Um die C++-Engine mit den KI-Algorithmen zu verbinden, programmieren wir Schnittstellen via \textit{pybind11}. Das Spiel wird dadurch als standardisiertes \textit{Gymnasium}-Environment in Python ladbar.
 \end{itemize}
 
 \subsection{Prozedurale Weltengenerierung}
-Die Architektur der Welten benötigt eine Balance aus Varianz und Struktur. Dafür setzen wir auf einen hybriden Ansatz:
+Die Architektur der Welten ben\"otigt eine Balance aus Varianz und Struktur. Daf\"ur setzen wir auf einen hybriden Ansatz:
 \begin{itemize}
-    \item \textbf{Layered Noise \& Cellular Automata:} Die Basis für Biom-Struktur und Ressourcenverteilung bildet performantes Rauschen (Noise). Um klar definierte Hindernisse und Höhlensysteme zu schaffen, glätten wir diese Struktur mit Zellulären Automaten.
-    \item \textbf{Flood-Fill Validierung:} Wir implementieren nach der Generierung einen Flood-Fill-Algorithmus, der garantiert, dass Zielpunkte physisch erreichbar bleiben. Ein unlösbarer Seed behindert andernfalls das KI-Training massiv.
-    \item \textbf{Lazy Evaluation:} Die Generierung generiert Chunks strikt \textit{on-demand} (lazy). Level-Bereiche werden erst berechnet, wenn die KI sich nähert, was den RAM-Bedarf minimiert. Um dabei zu verhindern, dass die KI später in unlösbare Sackgassen läuft, garantiert ein vorgelagerter Makro-Graph die Erreichbarkeit des Ziels auf globaler Ebene, \textit{bevor} die feingranularen Chunks instanziiert werden.
+    \item \textbf{Layered Noise \& Cellular Automata:} Die Basis f\"ur Biom-Struktur und Ressourcenverteilung bildet Rauschen (Noise). Um definierte Hindernisse und H\"ohlensysteme zu schaffen, gl\"atten wir diese Struktur mit Zellul\"aren Automaten.
+    \item \textbf{Flood-Fill Validierung:} Wir implementieren einen Flood-Fill-Algorithmus, der sicherstellt, dass Zielpunkte physisch erreichbar bleiben. Ein unl\"osbarer Seed w\"urde das KI-Training andernfalls blockieren.
+    \item \textbf{Lazy Evaluation:} Die Engine generiert Chunks \textit{on-demand} (lazy). Level-Bereiche werden berechnet, wenn die KI sich n\"ahert, was den RAM-Bedarf reduziert. Um dabei zu verhindern, dass die KI in unl\"osbare Sackgassen l\"auft, stellt ein vorgelagerter Makro-Graph die Erreichbarkeit des Ziels auf globaler Ebene sicher, bevor die feingranularen Chunks instanziiert werden.
 \end{itemize}
 
 \section{KI-Algorithmen und Training}
-Für das Training in den prozeduralen Umgebungen nutzen wir folgendes RL-Setup:
+F\"ur das Training in den prozeduralen Umgebungen nutzen wir folgendes RL-Setup:
 
 \begin{itemize}
-    \item \textbf{PPO (Proximal Policy Optimization) \cite{schulman2017ppo}:} Ein robustes Policy-Gradient-Verfahren (via \textit{Stable-Baselines3} \cite{raffin2021stable}), das als Industrie-Standard gilt und stabile Lernkurven bietet.
-    \item \textbf{Upgrades bei Stagnation:} Sollte der Agent im Grid stagnieren, planen wir funktionelle Erweiterungen wie \textbf{PPO-LSTM} (Kurzzeitgedächtnis für Navigation in teilweise beobachtbaren Umgebungen) oder \textbf{Intrinsic Curiosity / RND} \cite{pathak2017icm, burda2018rnd} (um den Agenten aktiv zur Exploration zu motivieren).
+    \item \textbf{PPO (Proximal Policy Optimization) \cite{schulman2017ppo}:} Ein Policy-Gradient-Verfahren (via \textit{Stable-Baselines3} \cite{raffin2021stable}), das in der Praxis oft stabile Lernkurven aufweist.
+    \item \textbf{Upgrades bei Stagnation:} Sollte der Agent im Grid stagnieren, planen wir funktionelle Erweiterungen wie \textbf{PPO-LSTM} (Kurzzeitged\"achtnis f\"ur Navigation in teilweise beobachtbaren Umgebungen) oder \textbf{Intrinsic Curiosity / RND} \cite{pathak2017icm, burda2018rnd} zur Motivationssteuerung.
 \end{itemize}
 
 \subsection{Reward Design und Evaluierung}
-Das Design der Belohnungsfunktion (Reward Function) ist maßgeblich für den Erfolg des Agenten. Um dem Problem stark verzögerter Belohnungen (\textit{Sparse Rewards}) in weitläufigen Leveln entgegenzuwirken, setzen wir auf ein hybrides Modell: Der Agent erhält einen signifikanten \textit{Sparse Reward} für das Erreichen des Ziels, gestützt durch kleine \textit{Dense Rewards} für progressionsfördernde Aktionen (z.B. den Abbau benötigter Ressourcen oder die Reduzierung der Distanz zum Ziel).
+Das Design der Belohnungsfunktion (Reward Function) hat Einfluss auf das Verhalten des Agenten. Um stark verz\"ogerten Belohnungen (\textit{Sparse Rewards}) entgegenzuwirken, setzen wir auf ein hybrides Modell: Der Agent erh\"alt einen \textit{Sparse Reward} f\"ur das Erreichen des Ziels, gest\"utzt durch kleinere \textit{Dense Rewards} f\"ur progressionsf\"ordernde Aktionen (z.B. den Abbau ben\"otigter Ressourcen oder die Reduzierung der Distanz).
 
-Als objektive Evaluierungsmetrik für ein „erfolgreiches“ Basis-Training definieren wir eine \textbf{Success Rate von $\ge 90\%$} über ein Set von 100 \textit{unbekannten} Seeds. Des Weiteren evaluieren wir die Effizienz der gefundenen Pfade anhand der Minimierung der \textit{Steps per Episode}.
+Als Evaluierungsmetrik definieren wir eine \textbf{Success Rate von $\ge 90\%$} \"uber ein Set von 100 \textit{unbekannten} Seeds. Des Weiteren betrachten wir die L\"ange der gefundenen Pfade anhand der Minimierung der \textit{Steps per Episode}.
 
 \section{Projektziele}
 \subsection{Must-Have-Kriterien}
 \begin{enumerate}
     \item Entwicklung der C++-Engine mit deterministischer Chunk-Generierung.
-    \item Brücke zwischen C++ und Python mittels \textit{pybind11} als vektorisiertes \textit{Gymnasium}-Environment.
+    \item Br\"ucke zwischen C++ und Python mittels \textit{pybind11} als vektorisiertes \textit{Gymnasium}-Environment.
     \item Basis-Training eines PPO-Agenten, der auf unbekannten Seeds sein Zielgebiet erreicht.
 \end{enumerate}
 \subsection{Nice-to-Have-Kriterien}
 \begin{enumerate}
     \item Grafischer Raylib-Client zur Live-Beobachtung (wie in der Skizze zu sehen).
-    \item System-Upgrades wie PPO-LSTM ("Gedächtnis") oder Curiosity (RND/ICM).
-    \item Detailreiches Crafting-System (Holz abbauen als Voraussetzung für Werkzeuge).
+    \item System-Upgrades wie PPO-LSTM oder Curiosity (RND/ICM).
+    \item Erweitertes Crafting-System (Holz abbauen als Voraussetzung f\"ur Werkzeuge).
 \end{enumerate}
 
 \section{Zeitplan}
-Die Phase der Umsetzung erstreckt sich über gut 4,5 Monate (Mitte April bis 10. August). Der iterative Zeitplan ist wie folgt aufgeteilt:
+Die Phase der Umsetzung erstreckt sich \"uber 4,5 Monate (Mitte April bis 10. August). Der Zeitplan ist wie folgt aufgeteilt:
 
 \vspace{0.5cm}
 \begin{center}
