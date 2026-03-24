@@ -1,0 +1,160 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{pgfgantt}
+\usepackage{tikz}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+\title{\textbf{Exposé für die Projektarbeit} \\ Entwicklung einer Custom-Engine für generative Spielwelten und Reinforcement Learning}
+\author{Florian Merlau \and Laurin [Nachname]}
+\date{März 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Projektidee}
+Wir planen in unserer Projektarbeit die Entwicklung eines 2D-Top-Down-Spiels (im Stil von Minecraft), welches primär als experimentelle Testumgebung für Künstliche Intelligenz (Reinforcement Learning) konzipiert ist. 
+
+Im Gegensatz zu vielen bestehenden Projekten, die feste Level verwenden, soll unsere Architektur auf einer deterministischen, prozedural generierten "Chunk"-Welt basieren. Dadurch variieren die Level bei jedem Durchlauf anhand eines Seeds. Der trainierte KI-Agent kann somit keine Maps auswendig lernen, sondern muss allgemeingültige Lösungsstrategien (Ressourcen abbauen, Hindernissen ausweichen, Zielpunkte finden) entwickeln.
+
+\section{Methodische Visualisierung: Das Spielkonzept}
+Um die Schnittstelle zwischen der grafischen Darstellung (für menschliche Spieler) und den Rohdaten (für die Künstliche Intelligenz) zu verdeutlichen, zeigt die folgende Skizze das Kernlayout der Engine (\textit{StoneforgeFrontier}). 
+
+Während der visuelle Client (Raylib) die gesamte Karte sowie das UI (Leben, Energie, Inventar-Hotbar) rendert, erhält der KI-Agent als Eingabe (\textit{Observation Space}) primär nur einen numerischen Array des lokalen Umfelds (hier als rote gestrichelte Box dargestellt) sowie seine Statuswerte.
+
+\vspace{0.5cm}
+\begin{center}
+\begin{tikzpicture}[x=1cm, y=1cm, scale=0.85, transform shape]
+    % Hintergrund Rahmen (Fenster)
+    \draw[thick, rounded corners=5pt, fill=black!5] (-1, -3.5) rectangle (10, 8.5);
+    \node[anchor=north west, font=\bfseries\small] at (-1, 8.5) {Raylib Game Client};
+    
+    % HUD (Top)
+    % Hearts (HP)
+    \node[anchor=west, text=red] at (0, 7.5) {$\heartsuit \heartsuit \heartsuit \heartsuit \heartsuit$};
+    % Energy bar
+    \draw[thick, fill=yellow!60] (6, 7.3) rectangle (9, 7.7);
+    \node[anchor=west, text=black, font=\footnotesize] at (4.5, 7.5) {Energy:};
+    \draw[thick] (6, 7.3) rectangle (9, 7.7); % Frame
+
+    % Grid World (7x7 example)
+    \draw[step=1cm, gray!40, thin] (1, 0) grid (8, 7);
+    
+    % Wände/Stein (Graue Kisten)
+    \fill[gray!60] (1,6) rectangle (2,7); \node[font=\footnotesize] at (1.5, 6.5) {Stein};
+    \fill[gray!60] (2,6) rectangle (3,7); \node[font=\footnotesize] at (2.5, 6.5) {Stein};
+    \fill[gray!60] (1,5) rectangle (2,6); \node[font=\footnotesize] at (1.5, 5.5) {Stein};
+
+    % Bäume (Grüne Kisten)
+    \fill[green!50!black, rounded corners=3pt] (6.1, 5.1) rectangle (6.9, 5.9);
+    \node[white, font=\tiny] at (6.5, 5.5) {Baum};
+    \fill[green!50!black, rounded corners=3pt] (7.1, 4.1) rectangle (7.9, 4.9);
+    \node[white, font=\tiny] at (7.5, 4.5) {Baum};
+
+    % Werkbank
+    \fill[brown!80!black] (2.1, 2.1) rectangle (2.9, 2.9);
+    \node[white, font=\tiny] at (2.5, 2.5) {Bank};
+    
+    % Dungeon Ausgang (Ziel)
+    \fill[purple!70] (6.1, 1.1) rectangle (6.9, 1.9);
+    \node[white, font=\tiny] at (6.5, 1.5) {Ziel};
+
+    % Player
+    \fill[blue!50] (4.2, 3.2) rectangle (4.8, 3.8);
+    \node[white, font=\bfseries] at (4.5, 3.5) {P};
+    
+    % Ausgerüstetes Tool (Axt)
+    \draw[ultra thick, brown] (4.8, 3.5) -- (5.3, 3.5);
+    \node[font=\tiny] at (5.5, 3.5) {Axt};
+
+    % Agent Observation Space (rotes Sichtfeld)
+    \draw[red, dashed, very thick] (2, 1) rectangle (7, 6);
+    \node[red, font=\footnotesize, anchor=north] at (4.5, 1) {Observation Space (Sichtfeld der KI)};
+
+    % Hotbar / UI Inventory (Bottom)
+    \draw[thick, fill=gray!20] (0.5, -2) rectangle (8.5, -1);
+    \foreach \x in {1,...,9} {
+        \draw[thick] (-0.5 + \x, -2) rectangle (0.5 + \x, -1);
+        \node[font=\tiny, anchor=north west] at (-0.5 + \x, -1) {\x};
+    }
+    % Selected Slot (1)
+    \draw[ultra thick, blue] (0.5, -2) rectangle (1.5, -1);
+    
+    % Items in Hotbar
+    \node[font=\footnotesize] at (1, -1.5) {Axt};
+    \node[font=\footnotesize] at (2, -1.5) {Holz};
+    \node[font=\footnotesize] at (3, -1.5) {Stein};
+\end{tikzpicture}
+\end{center}
+\vspace{0.5cm}
+
+\section{Technologien und Architektur}
+Um maximale Performance für das CPU-intensive KI-Training zu gewährleisten, verzichten wir auf vorgefertigte Game-Engines (wie Unity) und entwickeln eine performante, maßgeschneiderte Datenarchitektur:
+
+\subsection{Engine und Schnittstellen}
+\begin{itemize}
+    \item \textbf{C++20 (Core Engine):} Die komplette Spielmechanik wird hochperformant in C++ geschrieben. Das ermöglicht einen "Headless"-Modus, durch den die KI extrem schnell trainieren kann. Dies erlaubt es, dutzende Instanzen parallel laufen zu lassen (\textit{Vectorized Environments}), wovon das Training massiv profitiert.
+    \item \textbf{Python-Bindings (Pybind11 \& Gymnasium):} Um die C++-Engine mit den KI-Algorithmen zu verbinden, programmieren wir Schnittstellen via \textit{pybind11}. Das Spiel wird dadurch als standardisiertes \textit{Gymnasium}-Environment in Python ladbar.
+\end{itemize}
+
+\subsection{Prozedurale Weltengenerierung}
+Die Architektur der Welten benötigt eine Balance aus Varianz und Struktur. Dafür setzen wir auf einen hybriden Ansatz:
+\begin{itemize}
+    \item \textbf{Layered Noise \& Cellular Automata:} Die Basis für Biom-Struktur und Ressourcenverteilung bildet performantes Rauschen (Noise). Um klar definierte Hindernisse und Höhlensysteme zu schaffen, glätten wir diese Struktur mit Zellulären Automaten.
+    \item \textbf{Flood-Fill Validierung:} Wir implementieren nach der Generierung einen Flood-Fill-Algorithmus, der garantiert, dass Zielpunkte physisch erreichbar bleiben. Ein unlösbarer Seed behindert andernfalls das KI-Training massiv.
+    \item \textbf{Lazy Evaluation:} Die Generierung generiert Chunks strikt \textit{on-demand} (lazy). Level-Bereiche werden erst berechnet, wenn die KI sich nähert, was den RAM-Bedarf minimiert.
+\end{itemize}
+
+\section{KI-Algorithmen und Training}
+Für das Training in den prozeduralen Umgebungen nutzen wir folgendes RL-Setup:
+
+\begin{itemize}
+    \item \textbf{PPO (Proximal Policy Optimization):} Ein robustes Policy-Gradient-Verfahren (via \textit{Stable-Baselines3}), das als Industrie-Standard gilt und stabile Lernkurven bietet.
+    \item \textbf{Upgrades bei Stagnation:} Sollte der Agent im Grid stagnieren, planen wir funktionelle Erweiterungen wie \textbf{PPO-LSTM} (Kurzzeitgedächtnis für Navigation) oder \textbf{Intrinsic Curiosity / RND} (um den Agenten aktiv zur Exploration zu motivieren).
+\end{itemize}
+
+\section{Projektziele}
+\subsection{Must-Have-Kriterien}
+\begin{enumerate}
+    \item Entwicklung der C++-Engine mit deterministischer Chunk-Generierung.
+    \item Brücke zwischen C++ und Python mittels \textit{pybind11} als vektorisiertes \textit{Gymnasium}-Environment.
+    \item Basis-Training eines PPO-Agenten, der auf unbekannten Seeds sein Zielgebiet erreicht.
+\end{enumerate}
+\subsection{Nice-to-Have-Kriterien}
+\begin{enumerate}
+    \item Grafischer Raylib-Client zur Live-Beobachtung (wie in der Skizze zu sehen).
+    \item System-Upgrades wie PPO-LSTM ("Gedächtnis") oder Curiosity (RND/ICM).
+    \item Detailreiches Crafting-System (Holz abbauen als Voraussetzung für Werkzeuge).
+\end{enumerate}
+
+\section{Zeitplan}
+Die Phase der Umsetzung erstreckt sich über gut 4,5 Monate (Mitte April bis 10. August). Der iterative Zeitplan ist wie folgt aufgeteilt:
+
+\vspace{0.5cm}
+\begin{center}
+\begin{ganttchart}[
+    x unit=0.75cm,
+    y unit title=0.6cm,
+    y unit chart=0.7cm,
+    vgrid,
+    hgrid,
+    title label font=\bfseries\footnotesize,
+    bar label font=\footnotesize,
+    bar/.append style={fill=gray!30, rounded corners=2pt}
+]{1}{18}
+\gantttitle{Projektphasen (Mitte April bis 10. August 2026)}{18} \\
+\gantttitle{April}{4} \gantttitle{Mai}{4} \gantttitle{Juni}{4} \gantttitle{Juli}{4} \gantttitle{August}{2} \\
+\ganttbar{1. C++ Core-Engine (Mechaniken)}{1}{5} \\
+\ganttbar{2. Python-Bindings \& Gym}{5}{8} \\
+\ganttbar{3. KI-Training (PPO \& Rewards)}{9}{13} \\
+\ganttbar{4. Algorithmus-Upgrades \& Raylib}{13}{16} \\
+\ganttbar{5. Abschluss \& Dokumentation}{15}{18}
+\end{ganttchart}
+\end{center}
+
+\end{document}
