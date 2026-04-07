@@ -366,6 +366,22 @@ TileType Simulation::tileAt(int x, int y) const {
     return world_.tileAt(x, y);
 }
 
+int Simulation::biomeTagAt(int x, int y) const {
+    return world_.biomeTagAt(x, y);
+}
+
+std::string Simulation::biomeNameAt(int x, int y) const {
+    return std::string(world_.biomeNameAt(x, y));
+}
+
+bool Simulation::isLakeAt(int x, int y) const {
+    return world_.isLakeAt(x, y);
+}
+
+bool Simulation::isPlayerInLake() const {
+    return world_.isLakeAt(player_.x, player_.y);
+}
+
 const std::vector<Mob>& Simulation::mobs() const {
     return mobs_;
 }

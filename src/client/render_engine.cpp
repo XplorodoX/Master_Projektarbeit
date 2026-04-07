@@ -762,6 +762,8 @@ void drawParallaxBackground(int screenW, int screenH, float t) {
 void drawStyledTile(
     const Texture2D& atlas,
     stoneforge::TileType type,
+    int biomeTag,
+    Color biomeTint,
     int wx,
     int wy,
     int px,
@@ -770,45 +772,72 @@ void drawStyledTile(
     float t,
     const std::vector<RuntimeBiome>& biomes
 ) {
-    const BiomeWeights bw = biomeWeights(wx, wy, biomes);
-
     int primary = 0;
-    int secondary = 1;
-    float secondaryWeight = 0.0F;
-    dominantBiomes(bw, primary, secondary, secondaryWeight);
+    if(!biomes.empty()) {
+        int mapped = 0;
+        switch(biomeTag) {
+            case 0:  // grasland
+                mapped = 1;
+                break;
+            case 1:  // wald
+                mapped = 2;
+                break;
+            case 2:  // wueste
+                mapped = 1;
+                break;
+            case 3:  // bergland
+                mapped = 0;
+                break;
+            case 4:  // steppe
+                mapped = 1;
+                break;
+            case 5:  // tundra
+                mapped = 0;
+                break;
+            case 6:  // hoelle
+                mapped = 2;
+                break;
+            default:
+                mapped = 0;
+                break;
+        }
+        primary = std::clamp(mapped, 0, static_cast<int>(biomes.size()) - 1);
+    }
+    const int secondary = primary;
+    const float secondaryWeight = 0.0F;
     const int paletteHint = biomes.empty() ? 0 : biomes[static_cast<std::size_t>(std::clamp(primary, 0, static_cast<int>(biomes.size()) - 1))].paletteHint;
 
     if(type == stoneforge::TileType::Empty) {
-        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, biomeTint);
         const float blend = std::clamp(secondaryWeight * 1.2F - 0.15F, 0.0F, 0.65F);
         if(blend > 0.02F) {
-            drawSpriteTile(atlas, floorVariant(biomes, secondary, wx + 13, wy + 7), px, py, tileSize, Fade(WHITE, blend));
+            drawSpriteTile(atlas, floorVariant(biomes, secondary, wx + 13, wy + 7), px, py, tileSize, Fade(biomeTint, blend));
         }
         return;
     }
 
     if(type == stoneforge::TileType::Wall) {
-        drawSpriteTile(atlas, wallVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, wallVariant(biomes, primary, wx, wy), px, py, tileSize, biomeTint);
         const float blend = std::clamp(secondaryWeight * 1.2F - 0.12F, 0.0F, 0.60F);
         if(blend > 0.02F) {
-            drawSpriteTile(atlas, wallVariant(biomes, secondary, wx + 3, wy + 11), px, py, tileSize, Fade(WHITE, blend));
+            drawSpriteTile(atlas, wallVariant(biomes, secondary, wx + 3, wy + 11), px, py, tileSize, Fade(biomeTint, blend));
         }
         return;
     }
 
     if(type == stoneforge::TileType::Resource) {
-        drawSpriteTile(atlas, SpriteId::Ore, px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, SpriteId::Ore, px, py, tileSize, biomeTint);
         return;
     }
 
     if(type == stoneforge::TileType::Tree) {
-        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, biomeTint);
         drawOrganicTree(wx, wy, px, py, tileSize, paletteHint, t);
         return;
     }
 
     if(type == stoneforge::TileType::Workbench) {
-        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, WHITE);
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, biomeTint);
         drawSpriteTile(atlas, SpriteId::Workbench, px, py, tileSize, WHITE);
         return;
     }
@@ -996,6 +1025,141 @@ Color forcefieldColor(float value) {
     return Color{red, green, blue, 92};
 }
 
+Color biomeColorForTag(int biomeTag) {
+    switch(biomeTag) {
+        case 0:  // grasland
+            return Color{138, 226, 112, 255};
+        case 1:  // wald
+            return Color{34, 102, 52, 255};
+        case 2:  // wueste
+            return Color{234, 208, 96, 255};
+        case 3:  // bergland
+            return Color{146, 146, 152, 255};
+        case 4:  // steppe
+            return Color{184, 204, 86, 255};
+        case 5:  // tundra
+            return Color{78, 202, 194, 255};
+        case 6:  // hoelle
+            return Color{204, 62, 56, 255};
+        default:
+            return Color{120, 120, 120, 255};
+    }
+}
+
+Color lakeTintColor() {
+    return Color{68, 132, 201, 118};
+}
+
+Color biomeTintAtTile(const stoneforge::Simulation& sim, int wx, int wy) {
+    auto floorDivLocal = [](int value, int divisor) {
+        const int q = value / divisor;
+        const int r = value % divisor;
+        return (r != 0 && ((r > 0) != (divisor > 0))) ? q - 1 : q;
+    };
+    auto positiveModLocal = [](int value, int divisor) {
+        int result = value % divisor;
+        if(result < 0) {
+            result += divisor;
+        }
+        return result;
+    };
+    auto smoothstep = [](float t) {
+        t = std::clamp(t, 0.0F, 1.0F);
+        return t * t * (3.0F - 2.0F * t);
+    };
+    auto blendToWhite = [](const Color& c, float strength) {
+        const float s = std::clamp(strength, 0.0F, 1.0F);
+        return Color{
+            static_cast<unsigned char>(255.0F + (static_cast<float>(c.r) - 255.0F) * s),
+            static_cast<unsigned char>(255.0F + (static_cast<float>(c.g) - 255.0F) * s),
+            static_cast<unsigned char>(255.0F + (static_cast<float>(c.b) - 255.0F) * s),
+            255
+        };
+    };
+
+    const int chunkSize = stoneforge::World::kChunkSize;
+    const int cx = floorDivLocal(wx, chunkSize);
+    const int cy = floorDivLocal(wy, chunkSize);
+    const int lx = positiveModLocal(wx, chunkSize);
+    const int ly = positiveModLocal(wy, chunkSize);
+
+    auto chunkTag = [&sim, chunkSize](int ccx, int ccy) {
+        return sim.biomeTagAt(ccx * chunkSize, ccy * chunkSize);
+    };
+
+    const int baseTag = chunkTag(cx, cy);
+    Color baseColor = biomeColorForTag(baseTag);
+    if(baseTag == 3) {
+        bool mountainCore = true;
+        for(int oy = -2; oy <= 2 && mountainCore; ++oy) {
+            for(int ox = -2; ox <= 2; ++ox) {
+                if(chunkTag(cx + ox, cy + oy) != 3) {
+                    mountainCore = false;
+                    break;
+                }
+            }
+        }
+        if(mountainCore) {
+            baseColor = Color{238, 238, 238, 255};
+        }
+    }
+
+    float r = static_cast<float>(baseColor.r);
+    float g = static_cast<float>(baseColor.g);
+    float b = static_cast<float>(baseColor.b);
+    float w = 1.0F;
+
+    const int blendWidth = 12;
+    auto accumulate = [&](int tag, float weight) {
+        const Color c = biomeColorForTag(tag);
+        r += static_cast<float>(c.r) * weight;
+        g += static_cast<float>(c.g) * weight;
+        b += static_cast<float>(c.b) * weight;
+        w += weight;
+    };
+
+    const float leftI = smoothstep(static_cast<float>(blendWidth - lx) / static_cast<float>(blendWidth));
+    const float rightI = smoothstep(static_cast<float>(lx - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth));
+    const float topI = smoothstep(static_cast<float>(blendWidth - ly) / static_cast<float>(blendWidth));
+    const float bottomI = smoothstep(static_cast<float>(ly - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth));
+
+    if(leftI > 0.0F) {
+        accumulate(chunkTag(cx - 1, cy), leftI * 0.75F);
+    }
+    if(rightI > 0.0F) {
+        accumulate(chunkTag(cx + 1, cy), rightI * 0.75F);
+    }
+    if(topI > 0.0F) {
+        accumulate(chunkTag(cx, cy - 1), topI * 0.75F);
+    }
+    if(bottomI > 0.0F) {
+        accumulate(chunkTag(cx, cy + 1), bottomI * 0.75F);
+    }
+
+    if(leftI > 0.0F && topI > 0.0F) {
+        accumulate(chunkTag(cx - 1, cy - 1), std::min(leftI, topI) * 0.45F);
+    }
+    if(rightI > 0.0F && topI > 0.0F) {
+        accumulate(chunkTag(cx + 1, cy - 1), std::min(rightI, topI) * 0.45F);
+    }
+    if(leftI > 0.0F && bottomI > 0.0F) {
+        accumulate(chunkTag(cx - 1, cy + 1), std::min(leftI, bottomI) * 0.45F);
+    }
+    if(rightI > 0.0F && bottomI > 0.0F) {
+        accumulate(chunkTag(cx + 1, cy + 1), std::min(rightI, bottomI) * 0.45F);
+    }
+
+    const Color mixed{
+        static_cast<unsigned char>(std::clamp(r / w, 0.0F, 255.0F)),
+        static_cast<unsigned char>(std::clamp(g / w, 0.0F, 255.0F)),
+        static_cast<unsigned char>(std::clamp(b / w, 0.0F, 255.0F)),
+        255
+    };
+
+    // Natural look: tint materials toward biome color, not a transparent paint layer.
+    return blendToWhite(mixed, 0.46F);
+}
+
 Color potentialGoalAreaColor() {
     return Color{245, 224, 92, 86};
 }
@@ -1140,7 +1304,16 @@ void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, i
     drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, tint);
 }
 
-void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, float t, const stoneforge::Vec2i& facing, const std::string& heldItemId) {
+void drawPlayerSprite(
+    const Texture2D& atlas,
+    int px,
+    int py,
+    int tileSize,
+    float t,
+    const stoneforge::Vec2i& facing,
+    const std::string& heldItemId,
+    bool submerged
+) {
     const int bob = static_cast<int>(std::sin(t * 7.0F) * 1.6F);
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.28F, tileSize * 0.11F, Fade(BLACK, 0.35F));
     drawSpriteTile(atlas, SpriteId::Player, px, py + bob, tileSize, WHITE);
@@ -1159,6 +1332,10 @@ void drawPlayerSprite(const Texture2D& atlas, int px, int py, int tileSize, floa
         );
         const std::string glyph = itemGlyph(heldItemId);
         DrawText(glyph.c_str(), hx - 4, hy - 6, 12, WHITE);
+    }
+
+    if(submerged) {
+        DrawRectangle(px, py + tileSize / 2, tileSize, tileSize / 2 + 1, Color{68, 132, 201, 220});
     }
 }
 
@@ -1249,8 +1426,10 @@ int stoneforge::client::RenderEngine::run() {
     bool autoWalkEnabled = false;
     bool forcefieldEnabled = false;
     bool showPotentialGoalSpawnArea = false;
+    bool showChunkBorders = false;
     bool thresholdInputActive = false;
     std::string thresholdInput = "0.1";
+    double lakeNextMoveAllowedAt = 0.0;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -1326,7 +1505,9 @@ int stoneforge::client::RenderEngine::run() {
                 autoWalkEnabled = false;
                 forcefieldEnabled = false;
                 showPotentialGoalSpawnArea = false;
+                showChunkBorders = false;
                 thresholdInputActive = false;
+                lakeNextMoveAllowedAt = 0.0;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -1448,7 +1629,9 @@ int stoneforge::client::RenderEngine::run() {
             autoWalkEnabled = false;
             forcefieldEnabled = false;
             showPotentialGoalSpawnArea = false;
+            showChunkBorders = false;
             thresholdInputActive = false;
+            lakeNextMoveAllowedAt = 0.0;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_G) && !sim.done()) {
@@ -1461,6 +1644,10 @@ int stoneforge::client::RenderEngine::run() {
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_P) && !sim.done()) {
             showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
+        }
+
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_B) && !sim.done()) {
+            showChunkBorders = !showChunkBorders;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
@@ -1582,6 +1769,33 @@ int stoneforge::client::RenderEngine::run() {
                 const stoneforge::Vec2i playerBefore = sim.playerPos();
                 const int hpBefore = sim.hp();
 
+                const bool moveAction =
+                    action == stoneforge::Action::MoveUp || action == stoneforge::Action::MoveDown || action == stoneforge::Action::MoveLeft ||
+                    action == stoneforge::Action::MoveRight;
+                if(moveAction) {
+                    stoneforge::Vec2i delta{0, 0};
+                    if(action == stoneforge::Action::MoveUp) {
+                        delta = {0, -1};
+                    } else if(action == stoneforge::Action::MoveDown) {
+                        delta = {0, 1};
+                    } else if(action == stoneforge::Action::MoveLeft) {
+                        delta = {-1, 0};
+                    } else if(action == stoneforge::Action::MoveRight) {
+                        delta = {1, 0};
+                    }
+
+                    const stoneforge::Vec2i target{playerBefore.x + delta.x, playerBefore.y + delta.y};
+                    const bool inLake = sim.isPlayerInLake() || sim.isLakeAt(target.x, target.y);
+                    if(inLake) {
+                        const double now = GetTime();
+                        if(now < lakeNextMoveAllowedAt) {
+                            action = stoneforge::Action::Wait;
+                        } else {
+                            lakeNextMoveAllowedAt = now + 0.40;
+                        }
+                    }
+                }
+
                 if(action == stoneforge::Action::MoveUp) {
                     facing = {0, -1};
                 } else if(action == stoneforge::Action::MoveDown) {
@@ -1694,8 +1908,42 @@ int stoneforge::client::RenderEngine::run() {
 
                 const int px = centerX + vx * tileSize;
                 const int py = centerY + vy * tileSize;
+                const Color biomeTint = biomeTintAtTile(sim, wx, wy);
 
-                drawStyledTile(atlas, sim.tileAt(wx, wy), wx, wy, px, py, tileSize, t, runtimeBiomes);
+                drawStyledTile(atlas, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy), biomeTint, wx, wy, px, py, tileSize, t, runtimeBiomes);
+                if(sim.isLakeAt(wx, wy)) {
+                    DrawRectangle(px, py, tileSize, tileSize, lakeTintColor());
+                }
+            }
+        }
+
+        if(showChunkBorders) {
+            auto positiveModLocal = [](int value, int divisor) {
+                int result = value % divisor;
+                if(result < 0) {
+                    result += divisor;
+                }
+                return result;
+            };
+
+            const int chunkSize = stoneforge::World::kChunkSize;
+            const Color borderColor = Color{255, 235, 92, 210};
+            const int borderThickness = std::max(1, tileSize / 12);
+
+            for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
+                for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
+                    const int wx = player.x + vx;
+                    const int wy = player.y + vy;
+                    const int px = centerX + vx * tileSize;
+                    const int py = centerY + vy * tileSize;
+
+                    if(positiveModLocal(wx, chunkSize) == 0) {
+                        DrawRectangle(px, py, borderThickness, tileSize, borderColor);
+                    }
+                    if(positiveModLocal(wy, chunkSize) == 0) {
+                        DrawRectangle(px, py, tileSize, borderThickness, borderColor);
+                    }
+                }
             }
         }
 
@@ -1751,7 +1999,20 @@ int stoneforge::client::RenderEngine::run() {
         const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
 
         if(!inventoryOpen && hasPlacePreview) {
-            drawStyledTile(atlas, previewPlaceTile, hoverTile.x, hoverTile.y, hoverPx, hoverPy, tileSize, t, runtimeBiomes);
+            const Color previewBiomeTint = biomeTintAtTile(sim, hoverTile.x, hoverTile.y);
+            drawStyledTile(
+                atlas,
+                previewPlaceTile,
+                sim.biomeTagAt(hoverTile.x, hoverTile.y),
+                previewBiomeTint,
+                hoverTile.x,
+                hoverTile.y,
+                hoverPx,
+                hoverPy,
+                tileSize,
+                t,
+                runtimeBiomes
+            );
             const Color overlay = hoverCanPlace ? Fade(Color{126, 236, 156, 255}, 0.42F) : Fade(Color{236, 116, 116, 255}, 0.45F);
             DrawRectangle(hoverPx, hoverPy, tileSize, tileSize, overlay);
             DrawRectangleLinesEx(
@@ -1821,7 +2082,16 @@ int stoneforge::client::RenderEngine::run() {
             ++mobIdx;
         }
 
-        drawPlayerSprite(atlas, centerX, centerY, tileSize, t, facing, sim.hotbarSlot(sim.hotbarSelection()).itemId);
+        drawPlayerSprite(
+            atlas,
+            centerX,
+            centerY,
+            tileSize,
+            t,
+            facing,
+            sim.hotbarSlot(sim.hotbarSelection()).itemId,
+            sim.isPlayerInLake()
+        );
         drawParticles(particles, player, centerX, centerY, tileSize);
 
         if(hitFlash > 0.01F) {
@@ -1835,15 +2105,22 @@ int stoneforge::client::RenderEngine::run() {
 
         const stoneforge::Vec2i posNow = sim.playerPos();
         const stoneforge::Vec2i goalNow = sim.exitPos();
+        const std::string biomeNow = sim.biomeNameAt(posNow.x, posNow.y);
         const int goalDistance = std::abs(goalNow.x - posNow.x) + std::abs(goalNow.y - posNow.y);
         const Rectangle autoWalkBtn = {24.0F, 24.0F, 210.0F, 40.0F};
         const Rectangle forcefieldBtn = {244.0F, 24.0F, 226.0F, 40.0F};
         const Rectangle potentialGoalBtn = {478.0F, 24.0F, 286.0F, 40.0F};
+        const Rectangle chunkBordersBtn = {772.0F, 24.0F, 236.0F, 40.0F};
         const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
         const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
         const bool potentialGoalClicked = drawButton(
             potentialGoalBtn,
             showPotentialGoalSpawnArea ? "ShowPotentialGoalSpawnArea: ON" : "ShowPotentialGoalSpawnArea: OFF",
+            !sim.done()
+        );
+        const bool chunkBordersClicked = drawButton(
+            chunkBordersBtn,
+            showChunkBorders ? "ShowChunkBorders: ON" : "ShowChunkBorders: OFF",
             !sim.done()
         );
         if(autoWalkClicked) {
@@ -1855,6 +2132,9 @@ int stoneforge::client::RenderEngine::run() {
         if(potentialGoalClicked) {
             showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
         }
+        if(chunkBordersClicked) {
+            showChunkBorders = !showChunkBorders;
+        }
 
         const Rectangle thresholdBox = {24.0F, 70.0F, 140.0F, 34.0F};
         if(!sim.done() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), thresholdBox)) {
@@ -1862,7 +2142,8 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         DrawText(TextFormat("Goal distance: %d", goalDistance), 24, 112, 18, Color{208, 224, 243, 255});
-        DrawText("G toggles Auto-Walk | F toggles Forcefield | P toggles Goal Area", 24, 133, 16, Color{175, 193, 215, 255});
+        DrawText(TextFormat("Current biome: %s", biomeNow.c_str()), 24, 152, 18, Color{212, 230, 248, 255});
+        DrawText("G toggles Auto-Walk | F Forcefield | P Goal Area | B Chunk Borders", 24, 133, 16, Color{175, 193, 215, 255});
         DrawText("Threshold", 180, 70, 16, Color{208, 224, 243, 255});
         DrawRectangleRounded(thresholdBox, 0.2F, 6, thresholdInputActive ? Color{34, 45, 62, 255} : Color{24, 31, 43, 255});
         DrawRectangleRoundedLinesEx(thresholdBox, 0.2F, 6, 2.0F, thresholdInputActive ? Color{132, 176, 229, 255} : Color{84, 104, 132, 255});

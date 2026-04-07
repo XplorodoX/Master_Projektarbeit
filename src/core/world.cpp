@@ -128,6 +128,124 @@ double World::noise01(int worldX, int worldY, std::uint64_t salt) const {
     return static_cast<double>(value & 0xFFFFFFFFFFFFULL) * kScale;
 }
 
+double World::biomeFieldForChunk(int cx, int cy) const {
+    auto smoothstep = [](double t) {
+        t = std::clamp(t, 0.0, 1.0);
+        return t * t * (3.0 - 2.0 * t);
+    };
+    auto lerp = [](double a, double b, double t) {
+        return a + (b - a) * t;
+    };
+
+    const auto& cfg = gameConfig().world;
+    auto sampleValue = [&](double x, double y, std::uint64_t salt) {
+        const int x0 = static_cast<int>(std::floor(x));
+        const int y0 = static_cast<int>(std::floor(y));
+        const int x1 = x0 + 1;
+        const int y1 = y0 + 1;
+        const double tx = smoothstep(x - static_cast<double>(x0));
+        const double ty = smoothstep(y - static_cast<double>(y0));
+
+        const double v00 = noise01(x0, y0, salt);
+        const double v10 = noise01(x1, y0, salt);
+        const double v01 = noise01(x0, y1, salt);
+        const double v11 = noise01(x1, y1, salt);
+        return lerp(lerp(v00, v10, tx), lerp(v01, v11, tx), ty);
+    };
+
+    // Chunk tags stay deterministic, but warped coordinates remove square-looking biome regions.
+    double x = static_cast<double>(cx) * 0.22;
+    double y = static_cast<double>(cy) * 0.22;
+
+    const double warpX = sampleValue(x * 0.57 + 19.3, y * 0.57 - 7.1, cfg.biomeSalt ^ 0x9f4a7c15ULL);
+    const double warpY = sampleValue(x * 0.57 - 11.8, y * 0.57 + 13.4, cfg.biomeSalt ^ 0xc2b2ae35ULL);
+    x += (warpX - 0.5) * 2.8;
+    y += (warpY - 0.5) * 2.8;
+
+    const double n1 = sampleValue(x, y, cfg.biomeSalt ^ 0x31f2a3b6ULL);
+    const double n2 = sampleValue(x * 2.1 - 3.7, y * 2.1 + 1.9, cfg.biomeSalt ^ 0x7e2d4c91ULL);
+    const double n3 = sampleValue(x * 4.2 + 8.4, y * 4.2 - 5.6, cfg.biomeSalt ^ 0x4b9aa21dULL);
+
+    const double combined = n1 * 0.62 + n2 * 0.28 + n3 * 0.10;
+    return std::clamp(combined, 0.0, 1.0);
+}
+
+int World::biomeTagForChunk(int cx, int cy) const {
+    const double n = biomeFieldForChunk(cx, cy);
+
+    // 0=grasland, 1=wald, 2=wueste, 3=bergland, 4=steppe, 5=tundra, 6=hoelle
+    if(n < 1.0 / 7.0) {
+        return 0;
+    }
+    if(n < 2.0 / 7.0) {
+        return 1;
+    }
+    if(n < 3.0 / 7.0) {
+        return 2;
+    }
+    if(n < 4.0 / 7.0) {
+        return 3;
+    }
+    if(n < 5.0 / 7.0) {
+        return 4;
+    }
+    if(n < 6.0 / 7.0) {
+        return 5;
+    }
+    return 6;
+}
+
+std::string_view World::biomeNameForTag(int tag) {
+    switch(tag) {
+        case 0:
+            return "grasland";
+        case 1:
+            return "wald";
+        case 2:
+            return "wueste";
+        case 3:
+            return "bergland";
+        case 4:
+            return "steppe";
+        case 5:
+            return "tundra";
+        case 6:
+            return "hoelle";
+        default:
+            return "unbekannt";
+    }
+}
+
+int World::biomeTagAt(int x, int y) const {
+    const int cx = floorDiv(x, kChunkSize);
+    const int cy = floorDiv(y, kChunkSize);
+    return biomeTagForChunk(cx, cy);
+}
+
+std::string_view World::biomeNameAt(int x, int y) const {
+    return biomeNameForTag(biomeTagAt(x, y));
+}
+
+bool World::lakeMaskAt(int worldX, int worldY) const {
+    const auto& cfg = gameConfig().world;
+
+    // Blobby low-frequency mask; keeps lakes occasional and coherent.
+    const double a = noise01(worldX / 7, worldY / 7, cfg.densitySalt ^ 0x77aa44ccULL);
+    const double b = noise01(worldX / 3, worldY / 3, cfg.treeSalt ^ 0x11cc88ddULL);
+    const double lakeScore = 0.75 * a + 0.25 * b;
+
+    // Very rare lakes.
+    return lakeScore > 0.86;
+}
+
+bool World::isLakeAt(int x, int y) const {
+    // Never place lakes on spawn/exit tiles.
+    if((x == spawn_.x && y == spawn_.y) || (x == exit_.x && y == exit_.y)) {
+        return false;
+    }
+    return lakeMaskAt(x, y);
+}
+
 Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
     if(!cfg.randomizeExitFromSpawn) {
         return cfg.exit;
@@ -213,39 +331,75 @@ Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
 }
 
 TileType World::sampleBaseTile(int worldX, int worldY, const WorldGenConfig& cfg) const {
-    const double biome = noise01(worldX / 4, worldY / 4, cfg.biomeSalt);
+    const int cx = floorDiv(worldX, kChunkSize);
+    const int cy = floorDiv(worldY, kChunkSize);
+    const int biomeTag = biomeTagForChunk(cx, cy);
+
     const double density = noise01(worldX, worldY, cfg.densitySalt);
     const double ore = noise01(worldX, worldY, cfg.oreSalt);
     const double trees = noise01(worldX, worldY, cfg.treeSalt);
 
+    double wallThreshold = 0.11;
+    double oreThreshold = 0.03;
+    double treeThreshold = 0.08;
+
+    // Biome behavior profile requested by user.
+    switch(biomeTag) {
+        case 0:  // grasland: fewer trees
+            wallThreshold = 0.10;
+            oreThreshold = 0.03;
+            treeThreshold = 0.05;
+            break;
+        case 1:  // wald: many trees, few stones
+            wallThreshold = 0.07;
+            oreThreshold = 0.015;
+            treeThreshold = 0.23;
+            break;
+        case 2:  // wueste: many stones, no trees
+            wallThreshold = 0.19;
+            oreThreshold = 0.08;
+            treeThreshold = 0.0;
+            break;
+        case 3:  // bergland: many stones
+            wallThreshold = 0.25;
+            oreThreshold = 0.10;
+            treeThreshold = 0.02;
+            break;
+        case 4:  // steppe: grassland with a bit more trees
+            wallThreshold = 0.11;
+            oreThreshold = 0.03;
+            treeThreshold = 0.09;
+            break;
+        case 5:  // tundra: normal stones and trees
+            wallThreshold = 0.14;
+            oreThreshold = 0.05;
+            treeThreshold = 0.07;
+            break;
+        case 6:  // hoelle: many stones and some trees
+            wallThreshold = 0.23;
+            oreThreshold = 0.09;
+            treeThreshold = 0.06;
+            break;
+        default:
+            break;
+    }
+
     TileType tile = TileType::Empty;
-    if(biome < cfg.coldBiomeMax) {
-        if(density < cfg.coldWallThreshold) {
-            tile = TileType::Wall;
-        }
-        if(ore < cfg.coldOreThreshold) {
-            tile = TileType::Resource;
-        }
-    } else if(biome < cfg.warmBiomeMax) {
-        if(density < cfg.warmWallThreshold) {
-            tile = TileType::Wall;
-        }
-        if(ore < cfg.warmOreThreshold) {
-            tile = TileType::Resource;
-        }
-        if(tile == TileType::Empty && trees < cfg.warmTreeThreshold) {
-            tile = TileType::Tree;
-        }
-    } else {
-        if(density < cfg.mossWallThreshold) {
-            tile = TileType::Wall;
-        }
-        if(ore < cfg.mossOreThreshold) {
-            tile = TileType::Resource;
-        }
-        if(tile == TileType::Empty && trees < cfg.mossTreeThreshold) {
-            tile = TileType::Tree;
-        }
+
+    // Lakes are obstacle-free regions.
+    if(lakeMaskAt(worldX, worldY)) {
+        return TileType::Empty;
+    }
+
+    if(density < wallThreshold) {
+        tile = TileType::Wall;
+    }
+    // Ores only in bergland.
+    if(biomeTag == 3 && ore < oreThreshold) {
+        tile = TileType::Resource;
+    }
+    if(treeThreshold > 0.0 && tile == TileType::Empty && trees < treeThreshold) {
+        tile = TileType::Tree;
     }
 
     return tile;

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 #include <unordered_map>
 
 #include "stoneforge/game_config.hpp"
@@ -20,6 +21,9 @@ public:
     TileType tileAt(int x, int y) const;
     void setTile(int x, int y, TileType tile);
     bool isPassable(int x, int y) const;
+    int biomeTagAt(int x, int y) const;
+    std::string_view biomeNameAt(int x, int y) const;
+    bool isLakeAt(int x, int y) const;
 
     Vec2i spawnPoint() const;
     Vec2i exitPoint() const;
@@ -36,6 +40,10 @@ private:
 
     std::uint64_t mix(std::uint64_t value) const;
     double noise01(int worldX, int worldY, std::uint64_t salt) const;
+    double biomeFieldForChunk(int cx, int cy) const;
+    int biomeTagForChunk(int cx, int cy) const;
+    static std::string_view biomeNameForTag(int tag);
+    bool lakeMaskAt(int worldX, int worldY) const;
     Vec2i chooseExitPoint(const WorldGenConfig& cfg) const;
     TileType sampleBaseTile(int worldX, int worldY, const WorldGenConfig& cfg) const;
     void runCellularSmoothingStage(int cx, int cy, Chunk& chunk, const WorldGenConfig& cfg) const;

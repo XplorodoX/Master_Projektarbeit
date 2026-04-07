@@ -65,6 +65,10 @@ public:
     Vec2i playerPos() const;
     Vec2i exitPos() const;
     TileType tileAt(int x, int y) const;
+    int biomeTagAt(int x, int y) const;
+    std::string biomeNameAt(int x, int y) const;
+    bool isLakeAt(int x, int y) const;
+    bool isPlayerInLake() const;
     const std::vector<Mob>& mobs() const;
     std::vector<const Mob*> mobsInRect(int minX, int minY, int maxX, int maxY) const;
     bool hasMobAt(int x, int y) const;
