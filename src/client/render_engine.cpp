@@ -910,6 +910,14 @@ bool isWalkableTile(stoneforge::TileType tile) {
     return tile == stoneforge::TileType::Empty || tile == stoneforge::TileType::Exit;
 }
 
+Color forcefieldColor(float value) {
+    const float clamped = std::clamp(value, 0.0F, 1.0F);
+    const unsigned char red = static_cast<unsigned char>(35.0F + clamped * 220.0F);
+    const unsigned char green = static_cast<unsigned char>(64.0F + (1.0F - clamped) * 48.0F);
+    const unsigned char blue = static_cast<unsigned char>(232.0F - clamped * 172.0F);
+    return Color{red, green, blue, 92};
+}
+
 std::optional<stoneforge::Action> actionFromDelta(const stoneforge::Vec2i& delta) {
     if(delta.x == 1 && delta.y == 0) {
         return stoneforge::Action::MoveRight;
@@ -935,7 +943,7 @@ std::optional<stoneforge::Action> autoWalkNextAction(
         return stoneforge::Action::Wait;
     }
 
-    const int margin = 48;
+    const int margin = 128;
     const int minX = std::min(start.x, goal.x) - margin;
     const int maxX = std::max(start.x, goal.x) + margin;
     const int minY = std::min(start.y, goal.y) - margin;
@@ -1139,6 +1147,7 @@ int stoneforge::client::RenderEngine::run() {
     std::string commandFeedback;
     float commandFeedbackTtl = 0.0F;
     bool autoWalkEnabled = false;
+    bool forcefieldEnabled = false;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -1212,6 +1221,7 @@ int stoneforge::client::RenderEngine::run() {
                 commandMode = false;
                 commandInput.clear();
                 autoWalkEnabled = false;
+                forcefieldEnabled = false;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -1308,10 +1318,15 @@ int stoneforge::client::RenderEngine::run() {
             commandMode = false;
             commandInput.clear();
             autoWalkEnabled = false;
+            forcefieldEnabled = false;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_G) && !sim.done()) {
             autoWalkEnabled = !autoWalkEnabled;
+        }
+
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_F) && !sim.done()) {
+            forcefieldEnabled = !forcefieldEnabled;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
@@ -1552,6 +1567,24 @@ int stoneforge::client::RenderEngine::run() {
 
         drawTileDetailPass(sim, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
 
+        if(forcefieldEnabled) {
+            const float maxDistance = static_cast<float>(std::max(1, stoneforge::gameConfig().world.exitMaxDistance));
+            for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
+                for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
+                    const int wx = player.x + vx;
+                    const int wy = player.y + vy;
+                    const float dx = static_cast<float>(exit.x - wx);
+                    const float dy = static_cast<float>(exit.y - wy);
+                    const float dist = std::sqrt(dx * dx + dy * dy);
+                    const float value = 1.0F - std::clamp(dist / maxDistance, 0.0F, 1.0F);
+
+                    const int px = centerX + vx * tileSize;
+                    const int py = centerY + vy * tileSize;
+                    DrawRectangle(px, py, tileSize, tileSize, forcefieldColor(value));
+                }
+            }
+        }
+
         const int hoverPx = centerX + (hoverTile.x - player.x) * tileSize;
         const int hoverPy = centerY + (hoverTile.y - player.y) * tileSize;
 
@@ -1642,12 +1675,17 @@ int stoneforge::client::RenderEngine::run() {
         const stoneforge::Vec2i goalNow = sim.exitPos();
         const int goalDistance = std::abs(goalNow.x - posNow.x) + std::abs(goalNow.y - posNow.y);
         const Rectangle autoWalkBtn = {24.0F, 24.0F, 210.0F, 40.0F};
+        const Rectangle forcefieldBtn = {244.0F, 24.0F, 226.0F, 40.0F};
         const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
+        const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
         if(autoWalkClicked) {
             autoWalkEnabled = !autoWalkEnabled;
         }
+        if(forcefieldClicked) {
+            forcefieldEnabled = !forcefieldEnabled;
+        }
         DrawText(TextFormat("Goal distance: %d", goalDistance), 30, 70, 18, Color{208, 224, 243, 255});
-        DrawText("G toggles Auto-Walk", 30, 91, 16, Color{175, 193, 215, 255});
+        DrawText("G toggles Auto-Walk | F toggles Forcefield", 30, 91, 16, Color{175, 193, 215, 255});
 
         craftingPanel.craftRequested = false;
         if(inventoryOpen) {
