@@ -614,7 +614,60 @@ void drawOrganicTree(int wx, int wy, int px, int py, int tileSize, int biome, fl
 }
 
 BiomeWeights biomeWeights(int wx, int wy, const std::vector<RuntimeBiome>& biomes) {
-    const float n = hash01(wx / 8, wy / 8, 303);
+    auto floorDivLocal = [](int value, int divisor) {
+        const int q = value / divisor;
+        const int r = value % divisor;
+        return (r != 0 && ((r > 0) != (divisor > 0))) ? q - 1 : q;
+    };
+    auto positiveModLocal = [](int value, int divisor) {
+        int result = value % divisor;
+        if(result < 0) {
+            result += divisor;
+        }
+        return result;
+    };
+    auto smoothstep = [](float t) {
+        t = std::clamp(t, 0.0F, 1.0F);
+        return t * t * (3.0F - 2.0F * t);
+    };
+    auto lerp = [](float a, float b, float t) {
+        return a + (b - a) * t;
+    };
+    auto chunkNoise = [&](int cx, int cy) {
+        // Low-frequency value noise on chunk grid creates coherent biome clusters.
+        const float fx = static_cast<float>(cx) * 0.23F;
+        const float fy = static_cast<float>(cy) * 0.23F;
+        const int x0 = static_cast<int>(std::floor(fx));
+        const int y0 = static_cast<int>(std::floor(fy));
+        const int x1 = x0 + 1;
+        const int y1 = y0 + 1;
+        const float tx = smoothstep(fx - static_cast<float>(x0));
+        const float ty = smoothstep(fy - static_cast<float>(y0));
+
+        const float v00 = hash01(x0, y0, 3301);
+        const float v10 = hash01(x1, y0, 3301);
+        const float v01 = hash01(x0, y1, 3301);
+        const float v11 = hash01(x1, y1, 3301);
+        return lerp(lerp(v00, v10, tx), lerp(v01, v11, tx), ty);
+    };
+    auto chunkBiomeTag = [&](int cx, int cy) {
+        if(biomes.empty()) {
+            return 0;
+        }
+
+        const float n = chunkNoise(cx, cy);
+        int best = 0;
+        float bestDist = std::numeric_limits<float>::max();
+        for(int i = 0; i < static_cast<int>(biomes.size()); ++i) {
+            const float d = std::fabs(n - biomes[static_cast<std::size_t>(i)].center);
+            if(d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+        }
+        return best;
+    };
+
     BiomeWeights out{};
     out.count = std::min(3, static_cast<int>(biomes.size()));
     if(out.count <= 0) {
@@ -623,10 +676,35 @@ BiomeWeights biomeWeights(int wx, int wy, const std::vector<RuntimeBiome>& biome
         return out;
     }
 
-    for(int i = 0; i < out.count; ++i) {
-        const auto& biome = biomes[static_cast<std::size_t>(i)];
-        const float d = std::fabs(n - biome.center);
-        out.w[static_cast<std::size_t>(i)] = std::max(0.0F, 1.0F - d / biome.span);
+    const int chunkSize = stoneforge::World::kChunkSize;
+    const int cx = floorDivLocal(wx, chunkSize);
+    const int cy = floorDivLocal(wy, chunkSize);
+    const int lx = positiveModLocal(wx, chunkSize);
+    const int ly = positiveModLocal(wy, chunkSize);
+
+    const int baseTag = std::clamp(chunkBiomeTag(cx, cy), 0, out.count - 1);
+    out.w[static_cast<std::size_t>(baseTag)] += 1.0F;
+
+    const int blendWidth = 5;
+    if(lx < blendWidth) {
+        const float t = static_cast<float>(blendWidth - lx) / static_cast<float>(blendWidth);
+        const int neighbor = std::clamp(chunkBiomeTag(cx - 1, cy), 0, out.count - 1);
+        out.w[static_cast<std::size_t>(neighbor)] += t;
+    }
+    if(lx >= chunkSize - blendWidth) {
+        const float t = static_cast<float>(lx - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth);
+        const int neighbor = std::clamp(chunkBiomeTag(cx + 1, cy), 0, out.count - 1);
+        out.w[static_cast<std::size_t>(neighbor)] += t;
+    }
+    if(ly < blendWidth) {
+        const float t = static_cast<float>(blendWidth - ly) / static_cast<float>(blendWidth);
+        const int neighbor = std::clamp(chunkBiomeTag(cx, cy - 1), 0, out.count - 1);
+        out.w[static_cast<std::size_t>(neighbor)] += t;
+    }
+    if(ly >= chunkSize - blendWidth) {
+        const float t = static_cast<float>(ly - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth);
+        const int neighbor = std::clamp(chunkBiomeTag(cx, cy + 1), 0, out.count - 1);
+        out.w[static_cast<std::size_t>(neighbor)] += t;
     }
 
     const float sum = out.w[0] + out.w[1] + out.w[2];
@@ -918,6 +996,28 @@ Color forcefieldColor(float value) {
     return Color{red, green, blue, 92};
 }
 
+Color potentialGoalAreaColor() {
+    return Color{245, 224, 92, 86};
+}
+
+float parseThresholdValue(const std::string& text, float fallback) {
+    if(text.empty()) {
+        return fallback;
+    }
+
+    try {
+        return std::clamp(std::stof(text), 0.0F, 1.0F);
+    } catch(...) {
+        return fallback;
+    }
+}
+
+void trimThresholdText(std::string& text) {
+    while(text.size() > 1 && text.front() == '0' && text[1] != '.') {
+        text.erase(text.begin());
+    }
+}
+
 std::optional<stoneforge::Action> actionFromDelta(const stoneforge::Vec2i& delta) {
     if(delta.x == 1 && delta.y == 0) {
         return stoneforge::Action::MoveRight;
@@ -1148,6 +1248,9 @@ int stoneforge::client::RenderEngine::run() {
     float commandFeedbackTtl = 0.0F;
     bool autoWalkEnabled = false;
     bool forcefieldEnabled = false;
+    bool showPotentialGoalSpawnArea = false;
+    bool thresholdInputActive = false;
+    std::string thresholdInput = "0.1";
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -1222,6 +1325,8 @@ int stoneforge::client::RenderEngine::run() {
                 commandInput.clear();
                 autoWalkEnabled = false;
                 forcefieldEnabled = false;
+                showPotentialGoalSpawnArea = false;
+                thresholdInputActive = false;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -1244,6 +1349,28 @@ int stoneforge::client::RenderEngine::run() {
         if(!commandMode && IsKeyPressed(KEY_SLASH)) {
             commandMode = true;
             commandInput = "/";
+        }
+
+        if(thresholdInputActive) {
+            int ch = GetCharPressed();
+            while(ch > 0) {
+                const char c = static_cast<char>(ch);
+                if((c >= '0' && c <= '9') || c == '.') {
+                    if(thresholdInput.size() < 8) {
+                        thresholdInput.push_back(c);
+                        trimThresholdText(thresholdInput);
+                    }
+                }
+                ch = GetCharPressed();
+            }
+
+            if(IsKeyPressed(KEY_BACKSPACE) && !thresholdInput.empty()) {
+                thresholdInput.pop_back();
+            }
+
+            if(IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                thresholdInputActive = false;
+            }
         }
 
         if(commandMode) {
@@ -1307,6 +1434,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_R)) {
+            currentSeed += 1ULL;
             sim.reset(currentSeed);
             particles.clear();
             cracks.clear();
@@ -1319,6 +1447,8 @@ int stoneforge::client::RenderEngine::run() {
             commandInput.clear();
             autoWalkEnabled = false;
             forcefieldEnabled = false;
+            showPotentialGoalSpawnArea = false;
+            thresholdInputActive = false;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_G) && !sim.done()) {
@@ -1327,6 +1457,10 @@ int stoneforge::client::RenderEngine::run() {
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_F) && !sim.done()) {
             forcefieldEnabled = !forcefieldEnabled;
+        }
+
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_P) && !sim.done()) {
+            showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
@@ -1567,7 +1701,32 @@ int stoneforge::client::RenderEngine::run() {
 
         drawTileDetailPass(sim, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
 
+        if(showPotentialGoalSpawnArea) {
+            const auto& worldCfg = stoneforge::gameConfig().world;
+            const int minDistance = std::max(1, worldCfg.exitMinDistance);
+            const int maxDistance = std::max(minDistance, worldCfg.exitMaxDistance);
+            const int min2 = minDistance * minDistance;
+            const int max2 = maxDistance * maxDistance;
+            for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
+                for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
+                    const int wx = player.x + vx;
+                    const int wy = player.y + vy;
+                    const int dx = wx - worldCfg.spawn.x;
+                    const int dy = wy - worldCfg.spawn.y;
+                    const int dist2 = dx * dx + dy * dy;
+                    if(dist2 < min2 || dist2 > max2) {
+                        continue;
+                    }
+
+                    const int px = centerX + vx * tileSize;
+                    const int py = centerY + vy * tileSize;
+                    DrawRectangle(px, py, tileSize, tileSize, potentialGoalAreaColor());
+                }
+            }
+        }
+
         if(forcefieldEnabled) {
+            const float threshold = parseThresholdValue(thresholdInput, 0.1F);
             const float maxDistance = static_cast<float>(std::max(1, stoneforge::gameConfig().world.exitMaxDistance));
             for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
                 for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
@@ -1577,6 +1736,9 @@ int stoneforge::client::RenderEngine::run() {
                     const float dy = static_cast<float>(exit.y - wy);
                     const float dist = std::sqrt(dx * dx + dy * dy);
                     const float value = 1.0F - std::clamp(dist / maxDistance, 0.0F, 1.0F);
+                    if(value < threshold) {
+                        continue;
+                    }
 
                     const int px = centerX + vx * tileSize;
                     const int py = centerY + vy * tileSize;
@@ -1676,16 +1838,40 @@ int stoneforge::client::RenderEngine::run() {
         const int goalDistance = std::abs(goalNow.x - posNow.x) + std::abs(goalNow.y - posNow.y);
         const Rectangle autoWalkBtn = {24.0F, 24.0F, 210.0F, 40.0F};
         const Rectangle forcefieldBtn = {244.0F, 24.0F, 226.0F, 40.0F};
+        const Rectangle potentialGoalBtn = {478.0F, 24.0F, 286.0F, 40.0F};
         const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
         const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
+        const bool potentialGoalClicked = drawButton(
+            potentialGoalBtn,
+            showPotentialGoalSpawnArea ? "ShowPotentialGoalSpawnArea: ON" : "ShowPotentialGoalSpawnArea: OFF",
+            !sim.done()
+        );
         if(autoWalkClicked) {
             autoWalkEnabled = !autoWalkEnabled;
         }
         if(forcefieldClicked) {
             forcefieldEnabled = !forcefieldEnabled;
         }
-        DrawText(TextFormat("Goal distance: %d", goalDistance), 30, 70, 18, Color{208, 224, 243, 255});
-        DrawText("G toggles Auto-Walk | F toggles Forcefield", 30, 91, 16, Color{175, 193, 215, 255});
+        if(potentialGoalClicked) {
+            showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
+        }
+
+        const Rectangle thresholdBox = {24.0F, 70.0F, 140.0F, 34.0F};
+        if(!sim.done() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), thresholdBox)) {
+            thresholdInputActive = true;
+        }
+
+        DrawText(TextFormat("Goal distance: %d", goalDistance), 24, 112, 18, Color{208, 224, 243, 255});
+        DrawText("G toggles Auto-Walk | F toggles Forcefield | P toggles Goal Area", 24, 133, 16, Color{175, 193, 215, 255});
+        DrawText("Threshold", 180, 70, 16, Color{208, 224, 243, 255});
+        DrawRectangleRounded(thresholdBox, 0.2F, 6, thresholdInputActive ? Color{34, 45, 62, 255} : Color{24, 31, 43, 255});
+        DrawRectangleRoundedLinesEx(thresholdBox, 0.2F, 6, 2.0F, thresholdInputActive ? Color{132, 176, 229, 255} : Color{84, 104, 132, 255});
+        const std::string thresholdShown = thresholdInput.empty() ? "0.1" : thresholdInput;
+        DrawText(thresholdShown.c_str(), static_cast<int>(thresholdBox.x) + 12, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
+        if(thresholdInputActive && ((static_cast<int>(t * 2.0F) % 2) == 0)) {
+            const int tw = MeasureText(thresholdShown.c_str(), 18);
+            DrawText("_", static_cast<int>(thresholdBox.x) + 12 + tw + 2, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
+        }
 
         craftingPanel.craftRequested = false;
         if(inventoryOpen) {
