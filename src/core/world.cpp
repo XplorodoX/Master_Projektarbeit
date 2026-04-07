@@ -1,6 +1,9 @@
 #include "stoneforge/world.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <deque>
+#include <vector>
 
 #include "stoneforge/game_config.hpp"
 #include "stoneforge/object.hpp"
@@ -17,9 +20,39 @@ void World::reset(std::uint64_t seed) {
 
     const auto& cfg = gameConfig().world;
     spawn_ = cfg.spawn;
-    exit_ = cfg.exit;
 
-    carveGuaranteedPath();
+    // Keep spawn area stable even when no guaranteed corridor is carved.
+    for(int dy = -cfg.spawnClearRadius; dy <= cfg.spawnClearRadius; ++dy) {
+        for(int dx = -cfg.spawnClearRadius; dx <= cfg.spawnClearRadius; ++dx) {
+            setTile(spawn_.x + dx, spawn_.y + dy, TileType::Empty);
+        }
+    }
+
+    exit_ = chooseExitPoint(cfg);
+
+    if(cfg.forceGuaranteedPath) {
+        carveGuaranteedPath();
+    }
+
+    if(cfg.enableFloodFillValidation) {
+        const int radiusTiles = std::max(1, cfg.validationRadiusChunks) * kChunkSize;
+        const int minX = std::min(spawn_.x, exit_.x) - radiusTiles;
+        const int minY = std::min(spawn_.y, exit_.y) - radiusTiles;
+        const int maxX = std::max(spawn_.x, exit_.x) + radiusTiles;
+        const int maxY = std::max(spawn_.y, exit_.y) + radiusTiles;
+        const bool reachable = validateReachabilityWindow(minX, minY, maxX, maxY);
+        if(!reachable && cfg.guaranteedPathFallback) {
+            carveGuaranteedPath();
+        }
+    }
+
+    for(int dy = -cfg.exitClearRadius; dy <= cfg.exitClearRadius; ++dy) {
+        for(int dx = -cfg.exitClearRadius; dx <= cfg.exitClearRadius; ++dx) {
+            setTile(exit_.x + dx, exit_.y + dy, TileType::Empty);
+        }
+    }
+
+    setTile(exit_.x, exit_.y, TileType::Exit);
 }
 
 TileType World::tileAt(int x, int y) const {
@@ -95,6 +128,263 @@ double World::noise01(int worldX, int worldY, std::uint64_t salt) const {
     return static_cast<double>(value & 0xFFFFFFFFFFFFULL) * kScale;
 }
 
+Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
+    if(!cfg.randomizeExitFromSpawn) {
+        return cfg.exit;
+    }
+
+    const int minDist = std::max(1, cfg.exitMinDistance);
+    const int maxDist = std::max(minDist, cfg.exitMaxDistance);
+    const int searchMargin = std::max(16, cfg.exitClearRadius + 8);
+
+    const int minX = spawn_.x - maxDist - searchMargin;
+    const int maxX = spawn_.x + maxDist + searchMargin;
+    const int minY = spawn_.y - maxDist - searchMargin;
+    const int maxY = spawn_.y + maxDist + searchMargin;
+
+    auto toKey = [](int x, int y) {
+        const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(x));
+        const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(y));
+        return static_cast<std::int64_t>((hi << 32) | lo);
+    };
+
+    std::deque<Vec2i> queue;
+    std::unordered_map<std::int64_t, bool> visited;
+    std::vector<Vec2i> candidates;
+
+    queue.push_back(spawn_);
+    visited[toKey(spawn_.x, spawn_.y)] = true;
+
+    constexpr std::array<Vec2i, 4> kDirs = {
+        Vec2i{1, 0},
+        Vec2i{-1, 0},
+        Vec2i{0, 1},
+        Vec2i{0, -1},
+    };
+
+    while(!queue.empty()) {
+        const Vec2i current = queue.front();
+        queue.pop_front();
+
+        const int dx = current.x - spawn_.x;
+        const int dy = current.y - spawn_.y;
+        const int dist2 = dx * dx + dy * dy;
+        const int min2 = minDist * minDist;
+        const int max2 = maxDist * maxDist;
+        if(dist2 >= min2 && dist2 <= max2) {
+            candidates.push_back(current);
+        }
+
+        for(const Vec2i dir : kDirs) {
+            const int nx = current.x + dir.x;
+            const int ny = current.y + dir.y;
+            if(nx < minX || nx > maxX || ny < minY || ny > maxY) {
+                continue;
+            }
+
+            const std::int64_t key = toKey(nx, ny);
+            if(visited.find(key) != visited.end()) {
+                continue;
+            }
+
+            const int ndx = nx - spawn_.x;
+            const int ndy = ny - spawn_.y;
+            const int nd2 = ndx * ndx + ndy * ndy;
+            if(nd2 > max2) {
+                continue;
+            }
+
+            if(!isPassable(nx, ny)) {
+                continue;
+            }
+
+            visited[key] = true;
+            queue.push_back(Vec2i{nx, ny});
+        }
+    }
+
+    if(!candidates.empty()) {
+        const std::uint64_t mixed = mix(seed_ ^ cfg.biomeSalt ^ cfg.oreSalt ^ cfg.treeSalt);
+        const std::size_t idx = static_cast<std::size_t>(mixed % static_cast<std::uint64_t>(candidates.size()));
+        return candidates[idx];
+    }
+
+    return cfg.exit;
+}
+
+TileType World::sampleBaseTile(int worldX, int worldY, const WorldGenConfig& cfg) const {
+    const double biome = noise01(worldX / 4, worldY / 4, cfg.biomeSalt);
+    const double density = noise01(worldX, worldY, cfg.densitySalt);
+    const double ore = noise01(worldX, worldY, cfg.oreSalt);
+    const double trees = noise01(worldX, worldY, cfg.treeSalt);
+
+    TileType tile = TileType::Empty;
+    if(biome < cfg.coldBiomeMax) {
+        if(density < cfg.coldWallThreshold) {
+            tile = TileType::Wall;
+        }
+        if(ore < cfg.coldOreThreshold) {
+            tile = TileType::Resource;
+        }
+    } else if(biome < cfg.warmBiomeMax) {
+        if(density < cfg.warmWallThreshold) {
+            tile = TileType::Wall;
+        }
+        if(ore < cfg.warmOreThreshold) {
+            tile = TileType::Resource;
+        }
+        if(tile == TileType::Empty && trees < cfg.warmTreeThreshold) {
+            tile = TileType::Tree;
+        }
+    } else {
+        if(density < cfg.mossWallThreshold) {
+            tile = TileType::Wall;
+        }
+        if(ore < cfg.mossOreThreshold) {
+            tile = TileType::Resource;
+        }
+        if(tile == TileType::Empty && trees < cfg.mossTreeThreshold) {
+            tile = TileType::Tree;
+        }
+    }
+
+    return tile;
+}
+
+void World::runCellularSmoothingStage(int cx, int cy, Chunk& chunk, const WorldGenConfig& cfg) const {
+    if(!cfg.enableCellularSmoothing || cfg.cellularIterations <= 0) {
+        return;
+    }
+
+    const int halo = cfg.cellularIterations;
+    const int width = kChunkSize + halo * 2;
+    const int height = kChunkSize + halo * 2;
+    auto index = [width](int x, int y) {
+        return y * width + x;
+    };
+
+    std::vector<TileType> current(static_cast<std::size_t>(width * height), TileType::Empty);
+    std::vector<TileType> next = current;
+
+    for(int y = 0; y < height; ++y) {
+        for(int x = 0; x < width; ++x) {
+            const int worldX = cx * kChunkSize + (x - halo);
+            const int worldY = cy * kChunkSize + (y - halo);
+            current[static_cast<std::size_t>(index(x, y))] = sampleBaseTile(worldX, worldY, cfg);
+        }
+    }
+
+    auto isSolid = [](TileType tile) {
+        return !objectForTile(tile).isPassable();
+    };
+
+    for(int iteration = 0; iteration < cfg.cellularIterations; ++iteration) {
+        for(int y = 0; y < height; ++y) {
+            for(int x = 0; x < width; ++x) {
+                int solidNeighbors = 0;
+                for(int ny = y - 1; ny <= y + 1; ++ny) {
+                    for(int nx = x - 1; nx <= x + 1; ++nx) {
+                        if(nx == x && ny == y) {
+                            continue;
+                        }
+                        if(nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                            ++solidNeighbors;
+                            continue;
+                        }
+                        if(isSolid(current[static_cast<std::size_t>(index(nx, ny))])) {
+                            ++solidNeighbors;
+                        }
+                    }
+                }
+
+                const TileType source = current[static_cast<std::size_t>(index(x, y))];
+                const bool currentlySolid = isSolid(source);
+                if(currentlySolid) {
+                    next[static_cast<std::size_t>(index(x, y))] =
+                        (solidNeighbors >= cfg.cellularSurvivalMinNeighbors) ? source : TileType::Empty;
+                } else {
+                    next[static_cast<std::size_t>(index(x, y))] =
+                        (solidNeighbors >= cfg.cellularBirthMinNeighbors) ? TileType::Wall : source;
+                }
+            }
+        }
+        current.swap(next);
+    }
+
+    for(int ly = 0; ly < kChunkSize; ++ly) {
+        for(int lx = 0; lx < kChunkSize; ++lx) {
+            chunk.tiles[ly * kChunkSize + lx] =
+                current[static_cast<std::size_t>(index(lx + halo, ly + halo))];
+        }
+    }
+}
+
+bool World::validateReachabilityWindow(int minX, int minY, int maxX, int maxY) const {
+    if(spawn_.x < minX || spawn_.x > maxX || spawn_.y < minY || spawn_.y > maxY) {
+        return false;
+    }
+    if(exit_.x < minX || exit_.x > maxX || exit_.y < minY || exit_.y > maxY) {
+        return false;
+    }
+
+    auto withinBounds = [minX, minY, maxX, maxY](int x, int y) {
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    };
+
+    auto toKey = [](int x, int y) {
+        const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(x));
+        const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(y));
+        return static_cast<std::int64_t>((hi << 32) | lo);
+    };
+
+    std::deque<Vec2i> queue;
+    std::unordered_map<std::int64_t, bool> visited;
+    queue.push_back(spawn_);
+    visited[toKey(spawn_.x, spawn_.y)] = true;
+
+    constexpr std::array<Vec2i, 4> kDirs = {
+        Vec2i{1, 0},
+        Vec2i{-1, 0},
+        Vec2i{0, 1},
+        Vec2i{0, -1},
+    };
+
+    while(!queue.empty()) {
+        const Vec2i current = queue.front();
+        queue.pop_front();
+
+        if(current.x == exit_.x && current.y == exit_.y) {
+            return true;
+        }
+
+        for(const Vec2i dir : kDirs) {
+            const int nx = current.x + dir.x;
+            const int ny = current.y + dir.y;
+            if(!withinBounds(nx, ny)) {
+                continue;
+            }
+
+            const std::int64_t key = toKey(nx, ny);
+            if(visited.find(key) != visited.end()) {
+                continue;
+            }
+
+            if(nx == exit_.x && ny == exit_.y) {
+                return true;
+            }
+
+            if(!isPassable(nx, ny)) {
+                continue;
+            }
+
+            visited[key] = true;
+            queue.push_back(Vec2i{nx, ny});
+        }
+    }
+
+    return false;
+}
+
 World::Chunk& World::ensureChunk(int cx, int cy) const {
     const std::int64_t key = chunkKey(cx, cy);
     auto it = chunks_.find(key);
@@ -112,49 +402,18 @@ World::Chunk& World::ensureChunk(int cx, int cy) const {
 
 void World::generateChunk(int cx, int cy, Chunk& chunk) const {
     const auto& cfg = gameConfig().world;
+
+    // Stage 1: deterministic base material sampling (noise-driven).
     for(int ly = 0; ly < kChunkSize; ++ly) {
         for(int lx = 0; lx < kChunkSize; ++lx) {
             const int wx = cx * kChunkSize + lx;
             const int wy = cy * kChunkSize + ly;
-
-            const double biome = noise01(wx / 4, wy / 4, cfg.biomeSalt);
-            const double density = noise01(wx, wy, cfg.densitySalt);
-            const double ore = noise01(wx, wy, cfg.oreSalt);
-            const double trees = noise01(wx, wy, cfg.treeSalt);
-
-            TileType tile = TileType::Empty;
-            if(biome < cfg.coldBiomeMax) {
-                if(density < cfg.coldWallThreshold) {
-                    tile = TileType::Wall;
-                }
-                if(ore < cfg.coldOreThreshold) {
-                    tile = TileType::Resource;
-                }
-            } else if(biome < cfg.warmBiomeMax) {
-                if(density < cfg.warmWallThreshold) {
-                    tile = TileType::Wall;
-                }
-                if(ore < cfg.warmOreThreshold) {
-                    tile = TileType::Resource;
-                }
-                if(tile == TileType::Empty && trees < cfg.warmTreeThreshold) {
-                    tile = TileType::Tree;
-                }
-            } else {
-                if(density < cfg.mossWallThreshold) {
-                    tile = TileType::Wall;
-                }
-                if(ore < cfg.mossOreThreshold) {
-                    tile = TileType::Resource;
-                }
-                if(tile == TileType::Empty && trees < cfg.mossTreeThreshold) {
-                    tile = TileType::Tree;
-                }
-            }
-
-            chunk.tiles[ly * kChunkSize + lx] = tile;
+            chunk.tiles[ly * kChunkSize + lx] = sampleBaseTile(wx, wy, cfg);
         }
     }
+
+    // Stage 2: optional local smoothing with deterministic halo sampling.
+    runCellularSmoothingStage(cx, cy, chunk, cfg);
 }
 
 void World::carveGuaranteedPath() {

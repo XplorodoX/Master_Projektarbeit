@@ -820,6 +820,10 @@ bool Simulation::done() const {
     return done_;
 }
 
+bool Simulation::reachedExit() const {
+    return reachedExit_;
+}
+
 bool Simulation::commandSetTile(const Vec2i& target, TileType tile) {
     if(target == player_ && tile != TileType::Empty) {
         return false;

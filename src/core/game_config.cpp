@@ -121,6 +121,10 @@ void parseWorldConfig(GameConfig& cfg, const json& root) {
         cfg.world.exit.y = world["exit"][1].get<int>();
     }
 
+    cfg.world.randomizeExitFromSpawn = readBool(world, "randomizeExitFromSpawn", cfg.world.randomizeExitFromSpawn);
+    cfg.world.exitMinDistance = std::max(1, readInt(world, "exitMinDistance", cfg.world.exitMinDistance));
+    cfg.world.exitMaxDistance = std::max(cfg.world.exitMinDistance, readInt(world, "exitMaxDistance", cfg.world.exitMaxDistance));
+
     cfg.world.coldBiomeMax = readDouble(world, "coldBiomeMax", cfg.world.coldBiomeMax);
     cfg.world.warmBiomeMax = readDouble(world, "warmBiomeMax", cfg.world.warmBiomeMax);
 
@@ -144,6 +148,32 @@ void parseWorldConfig(GameConfig& cfg, const json& root) {
         cfg.world.densitySalt = readU64(salts, "density", cfg.world.densitySalt);
         cfg.world.oreSalt = readU64(salts, "ore", cfg.world.oreSalt);
         cfg.world.treeSalt = readU64(salts, "tree", cfg.world.treeSalt);
+    }
+
+    cfg.world.forceGuaranteedPath = readBool(world, "forceGuaranteedPath", cfg.world.forceGuaranteedPath);
+    cfg.world.guaranteedPathFallback = readBool(world, "guaranteedPathFallback", cfg.world.guaranteedPathFallback);
+
+    if(world.contains("procedural") && world["procedural"].is_object()) {
+        const auto& procedural = world["procedural"];
+
+        cfg.world.enableCellularSmoothing =
+            readBool(procedural, "enableCellularSmoothing", cfg.world.enableCellularSmoothing);
+        cfg.world.cellularIterations =
+            std::max(0, readInt(procedural, "cellularIterations", cfg.world.cellularIterations));
+        cfg.world.cellularBirthMinNeighbors =
+            std::clamp(readInt(procedural, "cellularBirthMinNeighbors", cfg.world.cellularBirthMinNeighbors), 1, 8);
+        cfg.world.cellularSurvivalMinNeighbors =
+            std::clamp(readInt(procedural, "cellularSurvivalMinNeighbors", cfg.world.cellularSurvivalMinNeighbors), 1, 8);
+
+        cfg.world.enableFloodFillValidation =
+            readBool(procedural, "enableFloodFillValidation", cfg.world.enableFloodFillValidation);
+        cfg.world.validationRadiusChunks =
+            std::max(1, readInt(procedural, "validationRadiusChunks", cfg.world.validationRadiusChunks));
+
+        cfg.world.enableMacroGraphPrecheck =
+            readBool(procedural, "enableMacroGraphPrecheck", cfg.world.enableMacroGraphPrecheck);
+        cfg.world.macroGraphRadiusChunks =
+            std::max(1, readInt(procedural, "macroGraphRadiusChunks", cfg.world.macroGraphRadiusChunks));
     }
 }
 

@@ -2,6 +2,11 @@
   "worldgen": {
     "spawn": [0, 0],
     "exit": [64, 64],
+    "randomizeExitFromSpawn": true,
+    "exitMinDistance": 100,
+    "exitMaxDistance": 120,
+    "forceGuaranteedPath": false,
+    "guaranteedPathFallback": false,
     "coldBiomeMax": 0.33,
     "warmBiomeMax": 0.66,
     "coldWallThreshold": 0.11,
@@ -19,6 +24,16 @@
       "density": 270544960,
       "ore": 2575857510,
       "tree": 1430532898
+    },
+    "procedural": {
+      "enableCellularSmoothing": false,
+      "cellularIterations": 2,
+      "cellularBirthMinNeighbors": 5,
+      "cellularSurvivalMinNeighbors": 4,
+      "enableFloodFillValidation": false,
+      "validationRadiusChunks": 8,
+      "enableMacroGraphPrecheck": false,
+      "macroGraphRadiusChunks": 16
     }
   },
   "gameplay": {

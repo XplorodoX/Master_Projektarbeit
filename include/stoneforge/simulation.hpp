@@ -108,6 +108,7 @@ public:
     int observationSize() const;
     int steps() const;
     bool done() const;
+    bool reachedExit() const;
 
     bool commandSetTile(const Vec2i& target, TileType tile);
     bool commandSpawnEntity(

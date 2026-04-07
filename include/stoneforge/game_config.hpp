@@ -14,6 +14,13 @@ namespace stoneforge {
 struct WorldGenConfig {
     Vec2i spawn{0, 0};
     Vec2i exit{64, 64};
+    bool randomizeExitFromSpawn = true;
+    int exitMinDistance = 100;
+    int exitMaxDistance = 120;
+
+    // Keep current behavior by default: always carve a deterministic safe path.
+    bool forceGuaranteedPath = false;
+    bool guaranteedPathFallback = false;
 
     double coldBiomeMax = 0.33;
     double warmBiomeMax = 0.66;
@@ -36,6 +43,18 @@ struct WorldGenConfig {
     std::uint64_t densitySalt = 0x10203040ULL;
     std::uint64_t oreSalt = 0x99887766ULL;
     std::uint64_t treeSalt = 0x55443322ULL;
+
+    // Optional phase-2 controls (disabled by default).
+    bool enableCellularSmoothing = false;
+    int cellularIterations = 2;
+    int cellularBirthMinNeighbors = 5;
+    int cellularSurvivalMinNeighbors = 4;
+
+    bool enableFloodFillValidation = false;
+    int validationRadiusChunks = 8;
+
+    bool enableMacroGraphPrecheck = false;
+    int macroGraphRadiusChunks = 16;
 };
 
 struct GameplayConfig {

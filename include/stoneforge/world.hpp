@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/types.hpp"
 
 namespace stoneforge {
@@ -35,6 +36,11 @@ private:
 
     std::uint64_t mix(std::uint64_t value) const;
     double noise01(int worldX, int worldY, std::uint64_t salt) const;
+    Vec2i chooseExitPoint(const WorldGenConfig& cfg) const;
+    TileType sampleBaseTile(int worldX, int worldY, const WorldGenConfig& cfg) const;
+    void runCellularSmoothingStage(int cx, int cy, Chunk& chunk, const WorldGenConfig& cfg) const;
+
+    bool validateReachabilityWindow(int minX, int minY, int maxX, int maxY) const;
 
     Chunk& ensureChunk(int cx, int cy) const;
     void generateChunk(int cx, int cy, Chunk& chunk) const;

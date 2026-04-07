@@ -3,7 +3,9 @@
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <deque>
 #include <limits>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -890,6 +892,129 @@ stoneforge::Action actionFromInput() {
     return stoneforge::Action::Wait;
 }
 
+std::int64_t posKey(int x, int y) {
+    const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(x));
+    const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(y));
+    return static_cast<std::int64_t>((hi << 32) | lo);
+}
+
+stoneforge::Vec2i keyToPos(std::int64_t key) {
+    const std::uint64_t u = static_cast<std::uint64_t>(key);
+    return stoneforge::Vec2i{
+        static_cast<int>(static_cast<std::uint32_t>(u >> 32)),
+        static_cast<int>(static_cast<std::uint32_t>(u & 0xFFFFFFFFULL))
+    };
+}
+
+bool isWalkableTile(stoneforge::TileType tile) {
+    return tile == stoneforge::TileType::Empty || tile == stoneforge::TileType::Exit;
+}
+
+std::optional<stoneforge::Action> actionFromDelta(const stoneforge::Vec2i& delta) {
+    if(delta.x == 1 && delta.y == 0) {
+        return stoneforge::Action::MoveRight;
+    }
+    if(delta.x == -1 && delta.y == 0) {
+        return stoneforge::Action::MoveLeft;
+    }
+    if(delta.x == 0 && delta.y == 1) {
+        return stoneforge::Action::MoveDown;
+    }
+    if(delta.x == 0 && delta.y == -1) {
+        return stoneforge::Action::MoveUp;
+    }
+    return std::nullopt;
+}
+
+std::optional<stoneforge::Action> autoWalkNextAction(
+    const stoneforge::Simulation& sim,
+    const stoneforge::Vec2i& start,
+    const stoneforge::Vec2i& goal
+) {
+    if(start == goal) {
+        return stoneforge::Action::Wait;
+    }
+
+    const int margin = 48;
+    const int minX = std::min(start.x, goal.x) - margin;
+    const int maxX = std::max(start.x, goal.x) + margin;
+    const int minY = std::min(start.y, goal.y) - margin;
+    const int maxY = std::max(start.y, goal.y) + margin;
+
+    std::deque<stoneforge::Vec2i> queue;
+    std::unordered_map<std::int64_t, std::int64_t> parent;
+
+    const std::int64_t startKey = posKey(start.x, start.y);
+    const std::int64_t goalKey = posKey(goal.x, goal.y);
+    queue.push_back(start);
+    parent[startKey] = startKey;
+
+    constexpr std::array<stoneforge::Vec2i, 4> kDirs = {
+        stoneforge::Vec2i{1, 0},
+        stoneforge::Vec2i{-1, 0},
+        stoneforge::Vec2i{0, 1},
+        stoneforge::Vec2i{0, -1},
+    };
+
+    bool found = false;
+    while(!queue.empty()) {
+        const stoneforge::Vec2i cur = queue.front();
+        queue.pop_front();
+
+        if(cur == goal) {
+            found = true;
+            break;
+        }
+
+        for(const stoneforge::Vec2i dir : kDirs) {
+            const int nx = cur.x + dir.x;
+            const int ny = cur.y + dir.y;
+            if(nx < minX || nx > maxX || ny < minY || ny > maxY) {
+                continue;
+            }
+
+            const std::int64_t key = posKey(nx, ny);
+            if(parent.find(key) != parent.end()) {
+                continue;
+            }
+
+            const bool isGoal = (nx == goal.x && ny == goal.y);
+            const bool walkable = isGoal || isWalkableTile(sim.tileAt(nx, ny));
+            if(!walkable) {
+                continue;
+            }
+
+            if(!isGoal && sim.hasMobAt(nx, ny)) {
+                continue;
+            }
+
+            parent[key] = posKey(cur.x, cur.y);
+            queue.push_back(stoneforge::Vec2i{nx, ny});
+            if(isGoal) {
+                found = true;
+                queue.clear();
+                break;
+            }
+        }
+    }
+
+    if(!found || parent.find(goalKey) == parent.end()) {
+        return std::nullopt;
+    }
+
+    std::int64_t stepKey = goalKey;
+    while(parent[stepKey] != startKey) {
+        stepKey = parent[stepKey];
+        if(stepKey == startKey) {
+            break;
+        }
+    }
+
+    const stoneforge::Vec2i stepPos = keyToPos(stepKey);
+    const stoneforge::Vec2i delta{stepPos.x - start.x, stepPos.y - start.y};
+    return actionFromDelta(delta);
+}
+
 void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, int py, int tileSize, float t, int idx) {
     const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
@@ -1013,6 +1138,7 @@ int stoneforge::client::RenderEngine::run() {
     std::string commandInput;
     std::string commandFeedback;
     float commandFeedbackTtl = 0.0F;
+    bool autoWalkEnabled = false;
 
     while(!WindowShouldClose()) {
         const int screenW = GetScreenWidth();
@@ -1085,6 +1211,7 @@ int stoneforge::client::RenderEngine::run() {
                 clearCraftingInputs(craftingPanel.slots);
                 commandMode = false;
                 commandInput.clear();
+                autoWalkEnabled = false;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
@@ -1180,6 +1307,11 @@ int stoneforge::client::RenderEngine::run() {
             clearCraftingInputs(craftingPanel.slots);
             commandMode = false;
             commandInput.clear();
+            autoWalkEnabled = false;
+        }
+
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_G) && !sim.done()) {
+            autoWalkEnabled = !autoWalkEnabled;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
@@ -1282,6 +1414,19 @@ int stoneforge::client::RenderEngine::run() {
             stepTimer = 0.0F;
             if(!sim.done()) {
                 stoneforge::Action action = gameplayInputBlocked ? stoneforge::Action::Wait : actionFromInput();
+                if(action != stoneforge::Action::Wait && action != stoneforge::Action::Noop) {
+                    autoWalkEnabled = false;
+                }
+
+                if(autoWalkEnabled && !inventoryOpen && !gameplayInputBlocked && !mouseMineActive) {
+                    const auto autoAction = autoWalkNextAction(sim, sim.playerPos(), sim.exitPos());
+                    if(autoAction.has_value()) {
+                        action = *autoAction;
+                    } else {
+                        autoWalkEnabled = false;
+                    }
+                }
+
                 if(mouseMineActive) {
                     action = stoneforge::Action::Mine;
                 }
@@ -1310,6 +1455,9 @@ int stoneforge::client::RenderEngine::run() {
                 }
 
                 sim.step(action);
+                if(sim.reachedExit() || sim.done()) {
+                    autoWalkEnabled = false;
+                }
                 scriptRuntime.emitEvent("onTick", {{"step", std::to_string(sim.steps())}});
 
                 if(action == stoneforge::Action::Place) {
@@ -1489,6 +1637,18 @@ int stoneforge::client::RenderEngine::run() {
         drawHud(sim, screenW, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
         drawHotbar(sim, screenW, screenH);
+
+        const stoneforge::Vec2i posNow = sim.playerPos();
+        const stoneforge::Vec2i goalNow = sim.exitPos();
+        const int goalDistance = std::abs(goalNow.x - posNow.x) + std::abs(goalNow.y - posNow.y);
+        const Rectangle autoWalkBtn = {24.0F, 24.0F, 210.0F, 40.0F};
+        const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
+        if(autoWalkClicked) {
+            autoWalkEnabled = !autoWalkEnabled;
+        }
+        DrawText(TextFormat("Goal distance: %d", goalDistance), 30, 70, 18, Color{208, 224, 243, 255});
+        DrawText("G toggles Auto-Walk", 30, 91, 16, Color{175, 193, 215, 255});
+
         craftingPanel.craftRequested = false;
         if(inventoryOpen) {
             drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode, craftingPanel);
@@ -1515,6 +1675,21 @@ int stoneforge::client::RenderEngine::run() {
                 const int tw = MeasureText(shown.c_str(), 22);
                 DrawText("_", 36 + tw + 2, screenH - 126, 22, Color{233, 242, 255, 255});
             }
+        }
+
+        if(sim.done() && sim.reachedExit()) {
+            DrawRectangle(0, 0, screenW, screenH, Fade(Color{8, 13, 18, 255}, 0.55F));
+            const Rectangle panel{
+                static_cast<float>(screenW / 2 - 270),
+                static_cast<float>(screenH / 2 - 110),
+                540.0F,
+                220.0F
+            };
+            DrawRectangleRounded(panel, 0.16F, 10, Color{22, 34, 44, 245});
+            DrawRectangleRoundedLinesEx(panel, 0.16F, 10, 3.0F, Color{132, 237, 184, 255});
+            DrawText("GEWONNEN", screenW / 2 - 120, screenH / 2 - 52, 56, Color{168, 255, 204, 255});
+            DrawText("Du hast das Ziel erreicht.", screenW / 2 - 150, screenH / 2 + 18, 28, Color{223, 240, 255, 255});
+            DrawText("R = neuer Lauf | ESC = Menu", screenW / 2 - 142, screenH / 2 + 58, 22, Color{193, 210, 229, 255});
         }
 
         EndDrawing();
