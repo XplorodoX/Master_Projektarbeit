@@ -12,7 +12,7 @@ namespace stoneforge {
 
 class World {
 public:
-    static constexpr int kChunkSize = 32;
+    static constexpr int kChunkSize = 8;
 
     explicit World(std::uint64_t seed = 0);
 

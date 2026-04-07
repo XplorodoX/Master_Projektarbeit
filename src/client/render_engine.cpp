@@ -50,6 +50,7 @@ constexpr int kWindowW = 1366;
 constexpr int kWindowH = 768;
 constexpr int kBaseTileSize = 30;
 constexpr int kAtlasCell = 16;
+constexpr bool kEnableDaylightCycle = false;
 struct BiomeWeights {
     std::array<float, 3> w{0.0F, 0.0F, 0.0F};
     int count = 0;
@@ -679,32 +680,26 @@ BiomeWeights biomeWeights(int wx, int wy, const std::vector<RuntimeBiome>& biome
     const int chunkSize = stoneforge::World::kChunkSize;
     const int cx = floorDivLocal(wx, chunkSize);
     const int cy = floorDivLocal(wy, chunkSize);
-    const int lx = positiveModLocal(wx, chunkSize);
-    const int ly = positiveModLocal(wy, chunkSize);
+    const float tileCx = (static_cast<float>(wx) + 0.5F) / static_cast<float>(chunkSize);
+    const float tileCy = (static_cast<float>(wy) + 0.5F) / static_cast<float>(chunkSize);
 
-    const int baseTag = std::clamp(chunkBiomeTag(cx, cy), 0, out.count - 1);
-    out.w[static_cast<std::size_t>(baseTag)] += 1.0F;
+    constexpr int kRadius = 4;
+    constexpr float kSigma = 1.9F;
+    constexpr float kTwoSigmaSq = 2.0F * kSigma * kSigma;
 
-    const int blendWidth = 5;
-    if(lx < blendWidth) {
-        const float t = static_cast<float>(blendWidth - lx) / static_cast<float>(blendWidth);
-        const int neighbor = std::clamp(chunkBiomeTag(cx - 1, cy), 0, out.count - 1);
-        out.w[static_cast<std::size_t>(neighbor)] += t;
-    }
-    if(lx >= chunkSize - blendWidth) {
-        const float t = static_cast<float>(lx - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth);
-        const int neighbor = std::clamp(chunkBiomeTag(cx + 1, cy), 0, out.count - 1);
-        out.w[static_cast<std::size_t>(neighbor)] += t;
-    }
-    if(ly < blendWidth) {
-        const float t = static_cast<float>(blendWidth - ly) / static_cast<float>(blendWidth);
-        const int neighbor = std::clamp(chunkBiomeTag(cx, cy - 1), 0, out.count - 1);
-        out.w[static_cast<std::size_t>(neighbor)] += t;
-    }
-    if(ly >= chunkSize - blendWidth) {
-        const float t = static_cast<float>(ly - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth);
-        const int neighbor = std::clamp(chunkBiomeTag(cx, cy + 1), 0, out.count - 1);
-        out.w[static_cast<std::size_t>(neighbor)] += t;
+    for(int dy = -kRadius; dy <= kRadius; ++dy) {
+        for(int dx = -kRadius; dx <= kRadius; ++dx) {
+            const int ccx = cx + dx;
+            const int ccy = cy + dy;
+            const int tag = std::clamp(chunkBiomeTag(ccx, ccy), 0, out.count - 1);
+            const float centerX = static_cast<float>(ccx) + 0.5F;
+            const float centerY = static_cast<float>(ccy) + 0.5F;
+            const float distX = tileCx - centerX;
+            const float distY = tileCy - centerY;
+            const float dist2 = distX * distX + distY * distY;
+            const float weight = std::exp(-dist2 / kTwoSigmaSq);
+            out.w[static_cast<std::size_t>(tag)] += weight;
+        }
     }
 
     const float sum = out.w[0] + out.w[1] + out.w[2];
@@ -773,38 +768,14 @@ void drawStyledTile(
     const std::vector<RuntimeBiome>& biomes
 ) {
     int primary = 0;
+    int secondary = 0;
+    float secondaryWeight = 0.0F;
     if(!biomes.empty()) {
-        int mapped = 0;
-        switch(biomeTag) {
-            case 0:  // grasland
-                mapped = 1;
-                break;
-            case 1:  // wald
-                mapped = 2;
-                break;
-            case 2:  // wueste
-                mapped = 1;
-                break;
-            case 3:  // bergland
-                mapped = 0;
-                break;
-            case 4:  // steppe
-                mapped = 1;
-                break;
-            case 5:  // tundra
-                mapped = 0;
-                break;
-            case 6:  // hoelle
-                mapped = 2;
-                break;
-            default:
-                mapped = 0;
-                break;
-        }
-        primary = std::clamp(mapped, 0, static_cast<int>(biomes.size()) - 1);
+        const BiomeWeights bw = biomeWeights(wx, wy, biomes);
+        dominantBiomes(bw, primary, secondary, secondaryWeight);
+        primary = std::clamp(primary, 0, static_cast<int>(biomes.size()) - 1);
+        secondary = std::clamp(secondary, 0, static_cast<int>(biomes.size()) - 1);
     }
-    const int secondary = primary;
-    const float secondaryWeight = 0.0F;
     const int paletteHint = biomes.empty() ? 0 : biomes[static_cast<std::size_t>(std::clamp(primary, 0, static_cast<int>(biomes.size()) - 1))].paletteHint;
 
     if(type == stoneforge::TileType::Empty) {
@@ -1067,14 +1038,8 @@ Color biomeTintAtTile(const stoneforge::Simulation& sim, int wx, int wy) {
         t = std::clamp(t, 0.0F, 1.0F);
         return t * t * (3.0F - 2.0F * t);
     };
-    auto blendToWhite = [](const Color& c, float strength) {
-        const float s = std::clamp(strength, 0.0F, 1.0F);
-        return Color{
-            static_cast<unsigned char>(255.0F + (static_cast<float>(c.r) - 255.0F) * s),
-            static_cast<unsigned char>(255.0F + (static_cast<float>(c.g) - 255.0F) * s),
-            static_cast<unsigned char>(255.0F + (static_cast<float>(c.b) - 255.0F) * s),
-            255
-        };
+    auto lerpFloat = [](float a, float b, float t) {
+        return a + (b - a) * t;
     };
 
     const int chunkSize = stoneforge::World::kChunkSize;
@@ -1087,77 +1052,55 @@ Color biomeTintAtTile(const stoneforge::Simulation& sim, int wx, int wy) {
         return sim.biomeTagAt(ccx * chunkSize, ccy * chunkSize);
     };
 
-    const int baseTag = chunkTag(cx, cy);
-    Color baseColor = biomeColorForTag(baseTag);
-    if(baseTag == 3) {
-        bool mountainCore = true;
-        for(int oy = -2; oy <= 2 && mountainCore; ++oy) {
-            for(int ox = -2; ox <= 2; ++ox) {
-                if(chunkTag(cx + ox, cy + oy) != 3) {
-                    mountainCore = false;
-                    break;
-                }
-            }
+    const float tileCx = (static_cast<float>(wx) + 0.5F) / static_cast<float>(chunkSize);
+    const float tileCy = (static_cast<float>(wy) + 0.5F) / static_cast<float>(chunkSize);
+
+    constexpr int kRadius = 4;
+    constexpr float kSigma = 1.85F;
+    constexpr float kTwoSigmaSq = 2.0F * kSigma * kSigma;
+
+    float r = 0.0F;
+    float g = 0.0F;
+    float b = 0.0F;
+    float weightSum = 0.0F;
+
+    for(int dy = -kRadius; dy <= kRadius; ++dy) {
+        for(int dx = -kRadius; dx <= kRadius; ++dx) {
+            const int ccx = cx + dx;
+            const int ccy = cy + dy;
+            const Color chunkColor = biomeColorForTag(chunkTag(ccx, ccy));
+
+            const float centerX = static_cast<float>(ccx) + 0.5F;
+            const float centerY = static_cast<float>(ccy) + 0.5F;
+            const float distX = tileCx - centerX;
+            const float distY = tileCy - centerY;
+            const float dist2 = distX * distX + distY * distY;
+            const float weight = std::exp(-dist2 / kTwoSigmaSq);
+
+            r += static_cast<float>(chunkColor.r) * weight;
+            g += static_cast<float>(chunkColor.g) * weight;
+            b += static_cast<float>(chunkColor.b) * weight;
+            weightSum += weight;
         }
-        if(mountainCore) {
-            baseColor = Color{238, 238, 238, 255};
-        }
     }
 
-    float r = static_cast<float>(baseColor.r);
-    float g = static_cast<float>(baseColor.g);
-    float b = static_cast<float>(baseColor.b);
-    float w = 1.0F;
-
-    const int blendWidth = 12;
-    auto accumulate = [&](int tag, float weight) {
-        const Color c = biomeColorForTag(tag);
-        r += static_cast<float>(c.r) * weight;
-        g += static_cast<float>(c.g) * weight;
-        b += static_cast<float>(c.b) * weight;
-        w += weight;
-    };
-
-    const float leftI = smoothstep(static_cast<float>(blendWidth - lx) / static_cast<float>(blendWidth));
-    const float rightI = smoothstep(static_cast<float>(lx - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth));
-    const float topI = smoothstep(static_cast<float>(blendWidth - ly) / static_cast<float>(blendWidth));
-    const float bottomI = smoothstep(static_cast<float>(ly - (chunkSize - blendWidth - 1)) / static_cast<float>(blendWidth));
-
-    if(leftI > 0.0F) {
-        accumulate(chunkTag(cx - 1, cy), leftI * 0.75F);
-    }
-    if(rightI > 0.0F) {
-        accumulate(chunkTag(cx + 1, cy), rightI * 0.75F);
-    }
-    if(topI > 0.0F) {
-        accumulate(chunkTag(cx, cy - 1), topI * 0.75F);
-    }
-    if(bottomI > 0.0F) {
-        accumulate(chunkTag(cx, cy + 1), bottomI * 0.75F);
+    if(weightSum <= 0.0001F) {
+        return Color{255, 255, 255, 255};
     }
 
-    if(leftI > 0.0F && topI > 0.0F) {
-        accumulate(chunkTag(cx - 1, cy - 1), std::min(leftI, topI) * 0.45F);
-    }
-    if(rightI > 0.0F && topI > 0.0F) {
-        accumulate(chunkTag(cx + 1, cy - 1), std::min(rightI, topI) * 0.45F);
-    }
-    if(leftI > 0.0F && bottomI > 0.0F) {
-        accumulate(chunkTag(cx - 1, cy + 1), std::min(leftI, bottomI) * 0.45F);
-    }
-    if(rightI > 0.0F && bottomI > 0.0F) {
-        accumulate(chunkTag(cx + 1, cy + 1), std::min(rightI, bottomI) * 0.45F);
-    }
+    const float normalizedR = r / weightSum;
+    const float normalizedG = g / weightSum;
+    const float normalizedB = b / weightSum;
 
-    const Color mixed{
-        static_cast<unsigned char>(std::clamp(r / w, 0.0F, 255.0F)),
-        static_cast<unsigned char>(std::clamp(g / w, 0.0F, 255.0F)),
-        static_cast<unsigned char>(std::clamp(b / w, 0.0F, 255.0F)),
+    const float localBlend = smoothstep((static_cast<float>(lx) + 0.5F) / static_cast<float>(chunkSize));
+    const float tintStrength = lerpFloat(0.68F, 0.84F, 1.0F - std::fabs(localBlend - 0.5F) * 2.0F);
+
+    return Color{
+        static_cast<unsigned char>(std::clamp(normalizedR * tintStrength + 255.0F * (1.0F - tintStrength), 0.0F, 255.0F)),
+        static_cast<unsigned char>(std::clamp(normalizedG * tintStrength + 255.0F * (1.0F - tintStrength), 0.0F, 255.0F)),
+        static_cast<unsigned char>(std::clamp(normalizedB * tintStrength + 255.0F * (1.0F - tintStrength), 0.0F, 255.0F)),
         255
     };
-
-    // Natural look: tint materials toward biome color, not a transparent paint layer.
-    return blendToWhite(mixed, 0.46F);
 }
 
 Color potentialGoalAreaColor() {
@@ -2049,17 +1992,19 @@ int stoneforge::client::RenderEngine::run() {
 
         drawCracks(cracks, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
 
-        const float dayNight = 0.75F + 0.25F * std::sin(t * 0.11F);
-        DrawRectangle(0, 0, screenW, screenH, Fade(Color{12, 15, 24, 255}, 1.0F - dayNight));
-        DrawRectangleGradientV(0, 0, screenW, screenH / 2, Fade(Color{138, 166, 204, 255}, 0.08F), Fade(BLANK, 0.0F));
-        DrawRectangleGradientV(0, screenH / 2, screenW, screenH / 2, Fade(BLANK, 0.0F), Fade(Color{0, 0, 0, 255}, 0.14F));
-        DrawRectangleGradientEx(
-            Rectangle{0.0F, 0.0F, static_cast<float>(screenW), static_cast<float>(screenH)},
-            Fade(BLACK, 0.16F),
-            Fade(BLACK, 0.16F),
-            Fade(BLACK, 0.04F),
-            Fade(BLACK, 0.04F)
-        );
+        if(kEnableDaylightCycle) {
+            const float dayNight = 0.75F + 0.25F * std::sin(t * 0.11F);
+            DrawRectangle(0, 0, screenW, screenH, Fade(Color{12, 15, 24, 255}, 1.0F - dayNight));
+            DrawRectangleGradientV(0, 0, screenW, screenH / 2, Fade(Color{138, 166, 204, 255}, 0.08F), Fade(BLANK, 0.0F));
+            DrawRectangleGradientV(0, screenH / 2, screenW, screenH / 2, Fade(BLANK, 0.0F), Fade(Color{0, 0, 0, 255}, 0.14F));
+            DrawRectangleGradientEx(
+                Rectangle{0.0F, 0.0F, static_cast<float>(screenW), static_cast<float>(screenH)},
+                Fade(BLACK, 0.16F),
+                Fade(BLACK, 0.16F),
+                Fade(BLACK, 0.04F),
+                Fade(BLACK, 0.04F)
+            );
+        }
 
         const int ex = centerX + (exit.x - player.x) * tileSize + tileSize / 2;
         const int ey = centerY + (exit.y - player.y) * tileSize + tileSize / 2;
