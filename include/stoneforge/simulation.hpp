@@ -181,6 +181,7 @@ private:
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;
     int starvationTicks_ = 0;
+    float proximityDamageAccumulator_ = 0.0F;
 
     bool done_ = false;
     bool reachedExit_ = false;

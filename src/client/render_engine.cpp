@@ -957,13 +957,7 @@ stoneforge::Action actionFromInput() {
     if(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
         return stoneforge::Action::MoveRight;
     }
-    if(IsKeyDown(KEY_Z)) {
-        return stoneforge::Action::Mine;
-    }
-    if(IsKeyDown(KEY_X)) {
-        return stoneforge::Action::Place;
-    }
-    if(IsKeyDown(KEY_C)) {
+    if(IsKeyPressed(KEY_E)) {
         return stoneforge::Action::Use;
     }
 
@@ -1630,13 +1624,9 @@ int stoneforge::client::RenderEngine::run() {
 
         const bool gameplayInputBlocked = commandMode;
 
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_TAB)) {
-            inventoryOpen = !inventoryOpen;
-            if(!inventoryOpen) {
-                dragSourceSlot = -1;
-                dragSplitMode = false;
-            }
-        }
+        inventoryOpen = false;
+        dragSourceSlot = -1;
+        dragSplitMode = false;
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_R)) {
             currentSeed += 1ULL;
@@ -1674,55 +1664,7 @@ int stoneforge::client::RenderEngine::run() {
             showChunkBorders = !showChunkBorders;
         }
 
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_V)) {
-            sim.placeWorkbenchForward();
-        }
-
-        if(!gameplayInputBlocked && !inventoryOpen && std::fabs(wheelMove) > 0.01F && !IsKeyDown(KEY_LEFT_CONTROL) && !IsKeyDown(KEY_RIGHT_CONTROL)) {
-            int nextSlot = sim.hotbarSelection();
-            const int hotbarSlots = sim.hotbarSlotCount();
-            if(wheelMove > 0.0F) {
-                nextSlot -= 1;
-            } else {
-                nextSlot += 1;
-            }
-
-            if(nextSlot < 0) {
-                nextSlot = hotbarSlots - 1;
-            } else if(nextSlot >= hotbarSlots) {
-                nextSlot = 0;
-            }
-
-            sim.setHotbarSelection(nextSlot);
-        }
-
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_ONE)) {
-            sim.setHotbarSelection(0);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_TWO)) {
-            sim.setHotbarSelection(1);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_THREE)) {
-            sim.setHotbarSelection(2);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_FOUR)) {
-            sim.setHotbarSelection(3);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_FIVE)) {
-            sim.setHotbarSelection(4);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_SIX)) {
-            sim.setHotbarSelection(5);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_SEVEN)) {
-            sim.setHotbarSelection(6);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_EIGHT)) {
-            sim.setHotbarSelection(7);
-        }
-        if(!gameplayInputBlocked && IsKeyPressed(KEY_NINE)) {
-            sim.setHotbarSelection(8);
-        }
+        (void)wheelMove;
 
         const stoneforge::Vec2i playerInput = sim.playerPos();
         const int centerXInput = screenW / 2;
@@ -1734,15 +1676,15 @@ int stoneforge::client::RenderEngine::run() {
         const stoneforge::Vec2i hoverTile{playerInput.x + hoverDx, playerInput.y + hoverDy};
         const stoneforge::TileType hoverType = sim.tileAt(hoverTile.x, hoverTile.y);
         const bool hoverMineable = hoverType == stoneforge::TileType::Resource || hoverType == stoneforge::TileType::Tree || hoverType == stoneforge::TileType::Workbench;
-        const stoneforge::TileType previewPlaceTile = sim.previewPlacementTileForSelectedHotbar();
-        const bool hasPlacePreview = previewPlaceTile != stoneforge::TileType::Empty;
+        const stoneforge::TileType previewPlaceTile = stoneforge::TileType::Empty;
+        const bool hasPlacePreview = false;
         const float miningRangeTiles = sim.miningRangeTiles();
         const float hoverDist2 = static_cast<float>(hoverDx * hoverDx + hoverDy * hoverDy);
         const bool hoverInRange = hoverDist2 <= (miningRangeTiles * miningRangeTiles);
         const bool hoverLineOfSight = hoverMineable ? sim.hasLineOfSightTo(hoverTile) : false;
-        const bool hoverCanPlace = hasPlacePreview ? sim.canPlaceFromHotbarAt(hoverTile) : false;
+        const bool hoverCanPlace = false;
         const bool hoverCanMine = hoverMineable ? sim.canMineTarget(hoverTile) : false;
-        const bool mouseMineActive = !gameplayInputBlocked && !inventoryOpen && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && hoverCanMine;
+        const bool mouseMineActive = false;
 
         if(mouseMineActive) {
             sim.setMiningTargetOverride(hoverTile);
@@ -1750,24 +1692,7 @@ int stoneforge::client::RenderEngine::run() {
             sim.clearMiningTargetOverride();
         }
 
-        if(!gameplayInputBlocked && !inventoryOpen && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-            const stoneforge::TileType beforeContext = sim.tileAt(hoverTile.x, hoverTile.y);
-            if(hoverDx != 0 || hoverDy != 0) {
-                if(std::abs(hoverDx) >= std::abs(hoverDy)) {
-                    facing = {hoverDx > 0 ? 1 : -1, 0};
-                } else {
-                    facing = {0, hoverDy > 0 ? 1 : -1};
-                }
-            }
-            const bool used = sim.contextUseAt(hoverTile);
-            if(used) {
-                const stoneforge::TileType afterContext = sim.tileAt(hoverTile.x, hoverTile.y);
-                scriptRuntime.emitEvent("onItemUsed", {{"x", std::to_string(hoverTile.x)}, {"y", std::to_string(hoverTile.y)}});
-                if(beforeContext != afterContext) {
-                    scriptRuntime.emitEvent("onBlockPlaced", {{"x", std::to_string(hoverTile.x)}, {"y", std::to_string(hoverTile.y)}});
-                }
-            }
-        }
+        (void)hoverCanPlace;
 
         stepTimer += dt;
         if(stepTimer >= stepIntervalSeconds) {
@@ -2115,7 +2040,7 @@ int stoneforge::client::RenderEngine::run() {
             tileSize,
             t,
             facing,
-            sim.hotbarSlot(sim.hotbarSelection()).itemId,
+            "stoneforge:sword",
             sim.isPlayerInLake()
         );
         drawParticles(particles, player, centerX, centerY, tileSize);
@@ -2127,7 +2052,6 @@ int stoneforge::client::RenderEngine::run() {
         const bool nearWorkbench = sim.isNearWorkbench();
         drawHud(sim, screenW, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
-        drawHotbar(sim, screenW, screenH);
 
         const stoneforge::Vec2i posNow = sim.playerPos();
         const stoneforge::Vec2i goalNow = sim.exitPos();
@@ -2181,13 +2105,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         craftingPanel.craftRequested = false;
-        if(inventoryOpen) {
-            drawInventoryPanel(sim, screenW, nearWorkbench, sim.selectedHotbarSlotIndex(), dragSourceSlot, dragSplitMode, craftingPanel);
-            if(craftingPanel.craftRequested && sim.craft(craftingPanel.requestedRecipe)) {
-                consumeCraftingInputs(craftingPanel.slots, craftingPanel.requestedRecipe);
-                scriptRuntime.emitEvent("onCraft", {{"recipe", craftingPanel.requestedRecipe}});
-            }
-        }
+        (void)craftingPanel;
 
         if(commandFeedbackTtl > 0.0F) {
             const Rectangle msgBox{24.0F, static_cast<float>(screenH - 174), static_cast<float>(screenW - 48), 32.0F};

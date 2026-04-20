@@ -218,6 +218,7 @@ void Simulation::reset(std::uint64_t seed) {
 
     steps_ = 0;
     starvationTicks_ = 0;
+    proximityDamageAccumulator_ = 0.0F;
     done_ = false;
     reachedExit_ = false;
 
@@ -234,7 +235,7 @@ StepResult Simulation::step(Action action) {
         return StepResult{0.0F, true, reachedExit_, steps_};
     }
 
-    const auto& cfg = gameConfig().gameplay;
+    const auto& cfg = gameConfig();
     const int distanceBefore = manhattanDistance(player_, world_.exitPoint());
     const int hpBefore = hp_;
     const bool idleAction = (action == Action::Wait || action == Action::Noop);
@@ -274,18 +275,36 @@ StepResult Simulation::step(Action action) {
     }
 
     if(idleAction) {
-        if(energy_ < 100 && (steps_ % std::max(1, cfg.idleEnergyRegenInterval) == 0)) {
+        if(energy_ < 100 && (steps_ % std::max(1, cfg.gameplay.idleEnergyRegenInterval) == 0)) {
             energy_ = std::min(100, energy_ + 1);
         }
-    } else if(steps_ % std::max(1, cfg.activeEnergyDrainInterval) == 0) {
+    } else if(steps_ % std::max(1, cfg.gameplay.activeEnergyDrainInterval) == 0) {
         energy_ = std::max(0, energy_ - 1);
     }
 
     updateMobs();
 
+    bool mobInThreeByThree = false;
+    for(const auto& mob : mobs_) {
+        if(std::abs(mob.pos.x - player_.x) <= 1 && std::abs(mob.pos.y - player_.y) <= 1) {
+            mobInThreeByThree = true;
+            break;
+        }
+    }
+
+    if(mobInThreeByThree) {
+        proximityDamageAccumulator_ += cfg.render.stepIntervalSeconds;
+        while(proximityDamageAccumulator_ >= 1.0F) {
+            hp_ -= 1;
+            proximityDamageAccumulator_ -= 1.0F;
+        }
+    } else {
+        proximityDamageAccumulator_ = 0.0F;
+    }
+
     if(energy_ <= 0) {
         ++starvationTicks_;
-        if(starvationTicks_ >= std::max(1, cfg.starvationTicksToDamage)) {
+        if(starvationTicks_ >= std::max(1, cfg.gameplay.starvationTicksToDamage)) {
             hp_ -= 1;
             starvationTicks_ = 0;
         }
@@ -971,30 +990,28 @@ void Simulation::placeForward() {
 }
 
 void Simulation::useAction() {
-    if(tryPlaceFromSlotIndex(selectedHotbarSlotIndex())) {
-        energy_ = std::max(0, energy_ - 1);
-        return;
+    // Sword slash: hit all mobs in a 3x3 area centered on the player.
+    for(auto& mob : mobs_) {
+        const int dx = std::abs(mob.pos.x - player_.x);
+        const int dy = std::abs(mob.pos.y - player_.y);
+        if(dx <= 1 && dy <= 1) {
+            mob.hp -= 1;
+        }
     }
 
-    if(craft("stoneforge:pickaxe_tier2")) {
-        return;
-    }
-    if(craft("stoneforge:axe_tier2")) {
-        return;
-    }
-    if(craft("stoneforge:pickaxe_tier1")) {
-        return;
-    }
-    if(craft("stoneforge:axe_tier1")) {
-        return;
-    }
-    if(craft("stoneforge:workbench")) {
-        return;
-    }
-    if(craft("stoneforge:sticks")) {
-        return;
-    }
-    (void)craft("stoneforge:planks");
+    mobs_.erase(
+        std::remove_if(
+            mobs_.begin(),
+            mobs_.end(),
+            [](const Mob& mob) {
+                return mob.hp <= 0;
+            }
+        ),
+        mobs_.end()
+    );
+
+    rebuildMobSpatialIndex();
+    energy_ = std::max(0, energy_ - 1);
 }
 
 void Simulation::clearMiningProgress() {
