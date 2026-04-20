@@ -49,7 +49,7 @@
     "starvationTicksToDamage": 18,
     "mobSpatialCellSize": 8,
     "mobSpawn": {
-      "count": 3,
+      "count": 0,
       "offsetX": 10,
       "offsetY": 10,
       "jitterMin": -8,
@@ -116,38 +116,5 @@
     "stoneforge:animal": "animal",
     "stoneforge:boss": "boss"
   },
-  "spawnTable": [
-    {
-      "entityId": "stoneforge:mob",
-      "behaviorType": "zombie",
-      "hp": 1,
-      "aggro": false,
-      "variant": "default",
-      "weight": 6
-    },
-    {
-      "entityId": "stoneforge:zombie",
-      "behaviorType": "zombie",
-      "hp": 2,
-      "aggro": true,
-      "variant": "default",
-      "weight": 4
-    },
-    {
-      "entityId": "stoneforge:animal",
-      "behaviorType": "animal",
-      "hp": 1,
-      "aggro": false,
-      "variant": "default",
-      "weight": 2
-    },
-    {
-      "entityId": "stoneforge:boss",
-      "behaviorType": "boss",
-      "hp": 4,
-      "aggro": true,
-      "variant": "boss",
-      "weight": 1
-    }
-  ]
+  "spawnTable": []
 }

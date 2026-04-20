@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "stoneforge/object.hpp"
@@ -28,6 +29,7 @@ struct Mob {
     std::string behaviorType = "default";
     bool aggro = false;
     std::string variant = "default";
+    int biomeTag = 0;
 };
 
 enum class ItemId : int {
@@ -186,6 +188,7 @@ private:
     std::vector<Mob> mobs_;
     int mobSpatialCellSize_ = 8;
     std::unordered_map<std::int64_t, std::vector<std::size_t>> mobSpatialBuckets_;
+    std::unordered_set<std::int64_t> mobSpawnCheckedChunks_;
 };
 
 }  // namespace stoneforge

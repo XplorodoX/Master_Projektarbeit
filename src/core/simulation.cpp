@@ -32,6 +32,33 @@ std::int64_t spatialKey(int x, int y, int cellSize) {
     return static_cast<std::int64_t>((hi << 32) | lo);
 }
 
+std::int64_t chunkKeyFromCoords(int cx, int cy) {
+    const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cx));
+    const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cy));
+    return static_cast<std::int64_t>((hi << 32) | lo);
+}
+
+std::string mobVariantForBiomeTag(int biomeTag) {
+    switch(biomeTag) {
+        case 0:
+            return "biome_grasland";
+        case 1:
+            return "biome_wald";
+        case 2:
+            return "biome_wueste";
+        case 3:
+            return "biome_bergland";
+        case 4:
+            return "biome_steppe";
+        case 5:
+            return "biome_tundra";
+        case 6:
+            return "biome_hoelle";
+        default:
+            return "biome_default";
+    }
+}
+
 Vec2i randomCardinalStep(std::mt19937_64& rng, float idleChance) {
     std::uniform_real_distribution<float> chance(0.0F, 1.0F);
     if(chance(rng) < std::clamp(idleChance, 0.0F, 1.0F)) {
@@ -196,39 +223,10 @@ void Simulation::reset(std::uint64_t seed) {
 
     mobSpatialCellSize_ = std::max(1, cfg.mobSpatialCellSize);
     mobs_.clear();
-
-    if(cfg.mobSpawn.count > 0) {
-        std::uniform_int_distribution<int> jitter(cfg.mobSpawn.jitterMin, cfg.mobSpawn.jitterMax);
-        for(int i = 0; i < cfg.mobSpawn.count; ++i) {
-            const auto& entry = pickSpawnEntry(cfg, rng_);
-            Vec2i p{
-                player_.x + cfg.mobSpawn.offsetX + jitter(rng_),
-                player_.y + cfg.mobSpawn.offsetY + jitter(rng_)
-            };
-
-            for(int attempts = 0; attempts < cfg.mobSpawn.passableRetries && !world_.isPassable(p.x, p.y); ++attempts) {
-                p = {
-                    player_.x + cfg.mobSpawn.offsetX + jitter(rng_),
-                    player_.y + cfg.mobSpawn.offsetY + jitter(rng_)
-                };
-            }
-
-            if(!world_.isPassable(p.x, p.y) || p == player_) {
-                continue;
-            }
-
-            std::string behaviorType = entry.behaviorType;
-            if(behaviorType.empty()) {
-                behaviorType = cfg.behaviorTypeForEntity(entry.entityId, "default");
-            }
-
-            const auto* profile = cfg.findMobBehavior(behaviorType);
-            const bool startAggro = entry.aggro || (profile != nullptr && profile->defaultAggro);
-            mobs_.push_back(Mob{p, std::max(1, entry.hp), entry.entityId, behaviorType, startAggro, entry.variant});
-        }
-    }
+    mobSpawnCheckedChunks_.clear();
 
     rebuildMobSpatialIndex();
+    updateMobs();
 }
 
 StepResult Simulation::step(Action action) {
@@ -865,15 +863,22 @@ bool Simulation::commandSpawnEntity(
         return false;
     }
 
-    const auto& cfg = gameConfig();
-    std::string resolvedBehavior = behaviorType;
-    if(resolvedBehavior.empty() || resolvedBehavior == "default") {
-        resolvedBehavior = cfg.behaviorTypeForEntity(entityId, "default");
+    (void)aggro;
+    const int biomeTag = world_.biomeTagAt(target.x, target.y);
+    std::string resolvedVariant = variant;
+    if(resolvedVariant.empty() || resolvedVariant == "default") {
+        resolvedVariant = mobVariantForBiomeTag(biomeTag);
     }
 
-    const auto* profile = cfg.findMobBehavior(resolvedBehavior);
-    const bool startAggro = aggro || (profile != nullptr && profile->defaultAggro);
-    mobs_.push_back(Mob{target, std::max(1, hp), entityId, resolvedBehavior, startAggro, variant});
+    std::string resolvedBehavior = behaviorType;
+    if(resolvedBehavior.empty()) {
+        resolvedBehavior = "passive";
+    }
+
+    mobs_.push_back(Mob{target, std::max(1, hp), entityId, resolvedBehavior, false, resolvedVariant, biomeTag});
+    const int chunkX = floorDiv(target.x, World::kChunkSize);
+    const int chunkY = floorDiv(target.y, World::kChunkSize);
+    mobSpawnCheckedChunks_.insert(chunkKeyFromCoords(chunkX, chunkY));
     rebuildMobSpatialIndex();
     return true;
 }
@@ -886,6 +891,9 @@ bool Simulation::commandTeleportPlayer(const Vec2i& target) {
     if(!world_.isPassable(target.x, target.y)) {
         return false;
     }
+    if(hasMobAt(target.x, target.y)) {
+        return false;
+    }
     player_ = target;
     clearMiningProgress();
     return true;
@@ -895,7 +903,7 @@ bool Simulation::tryMove(const Vec2i& delta) {
     const Vec2i candidate{player_.x + delta.x, player_.y + delta.y};
     facing_ = delta;
 
-    if(world_.isPassable(candidate.x, candidate.y)) {
+    if(world_.isPassable(candidate.x, candidate.y) && !hasMobAt(candidate.x, candidate.y)) {
         player_ = candidate;
         return true;
     }
@@ -1196,27 +1204,128 @@ bool Simulation::isWithinMiningRange(const Vec2i& target) const {
 }
 
 void Simulation::updateMobs() {
-    const auto& cfg = gameConfig();
+    // Spawn passive mobs lazily per discovered chunk: 90% chance, max one mob per chunk.
+    constexpr float kChunkSpawnChance = 0.90F;
+    constexpr int kSpawnAttemptsPerChunk = 10;
+
+    const int chunkSize = World::kChunkSize;
+    const int playerChunkX = floorDiv(player_.x, chunkSize);
+    const int playerChunkY = floorDiv(player_.y, chunkSize);
+    const int chunkRadius = std::max(1, (observationRadius_ + chunkSize - 1) / chunkSize + 1);
+
+    std::uniform_real_distribution<float> chanceDist(0.0F, 1.0F);
+    std::uniform_int_distribution<int> tileDist(0, chunkSize - 1);
+
+    for(int dy = -chunkRadius; dy <= chunkRadius; ++dy) {
+        for(int dx = -chunkRadius; dx <= chunkRadius; ++dx) {
+            const int cx = playerChunkX + dx;
+            const int cy = playerChunkY + dy;
+            const std::int64_t ck = chunkKeyFromCoords(cx, cy);
+
+            if(mobSpawnCheckedChunks_.find(ck) != mobSpawnCheckedChunks_.end()) {
+                continue;
+            }
+            mobSpawnCheckedChunks_.insert(ck);
+
+            if(chanceDist(rng_) > kChunkSpawnChance) {
+                continue;
+            }
+
+            const int chunkMinX = cx * chunkSize;
+            const int chunkMinY = cy * chunkSize;
+
+            bool spawned = false;
+            for(int attempt = 0; attempt < kSpawnAttemptsPerChunk; ++attempt) {
+                const int wx = chunkMinX + tileDist(rng_);
+                const int wy = chunkMinY + tileDist(rng_);
+                if(!world_.isPassable(wx, wy)) {
+                    continue;
+                }
+                if(player_.x == wx && player_.y == wy) {
+                    continue;
+                }
+                if(hasMobAt(wx, wy)) {
+                    continue;
+                }
+
+                const int biomeTag = world_.biomeTagAt(wx, wy);
+                mobs_.push_back(Mob{{wx, wy}, 1, "stoneforge:mob", "passive", false, mobVariantForBiomeTag(biomeTag), biomeTag});
+                spawned = true;
+                break;
+            }
+
+            if(!spawned) {
+                for(int ly = 0; ly < chunkSize && !spawned; ++ly) {
+                    for(int lx = 0; lx < chunkSize && !spawned; ++lx) {
+                        const int wx = chunkMinX + lx;
+                        const int wy = chunkMinY + ly;
+                        if(!world_.isPassable(wx, wy)) {
+                            continue;
+                        }
+                        if(player_.x == wx && player_.y == wy) {
+                            continue;
+                        }
+                        if(hasMobAt(wx, wy)) {
+                            continue;
+                        }
+
+                        const int biomeTag = world_.biomeTagAt(wx, wy);
+                        mobs_.push_back(Mob{{wx, wy}, 1, "stoneforge:mob", "passive", false, mobVariantForBiomeTag(biomeTag), biomeTag});
+                        spawned = true;
+                    }
+                }
+            }
+        }
+    }
+
+    auto tileKey = [](int x, int y) {
+        const std::uint64_t hi = static_cast<std::uint64_t>(static_cast<std::uint32_t>(x));
+        const std::uint64_t lo = static_cast<std::uint64_t>(static_cast<std::uint32_t>(y));
+        return static_cast<std::int64_t>((hi << 32) | lo);
+    };
+
+    std::unordered_set<std::int64_t> occupied;
+    occupied.reserve(mobs_.size() * 2 + 1);
+    for(const auto& mob : mobs_) {
+        occupied.insert(tileKey(mob.pos.x, mob.pos.y));
+    }
+
+    const bool mobsCanMoveThisStep = (steps_ % 2) == 0;
 
     for(auto& mob : mobs_) {
-        const auto* profile = cfg.findMobBehavior(mob.behaviorType);
-        if(profile == nullptr) {
+        if(!mobsCanMoveThisStep) {
             continue;
         }
 
-        if(steps_ % std::max(1, profile->moveInterval) == 0) {
-            const MobDecision decision = decideMobStep(mob, *profile, player_, rng_);
-            mob.aggro = decision.aggro;
+        const int dx = player_.x - mob.pos.x;
+        const int dy = player_.y - mob.pos.y;
 
-            const Vec2i next{mob.pos.x + decision.step.x, mob.pos.y + decision.step.y};
-            if(world_.isPassable(next.x, next.y) && !hasMobAt(next.x, next.y)) {
-                mob.pos = next;
-            }
+        // 7x7 centered around mob => player visible when both axes are within [-3, +3].
+        if(std::abs(dx) > 3 || std::abs(dy) > 3) {
+            continue;
         }
 
-        if(mob.pos == player_) {
-            hp_ -= std::max(0, profile->contactDamage);
+        const Vec2i step = stepToward(mob.pos, player_);
+        if(step.x == 0 && step.y == 0) {
+            continue;
         }
+
+        const Vec2i next{mob.pos.x + step.x, mob.pos.y + step.y};
+        if(next == player_) {
+            continue;
+        }
+        if(!world_.isPassable(next.x, next.y)) {
+            continue;
+        }
+
+        const std::int64_t nextKey = tileKey(next.x, next.y);
+        if(occupied.find(nextKey) != occupied.end()) {
+            continue;
+        }
+
+        occupied.erase(tileKey(mob.pos.x, mob.pos.y));
+        mob.pos = next;
+        occupied.insert(nextKey);
     }
 
     rebuildMobSpatialIndex();

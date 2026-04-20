@@ -29,11 +29,7 @@ GameConfig makeDefaultConfig() {
         {"stoneforge:boss", "boss"},
     };
 
-    cfg.spawnTable = {
-        EntitySpawnEntry{"stoneforge:mob", "zombie", 1, false, "default", 6},
-        EntitySpawnEntry{"stoneforge:zombie", "zombie", 2, true, "default", 4},
-        EntitySpawnEntry{"stoneforge:animal", "animal", 1, false, "default", 2},
-    };
+    cfg.spawnTable = {};
 
     return cfg;
 }

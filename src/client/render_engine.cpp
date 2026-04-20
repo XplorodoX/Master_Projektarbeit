@@ -1199,10 +1199,6 @@ std::optional<stoneforge::Action> autoWalkNextAction(
                 continue;
             }
 
-            if(!isGoal && sim.hasMobAt(nx, ny)) {
-                continue;
-            }
-
             parent[key] = posKey(cur.x, cur.y);
             queue.push_back(stoneforge::Vec2i{nx, ny});
             if(isGoal) {
@@ -1234,14 +1230,31 @@ void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, i
     const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
 
-    Color tint = WHITE;
-    if(mob.variant == "alpha") {
-        tint = Color{206, 235, 255, 255};
-    } else if(mob.variant == "boss") {
-        tint = Color{255, 198, 142, 255};
-    }
-    if(mob.aggro) {
-        tint = Color{255, 165, 165, 255};
+    Color tint = Color{230, 103, 95, 255};
+    switch(mob.biomeTag) {
+        case 0:
+            tint = Color{170, 208, 120, 255};
+            break;
+        case 1:
+            tint = Color{106, 167, 108, 255};
+            break;
+        case 2:
+            tint = Color{212, 176, 112, 255};
+            break;
+        case 3:
+            tint = Color{150, 154, 166, 255};
+            break;
+        case 4:
+            tint = Color{166, 179, 118, 255};
+            break;
+        case 5:
+            tint = Color{164, 204, 226, 255};
+            break;
+        case 6:
+            tint = Color{199, 103, 89, 255};
+            break;
+        default:
+            break;
     }
 
     drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, tint);

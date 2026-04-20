@@ -171,13 +171,39 @@ int main(int, char**) {
         );
 
         for(const auto& mob : sim.mobs()) {
+            SDL_Color mobColor{231, 76, 60, 255};
+            switch(mob.biomeTag) {
+                case 0:
+                    mobColor = SDL_Color{170, 208, 120, 255};
+                    break;
+                case 1:
+                    mobColor = SDL_Color{106, 167, 108, 255};
+                    break;
+                case 2:
+                    mobColor = SDL_Color{212, 176, 112, 255};
+                    break;
+                case 3:
+                    mobColor = SDL_Color{150, 154, 166, 255};
+                    break;
+                case 4:
+                    mobColor = SDL_Color{166, 179, 118, 255};
+                    break;
+                case 5:
+                    mobColor = SDL_Color{164, 204, 226, 255};
+                    break;
+                case 6:
+                    mobColor = SDL_Color{199, 103, 89, 255};
+                    break;
+                default:
+                    break;
+            }
             fillRect(
                 renderer,
                 centerX + (mob.pos.x - player.x) * kTileSize,
                 centerY + (mob.pos.y - player.y) * kTileSize,
                 kTileSize - 1,
                 kTileSize - 1,
-                {231, 76, 60}
+                mobColor
             );
         }
 

@@ -74,7 +74,7 @@ struct GameplayConfig {
 };
 
 struct MobSpawnConfig {
-    int count = 3;
+    int count = 0;
     int offsetX = 10;
     int offsetY = 10;
     int jitterMin = -8;
