@@ -2126,7 +2126,20 @@ int stoneforge::client::RenderEngine::run() {
             }
         }
 
-        if(sim.done() && sim.reachedExit()) {
+        if(sim.done() && !sim.reachedExit()) {
+            DrawRectangle(0, 0, screenW, screenH, Fade(Color{20, 6, 8, 255}, 0.72F));
+            const Rectangle panel{
+                static_cast<float>(screenW / 2 - 290),
+                static_cast<float>(screenH / 2 - 120),
+                580.0F,
+                240.0F
+            };
+            DrawRectangleRounded(panel, 0.16F, 10, Color{48, 18, 24, 245});
+            DrawRectangleRoundedLinesEx(panel, 0.16F, 10, 3.0F, Color{255, 104, 104, 255});
+            DrawText("DU BIST TOT", screenW / 2 - 150, screenH / 2 - 56, 56, Color{255, 181, 181, 255});
+            DrawText("Ein Gegner hat dich im Nahkampf besiegt.", screenW / 2 - 186, screenH / 2 + 16, 26, Color{245, 228, 228, 255});
+            DrawText("R = neuer Lauf | ESC = Menu", screenW / 2 - 142, screenH / 2 + 56, 22, Color{223, 197, 197, 255});
+        } else if(sim.done() && sim.reachedExit()) {
             DrawRectangle(0, 0, screenW, screenH, Fade(Color{8, 13, 18, 255}, 0.55F));
             const Rectangle panel{
                 static_cast<float>(screenW / 2 - 270),
