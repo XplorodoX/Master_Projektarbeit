@@ -1227,37 +1227,105 @@ std::optional<stoneforge::Action> autoWalkNextAction(
 }
 
 void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, int py, int tileSize, float t, int idx) {
-    const float wobble = std::sin(t * 5.2F + static_cast<float>(idx)) * 1.5F;
-    DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
+    (void)atlas;
+    const float phase = t + static_cast<float>(idx) * 0.37F;
+    const int cx = px + tileSize / 2;
+    const int cy = py + tileSize / 2;
 
-    Color tint = Color{230, 103, 95, 255};
     switch(mob.biomeTag) {
-        case 0:
-            tint = Color{170, 208, 120, 255};
+        case 0: {  // grasland: plant-blob, soft sway
+            const int sway = static_cast<int>(std::sin(phase * 3.2F) * 2.0F);
+            DrawEllipse(cx + sway, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.27F, tileSize * 0.10F, Fade(BLACK, 0.30F));
+            DrawCircleV(Vector2{static_cast<float>(cx + sway), static_cast<float>(cy + 1)}, tileSize * 0.28F, Color{125, 183, 96, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx + sway - tileSize / 7), static_cast<float>(cy - tileSize / 8)}, tileSize * 0.12F, Color{169, 216, 132, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx + sway + tileSize / 7), static_cast<float>(cy - tileSize / 8)}, tileSize * 0.12F, Color{169, 216, 132, 255});
             break;
-        case 1:
-            tint = Color{106, 167, 108, 255};
+        }
+        case 1: {  // wald: bark body + canopy bob
+            const int bob = static_cast<int>(std::sin(phase * 2.7F) * 2.0F);
+            DrawEllipse(cx, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.28F, tileSize * 0.10F, Fade(BLACK, 0.33F));
+            DrawRectangleRounded(
+                Rectangle{static_cast<float>(cx - tileSize / 6), static_cast<float>(py + tileSize / 3 + bob), static_cast<float>(tileSize / 3), static_cast<float>(tileSize / 2)},
+                0.35F,
+                6,
+                Color{92, 68, 46, 255}
+            );
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(py + tileSize / 3 + bob)}, tileSize * 0.22F, Color{84, 146, 87, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx - tileSize / 6), static_cast<float>(py + tileSize / 3 + bob + 1)}, tileSize * 0.14F, Color{66, 125, 70, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx + tileSize / 6), static_cast<float>(py + tileSize / 3 + bob + 1)}, tileSize * 0.14F, Color{66, 125, 70, 255});
             break;
-        case 2:
-            tint = Color{212, 176, 112, 255};
+        }
+        case 2: {  // wueste: scarab-like, quick jitter
+            const int jitter = static_cast<int>(std::sin(phase * 8.0F) * 1.2F);
+            DrawEllipse(cx + jitter, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.24F, tileSize * 0.09F, Fade(BLACK, 0.30F));
+            DrawEllipse(cx + jitter, cy + 1, tileSize * 0.24F, tileSize * 0.20F, Color{197, 154, 88, 255});
+            DrawTriangle(
+                Vector2{static_cast<float>(cx + jitter), static_cast<float>(py + tileSize / 6)},
+                Vector2{static_cast<float>(cx + jitter - tileSize / 6), static_cast<float>(py + tileSize / 3)},
+                Vector2{static_cast<float>(cx + jitter + tileSize / 6), static_cast<float>(py + tileSize / 3)},
+                Color{232, 196, 128, 255}
+            );
+            DrawLine(cx + jitter - tileSize / 8, cy, cx + jitter - tileSize / 3, cy + tileSize / 5, Color{129, 99, 56, 255});
+            DrawLine(cx + jitter + tileSize / 8, cy, cx + jitter + tileSize / 3, cy + tileSize / 5, Color{129, 99, 56, 255});
             break;
-        case 3:
-            tint = Color{150, 154, 166, 255};
+        }
+        case 3: {  // bergland: rock golem, heavy bounce
+            const int bounce = static_cast<int>(std::fabs(std::sin(phase * 2.2F)) * 2.5F);
+            DrawEllipse(cx, py + static_cast<int>(tileSize * 0.89F), tileSize * 0.30F, tileSize * 0.10F, Fade(BLACK, 0.36F));
+            DrawRectangleRounded(
+                Rectangle{static_cast<float>(px + tileSize / 5), static_cast<float>(py + tileSize / 4 - bounce), static_cast<float>(tileSize * 3 / 5), static_cast<float>(tileSize * 3 / 5)},
+                0.18F,
+                4,
+                Color{137, 142, 153, 255}
+            );
+            DrawRectangle(px + tileSize / 3, py + tileSize / 2 - bounce, tileSize / 6, tileSize / 8, Color{176, 182, 194, 255});
+            DrawRectangle(px + tileSize / 2, py + tileSize / 2 - bounce, tileSize / 6, tileSize / 8, Color{104, 109, 120, 255});
             break;
-        case 4:
-            tint = Color{166, 179, 118, 255};
+        }
+        case 4: {  // steppe: runner, horizontal dart
+            const int dart = static_cast<int>(std::sin(phase * 5.6F) * 3.0F);
+            DrawEllipse(cx + dart / 2, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.28F, tileSize * 0.09F, Fade(BLACK, 0.30F));
+            DrawEllipse(cx + dart, cy, tileSize * 0.28F, tileSize * 0.18F, Color{160, 176, 104, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx + dart + tileSize / 5), static_cast<float>(cy - tileSize / 10)}, tileSize * 0.10F, Color{198, 215, 133, 255});
+            DrawLine(cx + dart - tileSize / 7, py + tileSize * 3 / 4, cx + dart - tileSize / 3, py + tileSize - tileSize / 7, Color{103, 113, 70, 255});
+            DrawLine(cx + dart + tileSize / 8, py + tileSize * 3 / 4, cx + dart + tileSize / 3, py + tileSize - tileSize / 7, Color{103, 113, 70, 255});
             break;
-        case 5:
-            tint = Color{164, 204, 226, 255};
+        }
+        case 5: {  // tundra: crystal core, shimmering pulse
+            const float pulse = 0.86F + 0.14F * (0.5F + 0.5F * std::sin(phase * 4.2F));
+            const int glowAlpha = 120 + static_cast<int>(90.0F * (0.5F + 0.5F * std::sin(phase * 4.2F)));
+            DrawEllipse(cx, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.25F, tileSize * 0.09F, Fade(BLACK, 0.28F));
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy)}, tileSize * 0.30F * pulse, Color{152, 208, 236, static_cast<unsigned char>(glowAlpha)});
+            DrawTriangle(
+                Vector2{static_cast<float>(cx), static_cast<float>(py + tileSize / 6)},
+                Vector2{static_cast<float>(px + tileSize / 3), static_cast<float>(py + tileSize * 3 / 4)},
+                Vector2{static_cast<float>(px + tileSize * 2 / 3), static_cast<float>(py + tileSize * 3 / 4)},
+                Color{178, 226, 246, 255}
+            );
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy)}, tileSize * 0.10F, Color{235, 250, 255, 255});
             break;
-        case 6:
-            tint = Color{199, 103, 89, 255};
+        }
+        case 6: {  // hoelle: flame wisp, vertical flicker
+            const int flicker = static_cast<int>(std::sin(phase * 10.0F) * 2.5F);
+            DrawEllipse(cx, py + static_cast<int>(tileSize * 0.91F), tileSize * 0.25F, tileSize * 0.08F, Fade(BLACK, 0.28F));
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy + 2 + flicker / 2)}, tileSize * 0.24F, Color{203, 76, 56, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy - tileSize / 8 + flicker)}, tileSize * 0.17F, Color{236, 120, 72, 255});
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy - tileSize / 5 + flicker)}, tileSize * 0.10F, Color{255, 204, 96, 255});
+            DrawTriangle(
+                Vector2{static_cast<float>(cx), static_cast<float>(py + tileSize / 8 + flicker)},
+                Vector2{static_cast<float>(cx - tileSize / 8), static_cast<float>(py + tileSize / 3)},
+                Vector2{static_cast<float>(cx + tileSize / 8), static_cast<float>(py + tileSize / 3)},
+                Color{255, 168, 86, 255}
+            );
             break;
-        default:
+        }
+        default: {
+            const int wobble = static_cast<int>(std::sin(phase * 5.2F) * 2.0F);
+            DrawEllipse(cx, py + static_cast<int>(tileSize * 0.88F), tileSize * 0.25F, tileSize * 0.10F, Fade(BLACK, 0.3F));
+            DrawCircleV(Vector2{static_cast<float>(cx), static_cast<float>(cy + wobble / 2)}, tileSize * 0.24F, Color{230, 103, 95, 255});
             break;
+        }
     }
-
-    drawSpriteTile(atlas, SpriteId::Mob, px, py + static_cast<int>(wobble), tileSize, tint);
 }
 
 void drawPlayerSprite(
