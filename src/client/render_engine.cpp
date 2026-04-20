@@ -957,10 +957,6 @@ stoneforge::Action actionFromInput() {
     if(IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
         return stoneforge::Action::MoveRight;
     }
-    if(IsKeyPressed(KEY_E)) {
-        return stoneforge::Action::Use;
-    }
-
     return stoneforge::Action::Wait;
 }
 
@@ -1322,6 +1318,44 @@ void drawMobSprite(const Texture2D& atlas, const stoneforge::Mob& mob, int px, i
     }
 }
 
+void drawSwordSwing(int centerX, int centerY, int tileSize, float progress, float t) {
+    constexpr float kPi = 3.14159265F;
+    const float clamped = std::clamp(progress, 0.0F, 1.0F);
+    const float eased = 0.5F - 0.5F * std::cos(clamped * kPi);
+    const float angle = (-0.9F * kPi) + eased * (2.0F * kPi);
+    const float radius = static_cast<float>(tileSize) * 0.74F;
+    const float swordX = static_cast<float>(centerX) + std::cos(angle) * radius;
+    const float swordY = static_cast<float>(centerY) + std::sin(angle) * radius;
+    const float trailRadius = static_cast<float>(tileSize) * 0.18F;
+    const float shimmer = 0.5F + 0.5F * std::sin(t * 22.0F);
+
+    DrawCircleLines(centerX, centerY, radius, Fade(Color{255, 235, 185, 255}, 0.10F + 0.14F * (1.0F - clamped)));
+    DrawRing(
+        Vector2{static_cast<float>(centerX), static_cast<float>(centerY)},
+        radius - 3.0F,
+        radius + 3.0F,
+        0.0F,
+        360.0F,
+        96,
+        Fade(Color{255, 210, 132, 255}, 0.12F + 0.20F * (1.0F - clamped))
+    );
+
+    DrawCircleV(Vector2{swordX, swordY}, trailRadius * (1.0F + shimmer * 0.25F), Color{255, 231, 170, 255});
+    DrawLineEx(
+        Vector2{static_cast<float>(centerX), static_cast<float>(centerY)},
+        Vector2{swordX, swordY},
+        std::max(4.0F, static_cast<float>(tileSize) * 0.13F),
+        Color{182, 146, 94, 255}
+    );
+    DrawLineEx(
+        Vector2{static_cast<float>(centerX), static_cast<float>(centerY)},
+        Vector2{swordX, swordY},
+        std::max(2.0F, static_cast<float>(tileSize) * 0.06F),
+        Color{255, 238, 195, 255}
+    );
+    DrawCircleV(Vector2{swordX, swordY}, trailRadius, Color{255, 249, 223, 255});
+}
+
 void drawPlayerSprite(
     const Texture2D& atlas,
     int px,
@@ -1336,21 +1370,40 @@ void drawPlayerSprite(
     DrawEllipse(px + tileSize / 2, py + static_cast<int>(tileSize * 0.90F), tileSize * 0.28F, tileSize * 0.11F, Fade(BLACK, 0.35F));
     drawSpriteTile(atlas, SpriteId::Player, px, py + bob, tileSize, WHITE);
 
-    if(!heldItemId.empty()) {
-        const int handOffsetX = facing.x * (tileSize / 3);
-        const int handOffsetY = facing.y * (tileSize / 3);
-        const int hx = px + tileSize / 2 + handOffsetX;
-        const int hy = py + tileSize / 2 + bob + handOffsetY;
-        const int s = std::max(8, tileSize / 3);
-        DrawRectangleRounded(
-            Rectangle{static_cast<float>(hx - s / 2), static_cast<float>(hy - s / 2), static_cast<float>(s), static_cast<float>(s)},
-            0.25F,
-            4,
-            itemTint(heldItemId)
-        );
-        const std::string glyph = itemGlyph(heldItemId);
-        DrawText(glyph.c_str(), hx - 4, hy - 6, 12, WHITE);
+    (void)heldItemId;
+    const int handOffsetX = facing.x * (tileSize / 3);
+    const int handOffsetY = facing.y * (tileSize / 3);
+    const int hx = px + tileSize / 2 + handOffsetX;
+    const int hy = py + tileSize / 2 + bob + handOffsetY;
+
+    float angle = 35.0F;
+    if(facing.x < 0) {
+        angle = 210.0F;
+    } else if(facing.y < 0) {
+        angle = 300.0F;
+    } else if(facing.y > 0) {
+        angle = 120.0F;
     }
+
+    const float handleW = std::max(2.0F, static_cast<float>(tileSize) * 0.10F);
+    const float handleH = std::max(5.0F, static_cast<float>(tileSize) * 0.22F);
+    const float guardW = std::max(5.0F, static_cast<float>(tileSize) * 0.24F);
+    const float guardH = std::max(2.0F, static_cast<float>(tileSize) * 0.08F);
+    const float bladeW = std::max(2.0F, static_cast<float>(tileSize) * 0.12F);
+    const float bladeH = std::max(8.0F, static_cast<float>(tileSize) * 0.34F);
+
+    const Rectangle handleRect{static_cast<float>(hx) - handleW * 0.5F, static_cast<float>(hy) - handleH * 0.5F, handleW, handleH};
+    const Rectangle guardRect{static_cast<float>(hx) - guardW * 0.5F, static_cast<float>(hy) - handleH * 0.5F - guardH, guardW, guardH};
+    const Rectangle bladeRect{static_cast<float>(hx) - bladeW * 0.5F, static_cast<float>(hy) - handleH * 0.5F - guardH - bladeH, bladeW, bladeH};
+
+    const Vector2 pivot{static_cast<float>(hx), static_cast<float>(hy)};
+    DrawRectanglePro(handleRect, Vector2{handleW * 0.5F, handleH * 0.5F}, angle, Color{120, 84, 50, 255});
+    DrawRectanglePro(guardRect, Vector2{guardW * 0.5F, handleH * 0.5F + guardH * 0.5F}, angle, Color{214, 176, 96, 255});
+    DrawRectanglePro(bladeRect, Vector2{bladeW * 0.5F, handleH * 0.5F + guardH + bladeH * 0.5F}, angle, Color{214, 224, 236, 255});
+
+    const Rectangle shineRect{bladeRect.x + bladeW * 0.5F, bladeRect.y + 1.0F, std::max(1.0F, bladeW * 0.35F), bladeH - 2.0F};
+    DrawRectanglePro(shineRect, Vector2{bladeW * 0.5F + bladeW * 0.175F, handleH * 0.5F + guardH + bladeH * 0.5F}, angle, Color{245, 250, 255, 235});
+    DrawCircleV(pivot, std::max(1.0F, static_cast<float>(tileSize) * 0.06F), Color{88, 62, 38, 255});
 
     if(submerged) {
         DrawRectangle(px, py + tileSize / 2, tileSize, tileSize / 2 + 1, Color{68, 132, 201, 220});
@@ -1427,6 +1480,9 @@ int stoneforge::client::RenderEngine::run() {
 
     float stepTimer = 0.0F;
     float zoom = 1.0F;
+    float swordSwingTimer = 0.0F;
+    constexpr float kSwordSwingDuration = 0.34F;
+    bool queuedSwordUse = false;
 
     std::vector<Particle> particles;
     std::unordered_map<std::int64_t, CrackInfo> cracks;
@@ -1526,11 +1582,14 @@ int stoneforge::client::RenderEngine::run() {
                 showChunkBorders = false;
                 thresholdInputActive = false;
                 lakeNextMoveAllowedAt = 0.0;
+                queuedSwordUse = false;
+                swordSwingTimer = 0.0F;
                 hasRun = true;
                 screenState = ScreenState::Playing;
             } else if(resume) {
                 commandMode = false;
                 commandInput.clear();
+                queuedSwordUse = false;
                 screenState = ScreenState::Playing;
             }
 
@@ -1646,6 +1705,8 @@ int stoneforge::client::RenderEngine::run() {
             showChunkBorders = false;
             thresholdInputActive = false;
             lakeNextMoveAllowedAt = 0.0;
+            queuedSwordUse = false;
+            swordSwingTimer = 0.0F;
         }
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_G) && !sim.done()) {
@@ -1662,6 +1723,11 @@ int stoneforge::client::RenderEngine::run() {
 
         if(!gameplayInputBlocked && IsKeyPressed(KEY_B) && !sim.done()) {
             showChunkBorders = !showChunkBorders;
+        }
+
+        if(!gameplayInputBlocked && !sim.done() && IsKeyPressed(KEY_E)) {
+            queuedSwordUse = true;
+            swordSwingTimer = kSwordSwingDuration;
         }
 
         (void)wheelMove;
@@ -1703,6 +1769,10 @@ int stoneforge::client::RenderEngine::run() {
                     autoWalkEnabled = false;
                 }
 
+                if(action == stoneforge::Action::Use) {
+                    swordSwingTimer = kSwordSwingDuration;
+                }
+
                 if(autoWalkEnabled && !inventoryOpen && !gameplayInputBlocked && !mouseMineActive) {
                     const auto autoAction = autoWalkNextAction(sim, sim.playerPos(), sim.exitPos());
                     if(autoAction.has_value()) {
@@ -1710,6 +1780,12 @@ int stoneforge::client::RenderEngine::run() {
                     } else {
                         autoWalkEnabled = false;
                     }
+                }
+
+                if(queuedSwordUse) {
+                    action = stoneforge::Action::Use;
+                    queuedSwordUse = false;
+                    autoWalkEnabled = false;
                 }
 
                 if(mouseMineActive) {
@@ -2043,6 +2119,11 @@ int stoneforge::client::RenderEngine::run() {
             "stoneforge:sword",
             sim.isPlayerInLake()
         );
+        if(swordSwingTimer > 0.0F) {
+            const float progress = 1.0F - (swordSwingTimer / kSwordSwingDuration);
+            drawSwordSwing(centerX + tileSize / 2, centerY + tileSize / 2, tileSize, progress, t);
+            swordSwingTimer = std::max(0.0F, swordSwingTimer - dt);
+        }
         drawParticles(particles, player, centerX, centerY, tileSize);
 
         if(hitFlash > 0.01F) {
