@@ -844,9 +844,16 @@ class App(tk.Tk):
         def worker() -> None:
             try:
                 proc = subprocess.Popen(
-                    cmd, shell=True, cwd=ROOT, env=_make_env(),
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    text=True, bufsize=1,
+                    cmd,
+                    shell=True,
+                    cwd=ROOT,
+                    env=_make_env(),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    encoding='utf-8',
+                    errors='replace',  # Handle Windows compiler encoding issues
                 )
                 self._proc = proc
                 assert proc.stdout
@@ -968,7 +975,13 @@ class App(tk.Tk):
         seed = self._game_seed.get()
         cmd = f"{_quote(GAME_BINARY)} --seed {seed}"
         self._log(f"$ {cmd}\n", "cmd")
-        subprocess.Popen(cmd, shell=True, cwd=ROOT)
+        subprocess.Popen(
+            cmd,
+            shell=True,
+            cwd=ROOT,
+            encoding='utf-8',
+            errors='replace',
+        )
 
     def _stop_proc(self) -> None:
         if self._proc and self._proc.poll() is None:

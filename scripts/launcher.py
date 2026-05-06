@@ -57,7 +57,15 @@ def run(cmd: str, cwd: Optional[str] = None, check: bool = True) -> int:
     print(f"$ {cmd}")
     # Use shell=True for cross-platform compatibility
     # On Windows, shell=True is necessary for batch commands and environment variable expansion
-    proc = subprocess.run(cmd, shell=True, cwd=cwd or ROOT, env=_make_env())
+    # Use encoding='utf-8' with errors='replace' to handle compiler output on Windows
+    proc = subprocess.run(
+        cmd,
+        shell=True,
+        cwd=cwd or ROOT,
+        env=_make_env(),
+        encoding='utf-8',
+        errors='replace',  # Replace undecodable chars instead of crashing
+    )
     if check and proc.returncode != 0:
         print(f"[launcher] Command failed (exit {proc.returncode})", file=sys.stderr)
     return proc.returncode
