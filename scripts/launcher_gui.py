@@ -121,8 +121,12 @@ def _build_bindings_cli() -> bool:
         return False
     
     # Build
+    build_cmd = f"cmake --build {_quote(BUILD_DIR)} --target stoneforge_sim -j4"
+    if _IS_WIN:
+        build_cmd += " --config Release"
+
     rc = sp.run(
-        f"cmake --build {_quote(BUILD_DIR)} --target stoneforge_sim -j4",
+        build_cmd,
         shell=True,
         cwd=ROOT,
         encoding='utf-8',
@@ -158,6 +162,7 @@ def _find_so() -> Optional[str]:
         # Windows: look for .pyd (Python Dynamic module)
         patterns = [
             os.path.join(BUILD_DIR, "Release", "stoneforge_sim*.pyd"),
+            os.path.join(BUILD_DIR, "Debug", "stoneforge_sim*.pyd"),
             os.path.join(BUILD_DIR, "stoneforge_sim*.pyd"),
             os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
         ]
