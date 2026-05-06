@@ -17,19 +17,16 @@
 - `include/stoneforge/client/render_engine.hpp`: raylib render engine entry interface
 - `include/stoneforge/client/render_ui.hpp`: HUD/menu/inventory rendering API
 - `include/stoneforge/client/render_fx.hpp`: particles/cracks/visual effects API
-- `include/stoneforge/mod/*`: content registry, asset loader, mod loader, script runtime
 - `src/core`: world + simulation logic
 - `src/apps/headless_main.cpp`: fast non-visual runner
 - `src/client/raylib_main.cpp`: minimal executable entrypoint
 - `src/client/render_engine.cpp`: gameplay loop, rendering, input and UI engine implementation
 - `src/client/render_ui.cpp`: UI rendering module (menu, HUD, hotbar, inventory)
 - `src/client/render_fx.cpp`: effects module (particles + crack overlays)
-- `src/mod/*`: modular content + scripting foundation
 - `src/python/py_module.cpp`: pybind11 module
 - `python/stoneforge_env.py`: Gymnasium environment wrapper
 - `python/train_ppo.py`: Stable-Baselines3 PPO example
-- `assets/base/*`: base content manifests for texture overrides
-- `mods/*`: user mods (data + optional lua scripts)
+- `assets/base/*`: base game configuration and content files
 
 ## Build
 
@@ -50,37 +47,16 @@ The raylib client now follows a simple engine-oriented structure:
 - `RenderEngine::run()` owns update/render loop state
 - `render_ui.cpp` owns HUD/menu/inventory drawing
 - `render_fx.cpp` owns particle/crack effect drawing
-- content/mod loading is handled by dedicated mod modules before render boot
 - simulation remains isolated in `src/core`
 
 ### Optional flags
 
 - `-DBUILD_SDL_CLIENT=ON|OFF`
 - `-DBUILD_RAYLIB_CLIENT=ON|OFF`
-- `-DBUILD_SDL_CLIENT=ON|OFF` (legacy fallback)
 - `-DBUILD_PYTHON_BINDINGS=ON|OFF`
 - `-DBUILD_HEADLESS_RUNNER=ON|OFF`
-- `-DSTONEFORGE_ENABLE_LUA=ON|OFF`
 
 If raylib/SDL2 or Python dev headers are missing, those targets are skipped automatically.
-If Lua dev headers are missing, scripting is disabled automatically while data mods still load.
-
-## Modding and Custom Textures
-
-Minecraft-style data-first pipeline is prepared:
-
-- blocks/items/sprites are data-driven via JSON files
-- textures are loaded from files in `assets/base` and `mods/<modname>/textures`
-- fallback rendering remains active when a texture file is missing
-- script hooks are prepared through sandboxed Lua callbacks
-
-Supported Lua callbacks in V1 foundation:
-
-- `onTick(payload)`
-- `onBlockPlaced(payload)`
-- `onBlockBroken(payload)`
-- `onItemUsed(payload)`
-- `onCraft(payload)`
 
 ## Release CI/CD (GitHub Actions)
 
@@ -171,6 +147,10 @@ Workbench stations can be placed into the world and mined back into inventory.
 It also includes a main menu with seed input, New Run, and Continue.
 
 ## Python RL setup
+
+Projektarbeits-Dokumentation zu RL-Experimenten und Ergebnissen:
+
+- `Projektarbeit_RL_Dokumentation.md`
 
 Use Python 3.12 for best pybind11 compatibility.
 

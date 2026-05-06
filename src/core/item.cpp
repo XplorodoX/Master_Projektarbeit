@@ -5,8 +5,6 @@
 #include <cctype>
 #include <string>
 
-#include "stoneforge/mod/content_registry.hpp"
-
 namespace stoneforge {
 
 namespace {
@@ -29,8 +27,6 @@ constexpr std::array<LegacyItemInfo, 5> kLegacyItems{{
     {ItemId::Ore, "stoneforge:ore", "Ore", TileType::Wall, 64, "O", {185, 162, 93, 255}, "ore"},
     {ItemId::WorkbenchKit, "stoneforge:workbench_kit", "Workbench Kit", TileType::Workbench, 64, "B", {130, 95, 70, 255}, "workbench_kit"},
 }};
-
-const mod::ContentRegistry* gItemRegistry = nullptr;
 
 const LegacyItemInfo* findLegacyById(ItemId id) {
     for(const auto& item : kLegacyItems) {
@@ -56,40 +52,6 @@ const LegacyItemInfo* findLegacyByKey(std::string_view key) {
     return nullptr;
 }
 
-TileType parsePlacementTile(std::string_view token) {
-    if(token.empty()) {
-        return TileType::Empty;
-    }
-
-    std::string value(token);
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    if(value == "empty" || value == "stoneforge:empty") {
-        return TileType::Empty;
-    }
-    if(value == "wall" || value == "stoneforge:wall") {
-        return TileType::Wall;
-    }
-    if(value == "resource" || value == "stoneforge:resource") {
-        return TileType::Resource;
-    }
-    if(value == "exit" || value == "stoneforge:exit") {
-        return TileType::Exit;
-    }
-    if(value == "tree" || value == "stoneforge:tree") {
-        return TileType::Tree;
-    }
-    if(value == "workbench" || value == "stoneforge:workbench") {
-        return TileType::Workbench;
-    }
-    if(value == "wood_wall" || value == "stoneforge:wood_wall") {
-        return TileType::WoodWall;
-    }
-    if(value == "wood_log" || value == "stoneforge:wood_log") {
-        return TileType::WoodLog;
-    }
-    return TileType::Empty;
-}
-
 std::string prettifyItemLabel(std::string_view key) {
     std::string normalized = normalizeItemKey(key);
     if(normalized.empty()) {
@@ -112,36 +74,6 @@ std::string prettifyItemLabel(std::string_view key) {
         }
     }
     return label;
-}
-
-const mod::ItemDef* findRegistryItem(std::string_view key) {
-    if(gItemRegistry == nullptr) {
-        return nullptr;
-    }
-
-    const std::string normalized = normalizeItemKey(key);
-    if(normalized.empty()) {
-        return nullptr;
-    }
-
-    if(const auto* direct = gItemRegistry->findItem(normalized)) {
-        return direct;
-    }
-
-    const std::size_t sep = normalized.find(':');
-    const std::string local = (sep == std::string::npos) ? normalized : normalized.substr(sep + 1);
-    const std::string suffix = ":" + local;
-
-    const mod::ItemDef* matched = nullptr;
-    for(const auto& [id, def] : gItemRegistry->items()) {
-        if(id.size() >= suffix.size() && id.compare(id.size() - suffix.size(), suffix.size(), suffix) == 0) {
-            if(matched != nullptr) {
-                return nullptr;
-            }
-            matched = &def;
-        }
-    }
-    return matched;
 }
 
 }  // namespace
@@ -252,12 +184,6 @@ std::string normalizeItemKey(std::string_view key) {
 }
 
 std::string itemDisplayName(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        if(!def->displayName.empty()) {
-            return def->displayName;
-        }
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return legacy->displayName;
     }
@@ -266,12 +192,6 @@ std::string itemDisplayName(std::string_view key) {
 }
 
 TileType itemPlacementTile(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        if(!def->placeTile.empty()) {
-            return parsePlacementTile(def->placeTile);
-        }
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return legacy->placementTile;
     }
@@ -280,10 +200,6 @@ TileType itemPlacementTile(std::string_view key) {
 }
 
 int itemMaxStack(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        return std::max(1, def->maxStack);
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return std::max(1, legacy->maxStack);
     }
@@ -292,12 +208,6 @@ int itemMaxStack(std::string_view key) {
 }
 
 std::string itemGlyphText(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        if(!def->glyph.empty()) {
-            return def->glyph;
-        }
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return legacy->glyph;
     }
@@ -306,10 +216,6 @@ std::string itemGlyphText(std::string_view key) {
 }
 
 std::array<unsigned char, 4> itemTintRgba(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        return def->tint;
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return legacy->tint;
     }
@@ -318,25 +224,11 @@ std::array<unsigned char, 4> itemTintRgba(std::string_view key) {
 }
 
 std::string itemIconId(std::string_view key) {
-    if(const auto* def = findRegistryItem(key)) {
-        if(!def->icon.empty()) {
-            return def->icon;
-        }
-    }
-
     if(const auto* legacy = findLegacyByKey(key)) {
         return legacy->icon;
     }
 
     return std::string(normalizeItemKey(key));
-}
-
-const mod::ItemDef* itemDefinition(std::string_view key) {
-    return findRegistryItem(key);
-}
-
-void setItemRegistry(const mod::ContentRegistry* registry) {
-    gItemRegistry = registry;
 }
 
 }  // namespace stoneforge

@@ -20,6 +20,8 @@ struct Observation {
     int hp = 0;
     int energy = 0;
     int inventory = 0;
+    int exitDx = 0;
+    int exitDy = 0;
 };
 
 struct Mob {
@@ -153,7 +155,9 @@ private:
     bool isWithinMiningRange(const Vec2i& target) const;
     void rebuildMobSpatialIndex();
 
-    float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance) const;
+    float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
+                        int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
+                        bool moveBlocked, bool newTileVisited, bool idleAction) const;
 
     std::mt19937_64 rng_;
     World world_;
@@ -185,6 +189,11 @@ private:
 
     bool done_ = false;
     bool reachedExit_ = false;
+    bool exitUnlocked_ = false;
+    bool mobsKilledUnlocksExit_ = false;
+    int killsRequired_ = 0;
+    int totalKills_ = 0;
+    std::unordered_set<std::int64_t> visitedTiles_;
 
     std::vector<Mob> mobs_;
     int mobSpatialCellSize_ = 8;

@@ -1,0 +1,1 @@
+dokumneitere werte die wir erzielt habne bitte immer!!!! in einem Dokuemnt und was wir gemacht haben damit es besser wurde!!! Immer gerner angeben in welcher Version was geändert wurde!

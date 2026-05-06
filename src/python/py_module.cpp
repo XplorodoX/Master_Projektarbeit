@@ -17,6 +17,8 @@ std::vector<int> flattenObservation(const stoneforge::Observation& obs) {
     out.push_back(obs.hp);
     out.push_back(obs.energy);
     out.push_back(obs.inventory);
+    out.push_back(obs.exitDx);
+    out.push_back(obs.exitDy);
     return out;
 }
 
@@ -59,6 +61,18 @@ public:
         return sim_.observationSize();
     }
 
+    py::tuple playerPos() const {
+        const auto p = sim_.playerPos();
+        return py::make_tuple(p.x, p.y);
+    }
+
+    void configureWorldGeneration(int exitMinDistance, int exitMaxDistance, bool forceGuaranteedPath) {
+        auto& cfg = stoneforge::mutableGameConfig();
+        cfg.world.exitMinDistance = std::max(1, exitMinDistance);
+        cfg.world.exitMaxDistance = std::max(cfg.world.exitMinDistance, exitMaxDistance);
+        cfg.world.forceGuaranteedPath = forceGuaranteedPath;
+    }
+
 private:
     std::uint64_t baseSeed_ = 42;
     stoneforge::Simulation sim_;
@@ -74,5 +88,9 @@ PYBIND11_MODULE(stoneforge_sim, m) {
         .def("reset", &StoneforgeCoreEnv::reset, py::arg("seed"))
         .def("step", &StoneforgeCoreEnv::step, py::arg("action"))
         .def("action_space_n", &StoneforgeCoreEnv::actionSpaceN)
-        .def("observation_size", &StoneforgeCoreEnv::observationSize);
+        .def("observation_size", &StoneforgeCoreEnv::observationSize)
+        .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,
+             py::arg("exit_min_distance"), py::arg("exit_max_distance"),
+             py::arg("force_guaranteed_path"))
+        .def("player_pos", &StoneforgeCoreEnv::playerPos);
 }

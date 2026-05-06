@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <deque>
+#include <iostream>
 #include <limits>
 #include <optional>
 #include <string>
@@ -16,12 +17,6 @@
 #include "stoneforge/client/render_fx.hpp"
 #include "stoneforge/client/command_registry.hpp"
 #include "stoneforge/client/render_ui.hpp"
-#include "stoneforge/mod/asset_manager.hpp"
-#include "stoneforge/mod/content_registry.hpp"
-#include "stoneforge/mod/mod_loader.hpp"
-#include "stoneforge/mod/object_factory.hpp"
-#include "stoneforge/mod/runtime_registry.hpp"
-#include "stoneforge/mod/script_runtime.hpp"
 #include "stoneforge/game_config.hpp"
 #include "stoneforge/item.hpp"
 #include "stoneforge/simulation.hpp"
@@ -134,63 +129,6 @@ Rectangle spriteSource(SpriteId id) {
     return Rectangle{static_cast<float>(x), static_cast<float>(y), static_cast<float>(kAtlasCell), static_cast<float>(kAtlasCell)};
 }
 
-bool spriteIdFromSlotName(const std::string& slotName, SpriteId& out) {
-    if(slotName == "FloorACold") {
-        out = SpriteId::FloorACold;
-    } else if(slotName == "FloorBCold") {
-        out = SpriteId::FloorBCold;
-    } else if(slotName == "WallACold") {
-        out = SpriteId::WallACold;
-    } else if(slotName == "WallBCold") {
-        out = SpriteId::WallBCold;
-    } else if(slotName == "FloorAWarm") {
-        out = SpriteId::FloorAWarm;
-    } else if(slotName == "FloorBWarm") {
-        out = SpriteId::FloorBWarm;
-    } else if(slotName == "WallAWarm") {
-        out = SpriteId::WallAWarm;
-    } else if(slotName == "WallBWarm") {
-        out = SpriteId::WallBWarm;
-    } else if(slotName == "FloorAMoss") {
-        out = SpriteId::FloorAMoss;
-    } else if(slotName == "FloorBMoss") {
-        out = SpriteId::FloorBMoss;
-    } else if(slotName == "WallAMoss") {
-        out = SpriteId::WallAMoss;
-    } else if(slotName == "WallBMoss") {
-        out = SpriteId::WallBMoss;
-    } else if(slotName == "Ore") {
-        out = SpriteId::Ore;
-    } else if(slotName == "Exit") {
-        out = SpriteId::Exit;
-    } else if(slotName == "Player") {
-        out = SpriteId::Player;
-    } else if(slotName == "Mob") {
-        out = SpriteId::Mob;
-    } else if(slotName == "Tree") {
-        out = SpriteId::Tree;
-    } else if(slotName == "Workbench") {
-        out = SpriteId::Workbench;
-    } else if(slotName == "WoodWall") {
-        out = SpriteId::WoodWall;
-    } else if(slotName == "WoodLog") {
-        out = SpriteId::WoodLog;
-    } else {
-        return false;
-    }
-    return true;
-}
-
-int paletteHintFromBiomeId(const std::string& biomeId) {
-    if(biomeId.find("warm") != std::string::npos || biomeId.find("desert") != std::string::npos) {
-        return 1;
-    }
-    if(biomeId.find("moss") != std::string::npos || biomeId.find("forest") != std::string::npos) {
-        return 2;
-    }
-    return 0;
-}
-
 std::vector<RuntimeBiome> defaultRuntimeBiomes() {
     return {
         RuntimeBiome{"stoneforge:cold", 0.18F, 0.34F, SpriteId::FloorACold, SpriteId::FloorBCold, SpriteId::WallACold, SpriteId::WallBCold, 0},
@@ -199,75 +137,8 @@ std::vector<RuntimeBiome> defaultRuntimeBiomes() {
     };
 }
 
-std::vector<RuntimeBiome> buildRuntimeBiomes(const stoneforge::mod::ContentRegistry& registry) {
-    std::vector<RuntimeBiome> out;
-    out.reserve(registry.biomes().size());
-
-    for(const auto& [id, def] : registry.biomes()) {
-        SpriteId floorA = SpriteId::FloorACold;
-        SpriteId floorB = SpriteId::FloorBCold;
-        SpriteId wallA = SpriteId::WallACold;
-        SpriteId wallB = SpriteId::WallBCold;
-        if(!spriteIdFromSlotName(def.floorA, floorA) || !spriteIdFromSlotName(def.floorB, floorB) || !spriteIdFromSlotName(def.wallA, wallA) || !spriteIdFromSlotName(def.wallB, wallB)) {
-            continue;
-        }
-
-        RuntimeBiome biome;
-        biome.id = id;
-        biome.center = std::clamp(def.center, 0.0F, 1.0F);
-        biome.span = std::max(0.05F, def.span);
-        biome.floorA = floorA;
-        biome.floorB = floorB;
-        biome.wallA = wallA;
-        biome.wallB = wallB;
-        biome.paletteHint = paletteHintFromBiomeId(id);
-        out.push_back(std::move(biome));
-    }
-
-    if(out.empty()) {
-        return defaultRuntimeBiomes();
-    }
-
-    std::sort(out.begin(), out.end(), [](const RuntimeBiome& a, const RuntimeBiome& b) {
-        return a.center < b.center;
-    });
-    if(static_cast<int>(out.size()) > 3) {
-        out.resize(3);
-    }
-    return out;
-}
-
-void applySpriteTextureOverrides(
-    Texture2D& atlas,
-    const stoneforge::mod::ContentRegistry& registry,
-    const stoneforge::mod::AssetManager& assets
-) {
-    for(const auto& [id, def] : registry.sprites()) {
-        (void)id;
-        SpriteId spriteId = SpriteId::FloorACold;
-        if(!spriteIdFromSlotName(def.slot, spriteId)) {
-            continue;
-        }
-
-        auto texturePathOpt = assets.resolve(def.sourceMod, def.texture);
-        if(!texturePathOpt) {
-            continue;
-        }
-
-        Image image = LoadImage(texturePathOpt->string().c_str());
-        if(!IsImageValid(image)) {
-            continue;
-        }
-
-        ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-        if(image.width != kAtlasCell || image.height != kAtlasCell) {
-            ImageResizeNN(&image, kAtlasCell, kAtlasCell);
-        }
-
-        const Rectangle dst = spriteSource(spriteId);
-        UpdateTextureRec(atlas, dst, image.data);
-        UnloadImage(image);
-    }
+std::vector<RuntimeBiome> buildRuntimeBiomes() {
+    return defaultRuntimeBiomes();
 }
 
 Texture2D buildSpriteAtlas() {
@@ -1429,11 +1300,96 @@ std::uint64_t parseSeed(const std::string& text, std::uint64_t fallback) {
     return value;
 }
 
+void renderAiView(
+    stoneforge::Simulation& sim,
+    const std::string& label,
+    const stoneforge::Vec2i& facing,
+    const Texture2D& atlas,
+    const std::vector<RuntimeBiome>& runtimeBiomes,
+    int offsetX, int viewW, int screenH,
+    int tileSize, float t
+) {
+    const stoneforge::Vec2i player = sim.playerPos();
+    const stoneforge::Vec2i exit   = sim.exitPos();
+    const int centerX     = offsetX + viewW / 2;
+    const int centerY     = screenH / 2;
+    const int viewRadiusX = viewW  / (2 * tileSize) + 1;
+    const int viewRadiusY = screenH / (2 * tileSize) + 1;
+
+    BeginScissorMode(offsetX, 0, viewW, screenH);
+
+    for(int vy = -viewRadiusY; vy <= viewRadiusY; ++vy) {
+        for(int vx = -viewRadiusX; vx <= viewRadiusX; ++vx) {
+            const int wx = player.x + vx;
+            const int wy = player.y + vy;
+            const int px = centerX + vx * tileSize;
+            const int py = centerY + vy * tileSize;
+            const Color biomeTint = biomeTintAtTile(sim, wx, wy);
+            drawStyledTile(atlas, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy),
+                           biomeTint, wx, wy, px, py, tileSize, t, runtimeBiomes);
+            if(sim.isLakeAt(wx, wy)) {
+                DrawRectangle(px, py, tileSize, tileSize, lakeTintColor());
+            }
+        }
+    }
+
+    drawTileDetailPass(sim, player, centerX, centerY, tileSize, viewRadiusX, viewRadiusY, t);
+
+    const int ex = centerX + (exit.x - player.x) * tileSize + tileSize / 2;
+    const int ey = centerY + (exit.y - player.y) * tileSize + tileSize / 2;
+    DrawCircleGradient(ex, ey, static_cast<float>(tileSize) * 1.2F,
+                       Fade(Color{90, 255, 180, 255}, 0.4F), Fade(Color{90, 255, 180, 0}, 0.0F));
+
+    const auto visibleMobs = sim.mobsInRect(
+        player.x - viewRadiusX - 1, player.y - viewRadiusY - 1,
+        player.x + viewRadiusX + 1, player.y + viewRadiusY + 1
+    );
+    int mobIdx = 0;
+    for(const auto* mob : visibleMobs) {
+        if(mob == nullptr) { continue; }
+        const int mx = centerX + (mob->pos.x - player.x) * tileSize;
+        const int my = centerY + (mob->pos.y - player.y) * tileSize;
+        drawMobSprite(atlas, *mob, mx, my, tileSize, t, mobIdx++);
+    }
+
+    drawPlayerSprite(atlas, centerX, centerY, tileSize, t, facing,
+                     "stoneforge:sword", sim.isPlayerInLake());
+
+    if(offsetX > 0) {
+        DrawRectangle(offsetX, 0, 2, screenH, Color{60, 60, 60, 255});
+    }
+
+    DrawRectangle(offsetX + 4, 4, viewW - 8, 52, Fade(BLACK, 0.65F));
+    DrawText(label.c_str(), offsetX + 10, 8, 22, Color{255, 220, 60, 255});
+    const std::string stats = "HP: " + std::to_string(sim.hp()) +
+                              "  Steps: " + std::to_string(sim.steps());
+    DrawText(stats.c_str(), offsetX + 10, 34, 15, Color{210, 210, 210, 230});
+
+    if(sim.done()) {
+        const bool won = sim.reachedExit();
+        const std::string msg = won ? "EXIT REACHED!" : "DIED";
+        const Color msgColor  = won ? Color{80, 255, 140, 255} : Color{255, 80, 80, 255};
+        const int msgW = MeasureText(msg.c_str(), 30);
+        DrawRectangle(offsetX + (viewW - msgW) / 2 - 10, screenH / 2 - 22, msgW + 20, 46, Fade(BLACK, 0.75F));
+        DrawText(msg.c_str(), offsetX + (viewW - msgW) / 2, screenH / 2 - 15, 30, msgColor);
+    }
+
+    EndScissorMode();
+}
+
 }  // namespace
 
-int stoneforge::client::RenderEngine::run() {
+int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uint64_t aiSeed,
+                                          int winX, int winY, int winW, int winH,
+                                          const std::string& winTitle) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(kWindowW, kWindowH, "Stoneforge 2D - raylib biome client");
+    const int initW = winW > 0 ? winW : kWindowW;
+    const int initH = winH > 0 ? winH : kWindowH;
+    const char* title = winTitle.empty() ? "Stoneforge 2D - raylib biome client" : winTitle.c_str();
+    InitWindow(initW, initH, title);
+    if(winX >= 0 && winY >= 0) {
+        SetWindowPosition(winX, winY);
+    }
     SetTargetFPS(60);
 
     std::string gameConfigError;
@@ -1442,41 +1398,22 @@ int stoneforge::client::RenderEngine::run() {
     }
     const float stepIntervalSeconds = std::max(0.01F, stoneforge::gameConfig().render.stepIntervalSeconds);
 
-    stoneforge::mod::ContentRegistry contentRegistry;
-    stoneforge::mod::AssetManager assetManager;
-    stoneforge::mod::ModLoader modLoader;
-    std::vector<stoneforge::mod::LoadedModInfo> loadedMods;
-    std::string modError;
-    if(!modLoader.loadAll("assets/base", "mods", contentRegistry, assetManager, loadedMods, &modError)) {
-        TraceLog(LOG_WARNING, "Mod loading failed: %s", modError.c_str());
-    }
-    stoneforge::setItemRegistry(&contentRegistry);
-
-    stoneforge::mod::ObjectFactory objectFactory;
-    objectFactory.buildFromContent(contentRegistry);
-    stoneforge::mod::RuntimeRegistry runtimeRegistry;
-    runtimeRegistry.build(contentRegistry, objectFactory);
     stoneforge::client::CommandRegistry commandRegistry;
-    std::vector<RuntimeBiome> runtimeBiomes = buildRuntimeBiomes(contentRegistry);
-    TraceLog(LOG_INFO, "Object archetypes loaded: %d", static_cast<int>(objectFactory.objects().size()));
-    TraceLog(LOG_INFO, "Biome registry loaded: %d", static_cast<int>(contentRegistry.biomes().size()));
-    TraceLog(LOG_INFO, "Entity registry loaded: %d", static_cast<int>(contentRegistry.entities().size()));
-
-    stoneforge::mod::ScriptRuntime scriptRuntime;
-    if(!scriptRuntime.initialize()) {
-        TraceLog(LOG_WARNING, "Script runtime disabled: %s", scriptRuntime.lastError().c_str());
-    }
-    scriptRuntime.loadScripts(loadedMods);
+    std::vector<RuntimeBiome> runtimeBiomes = buildRuntimeBiomes();
 
     stoneforge::Simulation sim;
+    stoneforge::Simulation sim2;
+    if(aiMode) {
+        sim.reset(aiSeed);
+        if(aiDualMode) { sim2.reset(aiSeed); }
+    }
     Texture2D atlas = buildSpriteAtlas();
-    applySpriteTextureOverrides(atlas, contentRegistry, assetManager);
 
-    ScreenState screenState = ScreenState::Menu;
+    ScreenState screenState = aiMode ? ScreenState::Playing : ScreenState::Menu;
 
     std::string seedInput = "42";
-    std::uint64_t currentSeed = 42;
-    bool hasRun = false;
+    std::uint64_t currentSeed = aiMode ? aiSeed : 42ULL;
+    bool hasRun = aiMode;
 
     float stepTimer = 0.0F;
     float zoom = 1.0F;
@@ -1488,6 +1425,7 @@ int stoneforge::client::RenderEngine::run() {
     std::unordered_map<std::int64_t, CrackInfo> cracks;
 
     stoneforge::Vec2i facing{1, 0};
+    stoneforge::Vec2i facing2{1, 0};
     float hitFlash = 0.0F;
     bool inventoryOpen = false;
     int dragSourceSlot = -1;
@@ -1632,7 +1570,7 @@ int stoneforge::client::RenderEngine::run() {
         }
 
         if(commandMode) {
-            const stoneforge::client::CommandExecutionContext commandCtx{sim, contentRegistry, objectFactory, runtimeRegistry};
+            const stoneforge::client::CommandExecutionContext commandCtx{sim};
             int ch = GetCharPressed();
             while(ch > 0) {
                 const char c = static_cast<char>(ch);
@@ -1763,8 +1701,32 @@ int stoneforge::client::RenderEngine::run() {
         stepTimer += dt;
         if(stepTimer >= stepIntervalSeconds) {
             stepTimer = 0.0F;
-            if(!sim.done()) {
-                stoneforge::Action action = gameplayInputBlocked ? stoneforge::Action::Wait : actionFromInput();
+            if(aiDualMode) {
+                int a1 = 0, a2 = 0;
+                std::cin >> a1 >> a2;
+                const auto act1 = static_cast<stoneforge::Action>(a1);
+                const auto act2 = static_cast<stoneforge::Action>(a2);
+                auto updateFacing = [](stoneforge::Vec2i& f, stoneforge::Action a) {
+                    if(a == stoneforge::Action::MoveUp)    { f = {0, -1}; }
+                    else if(a == stoneforge::Action::MoveDown)  { f = {0,  1}; }
+                    else if(a == stoneforge::Action::MoveLeft)  { f = {-1, 0}; }
+                    else if(a == stoneforge::Action::MoveRight) { f = {1,  0}; }
+                };
+                updateFacing(facing,  act1);
+                updateFacing(facing2, act2);
+                if(!sim.done())  { sim.step(act1);  } else { sim.reset(aiSeed);  }
+                if(!sim2.done()) { sim2.step(act2); } else { sim2.reset(aiSeed); }
+            } else if(!sim.done()) {
+                stoneforge::Action action = stoneforge::Action::Wait;
+                if(aiMode) {
+                    int actionIdx = 0;
+                    if(std::cin >> actionIdx) {
+                        action = static_cast<stoneforge::Action>(actionIdx);
+                    }
+                } else {
+                    action = gameplayInputBlocked ? stoneforge::Action::Wait : actionFromInput();
+                }
+
                 if(action != stoneforge::Action::Wait && action != stoneforge::Action::Noop) {
                     autoWalkEnabled = false;
                 }
@@ -1773,7 +1735,7 @@ int stoneforge::client::RenderEngine::run() {
                     swordSwingTimer = kSwordSwingDuration;
                 }
 
-                if(autoWalkEnabled && !inventoryOpen && !gameplayInputBlocked && !mouseMineActive) {
+                if(!aiMode && autoWalkEnabled && !inventoryOpen && !gameplayInputBlocked && !mouseMineActive) {
                     const auto autoAction = autoWalkNextAction(sim, sim.playerPos(), sim.exitPos());
                     if(autoAction.has_value()) {
                         action = *autoAction;
@@ -1782,7 +1744,7 @@ int stoneforge::client::RenderEngine::run() {
                     }
                 }
 
-                if(queuedSwordUse) {
+                if(!aiMode && queuedSwordUse) {
                     action = stoneforge::Action::Use;
                     queuedSwordUse = false;
                     autoWalkEnabled = false;
@@ -1833,8 +1795,6 @@ int stoneforge::client::RenderEngine::run() {
 
                 stoneforge::TileType beforeMineTile = stoneforge::TileType::Empty;
                 stoneforge::Vec2i mineTarget{playerBefore.x + facing.x, playerBefore.y + facing.y};
-                const stoneforge::Vec2i placeTarget{playerBefore.x + facing.x, playerBefore.y + facing.y};
-                const stoneforge::TileType beforePlaceTile = sim.tileAt(placeTarget.x, placeTarget.y);
                 if(action == stoneforge::Action::Mine) {
                     if(mouseMineActive) {
                         mineTarget = hoverTile;
@@ -1845,18 +1805,6 @@ int stoneforge::client::RenderEngine::run() {
                 sim.step(action);
                 if(sim.reachedExit() || sim.done()) {
                     autoWalkEnabled = false;
-                }
-                scriptRuntime.emitEvent("onTick", {{"step", std::to_string(sim.steps())}});
-
-                if(action == stoneforge::Action::Place) {
-                    const stoneforge::TileType afterPlaceTile = sim.tileAt(placeTarget.x, placeTarget.y);
-                    if(afterPlaceTile != beforePlaceTile) {
-                        scriptRuntime.emitEvent("onBlockPlaced", {{"x", std::to_string(placeTarget.x)}, {"y", std::to_string(placeTarget.y)}});
-                    }
-                }
-
-                if(action == stoneforge::Action::Use) {
-                    scriptRuntime.emitEvent("onItemUsed", {{"x", std::to_string(playerBefore.x)}, {"y", std::to_string(playerBefore.y)}});
                 }
 
                 const bool minedResource = beforeMineTile == stoneforge::TileType::Resource;
@@ -1885,7 +1833,6 @@ int stoneforge::client::RenderEngine::run() {
                     if(afterMineTile != beforeMineTile) {
                         cracks.erase(tileKey(mineTarget.x, mineTarget.y));
                         spawnParticles(particles, dustPos, 18, burstColor, 2.4F, 0.7F, 1.15F, mineTarget.x * 31 + mineTarget.y * 17);
-                        scriptRuntime.emitEvent("onBlockBroken", {{"x", std::to_string(mineTarget.x)}, {"y", std::to_string(mineTarget.y)}});
                     }
                 }
 
@@ -1913,6 +1860,16 @@ int stoneforge::client::RenderEngine::run() {
             title += " | Episode done (R reset, ESC menu)";
         }
         SetWindowTitle(title.c_str());
+
+        if(aiDualMode) {
+            const int halfW = screenW / 2;
+            BeginDrawing();
+            drawParallaxBackground(screenW, screenH, t);
+            renderAiView(sim,  "PPO", facing,  atlas, runtimeBiomes, 0,     halfW, screenH, tileSize, t);
+            renderAiView(sim2, "DQN", facing2, atlas, runtimeBiomes, halfW, halfW, screenH, tileSize, t);
+            EndDrawing();
+            continue;
+        }
 
         const stoneforge::Vec2i player = sim.playerPos();
         const stoneforge::Vec2i exit = sim.exitPos();

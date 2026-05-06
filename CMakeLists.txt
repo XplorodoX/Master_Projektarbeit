@@ -6,7 +6,6 @@ option(BUILD_RAYLIB_CLIENT "Build the raylib playable client" ON)
 option(BUILD_SDL_CLIENT "Build the SDL2 playable client (legacy fallback)" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings for Gymnasium" ON)
 option(STONEFORGE_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
-option(STONEFORGE_ENABLE_LUA "Enable Lua scripting for mods" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,32 +40,9 @@ target_compile_features(stoneforge_core PUBLIC cxx_std_20)
 target_link_libraries(stoneforge_core PUBLIC nlohmann_json::nlohmann_json)
 stoneforge_set_warnings(stoneforge_core ${STONEFORGE_WARNINGS_AS_ERRORS})
 
-add_library(stoneforge_modding
-    src/mod/content_registry.cpp
-    src/mod/asset_manager.cpp
-    src/mod/mod_loader.cpp
-    src/mod/object_factory.cpp
-    src/mod/runtime_registry.cpp
-    src/mod/script_runtime.cpp
-)
-target_include_directories(stoneforge_modding PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(stoneforge_modding PUBLIC nlohmann_json::nlohmann_json)
-stoneforge_set_warnings(stoneforge_modding ${STONEFORGE_WARNINGS_AS_ERRORS})
-
-if(STONEFORGE_ENABLE_LUA)
-    find_package(Lua QUIET)
-    if(LUA_FOUND)
-        target_compile_definitions(stoneforge_modding PUBLIC STONEFORGE_HAS_LUA)
-        target_include_directories(stoneforge_modding PRIVATE ${LUA_INCLUDE_DIR})
-        target_link_libraries(stoneforge_modding PUBLIC ${LUA_LIBRARIES})
-    else()
-        message(WARNING "Lua not found. Mod scripts will be disabled; data mods still work.")
-    endif()
-endif()
-
 if(BUILD_HEADLESS_RUNNER)
     add_executable(stoneforge_headless src/apps/headless_main.cpp)
-    target_link_libraries(stoneforge_headless PRIVATE stoneforge_core stoneforge_modding)
+    target_link_libraries(stoneforge_headless PRIVATE stoneforge_core)
     stoneforge_set_warnings(stoneforge_headless ${STONEFORGE_WARNINGS_AS_ERRORS})
 endif()
 
@@ -128,7 +104,7 @@ if(BUILD_RAYLIB_CLIENT)
             src/client/render_fx.cpp
             src/client/render_ui.cpp
         )
-        target_link_libraries(stoneforge_client PRIVATE stoneforge_core stoneforge_modding ${STONEFORGE_RAYLIB_TARGET})
+        target_link_libraries(stoneforge_client PRIVATE stoneforge_core ${STONEFORGE_RAYLIB_TARGET})
         stoneforge_set_warnings(stoneforge_client ${STONEFORGE_WARNINGS_AS_ERRORS})
     else()
         message(WARNING "raylib not found. Skipping stoneforge_client target.")
@@ -162,7 +138,7 @@ if(BUILD_PYTHON_BINDINGS)
         FetchContent_MakeAvailable(pybind11)
 
         pybind11_add_module(stoneforge_sim src/python/py_module.cpp)
-        target_link_libraries(stoneforge_sim PRIVATE stoneforge_core stoneforge_modding)
+        target_link_libraries(stoneforge_sim PRIVATE stoneforge_core)
         target_include_directories(stoneforge_sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         set_target_properties(stoneforge_sim PROPERTIES PREFIX "" SUFFIX ".so")
         stoneforge_set_warnings(stoneforge_sim ${STONEFORGE_WARNINGS_AS_ERRORS})

@@ -5,16 +5,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "stoneforge/mod/runtime_registry.hpp"
 #include "stoneforge/simulation.hpp"
 
 namespace stoneforge::client {
 
 struct CommandExecutionContext {
     stoneforge::Simulation& sim;
-    const stoneforge::mod::ContentRegistry& contentRegistry;
-    const stoneforge::mod::ObjectFactory& objectFactory;
-    const stoneforge::mod::RuntimeRegistry& runtimeRegistry;
 };
 
 struct CommandExecutionResult {

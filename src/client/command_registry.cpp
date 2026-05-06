@@ -4,6 +4,7 @@
 #include <cctype>
 #include <sstream>
 
+#include "stoneforge/game_config.hpp"
 #include "stoneforge/item.hpp"
 
 namespace stoneforge::client {
@@ -92,6 +93,79 @@ std::vector<std::string> filterPrefix(const std::vector<std::string>& values, co
     return out;
 }
 
+std::vector<std::string> builtinItemIds() {
+    return {"stoneforge:wood", "stoneforge:planks", "stoneforge:sticks", "stoneforge:ore", "stoneforge:workbench_kit"};
+}
+
+std::vector<std::string> builtinBlockIds() {
+    return {
+        "stoneforge:empty",
+        "stoneforge:wall",
+        "stoneforge:resource",
+        "stoneforge:exit",
+        "stoneforge:tree",
+        "stoneforge:workbench",
+        "stoneforge:wood_wall",
+        "stoneforge:wood_log",
+    };
+}
+
+std::vector<std::string> builtinBiomeIds() {
+    return {"grasland", "wald", "wueste", "bergland", "steppe", "tundra", "hoelle"};
+}
+
+std::vector<std::string> builtinEntityIds() {
+    std::vector<std::string> ids;
+    for(const auto& [entityId, behavior] : stoneforge::gameConfig().entityBehaviorMap) {
+        (void)behavior;
+        ids.push_back(entityId);
+    }
+
+    if(ids.empty()) {
+        ids = {"stoneforge:mob", "stoneforge:zombie", "stoneforge:animal", "stoneforge:boss"};
+    }
+
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    return ids;
+}
+
+bool parseTileId(const std::string& token, stoneforge::TileType& outTile, std::string& outCanonicalId) {
+    int numeric = 0;
+    if(parseIntStrict(token, numeric)) {
+        if(numeric >= 0 && numeric <= static_cast<int>(stoneforge::TileType::WoodLog)) {
+            outTile = static_cast<stoneforge::TileType>(numeric);
+            outCanonicalId = builtinBlockIds()[static_cast<std::size_t>(numeric)];
+            return true;
+        }
+        return false;
+    }
+
+    const std::string id = normalizeRegistryId(token);
+    if(id == "stoneforge:empty") {
+        outTile = stoneforge::TileType::Empty;
+    } else if(id == "stoneforge:wall") {
+        outTile = stoneforge::TileType::Wall;
+    } else if(id == "stoneforge:resource") {
+        outTile = stoneforge::TileType::Resource;
+    } else if(id == "stoneforge:exit") {
+        outTile = stoneforge::TileType::Exit;
+    } else if(id == "stoneforge:tree") {
+        outTile = stoneforge::TileType::Tree;
+    } else if(id == "stoneforge:workbench") {
+        outTile = stoneforge::TileType::Workbench;
+    } else if(id == "stoneforge:wood_wall") {
+        outTile = stoneforge::TileType::WoodWall;
+    } else if(id == "stoneforge:wood_log") {
+        outTile = stoneforge::TileType::WoodLog;
+    } else {
+        return false;
+    }
+
+    outCanonicalId = id;
+    return true;
+}
+
 bool parseNbtLikeToken(const std::string& token, std::string& key, std::string& value) {
     const std::size_t sep = token.find('=');
     if(sep == std::string::npos || sep == 0 || sep + 1 >= token.size()) {
@@ -169,13 +243,8 @@ public:
         if(argumentIndex != 0) {
             return {};
         }
-
-        std::vector<std::string> ids{"stoneforge:wood", "stoneforge:planks", "stoneforge:sticks", "stoneforge:ore", "stoneforge:workbench_kit"};
-        for(const auto& [id, def] : ctx.contentRegistry.items()) {
-            (void)def;
-            ids.push_back(id);
-        }
-        return filterPrefix(ids, prefix);
+        (void)ctx;
+        return filterPrefix(builtinItemIds(), prefix);
     }
 
     CommandExecutionResult execute(const std::vector<std::string>& tokens, const CommandExecutionContext& ctx) const override {
@@ -205,18 +274,19 @@ public:
     }
 
     std::string usage() const override {
-        return "/setblock <x> <y> <block_id|runtime_id>";
+        return "/setblock <x> <y> <block_id|tile_id>";
     }
 
     std::string shortHelp() const override {
-        return "Set a block by namespaced ID or runtime numeric ID.";
+        return "Set a block by namespaced ID or tile enum ID.";
     }
 
     std::vector<std::string> suggest(std::size_t argumentIndex, const std::string& prefix, const CommandExecutionContext& ctx) const override {
         if(argumentIndex != 2) {
             return {};
         }
-        return filterPrefix(ctx.runtimeRegistry.blockIds(), prefix);
+        (void)ctx;
+        return filterPrefix(builtinBlockIds(), prefix);
     }
 
     CommandExecutionResult execute(const std::vector<std::string>& tokens, const CommandExecutionContext& ctx) const override {
@@ -230,22 +300,17 @@ public:
             return {false, "Invalid coordinates."};
         }
 
-        const std::string blockToken = normalizeRegistryId(tokens[3]);
-        std::uint32_t runtimeId = 0;
-        if(!ctx.runtimeRegistry.resolveBlockRuntimeId(blockToken, runtimeId) && !ctx.runtimeRegistry.resolveBlockRuntimeId(tokens[3], runtimeId)) {
-            return {false, "Unknown block id/runtime id: " + tokens[3]};
+        stoneforge::TileType tile = stoneforge::TileType::Empty;
+        std::string blockId;
+        if(!parseTileId(tokens[3], tile, blockId)) {
+            return {false, "Unknown block id/tile id: " + tokens[3]};
         }
 
-        const auto* archetype = ctx.runtimeRegistry.findBlockByRuntimeId(runtimeId);
-        if(archetype == nullptr || !archetype->hasTileType) {
-            return {false, "Block cannot be mapped to world tile."};
-        }
-
-        if(!ctx.sim.commandSetTile({x, y}, archetype->tileType)) {
+        if(!ctx.sim.commandSetTile({x, y}, tile)) {
             return {false, "Setblock failed."};
         }
 
-        return {true, "Placed " + archetype->id + " (" + std::to_string(runtimeId) + ") at " + std::to_string(x) + "," + std::to_string(y)};
+        return {true, "Placed " + blockId + " at " + std::to_string(x) + "," + std::to_string(y)};
     }
 };
 
@@ -260,11 +325,11 @@ public:
     }
 
     std::string usage() const override {
-        return "/spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]";
+        return "/spawn <entity_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]";
     }
 
     std::string shortHelp() const override {
-        return "Spawn entities by ID/runtime ID with NBT-like params.";
+        return "Spawn entities by ID with NBT-like params.";
     }
 
     std::string longHelp() const override {
@@ -272,13 +337,14 @@ public:
                "Usage: " + usage() + "\n"
                "Examples:\n"
                "  /spawn stoneforge:zombie\n"
-             "  /spawn stoneforge:zombie 12 7 hp=8 aggro=true variant=alpha behavior=zombie\n"
-               "  /summon 2001 hp=20 aggro=1 variant=boss";
+               "  /spawn stoneforge:zombie 12 7 hp=8 aggro=true variant=alpha behavior=zombie\n"
+               "  /summon stoneforge:boss hp=20 aggro=1 variant=boss";
     }
 
     std::vector<std::string> suggest(std::size_t argumentIndex, const std::string& prefix, const CommandExecutionContext& ctx) const override {
         if(argumentIndex == 0) {
-            return filterPrefix(ctx.runtimeRegistry.entityIds(), prefix);
+            (void)ctx;
+            return filterPrefix(builtinEntityIds(), prefix);
         }
         if(argumentIndex >= 3) {
             return filterPrefix({"hp=", "aggro=true", "aggro=false", "variant=", "behavior="}, prefix);
@@ -291,16 +357,7 @@ public:
             return {false, "Usage: " + usage()};
         }
 
-        std::uint32_t runtimeId = 0;
-        const std::string normalizedEntity = normalizeRegistryId(tokens[1]);
-        if(!ctx.runtimeRegistry.resolveEntityRuntimeId(normalizedEntity, runtimeId) && !ctx.runtimeRegistry.resolveEntityRuntimeId(tokens[1], runtimeId)) {
-            return {false, "Unknown entity id/runtime id: " + tokens[1]};
-        }
-
-        const auto* entity = ctx.runtimeRegistry.findEntityByRuntimeId(runtimeId);
-        if(entity == nullptr) {
-            return {false, "Entity runtime id not resolved."};
-        }
+        const std::string entityId = normalizeRegistryId(tokens[1]);
 
         stoneforge::Vec2i pos = ctx.sim.playerPos();
         std::size_t tokenIndex = 2;
@@ -313,10 +370,10 @@ public:
             }
         }
 
-        int hp = std::max(1, entity->hp);
+        int hp = 1;
         bool aggro = false;
         std::string variant = "default";
-        std::string behavior = entity->kind;
+        std::string behavior = stoneforge::gameConfig().behaviorTypeForEntity(entityId, "default");
 
         for(std::size_t i = tokenIndex; i < tokens.size(); ++i) {
             std::string key;
@@ -346,11 +403,11 @@ public:
             }
         }
 
-        if(!ctx.sim.commandSpawnEntity(entity->id, pos, hp, aggro, variant, behavior)) {
+        if(!ctx.sim.commandSpawnEntity(entityId, pos, hp, aggro, variant, behavior)) {
             return {false, "Spawn failed (target blocked/occupied)."};
         }
 
-        return {true, "Spawned " + entity->id + " (" + std::to_string(runtimeId) + ") at " + std::to_string(pos.x) + "," + std::to_string(pos.y)};
+        return {true, "Spawned " + entityId + " at " + std::to_string(pos.x) + "," + std::to_string(pos.y)};
     }
 };
 
@@ -365,7 +422,7 @@ public:
     }
 
     std::string shortHelp() const override {
-        return "List biome registry IDs.";
+        return "List built-in biome IDs.";
     }
 
     std::vector<std::string> suggest(std::size_t argumentIndex, const std::string& prefix, const CommandExecutionContext& ctx) const override {
@@ -381,25 +438,14 @@ public:
             return {false, "Usage: " + usage()};
         }
 
-        if(ctx.contentRegistry.biomes().empty()) {
-            return {false, "No biomes in registry."};
-        }
-
-        std::string out = "Biomes (" + std::to_string(ctx.contentRegistry.biomes().size()) + "): ";
-        std::size_t count = 0;
-        for(const auto& [id, def] : ctx.contentRegistry.biomes()) {
-            (void)def;
-            if(count > 0) {
+        (void)ctx;
+        const auto ids = builtinBiomeIds();
+        std::string out = "Biomes (" + std::to_string(ids.size()) + "): ";
+        for(std::size_t i = 0; i < ids.size(); ++i) {
+            if(i > 0) {
                 out += ", ";
             }
-            out += id;
-            ++count;
-            if(count >= 10) {
-                if(ctx.contentRegistry.biomes().size() > count) {
-                    out += ", ...";
-                }
-                break;
-            }
+            out += ids[i];
         }
         return {true, out};
     }
@@ -416,7 +462,7 @@ public:
     }
 
     std::string shortHelp() const override {
-        return "List entity registry IDs and runtime IDs.";
+        return "List configured entity IDs.";
     }
 
     std::vector<std::string> suggest(std::size_t argumentIndex, const std::string& prefix, const CommandExecutionContext& ctx) const override {
@@ -432,9 +478,10 @@ public:
             return {false, "Usage: " + usage()};
         }
 
-        const auto entries = ctx.runtimeRegistry.entityEntries();
+        (void)ctx;
+        const auto entries = builtinEntityIds();
         if(entries.empty()) {
-            return {false, "No entities in registry."};
+            return {false, "No entities configured."};
         }
 
         std::string out = "Entities (" + std::to_string(entries.size()) + "): ";
@@ -462,7 +509,7 @@ public:
     }
 
     std::string shortHelp() const override {
-        return "List block registry IDs and runtime IDs.";
+        return "List available block IDs.";
     }
 
     std::vector<std::string> suggest(std::size_t argumentIndex, const std::string& prefix, const CommandExecutionContext& ctx) const override {
@@ -478,9 +525,10 @@ public:
             return {false, "Usage: " + usage()};
         }
 
-        const auto entries = ctx.runtimeRegistry.blockEntries();
+        (void)ctx;
+        const auto entries = builtinBlockIds();
         if(entries.empty()) {
-            return {false, "No blocks in registry."};
+            return {false, "No blocks available."};
         }
 
         std::string out = "Blocks (" + std::to_string(entries.size()) + "): ";
@@ -527,16 +575,16 @@ CommandRegistry::CommandRegistry() {
         "Gameplay Commands:\n"
         "  /tp <x> <y>\n"
         "  /give <item_id> [count]\n"
-        "  /setblock <x> <y> <block_id|runtime_id>\n"
-        "  /spawn <entity_id|runtime_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]\n"
+        "  /setblock <x> <y> <block_id|tile_id>\n"
+        "  /spawn <entity_id> [x y] [hp=..] [aggro=true|false] [variant=name] [behavior=type]\n"
         "  /block list\n"
         "  /entity list";
 
     helpPages_["registry"] =
-        "Registry System:\n"
+        "ID System:\n"
         "  - Blocks and entities use namespaced IDs like stoneforge:wall\n"
-        "  - Runtime IDs are numeric and can be used in commands\n"
-        "  - List entries with /biome list and /entity list";
+        "  - setblock also accepts tile enum IDs (0..7)\n"
+        "  - List entries with /biome list, /block list and /entity list";
 
     helpPages_["nbt"] =
         "NBT-like Summon Params:\n"

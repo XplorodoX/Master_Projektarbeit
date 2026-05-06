@@ -221,6 +221,10 @@ void Simulation::reset(std::uint64_t seed) {
     proximityDamageAccumulator_ = 0.0F;
     done_ = false;
     reachedExit_ = false;
+    exitUnlocked_ = !mobsKilledUnlocksExit_;
+    totalKills_ = 0;
+    visitedTiles_.clear();
+    visitedTiles_.insert(spatialKey(player_.x, player_.y, 1));
 
     mobSpatialCellSize_ = std::max(1, cfg.mobSpatialCellSize);
     mobs_.clear();
@@ -238,24 +242,26 @@ StepResult Simulation::step(Action action) {
     const auto& cfg = gameConfig();
     const int distanceBefore = manhattanDistance(player_, world_.exitPoint());
     const int hpBefore = hp_;
+    const int mobsBefore = static_cast<int>(mobs_.size());
     const bool idleAction = (action == Action::Wait || action == Action::Noop);
+    bool moveBlocked = false;
 
     switch(action) {
         case Action::MoveUp:
             clearMiningProgress();
-            tryMove({0, -1});
+            if(!tryMove({0, -1})) { moveBlocked = true; }
             break;
         case Action::MoveDown:
             clearMiningProgress();
-            tryMove({0, 1});
+            if(!tryMove({0, 1})) { moveBlocked = true; }
             break;
         case Action::MoveLeft:
             clearMiningProgress();
-            tryMove({-1, 0});
+            if(!tryMove({-1, 0})) { moveBlocked = true; }
             break;
         case Action::MoveRight:
             clearMiningProgress();
-            tryMove({1, 0});
+            if(!tryMove({1, 0})) { moveBlocked = true; }
             break;
         case Action::Mine:
             mineForward();
@@ -283,6 +289,18 @@ StepResult Simulation::step(Action action) {
     }
 
     updateMobs();
+
+    const int mobsKilled = mobsBefore - static_cast<int>(mobs_.size());
+    if(mobsKilled > 0) {
+        totalKills_ += mobsKilled;
+    }
+    const std::int64_t tileKey = spatialKey(player_.x, player_.y, 1);
+    const bool newTileVisited = visitedTiles_.insert(tileKey).second;
+    bool exitJustUnlocked = false;
+    if(mobsKilledUnlocksExit_ && !exitUnlocked_ && totalKills_ >= killsRequired_) {
+        exitUnlocked_ = true;
+        exitJustUnlocked = true;
+    }
 
     bool mobInThreeByThree = false;
     for(const auto& mob : mobs_) {
@@ -312,7 +330,7 @@ StepResult Simulation::step(Action action) {
         starvationTicks_ = 0;
     }
 
-    if(player_ == world_.exitPoint()) {
+    if(exitUnlocked_ && player_ == world_.exitPoint()) {
         reachedExit_ = true;
         done_ = true;
     }
@@ -327,7 +345,9 @@ StepResult Simulation::step(Action action) {
     }
 
     const int distanceAfter = manhattanDistance(player_, world_.exitPoint());
-    const float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter);
+    const float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
+                                       mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
+                                       newTileVisited, idleAction);
 
     return StepResult{reward, done_, reachedExit_, steps_};
 }
@@ -367,6 +387,9 @@ Observation Simulation::getObservation() const {
     out.hp = hp_;
     out.energy = energy_;
     out.inventory = inventory();
+    const Vec2i exit = world_.exitPoint();
+    out.exitDx = exit.x - player_.x;
+    out.exitDy = exit.y - player_.y;
 
     return out;
 }
@@ -842,7 +865,7 @@ int Simulation::observationRadius() const {
 
 int Simulation::observationSize() const {
     const int side = 2 * observationRadius_ + 1;
-    return side * side + 3;
+    return side * side + 5;
 }
 
 int Simulation::steps() const {
@@ -1222,7 +1245,7 @@ bool Simulation::isWithinMiningRange(const Vec2i& target) const {
 
 void Simulation::updateMobs() {
     // Spawn passive mobs lazily per discovered chunk: 90% chance, max one mob per chunk.
-    constexpr float kChunkSpawnChance = 0.90F;
+    constexpr float kChunkSpawnChance = 0.00F;
     constexpr int kSpawnAttemptsPerChunk = 10;
 
     const int chunkSize = World::kChunkSize;
@@ -1359,17 +1382,40 @@ void Simulation::rebuildMobSpatialIndex() {
     }
 }
 
-float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance) const {
+float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
+                                int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
+                                bool moveBlocked, bool newTileVisited, bool idleAction) const {
     float reward = -0.01F;
+
+    if(newTileVisited) {
+        reward += 0.02F;
+    }
+
+    if(idleAction) {
+        reward -= 0.02F;
+    }
 
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
+    if(moveBlocked) {
+        reward -= 0.05F;
+    }
+
+    if(mobsKilledThisStep > 0) {
+        reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
+    }
+
+    if(exitJustUnlocked) {
+        reward += 5.0F;
+    }
+
+    (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    reward += static_cast<float>(progress) * 0.03F;
+    reward += static_cast<float>(progress) * 0.10F;
 
     if(reachedExit) {
-        reward += 50.0F;
+        reward += 100.0F;
     }
 
     if(done_ && !reachedExit) {

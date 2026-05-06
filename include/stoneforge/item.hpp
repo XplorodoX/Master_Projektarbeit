@@ -9,11 +9,6 @@
 
 namespace stoneforge {
 
-namespace mod {
-class ContentRegistry;
-struct ItemDef;
-}  // namespace mod
-
 class ItemBase {
 public:
     virtual ~ItemBase() = default;
@@ -96,7 +91,5 @@ int itemMaxStack(std::string_view key);
 std::string itemGlyphText(std::string_view key);
 std::array<unsigned char, 4> itemTintRgba(std::string_view key);
 std::string itemIconId(std::string_view key);
-const mod::ItemDef* itemDefinition(std::string_view key);
-void setItemRegistry(const mod::ContentRegistry* registry);
 
 }  // namespace stoneforge
