@@ -121,7 +121,13 @@ elseif(BUILD_SDL_CLIENT)
 endif()
 
 if(BUILD_PYTHON_BINDINGS)
-    set(STONEFORGE_VENV_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/.venv/bin/python")
+    # Support both Unix-style venv/bin/python and Windows-style venv/Scripts/python.exe
+    if(WIN32)
+        set(STONEFORGE_VENV_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/.venv/Scripts/python.exe")
+    else()
+        set(STONEFORGE_VENV_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/.venv/bin/python")
+    endif()
+    
     if(EXISTS "${STONEFORGE_VENV_PYTHON}")
         set(Python3_EXECUTABLE "${STONEFORGE_VENV_PYTHON}" CACHE FILEPATH "Preferred Python interpreter for bindings" FORCE)
     endif()
@@ -140,7 +146,14 @@ if(BUILD_PYTHON_BINDINGS)
         pybind11_add_module(stoneforge_sim src/python/py_module.cpp)
         target_link_libraries(stoneforge_sim PRIVATE stoneforge_core)
         target_include_directories(stoneforge_sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        set_target_properties(stoneforge_sim PROPERTIES PREFIX "" SUFFIX ".so")
+        
+        # Use platform-specific suffix: .so on Unix, .pyd on Windows
+        if(WIN32)
+            set_target_properties(stoneforge_sim PROPERTIES PREFIX "" SUFFIX ".pyd")
+        else()
+            set_target_properties(stoneforge_sim PROPERTIES PREFIX "" SUFFIX ".so")
+        endif()
+        
         stoneforge_set_warnings(stoneforge_sim ${STONEFORGE_WARNINGS_AS_ERRORS})
     else()
         message(WARNING "Python3 dev headers not found. Skipping stoneforge_sim module.")

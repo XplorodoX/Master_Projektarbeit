@@ -2,6 +2,13 @@
 
 2D top-down, Minecraft-like prototype focused on deterministic procedural generation and RL-first simulation.
 
+**🖥️ Platform Support**: Windows, macOS, Linux (fully cross-platform compatible)
+
+## Quick Start
+
+- **Windows Users**: See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed Windows installation guide
+- **macOS/Linux Users**: Follow the Python RL setup section below
+
 ## What is included
 
 - C++ core simulation (no engine dependency)

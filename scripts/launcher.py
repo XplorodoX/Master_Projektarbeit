@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import os
+import platform
 import shlex
 import shutil
 import subprocess
@@ -11,8 +12,15 @@ import sys
 from typing import Optional
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VENV_PY = os.path.join(ROOT, ".venv", "bin", "python3")
-PY = VENV_PY if os.path.exists(VENV_PY) else shutil.which("python3") or "python3"
+
+# Windows uses Scripts/python.exe, Unix uses bin/python3
+_IS_WIN = platform.system() == "Windows"
+if _IS_WIN:
+    VENV_PY = os.path.join(ROOT, ".venv", "Scripts", "python.exe")
+else:
+    VENV_PY = os.path.join(ROOT, ".venv", "bin", "python3")
+
+PY = VENV_PY if os.path.exists(VENV_PY) else shutil.which("python3") or "python"
 BUILD_DIR = os.path.join(ROOT, "build")
 REQ_FILE = os.path.join(ROOT, "python", "requirements.txt")
 VENV_REQ_MARKER = os.path.join(ROOT, ".venv", ".requirements_installed")
@@ -33,18 +41,31 @@ def _make_env() -> dict[str, str]:
 def run(cmd: str, cwd: Optional[str] = None, check: bool = True) -> int:
     """Run a shell command, streaming output live. Returns exit code."""
     print(f"$ {cmd}")
+    # Use shell=True for cross-platform compatibility
+    # On Windows, shell=True is necessary for batch commands and environment variable expansion
     proc = subprocess.run(cmd, shell=True, cwd=cwd or ROOT, env=_make_env())
     if check and proc.returncode != 0:
         print(f"[launcher] Command failed (exit {proc.returncode})", file=sys.stderr)
     return proc.returncode
 
 
-def _find_so() -> Optional[str]:
-    """Return path to the built stoneforge_sim shared library, or None."""
-    patterns = [
-        os.path.join(BUILD_DIR, "stoneforge_sim*.so"),
-        os.path.join(BUILD_DIR, "stoneforge_sim*.pyd"),
-        os.path.join(ROOT, "python", "stoneforge_sim*.so"),
+    
+    On Windows looks for .pyd files, on Unix looks for .so files.
+    """
+    if _IS_WIN:
+        # Windows: look for .pyd (Python Dynamic module)
+        patterns = [
+            os.path.join(BUILD_DIR, "Release", "stoneforge_sim*.pyd"),
+            os.path.join(BUILD_DIR, "stoneforge_sim*.pyd"),
+            os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
+        ]
+    else:
+        # Unix: look for .so (shared object)
+        patterns = [
+            os.path.join(BUILD_DIR, "stoneforge_sim*.so"),
+            os.path.join(ROOT, "python", "stoneforge_sim*.so"),
+        ]
+       os.path.join(ROOT, "python", "stoneforge_sim*.so"),
         os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
     ]
     for pattern in patterns:
@@ -86,7 +107,8 @@ def build_bindings(force: bool = False) -> bool:
 
     built = _find_so()
     if built is None:
-        print("[launcher] Build done but .so not found.", file=sys.stderr)
+        ext = ".pyd" if _IS_WIN else ".so"
+        print(f"[launcher] Build done but {ext} not found.", file=sys.stderr)
         return False
 
     # Copy into python/ so imports work without PYTHONPATH pointing at build/.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import os
+import platform
 import queue
 import re
 import shlex
@@ -19,10 +20,21 @@ from typing import Optional
 # Paths
 # ---------------------------------------------------------------------------
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VENV_PY = os.path.join(ROOT, ".venv", "bin", "python3")
-PY = VENV_PY if os.path.exists(VENV_PY) else shutil.which("python3") or "python3"
+
+# Windows uses Scripts/python.exe, Unix uses bin/python3
+_IS_WIN = platform.system() == "Windows"
+if _IS_WIN:
+    VENV_PY = os.path.join(ROOT, ".venv", "Scripts", "python.exe")
+else:
+    VENV_PY = os.path.join(ROOT, ".venv", "bin", "python3")
+
+PY = VENV_PY if os.path.exists(VENV_PY) else shutil.which("python3") or "python"
 BUILD_DIR = os.path.join(ROOT, "build")
-GAME_BINARY = os.path.join(BUILD_DIR, "stoneforge_client")
+
+# Windows executables have .exe extension
+_EXE_NAME = "stoneforge_client.exe" if _IS_WIN else "stoneforge_client"
+GAME_BINARY = os.path.join(BUILD_DIR, _EXE_NAME)
+
 DEFAULT_DQN = os.path.join(ROOT, "best_models_dqn", "best_model.zip")
 DEFAULT_PPO = os.path.join(ROOT, "best_models_ppo", "best_model.zip")
 
@@ -36,10 +48,22 @@ def _make_env() -> dict[str, str]:
 
 
 def _find_so() -> Optional[str]:
-    for pattern in [
-        os.path.join(BUILD_DIR, "stoneforge_sim*.so"),
-        os.path.join(ROOT, "python", "stoneforge_sim*.so"),
-    ]:
+    """Find the built stoneforge_sim module (.pyd on Windows, .so on Unix)."""
+    if _IS_WIN:
+        # Windows: look for .pyd (Python Dynamic module)
+        patterns = [
+            os.path.join(BUILD_DIR, "Release", "stoneforge_sim*.pyd"),
+            os.path.join(BUILD_DIR, "stoneforge_sim*.pyd"),
+            os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
+        ]
+    else:
+        # Unix: look for .so (shared object)
+        patterns = [
+            os.path.join(BUILD_DIR, "stoneforge_sim*.so"),
+            os.path.join(ROOT, "python", "stoneforge_sim*.so"),
+        ]
+    
+    for pattern in patterns:
         m = glob.glob(pattern)
         if m:
             return m[0]
@@ -822,14 +846,29 @@ class App(tk.Tk):
         threading.Thread(target=worker, daemon=True).start()
 
     def _do_build_bindings(self) -> None:
-        py_dir = shlex.quote(os.path.join(ROOT, "python"))
-        self._run(
+        # Build Python bindings
+        build_cmd = (
             f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
             " -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON"
             f" && cmake --build {shlex.quote(BUILD_DIR)} --target stoneforge_sim -j4"
-            f" && (cp {shlex.quote(BUILD_DIR)}/stoneforge_sim*.so {py_dir}/ 2>/dev/null || true)",
-            mode="build",
         )
+        self._run(build_cmd, mode="build")
+        # After build, copy module to python/ folder
+        self.after(1000, self._copy_sim_module)
+
+    def _copy_sim_module(self) -> None:
+        """Copy the compiled stoneforge_sim module (.pyd on Windows, .so on Unix) to python/ folder."""
+        built = _find_so()
+        if built:
+            dest_dir = os.path.join(ROOT, "python")
+            dest = os.path.join(dest_dir, os.path.basename(built))
+            try:
+                if os.path.abspath(built) != os.path.abspath(dest):
+                    shutil.copy2(built, dest)
+                    ext = ".pyd" if _IS_WIN else ".so"
+                    self._log(f"✓ {os.path.basename(built)} → python/{ext}\n", "ok")
+            except Exception as e:
+                self._log(f"⚠ Kopieren fehlgeschlagen: {e}\n", "warn")
 
     def _do_build_client(self) -> None:
         self._run(
@@ -841,14 +880,15 @@ class App(tk.Tk):
         self.after(2500, self._refresh_game_status)
 
     def _do_build_all(self) -> None:
-        py_dir = shlex.quote(os.path.join(ROOT, "python"))
-        self._run(
+        # Build everything (Python bindings + client)
+        build_cmd = (
             f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
             " -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON"
             f" && cmake --build {shlex.quote(BUILD_DIR)} -j4"
-            f" && (cp {shlex.quote(BUILD_DIR)}/stoneforge_sim*.so {py_dir}/ 2>/dev/null || true)",
-            mode="build",
         )
+        self._run(build_cmd, mode="build")
+        # After build, copy module and refresh game status
+        self.after(3000, self._copy_sim_module)
         self.after(3000, self._refresh_game_status)
 
     def _do_train(self) -> None:

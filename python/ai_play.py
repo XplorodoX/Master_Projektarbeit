@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -16,7 +17,11 @@ def make_play_env() -> StoneforgeWorldEnv:
     return ExitPotentialFieldWrapper(StoneforgeWorldEnv())  # type: ignore[return-value]
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GAME_BINARY = os.path.join(PROJECT_ROOT, "build", "stoneforge_client")
+
+# Windows executables have .exe extension, Unix does not
+_IS_WIN = platform.system() == "Windows"
+_EXE_NAME = "stoneforge_client.exe" if _IS_WIN else "stoneforge_client"
+GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 
 
 def load_model(path: str):

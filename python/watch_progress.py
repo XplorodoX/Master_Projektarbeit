@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 import threading
@@ -13,7 +14,11 @@ from stable_baselines3 import DQN, PPO
 from stoneforge_env import StoneforgeWorldEnv
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GAME_BINARY  = os.path.join(PROJECT_ROOT, "build", "stoneforge_client")
+
+# Windows executables have .exe extension, Unix does not
+_IS_WIN = platform.system() == "Windows"
+_EXE_NAME = "stoneforge_client.exe" if _IS_WIN else "stoneforge_client"
+GAME_BINARY  = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 
 WIN_W   = 640
 WIN_H   = 480
