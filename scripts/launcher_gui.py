@@ -62,42 +62,94 @@ def _make_env() -> dict[str, str]:
 
 
 def _ensure_requirements() -> bool:
-    """Ensure all Python requirements are installed. Returns True if successful."""
+    """Ensure all Python requirements and C++ bindings are available. Returns True if successful."""
+    # First check if stoneforge_sim module exists
+    if _find_so() is None:
+        print("[launcher] Python binding (stoneforge_sim) not found. Building...")
+        if not _build_bindings_cli():
+            print("[launcher] ✗ Failed to build Python bindings", file=sys.stderr)
+            return False
+    
+    # Check for critical Python modules
     req_file = os.path.join(ROOT, "python", "requirements.txt")
-    if not os.path.exists(req_file):
-        return True  # No requirements file, assume OK
+    if os.path.exists(req_file):
+        critical_modules = ["gymnasium", "stable_baselines3", "numpy", "tensorboard"]
+        missing_modules = []
+        
+        for module in critical_modules:
+            try:
+                __import__(module)
+            except ImportError:
+                missing_modules.append(module)
+        
+        if missing_modules:
+            # Install requirements
+            print(f"[launcher] Missing modules: {', '.join(missing_modules)}")
+            print(f"[launcher] Installing requirements from {req_file}...")
+            
+            import subprocess as sp
+            result = sp.run(
+                [PY, "-m", "pip", "install", "-r", req_file],
+                cwd=ROOT,
+                encoding='utf-8',
+                errors='replace',
+            )
+            
+            if result.returncode != 0:
+                print("[launcher] ✗ Failed to install requirements", file=sys.stderr)
+                return False
     
-    # Try to import critical modules to check if requirements are installed
-    critical_modules = ["gymnasium", "stable_baselines3", "numpy", "tensorboard"]
-    missing_modules = []
-    
-    for module in critical_modules:
-        try:
-            __import__(module)
-        except ImportError:
-            missing_modules.append(module)
-    
-    if not missing_modules:
-        return True  # All modules found
-    
-    # Install requirements
-    print(f"[launcher] Missing modules: {', '.join(missing_modules)}")
-    print(f"[launcher] Installing requirements from {req_file}...")
-    
+    print("[launcher] ✓ All requirements satisfied")
+    return True
+
+
+def _build_bindings_cli() -> bool:
+    """Build Python bindings from command line (non-GUI). Returns True if successful."""
     import subprocess as sp
-    result = sp.run(
-        [PY, "-m", "pip", "install", "-r", req_file],
+    
+    # Configure
+    rc = sp.run(
+        f"cmake -S {_quote(ROOT)} -B {_quote(BUILD_DIR)}"
+        " -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON",
+        shell=True,
         cwd=ROOT,
         encoding='utf-8',
         errors='replace',
-    )
+    ).returncode
     
-    if result.returncode == 0:
-        print("[launcher] ✓ Requirements installed successfully")
-        return True
-    else:
-        print("[launcher] ✗ Failed to install requirements", file=sys.stderr)
+    if rc != 0:
         return False
+    
+    # Build
+    rc = sp.run(
+        f"cmake --build {_quote(BUILD_DIR)} --target stoneforge_sim -j4",
+        shell=True,
+        cwd=ROOT,
+        encoding='utf-8',
+        errors='replace',
+    ).returncode
+    
+    if rc != 0:
+        return False
+    
+    # Copy to python/ folder
+    built = _find_so()
+    if built:
+        dest_dir = os.path.join(ROOT, "python")
+        dest = os.path.join(dest_dir, os.path.basename(built))
+        try:
+            if os.path.abspath(built) != os.path.abspath(dest):
+                shutil.copy2(built, dest)
+                print(f"[launcher] ✓ Copied {os.path.basename(built)} to python/")
+        except Exception as e:
+            print(f"[launcher] ⚠ Failed to copy module: {e}")
+            return False
+    else:
+        ext = ".pyd" if _IS_WIN else ".so"
+        print(f"[launcher] ✗ Build succeeded but {ext} not found.", file=sys.stderr)
+        return False
+    
+    return True
 
 
 def _find_so() -> Optional[str]:
