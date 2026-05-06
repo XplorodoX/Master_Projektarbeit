@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.4
+**Version**: 1.5
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -205,6 +205,20 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Beim Wechsel in die Play- oder Evaluation-Ansicht werden alle Modell-Dropdowns jetzt erneut aus dem Dateisystem geladen
 
 **Impact**: ✅ Die Modellliste ist in Play und Evaluation immer aktuell und sofort auswählbar
+
+---
+
+### 13. **scripts/launcher_gui.py** - Evaluation unter Windows über Temp-Skript
+
+**Problem**:
+- Der Evaluations-Button startete die Auswertung per `python -c ...`
+- Unter Windows war diese Variante anfällig für leere/abgeschnittene Ausgabe oder fragiles Quoting
+
+**Lösung**:
+- Die Evaluation läuft jetzt über eine temporäre Python-Datei statt über `-c`
+- Die Seed-Ergebnisse werden dadurch stabiler an die GUI zurückgemeldet
+
+**Impact**: ✅ Evaluation zeigt unter Windows wieder die Seed-Ausgaben und den Fortschritt statt nur „Fertig“
 
 ---
 

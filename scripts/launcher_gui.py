@@ -9,6 +9,7 @@ import queue
 import re
 import shlex
 import shutil
+import tempfile
 import subprocess
 import sys
 import threading
@@ -378,6 +379,7 @@ class App(tk.Tk):
         self._spinner_idx = 0
         self._total_ts = 1_000_000      # set from training form
         self._current_mode = ""         # "train" | "build" | "eval" | ""
+        self._eval_tmp_script: Optional[str] = None
 
         self._setup_styles()
         self._build_ui()
@@ -1066,8 +1068,10 @@ class App(tk.Tk):
             "seeds=list(range(7000,7050))\n"
             f"path={repr(model)}\n"
             "make_env=lambda: ExitPotentialFieldWrapper(StoneforgeWorldEnv())\n"
-            "try: model=PPO.load(path); name='PPO'\n"
-            "except: model=DQN.load(path); name='DQN'\n"
+            "try:\n"
+            "    model=PPO.load(path); name='PPO'\n"
+            "except Exception:\n"
+            "    model=DQN.load(path); name='DQN'\n"
             "env=make_env(); succ,lens,rets=0,[],[]\n"
             "for i,seed in enumerate(seeds):\n"
             "    obs,_=env.reset(seed=seed); done=False; ep=0.0; n=0; ok=False\n"
@@ -1078,11 +1082,17 @@ class App(tk.Tk):
             "        done=t or tr\n"
             "    succ+=int(ok); lens.append(n); rets.append(ep)\n"
             "    status='OK' if ok else 'FAIL'\n"
-            "    print(f'SEED_RESULT {i+1} {status} {n} {ep:.2f}',flush=True)\n"
-            "print(f'EVAL_FINAL {name} {succ} {np.mean(lens):.0f} {np.mean(rets):.2f}',flush=True)\n"
+            "    print(f'SEED_RESULT {i+1} {status} {n} {ep:.2f}', flush=True)\n"
+            "print(f'EVAL_FINAL {name} {succ} {np.mean(lens):.0f} {np.mean(rets):.2f}', flush=True)\n"
         )
         self._eval_seeds_done = 0
-        self._run(f"{_quote(PY)} -c {_quote(script)}", mode="eval")
+        with tempfile.NamedTemporaryFile("w", suffix="_stoneforge_eval.py", delete=False,
+                                         encoding="utf-8", newline="\n") as tmp:
+            tmp.write(script)
+            tmp_path = tmp.name
+
+        self._eval_tmp_script = tmp_path
+        self._run(f"{_quote(PY)} {_quote(tmp_path)}", mode="eval")
 
     def _do_game(self) -> None:
         if not os.path.exists(GAME_BINARY):
@@ -1246,9 +1256,21 @@ class App(tk.Tk):
                     rc: int = payload  # type: ignore[assignment]
                     msg = "\n✓ Fertig  (exit 0)\n" if rc == 0 else f"\n✗ Fehler (exit {rc})\n"
                     self._log(msg, "ok" if rc == 0 else "err")
+                    if self._current_mode == "eval" and self._eval_tmp_script:
+                        try:
+                            os.unlink(self._eval_tmp_script)
+                        except OSError:
+                            pass
+                        self._eval_tmp_script = None
                     self._set_running(False)
                 elif kind == "err":
                     self._log(f"\n✗ {payload}\n", "err")
+                    if self._current_mode == "eval" and self._eval_tmp_script:
+                        try:
+                            os.unlink(self._eval_tmp_script)
+                        except OSError:
+                            pass
+                        self._eval_tmp_script = None
                     self._set_running(False)
         except queue.Empty:
             pass
