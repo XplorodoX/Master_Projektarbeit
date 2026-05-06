@@ -3,11 +3,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import importlib
+import os
+import platform
+import sys
 from typing import Any
 
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_IS_WIN = platform.system() == "Windows"
+
+_BINDING_SEARCH_PATHS = [
+    os.path.join(_ROOT, "python"),
+    os.path.join(_ROOT, "build"),
+    os.path.join(_ROOT, "build", "Release"),
+    os.path.join(_ROOT, "build", "Debug"),
+]
+
+for _path in _BINDING_SEARCH_PATHS:
+    if _path not in sys.path and os.path.isdir(_path):
+        sys.path.insert(0, _path)
 
 stoneforge_sim = importlib.import_module("stoneforge_sim")
 

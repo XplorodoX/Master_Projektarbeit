@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.1
+**Version**: 1.2
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -165,6 +165,20 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Der Windows-Build ruft `cmake --build ... --config Release` auf, damit das Binding in der erwarteten Konfiguration erzeugt wird
 
 **Impact**: ✅ Der Launcher behebt fehlende Python-Bindings jetzt selbst und verhindert `ModuleNotFoundError: stoneforge_sim` beim ersten Trainingsstart
+
+---
+
+### 10. **python/stoneforge_env.py** - Robuster Binding-Import für Direktstart
+
+**Problem**:
+- `train.py` importiert `stoneforge_env.py` direkt, ohne über den Launcher zu laufen
+- Dadurch waren `build/Debug`, `build/Release` und `python/` nicht zuverlässig auf `sys.path`
+
+**Lösung**:
+- `stoneforge_env.py` fügt jetzt die relevanten Binding-Verzeichnisse vor dem Import zu `sys.path` hinzu
+- Die Suche priorisiert `build/Debug`, `build/Release`, `build/` und `python/`
+
+**Impact**: ✅ `python/train.py` findet `stoneforge_sim` jetzt auch beim Direktstart auf Windows
 
 ---
 
