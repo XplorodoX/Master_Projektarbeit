@@ -100,7 +100,7 @@ class CurriculumCallback(BaseCallback):
                 print(
                     f"\n[Curriculum] Stufe {next_stage + 1}/{len(_CURRICULUM_STAGES)}: "
                     f"Exit {emin}–{emax} Tiles  "
-                    f"({fraction:.0%} | Grund: {reason} | ∅Reward={recent_mean:.1f})"
+                    f"({fraction:.0%} | Grund: {reason} | avgReward={recent_mean:.1f})"
                 )
 
         return True

@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.2
+**Version**: 1.3
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -179,6 +179,19 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Die Suche priorisiert `build/Debug`, `build/Release`, `build/` und `python/`
 
 **Impact**: ✅ `python/train.py` findet `stoneforge_sim` jetzt auch beim Direktstart auf Windows
+
+---
+
+### 11. **python/train.py** - CP1252-sichere Curriculum-Ausgabe
+
+**Problem**:
+- Der Windows-Traceback brach beim `print()` im Curriculum-Callback an `∅Reward` ab
+- Die Standard-Konsole auf Windows nutzt oft CP1252 und kann dieses Zeichen nicht kodieren
+
+**Lösung**:
+- Die Laufzeit-Ausgabe wurde auf ASCII umgestellt und verwendet jetzt `avgReward`
+
+**Impact**: ✅ Das Training läuft auf Windows weiter, ohne an der Konsolen-Ausgabe zu scheitern
 
 ---
 
