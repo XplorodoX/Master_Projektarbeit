@@ -6,6 +6,7 @@ import platform
 import subprocess
 import sys
 import time
+from typing import Optional
 
 import numpy as np
 from stable_baselines3 import DQN, PPO
@@ -22,6 +23,81 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _IS_WIN = platform.system() == "Windows"
 _EXE_NAME = "stoneforge_client.exe" if _IS_WIN else "stoneforge_client"
 GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
+
+
+def _find_game_binary() -> Optional[str]:
+    """Return the first available stoneforge_client binary path, if any."""
+    candidates = []
+    if _IS_WIN:
+        candidates.extend([
+            os.path.join(PROJECT_ROOT, "build", "Release", _EXE_NAME),
+            os.path.join(PROJECT_ROOT, "build", "Debug", _EXE_NAME),
+            GAME_BINARY,
+        ])
+    else:
+        candidates.extend([
+            GAME_BINARY,
+            os.path.join(PROJECT_ROOT, "build", "Release", _EXE_NAME),
+            os.path.join(PROJECT_ROOT, "build", "Debug", _EXE_NAME),
+        ])
+
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def _ensure_game_binary() -> Optional[str]:
+    """Ensure the playable client exists; build it on demand if missing."""
+    existing = _find_game_binary()
+    if existing is not None:
+        return existing
+
+    print(f"Spiel-Client fehlt, baue ihn jetzt: {_EXE_NAME}")
+    configure_cmd = [
+        "cmake",
+        "-S", PROJECT_ROOT,
+        "-B", os.path.join(PROJECT_ROOT, "build"),
+        "-DCMAKE_BUILD_TYPE=Release",
+    ]
+    build_cmd = [
+        "cmake",
+        "--build", os.path.join(PROJECT_ROOT, "build"),
+        "--target", "stoneforge_client",
+    ]
+    if _IS_WIN:
+        build_cmd.extend(["--config", "Release"])
+
+    try:
+        rc = subprocess.run(configure_cmd, cwd=PROJECT_ROOT).returncode
+        if rc != 0:
+            print("Fehler: CMake-Konfiguration für stoneforge_client fehlgeschlagen.", file=sys.stderr)
+            return None
+
+        rc = subprocess.run(build_cmd, cwd=PROJECT_ROOT).returncode
+        if rc != 0:
+            print("Fehler: Build von stoneforge_client fehlgeschlagen.", file=sys.stderr)
+            return None
+    except FileNotFoundError as exc:
+        print(f"Fehler: cmake nicht gefunden: {exc}", file=sys.stderr)
+        return None
+
+    built = _find_game_binary()
+    if built is None:
+        print(f"Fehler: Game-Binary nach Build nicht gefunden: {GAME_BINARY}", file=sys.stderr)
+        return None
+
+    if os.path.abspath(built) != os.path.abspath(GAME_BINARY):
+        try:
+            os.makedirs(os.path.dirname(GAME_BINARY), exist_ok=True)
+            if os.path.exists(GAME_BINARY):
+                os.remove(GAME_BINARY)
+            with open(built, "rb") as src, open(GAME_BINARY, "wb") as dst:
+                dst.write(src.read())
+        except OSError:
+            pass
+
+    return built
 
 
 def load_model(path: str):
@@ -49,8 +125,12 @@ def run_single(model_path: str, seed: int, speed: float) -> None:
         expected_shape = tuple(expected_obs_space.shape)
     else:
         expected_shape = obs.shape
+    game_binary = _ensure_game_binary()
+    if game_binary is None:
+        raise SystemExit(1)
+
     game = subprocess.Popen(
-        [GAME_BINARY, "--ai", "--seed", str(seed)],
+        [game_binary, "--ai", "--seed", str(seed)],
         stdin=subprocess.PIPE, text=True, bufsize=1, cwd=PROJECT_ROOT,
     )
     time.sleep(1.5)
@@ -96,8 +176,12 @@ def run_dual(model1_path: str, model2_path: str, seed: int, speed: float) -> Non
     label2 = os.path.splitext(os.path.basename(model2_path))[0]
     print(f"Starte Dual-Modus: [{label1}] vs [{label2}] (Seed {seed})")
 
+    game_binary = _ensure_game_binary()
+    if game_binary is None:
+        raise SystemExit(1)
+
     game = subprocess.Popen(
-        [GAME_BINARY, "--ai-dual", "--seed", str(seed)],
+        [game_binary, "--ai-dual", "--seed", str(seed)],
         stdin=subprocess.PIPE, text=True, bufsize=1, cwd=PROJECT_ROOT,
     )
     time.sleep(1.5)
@@ -166,7 +250,8 @@ def main() -> None:
                         help="Geschwindigkeitsfaktor (1.0 = normal, 2.0 = doppelt)")
     args = parser.parse_args()
 
-    if not os.path.exists(GAME_BINARY):
+    game_binary = _ensure_game_binary()
+    if game_binary is None:
         print(f"Fehler: Game-Binary nicht gefunden: {GAME_BINARY}", file=sys.stderr)
         print("Bitte zuerst bauen: cmake --build build --target stoneforge_client", file=sys.stderr)
         sys.exit(1)

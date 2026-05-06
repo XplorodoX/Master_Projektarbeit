@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.5
+**Version**: 1.6
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -219,6 +219,20 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Die Seed-Ergebnisse werden dadurch stabiler an die GUI zurückgemeldet
 
 **Impact**: ✅ Evaluation zeigt unter Windows wieder die Seed-Ausgaben und den Fortschritt statt nur „Fertig“
+
+---
+
+### 14. **python/ai_play.py** - Spiel-Client automatisch bauen
+
+**Problem**:
+- Der Play-Start brach ab, wenn `stoneforge_client.exe` noch nicht gebaut war
+- Auf Windows lag die Binary außerdem oft in `build/Release/` statt direkt in `build/`
+
+**Lösung**:
+- `ai_play.py` sucht jetzt in `build/`, `build/Release/` und `build/Debug/`
+- Wenn keine Binary vorhanden ist, wird `stoneforge_client` automatisch per CMake gebaut
+
+**Impact**: ✅ Play startet auch auf frischen Windows-Setups ohne manuellen Client-Build
 
 ---
 
