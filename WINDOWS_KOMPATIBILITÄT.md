@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.6
+**Version**: 1.7
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -233,6 +233,20 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Wenn keine Binary vorhanden ist, wird `stoneforge_client` automatisch per CMake gebaut
 
 **Impact**: ✅ Play startet auch auf frischen Windows-Setups ohne manuellen Client-Build
+
+---
+
+### 15. **src/client/render_engine.cpp** - AI-Modus sichtbar markieren
+
+**Problem**:
+- Der Agentenmodus lief bereits, sah aber wie ein normaler manueller Lauf aus
+- Im Fenstertitel und in der UI fehlte eine klare Kennzeichnung für AI oder AI-Dual
+
+**Lösung**:
+- Der Fenstertitel zeigt jetzt `AI MODE` oder `AI DUAL`
+- Im Spiel wird zusätzlich ein sichtbares AI-Badge eingeblendet
+
+**Impact**: ✅ Abspielen wirkt jetzt eindeutig wie der Agentenlauf und nicht wie normales manuelles Spielen
 
 ---
 

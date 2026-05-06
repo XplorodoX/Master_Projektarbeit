@@ -1856,6 +1856,9 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
                             " Ore=" + std::to_string(sim.ore()) +
                             " Inv=" + std::to_string(sim.inventory()) +
                             " Steps=" + std::to_string(sim.steps());
+        if(aiMode) {
+            title += aiDualMode ? " | AI DUAL" : " | AI MODE";
+        }
         if(sim.done()) {
             title += " | Episode done (R reset, ESC menu)";
         }
@@ -2090,6 +2093,16 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         const bool nearWorkbench = sim.isNearWorkbench();
         drawHud(sim, screenW, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
+
+        if(aiMode) {
+            const char* aiLabel = aiDualMode ? "AI DUAL" : "AI MODE";
+            const Rectangle aiBadge{static_cast<float>(screenW - 166), 24.0F, 142.0F, 40.0F};
+            DrawRectangleRounded(aiBadge, 0.25F, 8, Color{22, 38, 58, 220});
+            DrawRectangleRoundedLinesEx(aiBadge, 0.25F, 8, 2.0F, Color{132, 176, 229, 240});
+            const int labelW = MeasureText(aiLabel, 20);
+            DrawText(aiLabel, static_cast<int>(aiBadge.x + (aiBadge.width - static_cast<float>(labelW)) * 0.5F),
+                     static_cast<int>(aiBadge.y) + 10, 20, Color{211, 228, 248, 255});
+        }
 
         const stoneforge::Vec2i posNow = sim.playerPos();
         const stoneforge::Vec2i goalNow = sim.exitPos();
