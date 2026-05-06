@@ -1,6 +1,6 @@
 # Windows Kompatibilität - Änderungsprotokoll
 
-**Version**: 1.3
+**Version**: 1.4
 **Datum**: 6. Mai 2026  
 **Status**: ✅ Vollständige Windows-Kompatibilität implementiert
 
@@ -192,6 +192,19 @@ GAME_BINARY = os.path.join(PROJECT_ROOT, "build", _EXE_NAME)
 - Die Laufzeit-Ausgabe wurde auf ASCII umgestellt und verwendet jetzt `avgReward`
 
 **Impact**: ✅ Das Training läuft auf Windows weiter, ohne an der Konsolen-Ausgabe zu scheitern
+
+---
+
+### 12. **scripts/launcher_gui.py** - Modell-Dropdowns mit Auto-Refresh
+
+**Problem**:
+- Die Play-/Evaluation-Dropdowns wurden nur beim Erzeugen des Widgets gescannt
+- Neue oder bereits vorhandene Modelle konnten dadurch in der GUI unsichtbar bleiben, bis der Launcher neu gestartet wurde
+
+**Lösung**:
+- Beim Wechsel in die Play- oder Evaluation-Ansicht werden alle Modell-Dropdowns jetzt erneut aus dem Dateisystem geladen
+
+**Impact**: ✅ Die Modellliste ist in Play und Evaluation immer aktuell und sofort auswählbar
 
 ---
 

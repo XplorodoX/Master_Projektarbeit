@@ -897,6 +897,14 @@ class App(tk.Tk):
         else:
             self._dual_inner.pack_forget()
 
+    def _refresh_model_pickers(self) -> None:
+        """Refresh all model dropdowns from the current filesystem state."""
+        for picker in (getattr(self, "_play_picker1", None),
+                       getattr(self, "_play_picker2", None),
+                       getattr(self, "_eval_picker", None)):
+            if picker is not None:
+                picker.refresh()
+
     def _refresh_game_status(self) -> None:
         if os.path.exists(GAME_BINARY):
             self._game_status_lbl.config(
@@ -914,6 +922,9 @@ class App(tk.Tk):
         for k, f in self._sections.items():
             (f.tkraise if k == key else lambda: None)()
         self._sections[key].tkraise()
+
+        if key in ("play", "eval"):
+            self._refresh_model_pickers()
 
     # ------------------------------------------------------------------
     # Timestep slider
