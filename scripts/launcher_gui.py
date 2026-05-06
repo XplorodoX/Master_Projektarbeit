@@ -61,6 +61,45 @@ def _make_env() -> dict[str, str]:
     return env
 
 
+def _ensure_requirements() -> bool:
+    """Ensure all Python requirements are installed. Returns True if successful."""
+    req_file = os.path.join(ROOT, "python", "requirements.txt")
+    if not os.path.exists(req_file):
+        return True  # No requirements file, assume OK
+    
+    # Try to import critical modules to check if requirements are installed
+    critical_modules = ["gymnasium", "stable_baselines3", "numpy", "tensorboard"]
+    missing_modules = []
+    
+    for module in critical_modules:
+        try:
+            __import__(module)
+        except ImportError:
+            missing_modules.append(module)
+    
+    if not missing_modules:
+        return True  # All modules found
+    
+    # Install requirements
+    print(f"[launcher] Missing modules: {', '.join(missing_modules)}")
+    print(f"[launcher] Installing requirements from {req_file}...")
+    
+    import subprocess as sp
+    result = sp.run(
+        [PY, "-m", "pip", "install", "-r", req_file],
+        cwd=ROOT,
+        encoding='utf-8',
+        errors='replace',
+    )
+    
+    if result.returncode == 0:
+        print("[launcher] ✓ Requirements installed successfully")
+        return True
+    else:
+        print("[launcher] ✗ Failed to install requirements", file=sys.stderr)
+        return False
+
+
 def _find_so() -> Optional[str]:
     """Find the built stoneforge_sim module (.pyd on Windows, .so on Unix)."""
     if _IS_WIN:
@@ -913,6 +952,9 @@ class App(tk.Tk):
         self.after(3000, self._refresh_game_status)
 
     def _do_train(self) -> None:
+        if not _ensure_requirements():
+            self._log("✗ Anforderungen konnten nicht installiert werden.\n", "err")
+            return
         algo = self._algo_var.get()
         ts = self._ts_var.get()
         self._total_ts = ts
@@ -924,6 +966,9 @@ class App(tk.Tk):
         self._run(" ".join(parts), mode="train")
 
     def _do_play(self) -> None:
+        if not _ensure_requirements():
+            self._log("✗ Anforderungen konnten nicht installiert werden.\n", "err")
+            return
         model = self._play_picker1.get_path()
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
@@ -939,6 +984,9 @@ class App(tk.Tk):
         self._run(" ".join(parts))
 
     def _do_eval(self) -> None:
+        if not _ensure_requirements():
+            self._log("✗ Anforderungen konnten nicht installiert werden.\n", "err")
+            return
         model = self._eval_picker.get_path()
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
