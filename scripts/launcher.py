@@ -29,6 +29,20 @@ DEFAULT_MODEL_DQN = "best_models_dqn/best_model.zip"
 DEFAULT_MODEL_PPO = "best_models_ppo/best_model.zip"
 
 
+def _quote(path: str) -> str:
+    """Quote a path for the current platform's shell.
+    
+    Windows uses double quotes, Unix uses single quotes with shlex.quote().
+    This is critical for paths with spaces.
+    """
+    if _IS_WIN:
+        # Windows: use double quotes (don't use shlex.quote, it uses Unix rules)
+        return f'"{path}"'
+    else:
+        # Unix/macOS/Linux: use shlex.quote for proper escaping
+        return shlex.quote(path)
+
+
 def _make_env() -> dict[str, str]:
     """Build environment dict with correct PYTHONPATH so stoneforge_sim is importable."""
     env = os.environ.copy()
@@ -81,7 +95,7 @@ def build_bindings(force: bool = False) -> bool:
     if os.path.exists(REQ_FILE) and os.path.exists(os.path.join(ROOT, ".venv")):
         if not os.path.exists(VENV_REQ_MARKER):
             print("[launcher] Installing Python requirements into venv...")
-            if run(f"{shlex.quote(PY)} -m pip install -r {shlex.quote(REQ_FILE)}") == 0:
+            if run(f"{_quote(PY)} -m pip install -r {_quote(REQ_FILE)}") == 0:
                 with open(VENV_REQ_MARKER, "w"):
                     pass
         else:
@@ -94,14 +108,14 @@ def build_bindings(force: bool = False) -> bool:
     print("[launcher] Building Python bindings (Release)...")
     # Configure with Release build — important for training speed.
     rc = run(
-        f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
+        f"cmake -S {_quote(ROOT)} -B {_quote(BUILD_DIR)}"
         " -DCMAKE_BUILD_TYPE=Release"
         " -DBUILD_PYTHON_BINDINGS=ON"
     )
     if rc != 0:
         return False
 
-    rc = run(f"cmake --build {shlex.quote(BUILD_DIR)} --target stoneforge_sim -j 4")
+    rc = run(f"cmake --build {_quote(BUILD_DIR)} --target stoneforge_sim -j 4")
     if rc != 0:
         return False
 
@@ -125,9 +139,9 @@ def train(algo: str = "dqn", timesteps: int = 1_000_000,
     if not build_bindings():
         return 1
     parts = [
-        shlex.quote(PY),
+        _quote(PY),
         "python/train.py",
-        "--algo", shlex.quote(algo),
+        "--algo", _quote(algo),
         "--timesteps", str(int(timesteps)),
     ]
     if not curriculum:
@@ -141,14 +155,14 @@ def play(model: str, seed: int = 42, speed: float = 1.0,
     if not build_bindings():
         return 1
     parts = [
-        shlex.quote(PY),
+        _quote(PY),
         "python/ai_play.py",
-        "--model", shlex.quote(model),
+        "--model", _quote(model),
         "--seed", str(int(seed)),
         "--speed", str(float(speed)),
     ]
     if model2:
-        parts += ["--model2", shlex.quote(model2)]
+        parts += ["--model2", _quote(model2)]
     return run(" ".join(parts), cwd=ROOT)
 
 
@@ -198,7 +212,7 @@ def evaluate(path):
 
 evaluate(path)
 """
-    cmd = f"{shlex.quote(PY)} -c {shlex.quote(script)}"
+    cmd = f"{_quote(PY)} -c {_quote(script)}"
     return run(cmd, cwd=ROOT)
 
 

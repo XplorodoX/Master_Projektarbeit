@@ -39,6 +39,20 @@ DEFAULT_DQN = os.path.join(ROOT, "best_models_dqn", "best_model.zip")
 DEFAULT_PPO = os.path.join(ROOT, "best_models_ppo", "best_model.zip")
 
 
+def _quote(path: str) -> str:
+    """Quote a path for the current platform's shell.
+    
+    Windows uses double quotes, Unix uses single quotes with shlex.quote().
+    This is critical for paths with spaces.
+    """
+    if _IS_WIN:
+        # Windows: use double quotes (don't use shlex.quote, it uses Unix rules)
+        return f'"{path}"'
+    else:
+        # Unix/macOS/Linux: use shlex.quote for proper escaping
+        return shlex.quote(path)
+
+
 def _make_env() -> dict[str, str]:
     env = os.environ.copy()
     extra = os.pathsep.join([BUILD_DIR, os.path.join(ROOT, "python")])
@@ -848,9 +862,9 @@ class App(tk.Tk):
     def _do_build_bindings(self) -> None:
         # Build Python bindings
         build_cmd = (
-            f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
+            f"cmake -S {_quote(ROOT)} -B {_quote(BUILD_DIR)}"
             " -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON"
-            f" && cmake --build {shlex.quote(BUILD_DIR)} --target stoneforge_sim -j4"
+            f" && cmake --build {_quote(BUILD_DIR)} --target stoneforge_sim -j4"
         )
         self._run(build_cmd, mode="build")
         # After build, copy module to python/ folder
@@ -872,9 +886,9 @@ class App(tk.Tk):
 
     def _do_build_client(self) -> None:
         self._run(
-            f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
+            f"cmake -S {_quote(ROOT)} -B {_quote(BUILD_DIR)}"
             " -DCMAKE_BUILD_TYPE=Release"
-            f" && cmake --build {shlex.quote(BUILD_DIR)} --target stoneforge_client -j4",
+            f" && cmake --build {_quote(BUILD_DIR)} --target stoneforge_client -j4",
             mode="build",
         )
         self.after(2500, self._refresh_game_status)
@@ -882,9 +896,9 @@ class App(tk.Tk):
     def _do_build_all(self) -> None:
         # Build everything (Python bindings + client)
         build_cmd = (
-            f"cmake -S {shlex.quote(ROOT)} -B {shlex.quote(BUILD_DIR)}"
+            f"cmake -S {_quote(ROOT)} -B {_quote(BUILD_DIR)}"
             " -DCMAKE_BUILD_TYPE=Release -DBUILD_PYTHON_BINDINGS=ON"
-            f" && cmake --build {shlex.quote(BUILD_DIR)} -j4"
+            f" && cmake --build {_quote(BUILD_DIR)} -j4"
         )
         self._run(build_cmd, mode="build")
         # After build, copy module and refresh game status
@@ -896,7 +910,7 @@ class App(tk.Tk):
         ts = self._ts_var.get()
         self._total_ts = ts
         cur = self._curriculum_var.get()
-        parts = [shlex.quote(PY), "python/train.py",
+        parts = [_quote(PY), "python/train.py",
                  "--algo", algo, "--timesteps", str(ts)]
         if not cur:
             parts.append("--no-curriculum")
@@ -907,14 +921,14 @@ class App(tk.Tk):
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
             return
-        parts = [shlex.quote(PY), "python/ai_play.py",
-                 "--model", shlex.quote(model),
+        parts = [_quote(PY), "python/ai_play.py",
+                 "--model", _quote(model),
                  "--seed", str(self._play_seed.get()),
                  "--speed", str(self._play_speed.get())]
         if self._dual_var.get():
             m2 = self._play_picker2.get_path()
             if m2:
-                parts += ["--model2", shlex.quote(m2)]
+                parts += ["--model2", _quote(m2)]
         self._run(" ".join(parts))
 
     def _do_eval(self) -> None:
@@ -945,14 +959,14 @@ class App(tk.Tk):
             "print(f'EVAL_FINAL {name} {succ} {np.mean(lens):.0f} {np.mean(rets):.2f}',flush=True)\n"
         )
         self._eval_seeds_done = 0
-        self._run(f"{shlex.quote(PY)} -c {shlex.quote(script)}", mode="eval")
+        self._run(f"{_quote(PY)} -c {_quote(script)}", mode="eval")
 
     def _do_game(self) -> None:
         if not os.path.exists(GAME_BINARY):
             self._log("✗ Binary fehlt — Build Client ausführen.\n", "err")
             return
         seed = self._game_seed.get()
-        cmd = f"{shlex.quote(GAME_BINARY)} --seed {seed}"
+        cmd = f"{_quote(GAME_BINARY)} --seed {seed}"
         self._log(f"$ {cmd}\n", "cmd")
         subprocess.Popen(cmd, shell=True, cwd=ROOT)
 
