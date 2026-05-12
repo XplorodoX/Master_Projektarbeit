@@ -1,0 +1,30 @@
+[
+  {
+    "id": "mob",
+    "name": "Vanilla Mob",
+    "kind": "zombie",
+    "spriteSlot": "Mob",
+    "hp": 1
+  },
+  {
+    "id": "zombie",
+    "name": "Zombie",
+    "kind": "zombie",
+    "spriteSlot": "Mob",
+    "hp": 2
+  },
+  {
+    "id": "animal",
+    "name": "Animal",
+    "kind": "animal",
+    "spriteSlot": "Mob",
+    "hp": 1
+  },
+  {
+    "id": "boss",
+    "name": "Boss",
+    "kind": "boss",
+    "spriteSlot": "Mob",
+    "hp": 4
+  }
+]

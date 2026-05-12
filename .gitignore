@@ -1,0 +1,15 @@
+# Build outputs
+/build/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+checkpoints
+tensorboard_logs
+ppo_stoneforge_model.zip
+dqn_stoneforge_model.zip
