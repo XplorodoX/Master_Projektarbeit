@@ -453,7 +453,12 @@ void drawStoneResource(int wx, int wy, int px, int py, int tileSize, Color biome
         // Smooth stone with horizontal lines
         for(int i = 0; i < 3; ++i) {
             const int y = py + (i + 1) * tileSize / 4;
-            DrawLineEx(Vector2{static_cast<float>(px)}, Vector2{static_cast<float>(px + tileSize), static_cast<float>(y)}, 1.0F, Fade(edgeColor, 0.3F));
+            DrawLineEx(
+                Vector2{static_cast<float>(px), static_cast<float>(y)},
+                Vector2{static_cast<float>(px + tileSize), static_cast<float>(y)},
+                1.0F,
+                Fade(edgeColor, 0.3F)
+            );
         }
         DrawRectangle(px + 2, py + 2, tileSize - 4, tileSize - 4, Fade(highlightColor, 0.15F));
     } else if(stoneType == 1) {
@@ -1014,32 +1019,32 @@ void drawLakeTile(const stoneforge::Simulation& /*sim*/, int px, int py, int til
     // Base lake color
     DrawRectangle(px, py, tileSize, tileSize, lakeTintColor());
 
-    // subtle moving wave texture (per-tile animated sine ripple)
+    // subtle moving shimmer instead of visible line bands
     const float twoPi = 6.2831853F;
-    const float speed = 1.6F;
-    const float amp = static_cast<float>(std::max(1, tileSize / 8));
-    const Color waveCol = Color{200, 230, 255, 255};
+    const float speed = 1.15F;
+    const float amp = static_cast<float>(std::max(1, tileSize / 14));
+    const Color waveCol = Color{220, 240, 255, 255};
 
-    // Primary wave layer (finer, stronger)
-    for(int sx = 0; sx < tileSize; ++sx) {
+    // dotted shimmer layer, intentionally sparse so it reads as water texture not lines
+    for(int sx = 1; sx < tileSize - 1; sx += std::max(3, tileSize / 6)) {
         const float nx = static_cast<float>(sx) / static_cast<float>(tileSize);
-        const float phase = nx * twoPi * 1.8F + t * speed + static_cast<float>((px ^ py) & 255) * 0.001F;
+        const float phase = nx * twoPi * 1.35F + t * speed + static_cast<float>((px ^ py) & 255) * 0.001F;
         const int dy = static_cast<int>(std::sin(phase) * amp);
         const int y = py + tileSize / 2 + dy;
-        DrawRectangle(px + sx, y, 1, 1, Fade(waveCol, 0.32F));
+        DrawCircleV(Vector2{static_cast<float>(px + sx), static_cast<float>(y)}, 0.75F, Fade(waveCol, 0.12F));
     }
 
-    // Secondary wave layer (offset, softer) for more organic motion
-    for(int sx = 0; sx < tileSize; sx += 3) {
+    // very soft secondary shimmer
+    for(int sx = 2; sx < tileSize - 2; sx += std::max(4, tileSize / 4)) {
         const float nx = static_cast<float>(sx) / static_cast<float>(tileSize);
-        const float phase2 = nx * twoPi * 2.3F + t * (speed * 1.35F) + static_cast<float>(((px + 7) ^ (py + 13)) & 255) * 0.0015F;
-        const int dy2 = static_cast<int>(std::cos(phase2) * (amp / 2.0F));
+        const float phase2 = nx * twoPi * 0.95F + t * (speed * 1.12F) + static_cast<float>(((px + 7) ^ (py + 13)) & 255) * 0.0015F;
+        const int dy2 = static_cast<int>(std::cos(phase2) * (amp * 0.65F));
         const int y2 = py + tileSize / 3 + dy2;
-        DrawRectangle(px + sx, y2, 1, 1, Fade(waveCol, 0.20F));
+        DrawCircleV(Vector2{static_cast<float>(px + sx), static_cast<float>(y2)}, 0.75F, Fade(waveCol, 0.08F));
     }
 
     // soft highlight at top half to give a light sheen
-    DrawRectangle(px, py, tileSize, tileSize / 2, Fade(Color{200, 230, 255, 255}, 0.06F));
+    DrawRectangle(px, py, tileSize, tileSize / 2, Fade(Color{200, 230, 255, 255}, 0.03F));
 }
 
 Color biomeTintAtTile(const stoneforge::Simulation& sim, int wx, int wy) {
@@ -2063,7 +2068,7 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
             }
         }
 
-        if(showChunkBorders) {
+        if(false && showChunkBorders) {
             auto positiveModLocal = [](int value, int divisor) {
                 int result = value % divisor;
                 if(result < 0) {

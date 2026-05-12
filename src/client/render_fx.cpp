@@ -119,13 +119,15 @@ void drawCracks(
 
         const float alpha = std::clamp(info.strength, 0.0F, 1.0F);
         const Color c = Fade(Color{33, 26, 26, 255}, 0.22F + alpha * 0.65F);
-
-        DrawLine(px + tileSize / 3, py + 2, px + tileSize / 2, py + tileSize - 3, c);
-        DrawLine(px + tileSize / 2, py + tileSize / 2, px + tileSize - 3, py + tileSize - 4, c);
-        DrawLine(px + 3, py + tileSize / 2, px + tileSize / 2, py + tileSize / 3, c);
-
         const int jitter = static_cast<int>(std::sin(t * 9.0F + static_cast<float>(wx + wy)) * 1.2F);
-        DrawLine(px + 5, py + 3 + jitter, px + tileSize - 6, py + tileSize - 6 - jitter, Fade(c, 0.65F));
+        const int cx = px + tileSize / 2;
+        const int cy = py + tileSize / 2;
+
+        // Keep the damage cue local and non-linear so it doesn't read as a world-spanning line artifact.
+        DrawCircle(cx - tileSize / 6, cy - tileSize / 7 + jitter, std::max(1, tileSize / 16), c);
+        DrawCircle(cx + tileSize / 8, cy - tileSize / 10 - jitter, std::max(1, tileSize / 18), Fade(c, 0.95F));
+        DrawCircle(cx - tileSize / 12, cy + tileSize / 8, std::max(1, tileSize / 18), Fade(c, 0.75F));
+        DrawCircle(cx + tileSize / 10, cy + tileSize / 9, std::max(1, tileSize / 20), Fade(c, 0.6F));
     }
 }
 
