@@ -1,0 +1,14 @@
+# CMake generation dependency list for this directory.
+C:/Strawberry/c/share/cmake-3.26/Modules/BasicConfigVersion-SameMajorVersion.cmake.in
+C:/Strawberry/c/share/cmake-3.26/Modules/CMakeDependentOption.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/CMakePackageConfigHelpers.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/CheckCSourceCompiles.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/CheckIncludeFile.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/CheckLibraryExists.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindPackageHandleStandardArgs.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindPackageMessage.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindThreads.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/GNUInstallDirs.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/WriteBasicConfigVersionFile.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/src/external/glfw/CMake/glfw3Config.cmake.in
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/src/external/glfw/CMakeLists.txt

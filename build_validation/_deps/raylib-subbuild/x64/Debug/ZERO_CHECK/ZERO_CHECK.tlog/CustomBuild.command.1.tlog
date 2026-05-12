@@ -1,0 +1,10 @@
+^C:\USERS\PC\DESKTOP\PROJEKT_LECON_MASTER_SEM2\MASTER_PROJEKTARBEIT\BUILD_VALIDATION\_DEPS\RAYLIB-SUBBUILD\CMAKEFILES\C03E8A1584B6261584A5B906D131B2D9\GENERATE.STAMP.RULE
+setlocal
+C:\Strawberry\c\bin\cmake.exe -SC:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-subbuild -BC:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-subbuild/raylib-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

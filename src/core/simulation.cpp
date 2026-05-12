@@ -1245,11 +1245,7 @@ bool Simulation::isWithinMiningRange(const Vec2i& target) const {
 
 void Simulation::updateMobs() {
     // Spawn passive mobs lazily per discovered chunk: 90% chance, max one mob per chunk.
-<<<<<<< HEAD
     constexpr float kChunkSpawnChance = 0.90F;
-=======
-    constexpr float kChunkSpawnChance = 0.00F;
->>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
     constexpr int kSpawnAttemptsPerChunk = 10;
 
     const int chunkSize = World::kChunkSize;

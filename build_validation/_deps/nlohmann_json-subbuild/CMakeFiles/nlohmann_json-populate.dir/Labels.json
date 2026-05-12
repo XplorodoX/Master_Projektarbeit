@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/nlohmann_json-populate"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/74949b12d1933a92713261c919092e00/nlohmann_json-populate.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/c0191ff926dcb51127fdd6c434ffe82a/nlohmann_json-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-subbuild/CMakeFiles/100cd8f4b427bdd44414a22c5cd457c5/nlohmann_json-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"nlohmann_json-populate"
+		],
+		"name" : "nlohmann_json-populate"
+	}
+}

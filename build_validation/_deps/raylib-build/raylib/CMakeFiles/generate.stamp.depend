@@ -1,0 +1,19 @@
+# CMake generation dependency list for this directory.
+C:/Strawberry/c/share/cmake-3.26/Modules/CPack.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/CPackComponent.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindOpenGL.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindPackageHandleStandardArgs.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/FindPackageMessage.cmake
+C:/Strawberry/c/share/cmake-3.26/Modules/GNUInstallDirs.cmake
+C:/Strawberry/c/share/cmake-3.26/Templates/CPackConfig.cmake.in
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/CompileDefinitions.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/GlfwImport.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/InstallConfigurations.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/JoinPaths.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/LibraryConfigurations.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/LibraryPathToLinkerFlags.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/PackConfigurations.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/PopulateConfigVariablesLocally.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/cmake/raylib-config-version.cmake
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/raylib.pc.in
+C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/raylib-src/src/CMakeLists.txt

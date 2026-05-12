@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\PC\Desktop\projekt_lecon_master_sem2\Master_Projektarbeit\build_validation\_deps\nlohmann_json-subbuild\CMakeFiles\74949b12d1933a92713261c919092e00\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{D5BA9FE8-EA85-3A22-B70A-9C58B351F0F8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
