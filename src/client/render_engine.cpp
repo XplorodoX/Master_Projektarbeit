@@ -74,9 +74,13 @@ enum class SpriteId : int {
     Tree = 16,
     Workbench = 17,
     WoodWall = 18,
+<<<<<<< HEAD
     WoodLog = 19,
     SandA = 20,
     SandB = 21
+=======
+    WoodLog = 19
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
 };
 
 enum class ScreenState {
@@ -144,7 +148,11 @@ std::vector<RuntimeBiome> buildRuntimeBiomes() {
 }
 
 Texture2D buildSpriteAtlas() {
+<<<<<<< HEAD
     Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 6, BLANK);
+=======
+    Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 5, BLANK);
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
 
     auto paintFloor = [&](int sx, int sy, Color baseA, Color speckA, Color speckB) {
         fillRect(atlas, sx, sy, kAtlasCell, kAtlasCell, baseA);
@@ -348,6 +356,7 @@ Texture2D buildSpriteAtlas() {
         }
     }
 
+<<<<<<< HEAD
     fillRect(atlas, 0, 5 * kAtlasCell, kAtlasCell, kAtlasCell, Color{214, 196, 142, 255});
     for(int y = 0; y < kAtlasCell; ++y) {
         for(int x = 0; x < kAtlasCell; ++x) {
@@ -386,6 +395,8 @@ Texture2D buildSpriteAtlas() {
         putPixel(atlas, kAtlasCell + kAtlasCell - 1, 5 * kAtlasCell + y, Color{172, 149, 95, 255});
     }
 
+=======
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     SetTextureFilter(atlasTexture, TEXTURE_FILTER_POINT);
@@ -412,6 +423,7 @@ SpriteId wallVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx,
     return alt ? biomes[static_cast<std::size_t>(idx)].wallB : biomes[static_cast<std::size_t>(idx)].wallA;
 }
 
+<<<<<<< HEAD
 bool lakeOrAdjacentAt(const stoneforge::Simulation& sim, int wx, int wy) {
     for(int dy = -1; dy <= 1; ++dy) {
         for(int dx = -1; dx <= 1; ++dx) {
@@ -427,6 +439,8 @@ SpriteId sandVariant(int wx, int wy) {
     return hash01(wx, wy, 5211) > 0.5F ? SpriteId::SandB : SpriteId::SandA;
 }
 
+=======
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
 void drawSpriteTile(const Texture2D& atlas, SpriteId id, int px, int py, int size, Color tint) {
     const Rectangle src = spriteSource(id);
     const Rectangle dst = Rectangle{static_cast<float>(px), static_cast<float>(py), static_cast<float>(size), static_cast<float>(size)};
@@ -440,6 +454,7 @@ void drawSpriteTileRotated(const Texture2D& atlas, SpriteId id, int px, int py, 
     DrawTexturePro(atlas, src, dst, origin, rotationDeg, tint);
 }
 
+<<<<<<< HEAD
 void drawStoneResource(int wx, int wy, int px, int py, int tileSize, Color biomeTint) {
     const int stoneType = static_cast<int>(hashU32(wx, wy, 4811) % 4u);
     
@@ -509,6 +524,8 @@ void drawStoneResource(int wx, int wy, int px, int py, int tileSize, Color biome
     DrawRectangleLines(px, py, tileSize, tileSize, Fade(edgeColor, 0.6F));
 }
 
+=======
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
 void drawOrganicTree(int wx, int wy, int px, int py, int tileSize, int biome, float t) {
     const float phase = hash01(wx, wy, 4901) * 6.2831853F;
     const int sway = static_cast<int>(std::sin(t * 1.15F + phase) * static_cast<float>(std::max(1, tileSize / 14)));
@@ -751,7 +768,10 @@ void drawParallaxBackground(int screenW, int screenH, float t) {
 
 void drawStyledTile(
     const Texture2D& atlas,
+<<<<<<< HEAD
     const stoneforge::Simulation& sim,
+=======
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
     stoneforge::TileType type,
     int biomeTag,
     Color biomeTint,
@@ -775,6 +795,7 @@ void drawStyledTile(
     const int paletteHint = biomes.empty() ? 0 : biomes[static_cast<std::size_t>(std::clamp(primary, 0, static_cast<int>(biomes.size()) - 1))].paletteHint;
 
     if(type == stoneforge::TileType::Empty) {
+<<<<<<< HEAD
         if(lakeOrAdjacentAt(sim, wx, wy)) {
             drawSpriteTile(atlas, sandVariant(wx, wy), px, py, tileSize, WHITE);
         } else {
@@ -783,6 +804,12 @@ void drawStyledTile(
             if(blend > 0.02F) {
                 drawSpriteTile(atlas, floorVariant(biomes, secondary, wx + 13, wy + 7), px, py, tileSize, Fade(biomeTint, blend));
             }
+=======
+        drawSpriteTile(atlas, floorVariant(biomes, primary, wx, wy), px, py, tileSize, biomeTint);
+        const float blend = std::clamp(secondaryWeight * 1.2F - 0.15F, 0.0F, 0.65F);
+        if(blend > 0.02F) {
+            drawSpriteTile(atlas, floorVariant(biomes, secondary, wx + 13, wy + 7), px, py, tileSize, Fade(biomeTint, blend));
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
         }
         return;
     }
@@ -797,7 +824,11 @@ void drawStyledTile(
     }
 
     if(type == stoneforge::TileType::Resource) {
+<<<<<<< HEAD
         drawStoneResource(wx, wy, px, py, tileSize, biomeTint);
+=======
+        drawSpriteTile(atlas, SpriteId::Ore, px, py, tileSize, biomeTint);
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
         return;
     }
 
@@ -861,8 +892,12 @@ void drawStyledTile(
 }
 
 bool isSolidTileForDetail(stoneforge::TileType type) {
+<<<<<<< HEAD
     // Trees are visually drawn above the floor; treat them as non-solid for detail edges
     return type == stoneforge::TileType::Wall || type == stoneforge::TileType::Resource ||
+=======
+    return type == stoneforge::TileType::Wall || type == stoneforge::TileType::Resource || type == stoneforge::TileType::Tree ||
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
            type == stoneforge::TileType::Workbench || type == stoneforge::TileType::WoodWall || type == stoneforge::TileType::WoodLog;
 }
 
@@ -895,6 +930,7 @@ void drawTileDetailPass(
             const int py = centerY + vy * tileSize;
 
             if(solid) {
+<<<<<<< HEAD
                 // Don't draw detail edges for trees - they blend naturally
                 if(type != stoneforge::TileType::Tree) {
                     if(!northSolid) {
@@ -909,6 +945,19 @@ void drawTileDetailPass(
                     if(!eastSolid) {
                         DrawRectangle(px + tileSize - edgeThick - 1, py + 1, edgeThick, tileSize - 2, Fade(BLACK, 0.20F));
                     }
+=======
+                if(!northSolid) {
+                    DrawRectangle(px + 1, py + 1, tileSize - 2, edgeThin, Fade(Color{241, 234, 222, 255}, 0.20F));
+                }
+                if(!westSolid) {
+                    DrawRectangle(px + 1, py + 1, edgeThin, tileSize - 2, Fade(Color{237, 229, 216, 255}, 0.12F));
+                }
+                if(!southSolid) {
+                    DrawRectangle(px + 1, py + tileSize - edgeThick - 1, tileSize - 2, edgeThick, Fade(BLACK, 0.25F));
+                }
+                if(!eastSolid) {
+                    DrawRectangle(px + tileSize - edgeThick - 1, py + 1, edgeThick, tileSize - 2, Fade(BLACK, 0.20F));
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
                 }
 
                 if(type == stoneforge::TileType::Tree) {
@@ -1458,7 +1507,11 @@ void renderAiView(
             const int px = centerX + vx * tileSize;
             const int py = centerY + vy * tileSize;
             const Color biomeTint = biomeTintAtTile(sim, wx, wy);
+<<<<<<< HEAD
             drawStyledTile(atlas, sim, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy),
+=======
+            drawStyledTile(atlas, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy),
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
                            biomeTint, wx, wy, px, py, tileSize, t, runtimeBiomes);
             if(sim.isLakeAt(wx, wy)) {
                 DrawRectangle(px, py, tileSize, tileSize, lakeTintColor());
@@ -1989,6 +2042,12 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
                             " Ore=" + std::to_string(sim.ore()) +
                             " Inv=" + std::to_string(sim.inventory()) +
                             " Steps=" + std::to_string(sim.steps());
+<<<<<<< HEAD
+=======
+        if(aiMode) {
+            title += aiDualMode ? " | AI DUAL" : " | AI MODE";
+        }
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
         if(sim.done()) {
             title += " | Episode done (R reset, ESC menu)";
         }
@@ -2025,7 +2084,11 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
                 const int py = centerY + vy * tileSize;
                 const Color biomeTint = biomeTintAtTile(sim, wx, wy);
 
+<<<<<<< HEAD
                 drawStyledTile(atlas, sim, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy), biomeTint, wx, wy, px, py, tileSize, t, runtimeBiomes);
+=======
+                drawStyledTile(atlas, sim.tileAt(wx, wy), sim.biomeTagAt(wx, wy), biomeTint, wx, wy, px, py, tileSize, t, runtimeBiomes);
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
                 if(sim.isLakeAt(wx, wy)) {
                     DrawRectangle(px, py, tileSize, tileSize, lakeTintColor());
                 }
@@ -2224,6 +2287,19 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         drawHud(sim, screenW, screenH, tileSize, inventoryOpen, nearWorkbench);
         drawBottomVitals(sim, screenW, screenH);
 
+<<<<<<< HEAD
+=======
+        if(aiMode) {
+            const char* aiLabel = aiDualMode ? "AI DUAL" : "AI MODE";
+            const Rectangle aiBadge{static_cast<float>(screenW - 166), 24.0F, 142.0F, 40.0F};
+            DrawRectangleRounded(aiBadge, 0.25F, 8, Color{22, 38, 58, 220});
+            DrawRectangleRoundedLinesEx(aiBadge, 0.25F, 8, 2.0F, Color{132, 176, 229, 240});
+            const int labelW = MeasureText(aiLabel, 20);
+            DrawText(aiLabel, static_cast<int>(aiBadge.x + (aiBadge.width - static_cast<float>(labelW)) * 0.5F),
+                     static_cast<int>(aiBadge.y) + 10, 20, Color{211, 228, 248, 255});
+        }
+
+>>>>>>> 552a307e4432715b30a5a38b9999e09b7a17ff0e
         const stoneforge::Vec2i posNow = sim.playerPos();
         const stoneforge::Vec2i goalNow = sim.exitPos();
         const std::string biomeNow = sim.biomeNameAt(posNow.x, posNow.y);
