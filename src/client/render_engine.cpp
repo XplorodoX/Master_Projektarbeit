@@ -348,43 +348,22 @@ Texture2D buildSpriteAtlas() {
         }
     }
 
-    fillRect(atlas, 0, 5 * kAtlasCell, kAtlasCell, kAtlasCell, Color{214, 196, 142, 255});
-    for(int y = 0; y < kAtlasCell; ++y) {
-        for(int x = 0; x < kAtlasCell; ++x) {
-            const float n = hash01(x, y, 5101);
-            if(n > 0.87F) {
-                putPixel(atlas, x, 5 * kAtlasCell + y, Color{233, 220, 173, 255});
-            } else if(n < 0.16F) {
-                putPixel(atlas, x, 5 * kAtlasCell + y, Color{196, 175, 118, 255});
+    auto paintSand = [&](int sx, int sy, Color baseA, Color speckA, Color speckB) {
+        fillRect(atlas, sx, sy, kAtlasCell, kAtlasCell, baseA);
+        for(int y = 0; y < kAtlasCell; ++y) {
+            for(int x = 0; x < kAtlasCell; ++x) {
+                const float n = hash01(sx + x, sy + y, 5101);
+                if(n > 0.86F) {
+                    putPixel(atlas, sx + x, sy + y, speckA);
+                } else if(n < 0.18F) {
+                    putPixel(atlas, sx + x, sy + y, speckB);
+                }
             }
         }
-    }
-    for(int x = 0; x < kAtlasCell; ++x) {
-        putPixel(atlas, x, 5 * kAtlasCell, Color{244, 230, 182, 255});
-        putPixel(atlas, x, 5 * kAtlasCell + kAtlasCell - 1, Color{177, 154, 98, 255});
-    }
-    for(int y = 0; y < kAtlasCell; ++y) {
-        putPixel(atlas, 0, 5 * kAtlasCell + y, Color{238, 224, 176, 255});
-        putPixel(atlas, kAtlasCell - 1, 5 * kAtlasCell + y, Color{175, 151, 95, 255});
-    }
+    };
 
-    fillRect(atlas, kAtlasCell, 5 * kAtlasCell, kAtlasCell, kAtlasCell, Color{206, 187, 130, 255});
-    for(int i = 0; i < 18; ++i) {
-        const int sx = kAtlasCell + 1 + static_cast<int>(hash01(i, 41, 5201) * 13.0F);
-        const int sy = 5 * kAtlasCell + 1 + static_cast<int>(hash01(41, i, 5203) * 13.0F);
-        putPixel(atlas, sx, sy, Color{242, 232, 189, 255});
-        if((i % 3) == 0) {
-            putPixel(atlas, sx + 1, sy, Color{182, 160, 103, 255});
-        }
-    }
-    for(int x = 0; x < kAtlasCell; ++x) {
-        putPixel(atlas, kAtlasCell + x, 5 * kAtlasCell, Color{240, 228, 184, 255});
-        putPixel(atlas, kAtlasCell + x, 5 * kAtlasCell + kAtlasCell - 1, Color{168, 144, 90, 255});
-    }
-    for(int y = 0; y < kAtlasCell; ++y) {
-        putPixel(atlas, kAtlasCell, 5 * kAtlasCell + y, Color{232, 215, 168, 255});
-        putPixel(atlas, kAtlasCell + kAtlasCell - 1, 5 * kAtlasCell + y, Color{172, 149, 95, 255});
-    }
+    paintSand(0, 5 * kAtlasCell, Color{214, 196, 142, 255}, Color{233, 220, 173, 255}, Color{196, 175, 118, 255});
+    paintSand(kAtlasCell, 5 * kAtlasCell, Color{206, 187, 130, 255}, Color{242, 232, 189, 255}, Color{182, 160, 103, 255});
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     SetTextureFilter(atlasTexture, TEXTURE_FILTER_POINT);
