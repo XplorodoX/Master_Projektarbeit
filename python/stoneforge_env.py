@@ -118,7 +118,20 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         obs, reward, terminated, truncated, info = self.core.step(int(action))
         obs_array = np.array(obs, dtype=np.float32)
         obs_array = self._normalize_observation(obs_array)
-        return obs_array, float(reward), bool(terminated), bool(truncated), dict(info)
+        
+        # Add player position to info dict for debugging and analysis
+        player_x, player_y = self.core.player_pos()
+        info_dict = dict(info)
+        info_dict['player_x'] = player_x
+        info_dict['player_y'] = player_y
+        
+        # Add distance to exit (from observation exitDx and exitDy)
+        exit_dx = obs[-2] * 128.0  # undo normalization
+        exit_dy = obs[-1] * 128.0
+        distance_to_exit = int(np.hypot(exit_dx, exit_dy))
+        info_dict['distance_to_exit'] = distance_to_exit
+        
+        return obs_array, float(reward), bool(terminated), bool(truncated), info_dict
 
 
 class ExitPotentialFieldWrapper(gym.ObservationWrapper):
