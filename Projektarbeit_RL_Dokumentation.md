@@ -967,18 +967,53 @@ Neuer Agent (Version 1.2 mit BFS):
 
 **Lesson:** Curriculum Learning war eine schlechte Idee für diesen Task. Agent sollte auf vollem Difficulty trainieren.
 
-#### Run 19 (NO CURRICULUM - Direktes Training)
+**Final Run 18 Results (bei 600K Timesteps):**
+- Eval Reward: -34.06 ± 0.33 (zurück zu Baseline, verloren)
+- Episode Length: 1962 (maxSteps erreicht - kein Exit gefunden)
+- Training Reward: +26 (Agent besteht Curriculum-Stages, aber generalisiert nicht)
+- **Verdict:** TERMINATED — Curriculum Ansatz bestätigt als schädlich
+
+---
+
+#### Run 19 (NO CURRICULUM - Direktes Training auf vollem Difficulty) ✓
 
 **Start:** 14.05.2026  
+**Status:** ACTIVE — läuft derzeit  
+**Terminal ID:** e718aabe-3c5e-4eea-b89c-9521ab7a1dc8
+
 **Config:**
 - `observationRadius`: 7 (15×15 Grid, v1.2.0)
-- `--no-curriculum` Flag aktiviert
+- `--no-curriculum` Flag aktiviert (Training immer auf 35-45 Tile exits)
 - `timesteps`: 1.000.000
 - **Reward-Shaping:** BFS Distance (neu)
-- **Grid-Encoding:** Passierbarkeit (neu)  
-- **Difficulty:** Fest auf Stufe 4 (35-45 Tiles) = echte Eval-Bedingungen
+- **Grid-Encoding:** Passierbarkeit (neu)
 
-*Training läuft ohne Curriculum-Schummeleien... Ergebnisse folgen*
+**Progress Report (194K timesteps = 19% complete):**
+
+| Metrik | Wert | Interpretation |
+|--------|------|-----------------|
+| Eval Reward | -27.24 ± 29.95 | ✓ **+6.82 besser** als Run 18 @ 321K |
+| Episode Length | 1907.20 ± 238.87 | ✓ **Variance!** = exits found on some seeds |
+| Training Reward | +83 | ✓ Strong signal, agent actively learning |
+| Exploration | 0.741 | ✓ Still exploring, not overfitting |
+| Time Elapsed | 194 sec | ~2 sec per 1K steps → 1M in ~33 min |
+
+**Key Insight:** Episode length **variance (238.87)** is breakthrough — Run 18 had 0 variance (always 1962). Run 19 is finding exits!
+
+**Predicted Convergence Timeline:**
+```
+100K:  Reward -27→-20, learning grid + basic navigation
+200K:  Reward -20→-15, more consistent exits found
+400K:  Reward -15→+10, success rate starting to rise (20-30%)
+600K:  Reward +10→+25, stronger performance (50%+)
+800K:  Reward +25→+40, approaching 70% target
+1M:    Reward +40+,   ≥70% success likely
+```
+
+**Next Milestones to Monitor:**
+- 200K steps (est. 6.5 hours total): Episode length variance should increase
+- 300K steps: Eval reward should break below -25
+- 400K steps: First signs of >0 eval reward possible
 
 ---
 
