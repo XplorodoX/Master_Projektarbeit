@@ -37,7 +37,7 @@
     }
   },
   "gameplay": {
-    "observationRadius": 5,
+    "observationRadius": 7,
     "maxSteps": 4000,
     "inventorySlots": 24,
     "inventoryStackLimit": 64,

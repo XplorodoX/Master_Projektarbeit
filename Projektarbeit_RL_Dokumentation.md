@@ -704,6 +704,147 @@ Observation (135 Features total):
 
 ---
 
+---
+
+## 6g) Kritische RL-Diagnose und strukturelle Fixes (14.05.2026)
+
+### 6g.1 Root-Cause-Analyse: Warum der Agent stehen bleibt
+
+Nach systematischer Analyse des Codes wurden drei strukturelle Fehler identifiziert, die zusammenwirken und das "Einfrieren" des Agenten verursachen:
+
+---
+
+#### Bug A — Grid-Encoding ist semantisch gebrochen (größtes Problem)
+
+**Was das Encoding macht:** Das Grid gibt den rohen C++ Tile-Typ-Wert aus:
+
+| Tile | Wert (roh) | Wert nach /30 | Passierbar? |
+|---|---|---|---|
+| Empty (Luft) | 0 | 0.000 | ✓ ja |
+| Wall (Wand) | 1 | 0.033 | ✗ nein |
+| Resource (Erz) | 2 | 0.067 | ✗ nein |
+| **Exit (Ziel!)** | **3** | **0.100** | ✓ **ja** |
+| Tree (Baum) | 4 | 0.133 | ✗ nein |
+| Workbench | 5 | 0.167 | ✗ nein |
+| WoodWall | 6 | 0.200 | ✗ nein |
+| Mob | 20 | 0.667 | (Entität) |
+| Player (Agent) | 30 | 1.000 | (Entität) |
+
+**Das Problem:** Das Netz sieht das Exit-Tile mit Wert `0.100` — kleiner als alle Wände (0.033-0.200). Das Netz muss lernen: "Dieser spezifische kleine Wert (0.1) ist das Ziel!" Während größere Werte (0.133, 0.167) Hindernisse sind. Das ist kontraintuitiv und schwer erlernbar. Dazu kommt: In der Frühphase des Trainings, wenn der Agent noch weit vom Exit entfernt ist (35-45 Tiles), ist der Exit überhaupt nicht im 11×11-Sichtfeld.
+
+---
+
+#### Bug B — `moveBlocked`-Penalty erzeugt Freeze-Verhalten (Direktursache des Einfrierens)
+
+**Mechanismus:**
+```
+Situation: Exit ist rechts, aber eine Wand blockiert den Weg.
+
+Schritt rechts (direkt zum Exit):  -0.01 (Schritt) - 0.05 (blocked) = -0.06
+Schritt links  (weg vom Exit):     -0.01 (Schritt) - 0.15 (Manhattan) = -0.16
+Schritt hoch   (seitlich):         -0.01 (Schritt) + 0.00 (Manhattan) = -0.01
+Idle (warten):                     -0.01 (Schritt) - 0.02 (idle)      = -0.03
+```
+
+Der Agent lernt: **Seitlich (-0.01) > Idle (-0.03) > Geblockt (-0.06) > Zurück (-0.16)**
+
+Problem: Wenn der Agent um die Wand herum muss (erst seitlich, dann wieder Richtung Exit), bekommt er für "seitlich" (-0.01) und für "zurück" (-0.16) negative Rewards. Das Q-Learning konvergiert auf "seitlich wandern oder idle" statt "um die Ecke navigieren."
+
+**In engen Korridoren** (Wände auf 3 Seiten): Alle 3 Bewegungsrichtungen geben -0.06 oder -0.16, idle gibt nur -0.03. → **Agent wählt idle. Einfrieren.**
+
+---
+
+#### Bug C — observationRadius = 5 trotz dokumentierter Änderung auf 7
+
+In `game_config.json` steht `"observationRadius": 5`, nicht 7. Die Änderung auf 7 wurde dokumentiert aber nie in die Datei gespeichert. Der Agent sieht 11×11 statt 15×15 Tiles.
+
+Bei Exit-Distanz 35-45 Tiles: Die Exit-Tile ist in BEIDEN Konfigurationen nicht direkt sichtbar (zu weit). Aber mit Radius 5 sieht der Agent nur 5 Tiles in jede Richtung — gerade genug für den lokalen Bereich. Mit Radius 7 (7 Tiles in jede Richtung) sieht er Wand-Lücken und Korridore früher und kann besser navigieren.
+
+---
+
+### 6g.2 Implementierte Fixes (Version 1.2 — 14.05.2026)
+
+#### Fix A — Grid-Encoding: Passierbarkeit statt Tile-Typ
+
+**Neues Encoding in `src/core/simulation.cpp` → `getObservation()`:**
+
+| Semantic | Wert (roh) | Wert nach /30 |
+|---|---|---|
+| Passierbar (Luft/Boden) | 0 | 0.000 |
+| **Wand / Hindernis** | **10** | **0.333** |
+| **Exit (Ziel!)** | **15** | **0.500** |
+| Mob (Entität) | 20 | 0.667 |
+| Player (Agent) | 30 | 1.000 |
+
+Jetzt ist die Encoding eindeutig:
+- 0 = "hier kann ich stehen/laufen"
+- 0.333 = "WAND — nicht durchkommen"
+- 0.5 = "EXIT — hierhin will ich!"
+- 0.667 = "MOB — Feind"
+- 1.0 = "ICH — meine Position"
+
+Das Netz kann jetzt in einem einzigen Layer lernen: "Wert > 0.1 und < 0.4 → Wand", "Wert ≈ 0.5 → Ziel". Keine Mapping-Verwirrung mehr.
+
+#### Fix B — Reward-Funktion überarbeitet
+
+| Term | Vorher | Nachher | Begründung |
+|---|---|---|---|
+| `moveBlocked`-Penalty | `-0.05` | `0` (entfernt) | Hauptursache des Einfrierens. Grid zeigt Wände bereits — kein zusätzliches Penalty nötig |
+| Manhattan-Shaping | `+0.15 × delta` | `+0.02 × delta` | Potential-Field gibt schon Richtung vor. Manhattan in Labyrinthe ist oft falsch (Wand ≠ Weg) |
+| Idle-Penalty | `-0.02` (zusätzlich) | `-0.04` (zusätzlich) | Stärkerer Anreiz sich zu bewegen statt zu stehen |
+
+**Neue Reward-Tabelle komplett:**
+
+| Event | Reward | Änderung |
+|---|---|---|
+| Jeder Schritt | −0.01 | unverändert |
+| Neues Tile besucht | +0.02 | unverändert |
+| Idle-Aktion | **−0.05** (gesamt) | verschärft |
+| Bewegung geblockt | **0** | entfernt |
+| Schritt näher am Exit | **+0.02 × delta** | reduziert |
+| Nähe-Bonus (dist ≤ 15) | +0.05 | unverändert |
+| Exit erreicht | +100.0 | unverändert |
+| Episode fehlgeschlagen | −10.0 | unverändert |
+
+**Warum Manhattan fast entfernt:** Der Potential-Field-Wrapper gibt bereits 9 Features mit Richtungsgradient zum Exit. Das reicht als Richtungssignal. Das Manhattan-Shaping (0.15) war stärker als alles andere außer Exit (+100) — und falsch für Labyrinthe. Bei 0.02 gibt es nur noch einen schwachen Hinweis, ohne das Lernverhalten zu dominieren.
+
+**Warum idle-Penalty stärker:** Mit -0.05 total für Idle vs -0.01 für Bewegung ist jede Bewegung besser als stehen bleiben, auch wenn die Richtung falsch ist. Das erzwingt Exploration.
+
+#### Fix C — observationRadius korrigiert (5 → 7)
+
+`assets/base/game_config.json`: `observationRadius` 5 → 7.
+
+**Neue Observation-Größe:**
+
+| | Radius 5 (alt) | Radius 7 (neu) |
+|---|---|---|
+| Grid | 11×11 = 121 | 15×15 = 225 |
+| Skalare | 5 | 5 |
+| Potential-Field | 9 | 9 |
+| **Gesamt** | **135** | **239** |
+
+Bestehende Modelle (135 Features) sind inkompatibel → alle Modelle müssen neu trainiert werden.
+
+---
+
+### 6g.3 Warum diese Änderungen zusammen sinnvoll sind
+
+```
+Alter Agent (eingefroren):
+  → Grid zeigt Wände als kleine Zahlen (0.033) und Exit als 0.1 → kein klares Signal
+  → moveBlocked macht alle Richtungen negativ → idle ist lokal optimal
+  → Manhattan dominiert das Lernen → falsche Gradienten bei Labyrinthen
+
+Neuer Agent (Version 1.2):
+  → Grid zeigt Wand=0.333 klar von Luft=0 und Exit=0.5 → leicht erlernbar
+  → Keine moveBlocked-Penalty → Agent MUSS nicht idle wählen
+  → Idle stark bestraft (-0.05) → Agent bewegt sich immer
+  → Manhattan nur schwacher Hint (0.02) → Potential-Field übernimmt Richtungsführung
+  → Radius 7 → mehr Kontext für Wand-Lücken-Navigation
+```
+
+---
+
 ## 7) Naechste Schritte fuer die Projektarbeit
 
 1. DQN als Hauptbaseline weiterfuehren (z. B. 1M bis 2M Timesteps).

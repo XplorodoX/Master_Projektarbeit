@@ -371,13 +371,20 @@ Observation Simulation::getObservation() const {
             const int wx = player_.x + dx;
             const int wy = player_.y + dy;
 
-            int value = static_cast<int>(world_.tileAt(wx, wy));
-            if(hasMobAt(wx, wy)) {
-                value = 20;
-            }
-
+            // Passierbarkeits-Encoding: 0=Luft, 10=Wand, 15=Exit, 20=Mob, 30=Agent.
+            // Nach /30 Normalisierung: 0.0 / 0.33 / 0.50 / 0.67 / 1.0
+            // Klare semantische Trennung: Netz lernt sofort passierbar vs. Hindernis vs. Ziel.
+            int value;
             if(wx == player_.x && wy == player_.y) {
                 value = 30;
+            } else if(hasMobAt(wx, wy)) {
+                value = 20;
+            } else if(world_.tileAt(wx, wy) == TileType::Exit) {
+                value = 15;  // Ziel — hoechste Prioritaet unter Tiles
+            } else if(world_.isPassable(wx, wy)) {
+                value = 0;   // passierbarer Boden / Luft
+            } else {
+                value = 10;  // jede Art von Wand / Hindernis
             }
 
             out.grid.push_back(value);
@@ -1395,16 +1402,17 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
         reward += 0.02F;
     }
 
+    // Idle staerker bestrafen als Bewegung — Agent soll sich immer bewegen.
     if(idleAction) {
-        reward -= 0.02F;
+        reward -= 0.04F;
     }
 
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
-    if(moveBlocked) {
-        reward -= 0.05F;
-    }
+    // moveBlocked-Penalty entfernt: Das Grid zeigt Waende bereits (Wert=10).
+    // Die Penalty verursachte Freeze-Verhalten — alle Richtungen negativ, idle bevorzugt.
+    (void)moveBlocked;
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
@@ -1416,7 +1424,10 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    reward += static_cast<float>(progress) * 0.15F;
+    // Manhattan-Shaping auf 0.02 reduziert (war 0.15).
+    // ExitPotentialField uebernimmt die Richtungsfuehrung (9 Features).
+    // Manhattan in Labyrinthen mit Waenden widerspricht oft dem optimalen Weg.
+    reward += static_cast<float>(progress) * 0.02F;
 
     // Proximity-Bonus: jeder Schritt naeher, wenn der Agent < 15 Tiles entfernt ist.
     if(currentDistance <= 15 && progress > 0) {
