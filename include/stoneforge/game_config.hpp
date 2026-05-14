@@ -71,6 +71,9 @@ struct GameplayConfig {
     int idleEnergyRegenInterval = 8;
     int activeEnergyDrainInterval = 18;
     int starvationTicksToDamage = 18;
+
+    // RL-Training: Mobs komplett deaktivieren fuer sauberes Navigationssignal.
+    bool disableMobs = false;
 };
 
 struct MobSpawnConfig {

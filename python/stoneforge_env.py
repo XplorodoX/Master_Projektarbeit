@@ -40,6 +40,7 @@ class StoneforgeConfig:
     exit_min_distance: int = 35
     exit_max_distance: int = 45
     force_guaranteed_path: bool = True
+    disable_mobs: bool = True  # Standard: Mobs aus fuer sauberes Navigationstraining
 
 
 class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
@@ -64,19 +65,41 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             int(self.config.exit_min_distance),
             int(self.config.exit_max_distance),
             bool(self.config.force_guaranteed_path),
+            bool(self.config.disable_mobs),
         )
 
+    # Maximale Rohwerte aus der C++ Simulation.
+    _GRID_MAX = 30.0   # Spieler-Marker (hoechster Wert im Grid)
+    _HP_MAX = 10.0
+    _ENERGY_MAX = 100.0
+    _INVENTORY_MAX = 24.0   # grobe obere Schranke (1 Item pro Slot)
+
     def _normalize_observation(self, obs: np.ndarray) -> np.ndarray:
-        out = obs.astype(np.float32, copy=False)
-        # Scale goal direction to stabilize NN optimization.
-        out[-2:] = out[-2:] / 128.0
+        out = obs.astype(np.float32, copy=True)
+
+        # Grid: 0=Luft, 1-6=Tile-Typen, 20=Mob, 30=Spieler → [0, 1]
+        # Ohne Normalisierung sieht das Netz den Spieler (30) als 30× wichtiger
+        # als eine leere Kachel (0), obwohl die Werte kategorisch sind.
+        n_grid = len(out) - 5
+        out[:n_grid] /= self._GRID_MAX
+
+        # Skalare normalisieren → alle in [0, 1]
+        out[-5] /= self._HP_MAX       # hp
+        out[-4] /= self._ENERGY_MAX   # energy
+        out[-3] /= self._INVENTORY_MAX  # inventory
+
+        # Zielrichtung: exitDx und exitDy in Tiles → /128 fuer [-1, 1]
+        out[-2:] /= 128.0
         return out
 
     def set_curriculum_stage(self, *, exit_min_distance: int, exit_max_distance: int,
-                             force_guaranteed_path: bool) -> None:
+                             force_guaranteed_path: bool,
+                             disable_mobs: bool | None = None) -> None:
         self.config.exit_min_distance = int(exit_min_distance)
         self.config.exit_max_distance = int(exit_max_distance)
         self.config.force_guaranteed_path = bool(force_guaranteed_path)
+        if disable_mobs is not None:
+            self.config.disable_mobs = bool(disable_mobs)
         self._apply_worldgen_config()
 
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):

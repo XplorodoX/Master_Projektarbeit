@@ -2,6 +2,7 @@
 """Graphical launcher for Stoneforge RL — with live training metrics."""
 from __future__ import annotations
 
+import datetime
 import glob
 import os
 import platform
@@ -13,6 +14,7 @@ import tempfile
 import subprocess
 import sys
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog, scrolledtext, ttk
 from typing import Optional
@@ -181,17 +183,18 @@ def _find_so() -> Optional[str]:
     return None
 
 
-def _scan_models() -> list[tuple[str, str]]:
-    """Scan the project for trained .zip models. Returns (display_name, abs_path) pairs."""
+def _scan_models() -> list[tuple[str, str, str, str]]:
+    """Scan the project for trained .zip models.
+
+    Returns (display_label, abs_path, date_str, size_str) tuples,
+    sorted newest-first within each folder.
+    """
     seen: set[str] = set()
-    results: list[tuple[str, str]] = []
+    results: list[tuple[str, str, str, str]] = []
 
     search_patterns = [
-        # best_models_dqn/ , best_models_ppo/  — bestes Modell pro Lauf
         os.path.join(ROOT, "best_models_*", "*.zip"),
-        # checkpoints/ — Snapshots während des Trainings
         os.path.join(ROOT, "checkpoints", "*.zip"),
-        # Root-Level Modelle (alte Konvention)
         os.path.join(ROOT, "*.zip"),
     ]
 
@@ -208,13 +211,11 @@ def _scan_models() -> list[tuple[str, str]]:
 
             if len(parts) == 2:
                 folder = parts[0]
-                # "best_models_dqn" → "DQN", "best_models_ppo" → "PPO"
                 algo = (folder.replace("best_models_", "")
                               .replace("models_", "")
                               .upper())
                 label = f"{algo}  —  {stem}"
             elif len(parts) == 1:
-                # root-level zip: guess algo from filename
                 low = stem.lower()
                 if "dqn" in low:
                     label = f"DQN  —  {stem}"
@@ -225,7 +226,16 @@ def _scan_models() -> list[tuple[str, str]]:
             else:
                 label = rel
 
-            results.append((label, abs_path))
+            try:
+                mtime = os.path.getmtime(abs_path)
+                date_str = datetime.datetime.fromtimestamp(mtime).strftime("%d.%m.%y %H:%M")
+                kb = os.path.getsize(abs_path) // 1024
+                size_str = f"{kb / 1024:.1f} MB" if kb >= 1024 else f"{kb} KB"
+            except OSError:
+                date_str = "?"
+                size_str = "?"
+
+            results.append((label, abs_path, date_str, size_str))
 
     return results
 
@@ -286,63 +296,84 @@ class StatCard(ttk.Frame):
 # Model Picker Widget
 # ---------------------------------------------------------------------------
 class ModelPicker(tk.Frame):
-    """Dropdown that lists all trained .zip models found in the project.
+    """Listbox that shows all trained .zip models with date and size.
 
     Usage:
         picker = ModelPicker(parent)
         path = picker.get_path()   # None if nothing found/selected
     """
 
-    def __init__(self, parent: tk.Widget, bg_color: str = BG3) -> None:
+    def __init__(self, parent: tk.Widget, bg_color: str = BG3, height: int = 3) -> None:
         super().__init__(parent, bg=bg_color)
-        self.columnconfigure(0, weight=1)
-
         self._paths: list[str] = []
-        self._names: list[str] = []
+        self._custom: list[tuple[str, str, str, str]] = []  # (label, path, date, size)
 
-        # Combobox (read-only — user picks from list or uses … for custom)
-        self._combo_var = tk.StringVar()
-        self._combo = ttk.Combobox(
-            self, textvariable=self._combo_var,
-            state="readonly", font=("Helvetica", 10),
+        # Controls row (Refresh + Browse — Label kommt vom Aufrufer via _sec_label)
+        ctrl = tk.Frame(self, bg=bg_color)
+        ctrl.pack(fill="x", pady=(0, 3))
+        ttk.Button(ctrl, text="…  Durchsuchen", style="Secondary.TButton",
+                   command=self._browse).pack(side="right", padx=(2, 0))
+        ttk.Button(ctrl, text="↻  Aktualisieren", style="Secondary.TButton",
+                   command=self.refresh).pack(side="right", padx=2)
+
+        # Listbox + scrollbar
+        lb_wrap = tk.Frame(self, bg=bg_color)
+        lb_wrap.pack(fill="x")
+
+        sb = tk.Scrollbar(lb_wrap, orient="vertical", bg=BG4,
+                          troughcolor=BG3, relief="flat", bd=0)
+        sb.pack(side="right", fill="y")
+
+        self._lb = tk.Listbox(
+            lb_wrap, height=height,
+            bg=BG2, fg=TEXT,
+            selectbackground=ACCENT, selectforeground=BTN_FG,
+            font=("Menlo", 9), relief="flat", bd=0,
+            yscrollcommand=sb.set, activestyle="none",
+            exportselection=False,
         )
-        self._combo.grid(row=0, column=0, sticky="ew", padx=(0, 4))
-
-        # Refresh button
-        ttk.Button(self, text="↻", style="Secondary.TButton", width=3,
-                   command=self.refresh).grid(row=0, column=1, padx=(0, 4))
-
-        # Browse for a file not in the list
-        ttk.Button(self, text="…", style="Secondary.TButton", width=3,
-                   command=self._browse).grid(row=0, column=2)
+        self._lb.pack(side="left", fill="both", expand=True)
+        sb.config(command=self._lb.yview)
 
         self.refresh()
 
     # ------------------------------------------------------------------
 
     def refresh(self) -> None:
-        """Re-scan the project for model files and update the dropdown."""
+        """Re-scan the project for model files and update the listbox."""
+        prev_path = self.get_path()
         models = _scan_models()
-        if models:
-            self._names = [m[0] for m in models]
-            self._paths = [m[1] for m in models]
-            self._combo.config(values=self._names, state="readonly")
-            # Keep current selection if still valid, else pick first entry.
-            if self._combo_var.get() not in self._names:
-                self._combo_var.set(self._names[0])
-        else:
-            self._names = []
-            self._paths = []
-            self._combo.config(values=["— Kein Modell gefunden —"], state="disabled")
-            self._combo_var.set("— Kein Modell gefunden —")
+        all_entries = models + self._custom
+
+        self._lb.delete(0, "end")
+        self._paths = []
+
+        if not all_entries:
+            self._lb.insert("end", "  — Kein Modell gefunden —")
+            self._lb.config(state="disabled")
+            return
+
+        self._lb.config(state="normal")
+        restore_idx: Optional[int] = None
+        for i, (label, path, date_str, size_str) in enumerate(all_entries):
+            row = f"  {label:<34}  {date_str}   {size_str}"
+            self._lb.insert("end", row)
+            self._paths.append(path)
+            if path == prev_path:
+                restore_idx = i
+
+        # Restore previous selection or default to first
+        select_idx = restore_idx if restore_idx is not None else 0
+        self._lb.selection_set(select_idx)
+        self._lb.see(select_idx)
 
     def get_path(self) -> Optional[str]:
         """Return the absolute path of the currently selected model, or None."""
-        try:
-            idx = self._names.index(self._combo_var.get())
-            return self._paths[idx]
-        except (ValueError, IndexError):
+        sel = self._lb.curselection()
+        if not sel or not self._paths:
             return None
+        idx = sel[0]
+        return self._paths[idx] if idx < len(self._paths) else None
 
     def _browse(self) -> None:
         """Let the user pick an arbitrary .zip file not in the scanned list."""
@@ -353,13 +384,26 @@ class ModelPicker(tk.Frame):
         if not p:
             return
         abs_p = os.path.abspath(p)
-        rel = os.path.relpath(abs_p, ROOT)
-        # Add to list so it stays selectable this session.
         if abs_p not in self._paths:
-            self._names.append(rel)
-            self._paths.append(abs_p)
-            self._combo.config(values=self._names, state="readonly")
-        self._combo_var.set(self._names[self._paths.index(abs_p)])
+            rel = os.path.relpath(abs_p, ROOT)
+            try:
+                mtime = os.path.getmtime(abs_p)
+                date_str = datetime.datetime.fromtimestamp(mtime).strftime("%d.%m.%y %H:%M")
+                kb = os.path.getsize(abs_p) // 1024
+                size_str = f"{kb / 1024:.1f} MB" if kb >= 1024 else f"{kb} KB"
+            except OSError:
+                date_str = "?"
+                size_str = "?"
+            self._custom.append((rel, abs_p, date_str, size_str))
+            self.refresh()
+        # Select the browsed file
+        try:
+            idx = self._paths.index(abs_p)
+            self._lb.selection_clear(0, "end")
+            self._lb.selection_set(idx)
+            self._lb.see(idx)
+        except ValueError:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -775,7 +819,12 @@ class App(tk.Tk):
         self._curriculum_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(card,
                         text="Curriculum Learning  (5–12 → 35–45 Tiles in 4 Stufen)",
-                        variable=self._curriculum_var).pack(anchor="w", padx=14, pady=(0, 10))
+                        variable=self._curriculum_var).pack(anchor="w", padx=14, pady=(0, 4))
+
+        self._monsters_train_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(card,
+                        text="Monster aktivieren  (Standard: aus — sauberes Navigationstraining)",
+                        variable=self._monsters_train_var).pack(anchor="w", padx=14, pady=(0, 10))
 
         self._sep(card)
         ttk.Button(card, text="▶  Training starten", style="Action.TButton",
@@ -807,14 +856,22 @@ class App(tk.Tk):
                    ).grid(row=0, column=3, sticky="w")
 
         self._sep(card)
+
+        opts2 = tk.Frame(card, bg=BG3)
+        opts2.pack(fill="x", padx=14, pady=(4, 0))
+        self._play_monsters_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(opts2,
+                        text="Monster aktivieren",
+                        variable=self._play_monsters_var).pack(side="left", padx=(0, 24))
+
         self._dual_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(card, text="Dual-Modus  (zwei Modelle vergleichen)",
+        ttk.Checkbutton(opts2, text="Dual-Modus  (zwei Modelle vergleichen)",
                         variable=self._dual_var,
-                        command=self._toggle_dual).pack(anchor="w", padx=14, pady=(4, 0))
+                        command=self._toggle_dual).pack(side="left")
 
         self._dual_inner = tk.Frame(card, bg=BG3)
-        tk.Label(self._dual_inner, text="Modell 2:", bg=BG3, fg=DIM,
-                 font=("Helvetica", 9)).pack(anchor="w", padx=14, pady=(6, 2))
+        tk.Label(self._dual_inner, text="Modell 2 (Vergleich)", bg=BG3, fg=ACCENT,
+                 font=("Helvetica", 9, "bold")).pack(anchor="w", padx=14, pady=(8, 2))
         self._play_picker2 = ModelPicker(self._dual_inner)
         self._play_picker2.pack(fill="x", padx=14, pady=(0, 8))
 
@@ -852,6 +909,11 @@ class App(tk.Tk):
                  font=("Helvetica", 10)).pack(side="left", padx=(0, 8))
         self._game_seed = tk.IntVar(value=42)
         ttk.Entry(opt, textvariable=self._game_seed, width=10).pack(side="left")
+
+        self._game_monsters_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(card,
+                        text="Monster aktivieren  (Standard: aus — konsistent mit Training)",
+                        variable=self._game_monsters_var).pack(anchor="w", padx=14, pady=(0, 8))
 
         self._sep(card)
         btn_row = tk.Frame(card, bg=BG3)
@@ -962,12 +1024,55 @@ class App(tk.Tk):
                     text=True,
                     bufsize=1,
                     encoding='utf-8',
-                    errors='replace',  # Handle Windows compiler encoding issues
+                    errors='replace',
                 )
                 self._proc = proc
                 assert proc.stdout
-                for line in proc.stdout:
-                    self._out_queue.put(("line", line))
+
+                # Reader-Thread liest Zeilen blockierend.
+                # Hintergrund: SB3-Worker-Prozesse (SubprocVecEnv) erben den
+                # Pipe-Write-Fd per fork(). Nach Ende des Trainings hält das
+                # "for line in proc.stdout:" dann endlos, weil diese Worker-
+                # Prozesse die Pipe offen halten.
+                # Fix: separater Reader-Thread + 2s-Drain nach Prozessende.
+                line_q: queue.Queue[Optional[str]] = queue.Queue()
+
+                def _reader() -> None:
+                    try:
+                        for ln in proc.stdout:  # type: ignore[union-attr]
+                            line_q.put(ln)
+                    except (OSError, ValueError):
+                        pass
+                    line_q.put(None)  # Sentinel
+
+                threading.Thread(target=_reader, daemon=True).start()
+
+                while True:
+                    try:
+                        item = line_q.get(timeout=0.15)
+                    except queue.Empty:
+                        if proc.poll() is not None:
+                            # Prozess beendet — 2s auf verbleibende Ausgabe warten.
+                            deadline = time.monotonic() + 2.0
+                            while time.monotonic() < deadline:
+                                try:
+                                    item = line_q.get(timeout=0.1)
+                                    if item is None:
+                                        break
+                                    self._out_queue.put(("line", item))
+                                except queue.Empty:
+                                    break
+                            # Pipe schließen um Reader-Thread zu entblocken.
+                            try:
+                                proc.stdout.close()  # type: ignore[union-attr]
+                            except Exception:
+                                pass
+                            break
+                        continue
+                    if item is None:
+                        break
+                    self._out_queue.put(("line", item))
+
                 rc = proc.wait()
                 self._out_queue.put(("done", rc))
             except Exception as exc:
@@ -1033,6 +1138,8 @@ class App(tk.Tk):
                  "--algo", algo, "--timesteps", str(ts)]
         if not cur:
             parts.append("--no-curriculum")
+        if self._monsters_train_var.get():
+            parts.append("--monsters")
         self._run(" ".join(parts), mode="train")
 
     def _do_play(self) -> None:
@@ -1051,6 +1158,8 @@ class App(tk.Tk):
             m2 = self._play_picker2.get_path()
             if m2:
                 parts += ["--model2", _quote(m2)]
+        if self._play_monsters_var.get():
+            parts.append("--monsters")
         self._run(" ".join(parts))
 
     def _do_eval(self) -> None:
@@ -1064,10 +1173,12 @@ class App(tk.Tk):
         script = (
             "import numpy as np\n"
             "from stable_baselines3 import PPO, DQN\n"
-            "from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeWorldEnv\n"
+            "from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv\n"
             "seeds=list(range(7000,7050))\n"
             f"path={repr(model)}\n"
-            "make_env=lambda: ExitPotentialFieldWrapper(StoneforgeWorldEnv())\n"
+            # Monster aus, Distanz 35-45 (volle Schwierigkeit) — identisch mit Eval-Env im Training
+            "cfg=StoneforgeConfig(disable_mobs=True)\n"
+            "make_env=lambda: ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg))\n"
             "try:\n"
             "    model=PPO.load(path); name='PPO'\n"
             "except Exception:\n"
@@ -1077,7 +1188,8 @@ class App(tk.Tk):
             "    obs,_=env.reset(seed=seed); done=False; ep=0.0; n=0; ok=False\n"
             "    while not done and n<4000:\n"
             "        a,_=model.predict(obs,deterministic=True)\n"
-            "        obs,r,t,tr,info=env.step(int(a)); ep+=r; n+=1\n"
+            "        a=7 if int(a)==4 else int(a)\n"  # Mining blockieren
+            "        obs,r,t,tr,info=env.step(a); ep+=r; n+=1\n"
             "        if info.get('reached_exit'): ok=True\n"
             "        done=t or tr\n"
             "    succ+=int(ok); lens.append(n); rets.append(ep)\n"
@@ -1100,6 +1212,8 @@ class App(tk.Tk):
             return
         seed = self._game_seed.get()
         cmd = f"{_quote(GAME_BINARY)} --seed {seed}"
+        if not self._game_monsters_var.get():
+            cmd += " --no-monsters"
         self._log(f"$ {cmd}\n", "cmd")
         subprocess.Popen(
             cmd,
@@ -1203,8 +1317,12 @@ class App(tk.Tk):
         if running:
             self._show_metrics(mode)
         else:
+            prev_mode = self._current_mode
             self._hide_metrics()
             self._current_mode = ""
+            # Nach Training automatisch Model-Picker aktualisieren (neues best_model.zip).
+            if prev_mode == "train":
+                self.after(1000, self._refresh_model_pickers)
 
     def _animate_spinner(self) -> None:
         if self._running:

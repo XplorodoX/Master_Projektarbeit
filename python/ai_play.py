@@ -11,11 +11,12 @@ from typing import Optional
 import numpy as np
 from stable_baselines3 import DQN, PPO
 
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeWorldEnv
+from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
 
 
-def make_play_env() -> StoneforgeWorldEnv:
-    return ExitPotentialFieldWrapper(StoneforgeWorldEnv())  # type: ignore[return-value]
+def make_play_env(disable_mobs: bool = True) -> StoneforgeWorldEnv:
+    cfg = StoneforgeConfig(disable_mobs=disable_mobs)
+    return ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg))  # type: ignore[return-value]
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -114,9 +115,9 @@ def sanitize_action(action: int) -> int:
     return 7 if action == 4 else action
 
 
-def run_single(model_path: str, seed: int, speed: float) -> None:
+def run_single(model_path: str, seed: int, speed: float, disable_mobs: bool = True) -> None:
     model, deterministic = load_model(model_path)
-    env = make_play_env()
+    env = make_play_env(disable_mobs=disable_mobs)
     obs, _ = env.reset(seed=seed)
     print(f"Starte Spiel (Seed {seed}, Modell: {model_path}, deterministisch={deterministic})...")
     # Determine expected observation shape from the model (if available)
@@ -129,8 +130,11 @@ def run_single(model_path: str, seed: int, speed: float) -> None:
     if game_binary is None:
         raise SystemExit(1)
 
+    binary_args = [game_binary, "--ai", "--seed", str(seed)]
+    if disable_mobs:
+        binary_args.append("--no-monsters")
     game = subprocess.Popen(
-        [game_binary, "--ai", "--seed", str(seed)],
+        binary_args,
         stdin=subprocess.PIPE, text=True, bufsize=1, cwd=PROJECT_ROOT,
     )
     time.sleep(1.5)
@@ -163,12 +167,13 @@ def run_single(model_path: str, seed: int, speed: float) -> None:
             game.terminate()
 
 
-def run_dual(model1_path: str, model2_path: str, seed: int, speed: float) -> None:
+def run_dual(model1_path: str, model2_path: str, seed: int, speed: float,
+             disable_mobs: bool = True) -> None:
     model1, det1 = load_model(model1_path)
     model2, det2 = load_model(model2_path)
 
-    env1 = make_play_env()
-    env2 = make_play_env()
+    env1 = make_play_env(disable_mobs=disable_mobs)
+    env2 = make_play_env(disable_mobs=disable_mobs)
     obs1, _ = env1.reset(seed=seed)
     obs2, _ = env2.reset(seed=seed)
 
@@ -180,8 +185,11 @@ def run_dual(model1_path: str, model2_path: str, seed: int, speed: float) -> Non
     if game_binary is None:
         raise SystemExit(1)
 
+    binary_args = [game_binary, "--ai-dual", "--seed", str(seed)]
+    if disable_mobs:
+        binary_args.append("--no-monsters")
     game = subprocess.Popen(
-        [game_binary, "--ai-dual", "--seed", str(seed)],
+        binary_args,
         stdin=subprocess.PIPE, text=True, bufsize=1, cwd=PROJECT_ROOT,
     )
     time.sleep(1.5)
@@ -248,7 +256,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--speed", type=float, default=1.0,
                         help="Geschwindigkeitsfaktor (1.0 = normal, 2.0 = doppelt)")
+    parser.add_argument("--monsters", action="store_true",
+                        help="Monster aktivieren (Standard: aus, passend zum Training)")
     args = parser.parse_args()
+
+    disable_mobs = not args.monsters
 
     game_binary = _ensure_game_binary()
     if game_binary is None:
@@ -257,9 +269,9 @@ def main() -> None:
         sys.exit(1)
 
     if args.model2:
-        run_dual(args.model, args.model2, args.seed, args.speed)
+        run_dual(args.model, args.model2, args.seed, args.speed, disable_mobs=disable_mobs)
     else:
-        run_single(args.model, args.seed, args.speed)
+        run_single(args.model, args.seed, args.speed, disable_mobs=disable_mobs)
 
 
 if __name__ == "__main__":

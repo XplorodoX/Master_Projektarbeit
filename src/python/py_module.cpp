@@ -66,11 +66,13 @@ public:
         return py::make_tuple(p.x, p.y);
     }
 
-    void configureWorldGeneration(int exitMinDistance, int exitMaxDistance, bool forceGuaranteedPath) {
+    void configureWorldGeneration(int exitMinDistance, int exitMaxDistance, bool forceGuaranteedPath,
+                                   bool disableMobs = false) {
         auto& cfg = stoneforge::mutableGameConfig();
         cfg.world.exitMinDistance = std::max(1, exitMinDistance);
         cfg.world.exitMaxDistance = std::max(cfg.world.exitMinDistance, exitMaxDistance);
         cfg.world.forceGuaranteedPath = forceGuaranteedPath;
+        cfg.gameplay.disableMobs = disableMobs;
     }
 
 private:
@@ -91,6 +93,6 @@ PYBIND11_MODULE(stoneforge_sim, m) {
         .def("observation_size", &StoneforgeCoreEnv::observationSize)
         .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,
              py::arg("exit_min_distance"), py::arg("exit_max_distance"),
-             py::arg("force_guaranteed_path"))
+             py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false)
         .def("player_pos", &StoneforgeCoreEnv::playerPos);
 }

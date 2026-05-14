@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
+import sys
 from collections import deque
 
 import gymnasium as gym
@@ -10,7 +13,31 @@ from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalC
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
 
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeWorldEnv
+from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _rebuild_sim() -> bool:
+    """Baut stoneforge_sim (Python-Binding) neu bevor Training startet.
+    Stellt sicher dass Python-Env und C++ Client immer denselben Stand haben.
+    Gibt True zurueck wenn Build erfolgreich.
+    """
+    build_dir = os.path.join(_PROJECT_ROOT, "build")
+    if not os.path.isdir(build_dir):
+        print("[Build] Kein build/-Ordner gefunden — Build uebersprungen.", file=sys.stderr)
+        return False
+
+    print("[Build] Baue stoneforge_sim und stoneforge_client neu...")
+    result = subprocess.run(
+        ["cmake", "--build", build_dir, "-j", "--target", "stoneforge_sim", "stoneforge_client"],
+        cwd=_PROJECT_ROOT,
+    )
+    if result.returncode != 0:
+        print("[Build] FEHLER: Build fehlgeschlagen! Training wird trotzdem gestartet.", file=sys.stderr)
+        return False
+    print("[Build] Build erfolgreich.")
+    return True
 
 
 class ReducedActionEnv(gym.ActionWrapper):
@@ -26,8 +53,9 @@ class ReducedActionEnv(gym.ActionWrapper):
         return self._ACTION_MAP[int(action)]
 
 
-def make_env() -> gym.Env:
-    return ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv()))
+def make_env(disable_mobs: bool = True) -> gym.Env:
+    cfg = StoneforgeConfig(disable_mobs=disable_mobs)
+    return ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
 
 
 # ---------------------------------------------------------------------------
@@ -116,19 +144,25 @@ def main() -> None:
     parser.add_argument("--timesteps", type=int, default=1_000_000)
     parser.add_argument("--no-curriculum", action="store_true",
                         help="Curriculum Learning deaktivieren (direkt volle Distanz)")
+    parser.add_argument("--monsters", action="store_true",
+                        help="Monster aktivieren (Standard: deaktiviert fuer sauberes Navigationstraining)")
     args = parser.parse_args()
 
+    _rebuild_sim()
+
+    disable_mobs = not args.monsters
     print(f"Starte Training mit {args.algo.upper()} für {args.timesteps:,} Steps...")
+    print(f"Monster: {'AN' if args.monsters else 'AUS (--monsters zum Aktivieren)'}")
     if not args.no_curriculum:
         print("Curriculum Learning: leistungsbasiert (4 Stufen)")
 
     n_envs = 8 if args.algo == "ppo" else 1
-    env = make_vec_env(make_env, n_envs=n_envs)
+    env = make_vec_env(lambda: make_env(disable_mobs=disable_mobs), n_envs=n_envs)
 
     best_model_path = f"./best_models_{args.algo}/"
 
     # Eval-Env immer auf voller Distanz (35-45) → misst echten Fortschritt.
-    eval_env = Monitor(make_env())
+    eval_env = Monitor(make_env(disable_mobs=disable_mobs))
 
     eval_callback = EvalCallback(
         eval_env,
@@ -147,6 +181,11 @@ def main() -> None:
 
     tensorboard_folder = "./tensorboard_logs/"
 
+    # Groesseres Netz: 135 Input-Features benoetigen mehr Kapazitaet als [64,64].
+    # [256,256] verdoppelt die Hidden-Einheiten pro Schicht → besser fuer
+    # raeumliche Muster im Grid + Richtungsfeatures.
+    net_arch = [256, 256]
+
     if args.algo == "ppo":
         model = PPO(
             "MlpPolicy",
@@ -157,6 +196,7 @@ def main() -> None:
             learning_rate=3e-4,
             gamma=0.995,
             ent_coef=0.01,
+            policy_kwargs=dict(net_arch=net_arch),
             tensorboard_log=tensorboard_folder,
         )
     else:
@@ -164,17 +204,19 @@ def main() -> None:
             "MlpPolicy",
             env,
             verbose=1,
-            learning_rate=1e-4,
-            buffer_size=500_000,        # größer: erfolgreiche Episoden bleiben länger erhalten
+            # 3e-4 statt 1e-4: schnelleres Lernen durch groessere Schritte.
+            # Mit normalisierter Obs ist der Gradient stabiler → hoehere LR vertretbar.
+            learning_rate=3e-4,
+            buffer_size=500_000,
             learning_starts=10_000,
-            batch_size=128,
+            # 256 statt 128: groessere Batches → stabilere Gradient-Schaetzung.
+            batch_size=256,
             train_freq=4,
             target_update_interval=500,
-            # Exploration bis 70% des Trainings: Agent kann sich in schwereren
-            # Stufen neu anpassen, statt sofort greedy zu sein.
             exploration_fraction=0.70,
             exploration_final_eps=0.05,
             gamma=0.995,
+            policy_kwargs=dict(net_arch=net_arch),
             tensorboard_log=tensorboard_folder,
         )
 

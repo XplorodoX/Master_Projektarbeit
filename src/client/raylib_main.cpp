@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
     int winW = -1;
     int winH = -1;
     std::string winTitle;
+    bool noMonsters = false;
 
     for(int i = 1; i < argc; ++i) {
         const std::string arg(argv[i]);
@@ -29,8 +30,10 @@ int main(int argc, char** argv) {
             winH = std::atoi(argv[++i]);
         } else if(arg == "--title" && i + 1 < argc) {
             winTitle = argv[++i];
+        } else if(arg == "--no-monsters") {
+            noMonsters = true;
         }
     }
     stoneforge::client::RenderEngine engine;
-    return engine.run(aiMode, aiDualMode, aiSeed, winX, winY, winW, winH, winTitle);
+    return engine.run(aiMode, aiDualMode, aiSeed, winX, winY, winW, winH, winTitle, noMonsters);
 }

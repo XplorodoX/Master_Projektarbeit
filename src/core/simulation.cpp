@@ -1244,6 +1244,10 @@ bool Simulation::isWithinMiningRange(const Vec2i& target) const {
 }
 
 void Simulation::updateMobs() {
+    if(gameConfig().gameplay.disableMobs) {
+        return;
+    }
+
     // Spawn passive mobs lazily per discovered chunk: 90% chance, max one mob per chunk.
     constexpr float kChunkSpawnChance = 0.90F;
     constexpr int kSpawnAttemptsPerChunk = 10;
@@ -1412,7 +1416,12 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    reward += static_cast<float>(progress) * 0.10F;
+    reward += static_cast<float>(progress) * 0.15F;
+
+    // Proximity-Bonus: jeder Schritt naeher, wenn der Agent < 15 Tiles entfernt ist.
+    if(currentDistance <= 15 && progress > 0) {
+        reward += 0.05F;
+    }
 
     if(reachedExit) {
         reward += 100.0F;

@@ -1547,7 +1547,7 @@ void renderAiView(
 
 int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uint64_t aiSeed,
                                           int winX, int winY, int winW, int winH,
-                                          const std::string& winTitle) {
+                                          const std::string& winTitle, bool noMonsters) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     const int initW = winW > 0 ? winW : kWindowW;
     const int initH = winH > 0 ? winH : kWindowH;
@@ -1561,6 +1561,10 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
     std::string gameConfigError;
     if(!stoneforge::loadGameConfigFile("assets/base/game_config.json", &gameConfigError)) {
         TraceLog(LOG_WARNING, "Game config load failed: %s", gameConfigError.c_str());
+    }
+    // Mobs deaktivieren wenn --no-monsters gesetzt (muss NACH loadGameConfigFile stehen).
+    if(noMonsters) {
+        stoneforge::mutableGameConfig().gameplay.disableMobs = true;
     }
     const float stepIntervalSeconds = std::max(0.01F, stoneforge::gameConfig().render.stepIntervalSeconds);
 
@@ -1605,6 +1609,8 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
     bool forcefieldEnabled = false;
     bool showPotentialGoalSpawnArea = false;
     bool showChunkBorders = false;
+    // Monster-Toggle: Startzustand spiegelt den CLI-Flag wider.
+    bool monstersEnabled = !noMonsters;
     bool thresholdInputActive = false;
     std::string thresholdInput = "0.1";
     double lakeNextMoveAllowedAt = 0.0;
@@ -1829,6 +1835,15 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
             showChunkBorders = !showChunkBorders;
         }
 
+        if(!gameplayInputBlocked && IsKeyPressed(KEY_M)) {
+            monstersEnabled = !monstersEnabled;
+            stoneforge::mutableGameConfig().gameplay.disableMobs = !monstersEnabled;
+            // Reset: neue Welt mit geaenderter Mob-Config generieren.
+            sim.reset(currentSeed);
+            if(aiDualMode) { sim2.reset(currentSeed); }
+            particles.clear();
+        }
+
         if(!gameplayInputBlocked && !sim.done() && IsKeyPressed(KEY_E)) {
             queuedSwordUse = true;
             swordSwingTimer = kSwordSwingDuration;
@@ -1882,7 +1897,15 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
                 updateFacing(facing2, act2);
                 if(!sim.done())  { sim.step(act1);  } else { sim.reset(aiSeed);  }
                 if(!sim2.done()) { sim2.step(act2); } else { sim2.reset(aiSeed); }
-            } else if(!sim.done()) {
+            } else {
+                // AI-Single-Mode: Auto-Reset wenn Episode beendet — synchron mit Python-Env.
+                // Ohne diesen Fix liest der Client nach sim.done() nichts mehr aus stdin,
+                // waehrend Python weiter Aktionen schickt → Simulationen laufen auseinander.
+                if(aiMode && sim.done()) {
+                    sim.reset(aiSeed);
+                    particles.clear();
+                }
+                if(!sim.done()) {
                 stoneforge::Action action = stoneforge::Action::Wait;
                 if(aiMode) {
                     int actionIdx = 0;
@@ -1939,7 +1962,10 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
 
                     const stoneforge::Vec2i target{playerBefore.x + delta.x, playerBefore.y + delta.y};
                     const bool inLake = sim.isPlayerInLake() || sim.isLakeAt(target.x, target.y);
-                    if(inLake) {
+                    // Lake-Slowdown nur fuer menschliche Spieler aktiv.
+                    // Im AI-Modus deaktiviert: Training hat keinen Slowdown →
+                    // Spiel muss dasselbe zeigen, sonst divergieren Python-Env und Client.
+                    if(inLake && !aiMode) {
                         const double now = GetTime();
                         if(now < lakeNextMoveAllowedAt) {
                             action = stoneforge::Action::Wait;
@@ -2011,8 +2037,9 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
                     spawnParticles(particles, hitPos, 10 + damage * 4, Color{250, 93, 90, 255}, 2.0F, 0.55F, 1.0F, hpBefore * 13 + sim.steps());
                     hitFlash = std::min(1.0F, hitFlash + static_cast<float>(damage) * 0.35F);
                  }
-             }
-         }
+             }  // if(!sim.done())
+         }      // } else {
+        }       // if(stepTimer >= stepIntervalSeconds)
 
         std::string title = "Stoneforge 2D | Seed=" + std::to_string(currentSeed) +
                             " HP=" + std::to_string(sim.hp()) +
@@ -2279,6 +2306,7 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         const Rectangle forcefieldBtn = {244.0F, 24.0F, 226.0F, 40.0F};
         const Rectangle potentialGoalBtn = {478.0F, 24.0F, 286.0F, 40.0F};
         const Rectangle chunkBordersBtn = {772.0F, 24.0F, 236.0F, 40.0F};
+        const Rectangle monstersBtn = {1016.0F, 24.0F, 220.0F, 40.0F};
         const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
         const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
         const bool potentialGoalClicked = drawButton(
@@ -2290,6 +2318,11 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
             chunkBordersBtn,
             showChunkBorders ? "ShowChunkBorders: ON" : "ShowChunkBorders: OFF",
             !sim.done()
+        );
+        const bool monstersClicked = drawButton(
+            monstersBtn,
+            monstersEnabled ? "Monsters: ON" : "Monsters: OFF",
+            true
         );
         if(autoWalkClicked) {
             autoWalkEnabled = !autoWalkEnabled;
@@ -2303,6 +2336,13 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         if(chunkBordersClicked) {
             showChunkBorders = !showChunkBorders;
         }
+        if(monstersClicked) {
+            monstersEnabled = !monstersEnabled;
+            stoneforge::mutableGameConfig().gameplay.disableMobs = !monstersEnabled;
+            sim.reset(currentSeed);
+            if(aiDualMode) { sim2.reset(currentSeed); }
+            particles.clear();
+        }
 
         const Rectangle thresholdBox = {24.0F, 70.0F, 140.0F, 34.0F};
         if(!sim.done() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), thresholdBox)) {
@@ -2311,7 +2351,7 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
 
         DrawText(TextFormat("Goal distance: %d", goalDistance), 24, 112, 18, Color{208, 224, 243, 255});
         DrawText(TextFormat("Current biome: %s", biomeNow.c_str()), 24, 152, 18, Color{212, 230, 248, 255});
-        DrawText("G toggles Auto-Walk | F Forcefield | P Goal Area | B Chunk Borders", 24, 133, 16, Color{175, 193, 215, 255});
+        DrawText("G Auto-Walk | F Forcefield | P Goal Area | B Chunk Borders | M Monsters", 24, 133, 16, Color{175, 193, 215, 255});
         DrawText("Threshold", 180, 70, 16, Color{208, 224, 243, 255});
         DrawRectangleRounded(thresholdBox, 0.2F, 6, thresholdInputActive ? Color{34, 45, 62, 255} : Color{24, 31, 43, 255});
         DrawRectangleRoundedLinesEx(thresholdBox, 0.2F, 6, 2.0F, thresholdInputActive ? Color{132, 176, 229, 255} : Color{84, 104, 132, 255});

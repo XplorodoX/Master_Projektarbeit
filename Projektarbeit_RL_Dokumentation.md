@@ -1,6 +1,6 @@
 # RL Dokumentation fuer die Projektarbeit
 
-Stand: 27.04.2026
+Stand: 14.05.2026
 
 ## 1) Ziel
 
@@ -272,6 +272,435 @@ StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedActionEnv
 
 Vorher: `(2*r+1)² + 5` Features  
 Nachher: `(2*r+1)² + 5 + 9` Features (+ 8 Richtungs-Samples + 1 Proximity)
+
+---
+
+## 6c) Reward-Verbesserung und Monster-Deaktivierung (14.05.2026)
+
+### 6c.1 Monster deaktiviert fuer sauberes Navigationstraining
+
+**Problem:** Mobs spawnen zufaellig, laufen auf den Spieler zu, blockieren Bewegung und verursachen Schaden. Das fuegt dem Reward-Signal zufaelliges Rauschen hinzu und erschwert dem Agenten, die Navigation zum Exit zu lernen.
+
+**Loesung (Version 14.05.2026):** Neuer `disableMobs`-Flag.
+
+| Datei | Aenderung |
+|---|---|
+| `include/stoneforge/game_config.hpp` | `bool disableMobs = false` in `GameplayConfig` |
+| `src/core/simulation.cpp` | `updateMobs()` bricht sofort ab wenn `disableMobs == true` |
+| `src/python/py_module.cpp` | `configure_world_generation(... disable_mobs=False)` neuer Parameter |
+| `python/stoneforge_env.py` | `StoneforgeConfig.disable_mobs = True` (Standard fuer Training) |
+| `python/train.py` | `--monsters`-Flag: Monster zuschaltbar, Standard ist AUS |
+
+**Training mit Monstern (optional):**
+```bash
+python python/train.py --algo dqn --monsters  # Monster aktivieren
+python python/train.py --algo dqn             # Standard: Monster deaktiviert
+```
+
+### 6c.2 Reward-Funktion verbessert (14.05.2026)
+
+Aenderungen in `src/core/simulation.cpp` → `computeReward()`:
+
+| Term | Alt | Neu | Begruendung |
+|---|---|---|---|
+| Distance Progress | `+0.10 * delta` | `+0.15 * delta` | Staerkeres Signal fuer Fortschritt Richtung Exit |
+| Proximity-Bonus | — | `+0.05` wenn `dist <= 15 && progress > 0` | Extra-Signal in der Endphase (letzte 15 Tiles) |
+
+**Vollstaendige Reward-Struktur (aktuell):**
+
+| Event | Reward |
+|---|---|
+| Jeder Schritt | -0.01 |
+| Neues Tile besucht | +0.02 |
+| Idle-Aktion | -0.02 |
+| Bewegung geblockt | -0.05 |
+| Schaden erhalten | -0.5 pro HP |
+| Mob getoetet | +2.0 |
+| Exit freigeschaltet | +5.0 |
+| Schritt naeher am Exit | +0.15 * delta |
+| Naehe-Bonus (dist ≤ 15, naeher) | +0.05 |
+| Exit erreicht | +100.0 |
+| Fehlschlag (done, kein Exit) | -10.0 |
+
+### 6c.3 Warum diese Reihenfolge der Prioritaeten
+
+1. **Mobs aus**: Groesster Einzelgewinn. Kein zufaelliges Blocking, kein Schadens-Rauschen.
+2. **Distance 0.10 → 0.15**: Bei 40 Tiles Distanz ergibt das insgesamt 6.0 statt 4.0 Reward fuer den kompletten Approach. Das Exit-Reward von 100 dominiert weiterhin.
+3. **Proximity-Bonus**: Gibt dem Agenten ein starkeres Signal wenn er fast am Ziel ist. Wichtig weil die Episode oft mit Zeitlimit endet kurz vor dem Exit.
+
+---
+
+## 6d) Observation-Normalisierung und Netz-Optimierung (14.05.2026)
+
+### 6d.1 Kernproblem: Unnormalisierte Observation (groesster struktureller Fehler)
+
+**Diagnose:** Die Rohwerte aus der C++ Simulation wurden bisher kaum normalisiert:
+
+| Feature | Vorher | Nachher | Problem ohne Normalisierung |
+|---|---|---|---|
+| Grid-Zellen (0-30) | roh (`0..30`) | `/30.0` → `[0,1]` | Spieler-Marker (30) wirkt 30× "groesser" als Luft (0). Das Netz interpoliert zwischen kategorischen Werten, die gar keine ordinale Bedeutung haben. |
+| HP | `0..10` (roh) | `/10.0` → `[0,1]` | Gleiche Einheit wie Grid-Werte, aber andere Semantik → falscher Gradient. |
+| Energy | `0..100` (roh) | `/100.0` → `[0,1]` | 10× groessere Skala als HP → dominiert den Input unnoetig. |
+| Inventory | `0..N` (roh) | `/24.0` → `[0,1]` | Selbe Problematik. |
+| exitDx/exitDy | `/128` → `[-1,1]` | unveraendert | War bereits korrekt. |
+| Potential Field | `[0,1]` | unveraendert | War bereits korrekt. |
+
+**Warum ist das kritisch:** Neuronale Netze optimieren Gradienten. Wenn Input-Features verschiedene Groessenordnungen haben (z.B. Energy=100 vs. Luft-Kachel=0.03), entstehen schiefe Gradienten → das Netz lernt Features mit grossen Werten bevorzugt, egal ob sie informativ sind.
+
+**Fix in `python/stoneforge_env.py` → `_normalize_observation()`:**
+```
+Grid (121 Zellen): / 30.0   → [0, 1]
+HP:                / 10.0   → [0, 1]
+Energy:            / 100.0  → [0, 1]
+Inventory:         / 24.0   → [0, 1]
+exitDx/exitDy:     / 128.0  → [-1, 1]   (war bereits so)
+```
+Ergebnis: Alle 135 Features liegen jetzt in `[-1, 1]` ✓
+
+### 6d.2 Netzgroesse: [64,64] → [256,256]
+
+**Problem:** Das Default-MLP von SB3 hat zwei Hidden-Layer mit je 64 Neuronen = 4096 + 4096 = ~8K Parameter fuer die Hidden-Layers.
+
+Mit 135 Input-Features und einer prozeduralen Welt die Navigation erfordert, ist [64,64] zu klein:
+- 135 → 64: massive Kompression im ersten Layer (Informationsflaschenhals)
+- Raeumliche Muster (Grid) + Richtungsinfo (Potential Field) + Skalare muessen gemeinsam repraesentiert werden
+
+**Fix in `python/train.py`:**
+```python
+net_arch = [256, 256]  # fuer PPO und DQN
+```
+Parameter-Vergleich:
+| Architektur | Schicht 1 | Schicht 2 | Gesamt Hidden |
+|---|---|---|---|
+| [64, 64] | 135×64 = 8640 | 64×64 = 4096 | ~13K |
+| [256, 256] | 135×256 = 34560 | 256×256 = 65536 | ~100K |
+
+Mehr Kapazitaet → bessere Repraesentationsmoeglichkeit fuer komplexe Navigationsmuster.
+
+### 6d.3 DQN Hyperparameter-Anpassungen
+
+| Parameter | Alt | Neu | Begruendung |
+|---|---|---|---|
+| `learning_rate` | `1e-4` | `3e-4` | Mit normalisierter Observation sind Gradienten stabiler. Hoehere LR → schnelleres Lernen in fruehen Phasen. |
+| `batch_size` | `128` | `256` | Groessere Batches → stabilere Gradienten-Schaetzung → weniger Varianz im Update. Speicherverbrauch bleibt im Rahmen. |
+
+### 6d.3 GUI-Bugfixes — Visualisierungs-Skripte aktualisiert (14.05.2026)
+
+**Diagnose der GUI-Probleme:**
+
+| Datei | Bug | Auswirkung |
+|---|---|---|
+| `multi_ai_play.py` | Kein `ExitPotentialFieldWrapper` | Modell kriegt 126-dim Obs, erwartet 135 → komplett falsche Aktionen |
+| `multi_ai_play.py` | Keine Action-Sanitization | Mining-Aktion (4) koennte durchrutschen → Agent gabt Energie |
+| `multi_ai_play.py` | Kein `StoneforgeConfig` | Default-Config unklar, keine explizite Monster-Kontrolle |
+| `ai_play.py` / `multi_ai_play.py` | C++ Client hatte Mobs, Python nicht | Python-Env und Spiel-Client laufen auseinander → Agent steuert in falschen Zustand |
+
+**Kritischster Bug: `multi_ai_play.py` ohne Wrapper**
+
+Das Modell wurde mit 135 Features (inkl. Potential Field) trainiert. `multi_ai_play.py` hat den `ExitPotentialFieldWrapper` vergessen → 126 Features. Das Modell hat "zufaellige" Features in der Haelfte seiner Inputs gesehen → komplett falsches Verhalten beim Zuschauen.
+
+**Alle Fixes:**
+
+| Datei | Aenderung |
+|---|---|
+| `include/stoneforge/client/render_engine.hpp` | `noMonsters` Parameter zu `run()` |
+| `src/client/render_engine.cpp` | `disableMobs = noMonsters` nach `loadGameConfigFile` |
+| `src/client/raylib_main.cpp` | `--no-monsters` CLI-Flag parsen |
+| `python/ai_play.py` | `--monsters` Flag + `--no-monsters` an Binary + explizite Config |
+| `python/multi_ai_play.py` | `ExitPotentialFieldWrapper` ergaenzt, Action-Sanitization, `StoneforgeConfig`, `--monsters` Flag, `--no-monsters` an Binary |
+
+**Ergebnis:** Python-Env und C++ Game-Client sind jetzt synchron (beide mit/ohne Monster), korrekte Obs-Groesse (135), korrekte Actions.
+
+### 6d.4 Zusammenfassung aller aktiven Verbesserungen (Stand 14.05.2026)
+
+| Verbesserung | Datei | Beschreibung |
+|---|---|---|
+| Monster deaktiviert | C++ + Python | Kein Mob-Rauschen im Reward-Signal |
+| Distance Reward | C++ | `0.10 → 0.15` pro Schritt Fortschritt |
+| Proximity-Bonus | C++ | `+0.05` wenn `dist ≤ 15` und naeher |
+| Grid-Normalisierung | Python | Grid/30 + HP/10 + Energy/100 → alle in [0,1] |
+| Groesseres Netz | Python | `[64,64] → [256,256]` Hidden-Layer |
+| Hohere DQN-LR | Python | `1e-4 → 3e-4` |
+| Groesserer Batch | Python | `128 → 256` |
+| Potential Field Obs | Python | 9 zusaetzliche Richtungs-Features |
+| Curriculum Learning | Python | 4 leistungsbasierte Stufen |
+| Nur Bewegungs-Actions | Python | 4 statt 9 Actions |
+
+---
+
+## 6e) GUI-Verbesserungen und Versionssync-Analyse (14.05.2026)
+
+### 6e.1 Vollstaendiger Versionssync-Check: Python-Env vs. C++ Game-Client (14.05.2026)
+
+**Durchgefuehrte Analyse:** Systematischer Vergleich aller Simulations-Parameter.
+
+#### Uebereinstimmungen (keine Aenderung noetig)
+
+| Kriterium | Python-Env | C++ Game-Client | Status |
+|---|---|---|---|
+| Kern-Simulation | `stoneforge::Simulation` (via pybind11) | `stoneforge::Simulation` (direkt) | ✓ Selbe C++ Klasse |
+| exitMinDistance | 35 (Python-Default = JSON-Wert) | 35 (JSON) | ✓ |
+| exitMaxDistance | 45 (Python-Default = JSON-Wert) | 45 (JSON) | ✓ |
+| forceGuaranteedPath | true | true (JSON) | ✓ |
+| observationRadius | 5 (JSON) | 5 (JSON) | ✓ |
+| maxSteps | 4000 (JSON) | 4000 (JSON) | ✓ |
+| Energy-System | C++ Simulation | C++ Simulation | ✓ |
+| HP-System | C++ Simulation | C++ Simulation | ✓ |
+| Action-Mapping | 0-3 = Bewegung | selbes Mapping | ✓ |
+| Mob-Spawn | disableMobs=True (Training) | --no-monsters Flag | ✓ (nach Fix) |
+| Welt-RNG | seed → selbe Welt | seed → selbe Welt | ✓ |
+| spawnTable | leer in JSON | leer in JSON | ✓ Mobs nur via lazy Spawning |
+
+#### Gefundene Divergenzen — beide behoben (14.05.2026)
+
+**Bug 1: Lake-Slowdown (client-only, training kennt es nicht)**
+
+In `src/client/render_engine.cpp`: Wenn der Spieler in einen See tritt, wird Bewegung auf 1 Schritt / 0.4s gebremst. In der Python-Simulation (`Simulation::tryMove()`) gibt es diesen Mechanismus nicht — der Agent kann sich ohne Verzoegerung durch Seen bewegen.
+
+Konsequenz: Agent trainiert ohne Slowdown, sieht in der GUI aber gebremste Bewegung. Der Agent wuerde Seen im Training anders bewerten als im Spiel (als "freie Passage").
+
+**Fix:** `if(inLake && !aiMode)` — Lake-Slowdown ist jetzt nur im manuellen Spielmodus aktiv. Im AI-Modus wird keine Bremse angewandt, damit Spiel und Training identisch sind.
+
+**Bug 2: Kein Auto-Reset im Single-AI-Modus**
+
+Nach `sim.done()` (Episode beendet) liest der Game-Client im Single-AI-Modus keine Aktionen mehr aus stdin. Python-Env setzt sofort zurueck (`env.reset(seed)`) und schickt weiter Aktionen. Die Aktionen stauen sich im stdin-Puffer. Der Game-Client wartete auf manuelle `R`-Taste (und resettete dabei mit `seed+1`, nicht dem Original-Seed!).
+
+Konsequenz: Nach der ersten Episode divergieren Python-Env und Game-Client vollstaendig.
+
+**Fix:** `if(aiMode && sim.done()) { sim.reset(aiSeed); }` — Im AI-Modus wird automatisch mit dem Original-Seed zurueckgesetzt, synchron mit Python-Env. Kein manuelles Druecken von R mehr noetig.
+
+#### Bleibende Abweichung (absichtlich)
+
+- **Curriculum-Phasen 1–3**: Waehrend Training setzt Python `exitMin/Max` auf kuerzere Distanzen (5–35 Tiles). Game-Client bleibt bei 35–45 Tiles. Das ist beabsichtigt — beim Playback (`ai_play.py`) wird Python-Default-Config (35–45) verwendet, identisch mit dem Game-Client.
+
+**Schlussfolgerung nach Fix:** Was der Agent im Training sieht und was der Game-Client zeigt, ist nun exakt dieselbe Simulation — gleiche Physik, gleiche Mob-Config, gleiche Reset-Logik.
+
+### 6e.2 Monster-Toggle in der GUI (14.05.2026)
+
+**Aenderungen in `src/client/render_engine.cpp`:**
+
+- Neue State-Variable `monstersEnabled` (initialisiert aus `!noMonsters` von CLI)
+- **M-Taste**: Togglet Monster an/aus, setzt Simulation sofort neu (gleicher Seed)
+- **Neuer Button** "Monsters: ON / OFF" in der Button-Leiste oben rechts (Position x=1016)
+- Button ist auch ohne laufendes Spiel klickbar (im Gegensatz zu den anderen Toggles)
+- **HUD-Text** aktualisiert: "M Monsters" ergaenzt
+
+**Tastaturkuerzel-Uebersicht (aktuell):**
+| Taste | Funktion |
+|---|---|
+| G | Auto-Walk toggle |
+| F | Forcefield-Visualisierung |
+| P | Goal-Spawn-Area anzeigen |
+| B | Chunk-Borders anzeigen |
+| M | **Monster an/aus** (NEU) |
+| R | Neue Runde (gleicher Seed) |
+| / | Command-Modus |
+
+### 6e.3 Auto-Rebuild vor Training (14.05.2026)
+
+**Motivation:** Wenn C++ Quellcode geaendert wurde (z.B. Reward-Funktion, Observation, Monster-Flag), muss die `.so`-Datei neu gebaut werden, bevor Training sinnvoll ist. Bisher wurde das vergessen und es wurde mit altem Code trainiert.
+
+**Implementierung in `python/train.py`:** Neue Funktion `_rebuild_sim()`:
+- Wird am Anfang von `main()` aufgerufen (vor Environment-Erstellung)
+- Baut `stoneforge_sim` + `stoneforge_client` via `cmake --build build -j`
+- Bei Build-Fehler: Warnung, Training laeuft trotzdem weiter (mit altem Binary)
+- Kein zusaetzliches Argument noetig — laeuft immer automatisch
+
+```
+[Build] Baue stoneforge_sim und stoneforge_client neu...
+[Build] Build erfolgreich.
+Starte Training mit DQN fuer 1.000.000 Steps...
+```
+
+---
+
+---
+
+## 6f) Launcher-GUI aktualisiert (14.05.2026)
+
+### 6f.1 Model-Picker: Listbox statt Combobox + Auto-Refresh
+
+**Problem:** Die Model-Auswahl war eine einfache Dropdown-Liste (Combobox). Keine Datums- oder Größenanzeige, kein Auto-Refresh nach Training, kein manuelles Durchsuchen mit Vorschau.
+
+**Fix:** `ModelPicker` komplett neu als Listbox:
+
+| Feature | Vorher | Nachher |
+|---|---|---|
+| Widget-Typ | Combobox (1 Zeile) | Listbox (3 Zeilen, scrollbar) |
+| Anzeige-Info | Nur Name | Name + Datum + Dateigröße |
+| Auto-Refresh | Nur bei Tab-Wechsel | Automatisch 1s nach Trainingsende |
+| Selektion nach Refresh | Reset auf ersten Eintrag | Behält vorherige Auswahl |
+| Durchsuchen | Dateiauswahl, bleibt diese Session | Gleich, mit korrekter Datumsanzeige |
+
+Beispiel-Anzeige in der Listbox:
+```
+  DQN  —  best_model                   14.05.26 14:22   2.3 MB
+  PPO  —  best_model                   14.05.26 13:01   3.1 MB
+```
+
+`_scan_models()` gibt jetzt `(label, path, date_str, size_str)` zurück (vorher nur `(label, path)`).
+
+### 6f.2 Fehlende Monster-Toggles (Bug)
+
+Der Launcher (`scripts/launcher_gui.py`) hatte bisher in keiner der drei relevanten Sektionen einen Monster-Toggle. Das bedeutete: Auch wenn das Training mit `disable_mobs=True` läuft, war es aus der GUI heraus nicht möglich, Monster beim Abspielen oder im Direktspiel zu steuern. Außerdem konnte man kein Training mit Monstern starten, ohne die Kommandozeile zu nutzen.
+
+| Sektion | Vorher | Nachher |
+|---|---|---|
+| Training | Kein Monster-Toggle | Checkbox "Monster aktivieren" (Standard: aus) |
+| Abspielen | Kein Monster-Toggle | Checkbox "Monster aktivieren" (Standard: aus) |
+| Spiel starten | Kein Monster-Toggle | Checkbox "Monster aktivieren" → `--no-monsters` an Game-Client |
+
+**Logik für den Game-Client:** Der C++ Client hat Monster standardmäßig AN. Bei unkontrolliertem Aufruf ist das Training (ohne Monster) und das Spiel aus dem Launcher (mit Monstern) nicht konsistent. Fix: Checkbox unkontrolliert → `--no-monsters` wird übergeben, sodass der Default im Launcher "keine Monster" ist — passend zum Training.
+
+### 6f.1b Hang-Bug nach Training (Kritischer Bug — behoben 14.05.2026)
+
+**Problem:** Nach Ende des Trainings hing der Launcher dauerhaft — kein neues Training startbar, Stop-Button ohne Effekt, Status blieb auf "Läuft…".
+
+**Ursache:** Der Output-Reader-Thread nutzte `for line in proc.stdout:`. Dieser Iterator blockiert bis ALLE Write-Enden der Pipe geschlossen sind. SB3's `SubprocVecEnv` erstellt Worker-Prozesse via `fork()`, die den Pipe-File-Descriptor erben. Auch nachdem das Haupt-Trainingsskript beendet ist, können diese Worker-Prozesse kurzzeitig noch leben und die Pipe offen halten. Damit kam `proc.stdout.readline()` nie zurück → der `("done", rc)` Event wurde nie auf die Queue gelegt → `_set_running(False)` wurde nie aufgerufen → Launcher dachte, Training laufe noch.
+
+**Fix (in `_run()`):** Separater Reader-Thread + 2-Sekunden-Drain mit anschließendem Force-Close der Pipe:
+
+```
+Worker-Thread:
+  1. Startet _reader-Thread (blockierendes Lesen in eigene Queue)
+  2. Draint Queue mit 150ms Timeout pro Iteration
+  3. Wenn proc.poll() != None (Prozess beendet):
+     → 2s Drain-Fenster für verbleibende Ausgabe
+     → proc.stdout.close() → entblockt Reader-Thread
+     → break → proc.wait() → ("done", rc) auf Queue
+```
+
+**Weitere Fix:** `_set_running(False)` ruft nach Training automatisch `_refresh_model_pickers()` auf (mit 1s Delay), damit das neue `best_model.zip` sofort in Abspielen/Eval erscheint.
+
+### 6f.2 Eval-Skript abgesichert
+
+Das eingebettete Eval-Skript im Launcher hatte zwei stille Fehler:
+
+| Problem | Vorher | Nachher |
+|---|---|---|
+| Fehlende explizite Config | `StoneforgeWorldEnv()` ohne Config | `StoneforgeConfig(disable_mobs=True)` explizit gesetzt |
+| Fehlende Action-Sanitization | Mining-Aktion (4) konnte durchkommen | `a = 7 if int(a) == 4 else int(a)` blockiert Mining |
+
+**Warum wichtig:** Die Eval-Ergebnisse aus dem Launcher sollen exakt mit dem manuellen 50-Seed-Test aus CLAUDE.md übereinstimmen. Beide nutzen jetzt Monster-aus und kein Mining.
+
+---
+
+## 9) Versionshistorie — Chronologischer Überblick aller Verbesserungen
+
+Alle Änderungen, ihre Motivation und (soweit gemessen) ihre Wirkung auf die 50-Seed-Erfolgsrate.
+
+### Version 0 — Ausgangszustand (vor 27.04.2026)
+
+**Zustand:**
+- PPO und DQN als Basisalgorithmen
+- Observation: Grid (unnormalisiert, 0-30) + exitDx/exitDy + HP/Energy/Inventory (alle roh)
+- Netz: [64, 64] Hidden-Layer (SB3-Default)
+- Trainingszeit: 500K Timesteps
+- Curriculum: zeitbasiert (Stufe wechselt automatisch nach Zeitanteil)
+- Monster: aktiv
+- `n_eval_episodes`: 5
+
+**Probleme:**
+- Reward-Signal durch Mob-Treffer verzerrt
+- Unnormalisierte Features → schiefe Gradienten
+- Netz zu klein für 126+ Features
+- Zeitbasiertes Curriculum → Reward-Kollaps wenn Agent auf Stufe noch nicht bereit
+
+**Ergebnis (50-Seed-Test, 27.04.2026):**
+
+| Algorithmus | Erfolge | Success Rate | Mittl. Ep.-Länge | Mittl. Return |
+|---|---|---|---|---|
+| PPO | 3 / 50 | 6.0 % | 1857.6 | −112.87 |
+| DQN | 20 / 50 | 40.0 % | 1383.1 | −3.43 |
+
+---
+
+### Version 1 — Curriculum + Buffer + Eval-Fix (30.04.2026)
+
+**Was geändert wurde:**
+
+| Parameter / Datei | Vorher | Nachher | Problem das geloest wurde |
+|---|---|---|---|
+| Curriculum-Typ (`train.py`) | zeitbasiert | leistungsbasiert (CurriculumCallback) | Reward-Kollaps bei Stufenwechsel |
+| `buffer_size` | 100K | 500K | Zu wenig Erfahrung wiederverwendbar |
+| `exploration_fraction` | 0.40 | 0.70 | Exploration zu früh beendet |
+| `n_eval_episodes` | 5 | 20 | Eval-Signal zu verrauscht |
+| `learning_starts` | 5K | 10K | Mehr Random-Exploration anfangs |
+| `train_freq` | 1 | 4 | Stabileres Gradient-Update |
+| `target_update_interval` | 1000 | 500 | Schnellere Target-Anpassung |
+| Default `timesteps` | 500K | 1M | Mehr Training |
+| `observationRadius` | 5 (11×11) | 7 (15×15) | Agent sieht weiter |
+| `maxSteps` | 2500 | 4000 | Mehr Zeit für längere Pfade |
+| Exit Potential Field | — | 9 neue Features (8 Richtungen + Nähe) | Gradient zum Exit explizit |
+
+**Keine neue Messung dokumentiert** (Training noch nicht neu gelaufen).
+
+---
+
+### Version 1.1 — Monster-Deaktivierung + Reward + Normalisierung + Netz (14.05.2026)
+
+**Was geändert wurde:**
+
+| Parameter / Datei | Vorher | Nachher | Problem das geloest wurde |
+|---|---|---|---|
+| Monster (`game_config.hpp`, `simulation.cpp`, `py_module.cpp`, `stoneforge_env.py`) | immer aktiv | `disableMobs=True` per Default im Training | Reward-Rauschen durch Mob-Schaden und Blocking |
+| Distance-Reward (`simulation.cpp`) | `+0.10 * delta` | `+0.15 * delta` | Zu schwaches Navigationssignal |
+| Proximity-Bonus (`simulation.cpp`) | — | `+0.05` wenn `dist ≤ 15 && progress > 0` | Agent bricht kurz vor Exit ab |
+| Grid-Normalisierung (`stoneforge_env.py`) | roh (0–30) | `/ 30.0` → [0, 1] | Spieler-Marker (30) dominierte Gradienten |
+| HP-Normalisierung | roh (0–10) | `/ 10.0` → [0, 1] | Falsche Skalierung gegenüber Grid |
+| Energy-Normalisierung | roh (0–100) | `/ 100.0` → [0, 1] | 10× größere Skala als HP |
+| Netz-Größe (`train.py`) | [64, 64] | [256, 256] | Informationsflaschenhals bei 135 Features |
+| DQN `learning_rate` | `1e-4` | `3e-4` | Mit normalisierter Obs stabilere Gradienten → höhere LR möglich |
+| DQN `batch_size` | `128` | `256` | Stabilere Gradienten-Schätzung |
+| Auto-Rebuild (`train.py`) | manuell | `_rebuild_sim()` am Training-Start | Altes Binary nach C++ Änderung verwendet |
+| Lake-Slowdown (`render_engine.cpp`) | immer aktiv | nur im manuellen Modus (`!aiMode`) | Training kennt keinen Slowdown → Divergenz |
+| Auto-Reset AI-Modus (`render_engine.cpp`) | manuell R drücken | automatisch nach `sim.done()` | Python schickt Aktionen, Client hört auf → Auseinanderlaufen |
+| `multi_ai_play.py` | kein `ExitPotentialFieldWrapper` | Wrapper ergänzt | Modell bekam 126 statt 135 Features → komplett falsche Aktionen |
+| Monster-Toggle GUI (Launcher) | kein Toggle | Checkbox in Training / Abspielen / Spiel | Konsistenz Training ↔ Visualisierung |
+| Eval-Skript (Launcher) | implizite Config | explizit `disable_mobs=True`, Mining geblockt | Eval-Ergebnisse nicht reproduzierbar |
+
+**Aktuelle vollständige Reward-Struktur:**
+
+| Event | Reward | Erklärung |
+|---|---|---|
+| Jeder Schritt | −0.01 | Zeitstrafe — Agent soll effizient sein |
+| Neues Tile besucht | +0.02 | Exploration belohnen |
+| Idle-Aktion (Warten) | −0.02 | Passivität bestrafen |
+| Bewegung geblockt | −0.05 | Gegen Wände laufen bestrafen |
+| Schaden erhalten | −0.5 pro HP | Mob-Schaden (nur mit Monstern relevant) |
+| Mob getötet | +2.0 | (nur mit Monstern relevant) |
+| Exit freigeschaltet | +5.0 | Bonus wenn Exit-Bedingung erfüllt |
+| Schritt näher am Exit | +0.15 × delta | Hauptnavigations-Signal |
+| Nähe-Bonus (dist ≤ 15, näher) | +0.05 | Endphasen-Signal |
+| Exit erreicht | +100.0 | Hauptziel |
+| Episode fehlgeschlagen | −10.0 | Zeitlimit ohne Exit |
+
+**Aktuelle Architektur-Übersicht:**
+
+```
+Welt-Seed → StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedActionEnv
+                                                                       ↓
+                                                              4 Aktionen: hoch/runter/links/rechts
+                                                              
+Observation (135 Features total):
+  - 225 Grid-Zellen (15×15, normalisiert /30)
+  - HP (normalisiert /10)
+  - Energy (normalisiert /100)
+  - Inventory (normalisiert /24)
+  - exitDx, exitDy (normalisiert /128)
+  - 8 Potential-Field-Richtungen + 1 Nähe-Wert
+```
+
+**Curriculum-Stufen (leistungsbasiert):**
+
+| Stufe | Exit-Distanz | Reward-Schwellwert | Zeitlimit (Sicherheit) | Ziel |
+|---|---|---|---|---|
+| 1 | 5–12 Tiles | ≥ −4.0 | 20 % | Zufallspfad reicht |
+| 2 | 12–22 Tiles | ≥ −18.0 | 45 % | Kurze Navigation |
+| 3 | 22–35 Tiles | ≥ −35.0 | 70 % | Mittlere Navigation |
+| 4 | 35–45 Tiles | — (Finale) | 100 % | Volle Schwierigkeit |
+
+**Noch keine neue 50-Seed-Messung** — nächster Trainingsrun wird die Wirkung aller Verbesserungen zeigen.
 
 ---
 
