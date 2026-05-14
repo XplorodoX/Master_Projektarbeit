@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <queue>
 #include <random>
 
 #include "stoneforge/game_config.hpp"
@@ -232,6 +233,9 @@ void Simulation::reset(std::uint64_t seed) {
 
     rebuildMobSpatialIndex();
     updateMobs();
+    
+    // BFS-Distanzen vom Exit aus berechnen — einmal pro reset(), dann O(1) Lookup.
+    computeBfsDistances();
 }
 
 StepResult Simulation::step(Action action) {
@@ -240,7 +244,7 @@ StepResult Simulation::step(Action action) {
     }
 
     const auto& cfg = gameConfig();
-    const int distanceBefore = manhattanDistance(player_, world_.exitPoint());
+    const int distanceBefore = bfsDistanceToExit(player_.x, player_.y);
     const int hpBefore = hp_;
     const int mobsBefore = static_cast<int>(mobs_.size());
     const bool idleAction = (action == Action::Wait || action == Action::Noop);
@@ -344,7 +348,7 @@ StepResult Simulation::step(Action action) {
         done_ = true;
     }
 
-    const int distanceAfter = manhattanDistance(player_, world_.exitPoint());
+    const int distanceAfter = bfsDistanceToExit(player_.x, player_.y);
     const float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
                                        mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
                                        newTileVisited, idleAction);
@@ -1443,6 +1447,63 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     }
 
     return reward;
+}
+
+void Simulation::computeBfsDistances() {
+    bfsDistances_.clear();
+
+    const Vec2i exit = world_.exitPoint();
+    const Vec2i spawn = world_.spawnPoint();
+
+    // Suchbereich: Bounding-Box um Spawn + Exit mit Puffer.
+    // Der garantierte Pfad liegt innerhalb dieses Bereichs.
+    const int BUFFER = 20;
+    const int minX = std::min(spawn.x, exit.x) - BUFFER;
+    const int maxX = std::max(spawn.x, exit.x) + BUFFER;
+    const int minY = std::min(spawn.y, exit.y) - BUFFER;
+    const int maxY = std::max(spawn.y, exit.y) + BUFFER;
+
+    // BFS rueckwaerts vom Exit aus: Distanz 0 am Exit, +1 pro Schritt.
+    std::queue<Vec2i> q;
+    const std::int64_t exitKey = spatialKey(exit.x, exit.y, 1);
+    bfsDistances_[exitKey] = 0;
+    q.push(exit);
+
+    constexpr Vec2i kDirs[4] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    while(!q.empty()) {
+        const Vec2i cur = q.front();
+        q.pop();
+        const int curDist = bfsDistances_.at(spatialKey(cur.x, cur.y, 1));
+
+        for(const Vec2i& d : kDirs) {
+            const Vec2i next{cur.x + d.x, cur.y + d.y};
+
+            if(next.x < minX || next.x > maxX || next.y < minY || next.y > maxY) {
+                continue;
+            }
+
+            const std::int64_t key = spatialKey(next.x, next.y, 1);
+            if(bfsDistances_.count(key)) {
+                continue;
+            }
+            if(!world_.isPassable(next.x, next.y)) {
+                continue;
+            }
+
+            bfsDistances_[key] = curDist + 1;
+            q.push(next);
+        }
+    }
+}
+
+int Simulation::bfsDistanceToExit(int x, int y) const {
+    const auto it = bfsDistances_.find(spatialKey(x, y, 1));
+    if(it != bfsDistances_.end()) {
+        return it->second;
+    }
+    // Fallback: Manhattan wenn Position ausserhalb des BFS-Bereichs.
+    return manhattanDistance({x, y}, world_.exitPoint());
 }
 
 }  // namespace stoneforge
