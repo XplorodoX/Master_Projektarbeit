@@ -949,24 +949,36 @@ Neuer Agent (Version 1.2 mit BFS):
 ### 6h.2 Training Run v1.2.0 + BFS
 
 **Start: 14.05.2026**  
-**Training Run:** `dqn_run_18`  
-**Algorithmus:** DQN  
-**Timesteps:** 1.000.000  
+**Training Run 18:** `dqn_run_18` (STOPPED at 321K - Curriculum Learning Collapse)  
+**Training Run 19:** `dqn_run_19` (NO CURRICULUM - Fresh Start)
+
+#### Run 18 Analysis (mit Curriculum)
+
+**Beobachtung:** Agent zeigte bipolares Verhalten:
+- **Training Rollouts:** +70 reward mean (Agent löst Curriculum-Stages 1-3)
+- **Eval Seeds 7000-7049:** -34 reward (Agent findet Exit NICHT)
+- **Episode Length:** 1962 = maxSteps → Agent läuft vollen 4000 Timesteps, findet nie Exit
+
+**Root Cause:** Curriculum Learning Trap
+- Stages 1-3 (5-35 tiles) sind für einen gut trainierten Agent machbar
+- Eval-Seeds (35-45 tiles) sind eine Distribution außerhalb der Curriculum-Range
+- Agent lernte: "Auf einfachen Seeds gewinnen" statt "Fundamentale Navigation lernen"
+- BFS Reward Shaping ist korrekt, aber Curriculum deckt es ab
+
+**Lesson:** Curriculum Learning war eine schlechte Idee für diesen Task. Agent sollte auf vollem Difficulty trainieren.
+
+#### Run 19 (NO CURRICULUM - Direktes Training)
+
+**Start:** 14.05.2026  
 **Config:**
-- `observationRadius`: 7 (15×15 Grid)
-- `buffer_size`: 500.000
-- `exploration_fraction`: 0.70
-- `n_eval_episodes`: 20
+- `observationRadius`: 7 (15×15 Grid, v1.2.0)
+- `--no-curriculum` Flag aktiviert
+- `timesteps`: 1.000.000
 - **Reward-Shaping:** BFS Distance (neu)
-- **Grid-Encoding:** Passierbarkeit (neu)
+- **Grid-Encoding:** Passierbarkeit (neu)  
+- **Difficulty:** Fest auf Stufe 4 (35-45 Tiles) = echte Eval-Bedingungen
 
-**Initialer Status (7848 Timesteps):**
-- Episode Reward Mean: -27.4 bis -28.0
-- Episode Length Mean: ~1960 steps
-- Exploration Rate: 0.989 → 0.979
-- FPS: ~3000
-
-*Training läuft live... TensorBoard logs unter: `tensorboard_logs/dqn_run_18/`*
+*Training läuft ohne Curriculum-Schummeleien... Ergebnisse folgen*
 
 ---
 
