@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <queue>
 #include <random>
 #include <string>
 #include <string_view>
@@ -159,6 +160,11 @@ private:
                         int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
                         bool moveBlocked, bool newTileVisited, bool idleAction) const;
 
+    // BFS-Distanzfeld: einmal pro Episode berechnet, danach O(1) Lookup.
+    // Garantiert korrektes Reward-Shaping auch wenn Waende zwischen Agent und Exit liegen.
+    void computeBfsDistances();
+    int bfsDistanceToExit(int x, int y) const;
+
     std::mt19937_64 rng_;
     World world_;
 
@@ -199,6 +205,10 @@ private:
     int mobSpatialCellSize_ = 8;
     std::unordered_map<std::int64_t, std::vector<std::size_t>> mobSpatialBuckets_;
     std::unordered_set<std::int64_t> mobSpawnCheckedChunks_;
+
+    // BFS-Distanzfeld vom Exit aus: key = spatialKey(x,y,1), value = Pfadlaenge zum Exit.
+    // Einmal pro reset() berechnet, dann O(1) Lookup pro Schritt.
+    std::unordered_map<std::int64_t, int> bfsDistances_;
 };
 
 }  // namespace stoneforge

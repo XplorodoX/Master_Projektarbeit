@@ -111,13 +111,21 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         else:
             actual_seed = int(seed)
         obs = np.array(self.core.reset(int(actual_seed)), dtype=np.float32)
+        
+        # Add player position and distance to exit BEFORE normalization
+        player_x, player_y = self.core.player_pos()
+        exit_dx = float(obs[-2])  # raw value in tiles
+        exit_dy = float(obs[-1])  # raw value in tiles
+        distance_to_exit = int(np.hypot(exit_dx, exit_dy))
+        
+        # Now normalize observation
         obs = self._normalize_observation(obs)
-        return obs, {"world_seed": actual_seed}
+        
+        return obs, {"world_seed": actual_seed, "player_x": player_x, "player_y": player_y, "distance_to_exit": distance_to_exit}
 
     def step(self, action: int):
         obs, reward, terminated, truncated, info = self.core.step(int(action))
         obs_array = np.array(obs, dtype=np.float32)
-        obs_array = self._normalize_observation(obs_array)
         
         # Add player position to info dict for debugging and analysis
         player_x, player_y = self.core.player_pos()
@@ -125,11 +133,15 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         info_dict['player_x'] = player_x
         info_dict['player_y'] = player_y
         
-        # Add distance to exit (from observation exitDx and exitDy)
-        exit_dx = obs[-2] * 128.0  # undo normalization
-        exit_dy = obs[-1] * 128.0
+        # Add distance to exit (from RAW observation exitDx and exitDy BEFORE normalization)
+        # Raw observation last two values are exit offset in tiles
+        exit_dx = float(obs[-2])  # raw value in tiles
+        exit_dy = float(obs[-1])  # raw value in tiles
         distance_to_exit = int(np.hypot(exit_dx, exit_dy))
         info_dict['distance_to_exit'] = distance_to_exit
+        
+        # Now normalize observation for network input
+        obs_array = self._normalize_observation(obs_array)
         
         return obs_array, float(reward), bool(terminated), bool(truncated), info_dict
 

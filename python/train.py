@@ -181,9 +181,8 @@ def main() -> None:
 
     tensorboard_folder = "./tensorboard_logs/"
 
-    # Groesseres Netz: 135 Input-Features benoetigen mehr Kapazitaet als [64,64].
-    # [256,256] verdoppelt die Hidden-Einheiten pro Schicht → besser fuer
-    # raeumliche Muster im Grid + Richtungsfeatures.
+    # 239 Input-Features (225 Grid + 5 Skalare + 9 Potential-Field).
+    # [256,256] hat genuegend Kapazitaet fuer raeumliche Muster + Richtungsfeatures.
     net_arch = [256, 256]
 
     if args.algo == "ppo":
