@@ -12,8 +12,9 @@ from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
+from sb3_contrib import RecurrentPPO
 
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
+from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv, SymmetryAugmentationWrapper
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -53,9 +54,21 @@ class ReducedActionEnv(gym.ActionWrapper):
         return self._ACTION_MAP[int(action)]
 
 
-def make_env(disable_mobs: bool = True) -> gym.Env:
-    cfg = StoneforgeConfig(disable_mobs=disable_mobs)
-    return ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
+def make_env(disable_mobs: bool = True, eval_mode: bool = False) -> gym.Env:
+    if eval_mode:
+        # Eval immer bei voller Schwierigkeit (35-45 Tiles) — misst echten Fortschritt.
+        cfg = StoneforgeConfig(disable_mobs=disable_mobs)
+        base = ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
+        return SymmetryAugmentationWrapper(base, augment=False)
+    else:
+        # Training startet bei Stage-0-Distanz; CurriculumCallback schaltet weiter.
+        cfg = StoneforgeConfig(
+            disable_mobs=disable_mobs,
+            exit_min_distance=_CURRICULUM_STAGES[0][0],
+            exit_max_distance=_CURRICULUM_STAGES[0][1],
+        )
+        base = ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
+        return SymmetryAugmentationWrapper(base, augment=True)
 
 
 # ---------------------------------------------------------------------------
@@ -74,12 +87,23 @@ _CURRICULUM_STAGES = [
     # exit_min, exit_max, reward_threshold, forced_fraction
     # reward_threshold: ∅ Reward über letzte 50 Episoden muss diesen Wert
     #                   überschreiten bevor zur nächsten Stufe gewechselt wird.
-    # forced_fraction:  Spätestens bei diesem Anteil des Trainings wird
-    #                   weitergeschaltet (Sicherheitsnetz).
-    ( 5, 12,  -4.0, 0.20),   # sehr nah — Zufallspfad reicht; Grenze: reward > -4
-    (12, 22, -18.0, 0.45),   # mittelklein; Grenze: reward > -18
-    (22, 35, -35.0, 0.70),   # mittel; Grenze: reward > -35
-    (35, 45,  None, 1.00),   # volle Schwierigkeit — bleibt bis Trainingsende
+    # forced_fraction:  Advance ZU DIESER Stage spätestens bei diesem Anteil.
+    #
+    # v1.3 Curriculum-Redesign (3 Stages statt 4):
+    # ─ Training startet bei Stage-0-Distanz (5-15 Tiles) statt Default (35-45)
+    # ─ Stage 3 (volle Schwierigkeit) wird bei 40% erzwungen → 60% des Trainings!
+    # ─ BFS-Thresholds: mit +0.10/Schritt braucht man ~70% Erfolg für Threshold 50
+    #
+    # Zeitplan bei 1M Steps:
+    #   0 – 20%: 5–15 Tiles   (200K Steps — Agent sieht Exit direkt, lernt Zielkennung)
+    #  20 – 40%: 15–30 Tiles  (200K Steps — Transition zu indirekter Navigation)
+    #  40 –100%: 35–45 Tiles  (600K Steps — volle Schwierigkeit, 60% des Trainings!)
+    # forced_fraction bedeutet: "Advance ZU DIESER Stage spätestens bei X%".
+    # Stage 3 (35-45) muss forced=0.40 haben damit der Wechsel zu voller Schwierigkeit
+    # bei 40% passiert und 60% des Trainings dort stattfinden.
+    ( 5, 15,  50.0, 0.20),   # Stage 1: advance TO 5-15  by 20%
+    (15, 30,  15.0, 0.40),   # Stage 2: advance TO 15-30 by 40%
+    (35, 45,  None, 0.40),   # Stage 3: advance TO 35-45 by 40% → 60% Training hier!
 ]
 
 _REWARD_WINDOW = 50   # Anzahl Episoden für den gleitenden Mittelwert
@@ -140,7 +164,7 @@ class CurriculumCallback(BaseCallback):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Trainiere RL Agenten für Stoneforge")
-    parser.add_argument("--algo", type=str, default="dqn", choices=["ppo", "dqn"])
+    parser.add_argument("--algo", type=str, default="dqn", choices=["ppo", "dqn", "rppo"])
     parser.add_argument("--timesteps", type=int, default=1_000_000)
     parser.add_argument("--no-curriculum", action="store_true",
                         help="Curriculum Learning deaktivieren (direkt volle Distanz)")
@@ -156,13 +180,13 @@ def main() -> None:
     if not args.no_curriculum:
         print("Curriculum Learning: leistungsbasiert (4 Stufen)")
 
-    n_envs = 8 if args.algo == "ppo" else 1
+    n_envs = 8 if args.algo in ("ppo", "rppo") else 1
     env = make_vec_env(lambda: make_env(disable_mobs=disable_mobs), n_envs=n_envs)
 
     best_model_path = f"./best_models_{args.algo}/"
 
     # Eval-Env immer auf voller Distanz (35-45) → misst echten Fortschritt.
-    eval_env = Monitor(make_env(disable_mobs=disable_mobs))
+    eval_env = Monitor(make_env(disable_mobs=disable_mobs, eval_mode=True))
 
     eval_callback = EvalCallback(
         eval_env,
@@ -173,6 +197,7 @@ def main() -> None:
         deterministic=True,
         render=False,
         verbose=1,
+        warn=False,
     )
 
     callbacks = [eval_callback]
@@ -185,7 +210,32 @@ def main() -> None:
     # [256,256] hat genuegend Kapazitaet fuer raeumliche Muster + Richtungsfeatures.
     net_arch = [256, 256]
 
-    if args.algo == "ppo":
+    if args.algo == "rppo":
+        # RecurrentPPO (LSTM-PPO) — analog zu DreamerV3's Kernvorteil: Gedächtnis.
+        # Der Agent erinnert sich an die letzten Schritte (verhindert ↑↓-Pendeln strukturell).
+        # lstm_hidden_size=256: genug Kapazität um Trajektorie der letzten ~20 Schritte zu merken.
+        # 8 Envs liefern diverse Episoden → On-Policy-Update stabilisiert sich schnell.
+        model = RecurrentPPO(
+            "MlpLstmPolicy",
+            env,
+            verbose=1,
+            n_steps=512,
+            batch_size=256,
+            n_epochs=4,
+            learning_rate=3e-4,
+            gamma=0.995,
+            ent_coef=0.01,
+            gae_lambda=0.95,
+            policy_kwargs=dict(
+                net_arch=net_arch,
+                lstm_hidden_size=256,
+                n_lstm_layers=1,
+                shared_lstm=False,
+                enable_critic_lstm=True,
+            ),
+            tensorboard_log=tensorboard_folder,
+        )
+    elif args.algo == "ppo":
         model = PPO(
             "MlpPolicy",
             env,
@@ -203,12 +253,9 @@ def main() -> None:
             "MlpPolicy",
             env,
             verbose=1,
-            # 3e-4 statt 1e-4: schnelleres Lernen durch groessere Schritte.
-            # Mit normalisierter Obs ist der Gradient stabiler → hoehere LR vertretbar.
             learning_rate=3e-4,
             buffer_size=500_000,
             learning_starts=10_000,
-            # 256 statt 128: groessere Batches → stabilere Gradient-Schaetzung.
             batch_size=256,
             train_freq=4,
             target_update_interval=500,

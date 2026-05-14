@@ -158,7 +158,7 @@ private:
 
     float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                         int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
-                        bool moveBlocked, bool newTileVisited, bool idleAction) const;
+                        bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const;
 
     // BFS-Distanzfeld: einmal pro Episode berechnet, danach O(1) Lookup.
     // Garantiert korrektes Reward-Shaping auch wenn Waende zwischen Agent und Exit liegen.
@@ -191,6 +191,10 @@ private:
     int steps_ = 0;
     int maxSteps_ = kDefaultMaxSteps;
     int starvationTicks_ = 0;
+    int consecutiveBlockedSteps_ = 0;
+    Vec2i prevPos_{};
+    Vec2i prevPrevPos_{};
+    bool positionLoop_ = false;
     float proximityDamageAccumulator_ = 0.0F;
 
     bool done_ = false;
@@ -200,6 +204,7 @@ private:
     int killsRequired_ = 0;
     int totalKills_ = 0;
     std::unordered_set<std::int64_t> visitedTiles_;
+    std::unordered_map<std::int64_t, int> tileVisitCounts_;
 
     std::vector<Mob> mobs_;
     int mobSpatialCellSize_ = 8;

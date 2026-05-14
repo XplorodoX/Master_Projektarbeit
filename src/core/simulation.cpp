@@ -219,6 +219,10 @@ void Simulation::reset(std::uint64_t seed) {
 
     steps_ = 0;
     starvationTicks_ = 0;
+    consecutiveBlockedSteps_ = 0;
+    prevPos_ = player_;
+    prevPrevPos_ = player_;
+    positionLoop_ = false;
     proximityDamageAccumulator_ = 0.0F;
     done_ = false;
     reachedExit_ = false;
@@ -226,6 +230,7 @@ void Simulation::reset(std::uint64_t seed) {
     totalKills_ = 0;
     visitedTiles_.clear();
     visitedTiles_.insert(spatialKey(player_.x, player_.y, 1));
+    tileVisitCounts_.clear();
 
     mobSpatialCellSize_ = std::max(1, cfg.mobSpatialCellSize);
     mobs_.clear();
@@ -284,6 +289,19 @@ StepResult Simulation::step(Action action) {
             break;
     }
 
+    // Konsekutive Blocks zählen — für Stuck-Penalty in computeReward.
+    if(!idleAction && moveBlocked) {
+        consecutiveBlockedSteps_++;
+    } else {
+        consecutiveBlockedSteps_ = 0;
+    }
+
+    // 2-Schritt-Schleifen erkennen: wenn aktuelle Position == Position vor 2 Schritten
+    // → Agent pendelt (z.B. ↑↓↑↓) ohne Fortschritt zu machen.
+    positionLoop_ = (player_ == prevPrevPos_) && (player_ != prevPos_);
+    prevPrevPos_ = prevPos_;
+    prevPos_ = player_;
+
     if(idleAction) {
         if(energy_ < 100 && (steps_ % std::max(1, cfg.gameplay.idleEnergyRegenInterval) == 0)) {
             energy_ = std::min(100, energy_ + 1);
@@ -300,6 +318,8 @@ StepResult Simulation::step(Action action) {
     }
     const std::int64_t tileKey = spatialKey(player_.x, player_.y, 1);
     const bool newTileVisited = visitedTiles_.insert(tileKey).second;
+    tileVisitCounts_[tileKey]++;
+    const int visitCount = tileVisitCounts_[tileKey];
     bool exitJustUnlocked = false;
     if(mobsKilledUnlocksExit_ && !exitUnlocked_ && totalKills_ >= killsRequired_) {
         exitUnlocked_ = true;
@@ -351,7 +371,7 @@ StepResult Simulation::step(Action action) {
     const int distanceAfter = bfsDistanceToExit(player_.x, player_.y);
     const float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
                                        mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
-                                       newTileVisited, idleAction);
+                                       newTileVisited, idleAction, visitCount);
 
     return StepResult{reward, done_, reachedExit_, steps_};
 }
@@ -401,6 +421,16 @@ Observation Simulation::getObservation() const {
     const Vec2i exit = world_.exitPoint();
     out.exitDx = exit.x - player_.x;
     out.exitDy = exit.y - player_.y;
+
+    // Visited mask: für jede Zelle im 15×15-Fenster 1 wenn dieses Tile besucht wurde, sonst 0.
+    // Ermöglicht dem Agenten "wo war ich schon" ohne rekurrente Netze — analog PokeRL Visited Mask.
+    for(int dy = -observationRadius_; dy <= observationRadius_; ++dy) {
+        for(int dx = -observationRadius_; dx <= observationRadius_; ++dx) {
+            const int wx = player_.x + dx;
+            const int wy = player_.y + dy;
+            out.grid.push_back(visitedTiles_.count(spatialKey(wx, wy, 1)) ? 1 : 0);
+        }
+    }
 
     return out;
 }
@@ -876,7 +906,7 @@ int Simulation::observationRadius() const {
 
 int Simulation::observationSize() const {
     const int side = 2 * observationRadius_ + 1;
-    return side * side + 5;
+    return 2 * side * side + 5;  // grid + visited_mask + 5 scalars
 }
 
 int Simulation::steps() const {
@@ -1399,7 +1429,7 @@ void Simulation::rebuildMobSpatialIndex() {
 
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
-                                bool moveBlocked, bool newTileVisited, bool idleAction) const {
+                                bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {
     float reward = -0.01F;
 
     if(newTileVisited) {
@@ -1414,9 +1444,29 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
-    // moveBlocked-Penalty entfernt: Das Grid zeigt Waende bereits (Wert=10).
-    // Die Penalty verursachte Freeze-Verhalten — alle Richtungen negativ, idle bevorzugt.
     (void)moveBlocked;
+
+    // Multi-Visit-Penalty: Tile das mehr als 3x besucht wurde deutet auf Loop hin.
+    // Abgeschwächt: -0.02 bei >3, -0.05 bei >5 — sanfter Gradient ohne Lern-Kollaps.
+    if(visitCount > 5) {
+        reward -= 0.05F;
+    } else if(visitCount > 3) {
+        reward -= 0.02F;
+    }
+
+    // Pendel-Penalty: Agent wechselt zwischen 2 Positionen hin und her.
+    // Ohne diese Penalty umgeht er die Stuck-Penalty durch Alternieren (↑↓↑↓).
+    if(positionLoop_) {
+        reward -= 0.15F;
+    }
+
+    // Stuck-Penalty: nach 5 konsekutiven Blocks eskaliert die Strafe.
+    // Ohne diese Penalty drückt der Agent 90+ Schritte gegen dieselbe Wand,
+    // weil -0.01/Schritt den Q-Wert "rechts" (gelernt in offenen Feldern) nicht bricht.
+    // Mit -0.20 nach 5 Blocks lohnt sich der Umweg definitiv mehr.
+    if(consecutiveBlockedSteps_ > 5) {
+        reward -= 0.20F;
+    }
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
@@ -1428,10 +1478,10 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    // Manhattan-Shaping auf 0.02 reduziert (war 0.15).
-    // ExitPotentialField uebernimmt die Richtungsfuehrung (9 Features).
-    // Manhattan in Labyrinthen mit Waenden widerspricht oft dem optimalen Weg.
-    reward += static_cast<float>(progress) * 0.02F;
+    // BFS-Shaping: +0.10 pro echtem Pfad-Schritt Richtung Exit.
+    // BFS ist korrekt in Labyrinthen — ein Schritt um die Ecke herum ist +0.10,
+    // nicht negativ wie bei Manhattan. Damit ist jeder richtige Schritt lohnend.
+    reward += static_cast<float>(progress) * 0.10F;
 
     // Proximity-Bonus: jeder Schritt naeher, wenn der Agent < 15 Tiles entfernt ist.
     if(currentDistance <= 15 && progress > 0) {

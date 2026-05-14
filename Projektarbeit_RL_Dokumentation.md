@@ -747,7 +747,125 @@ Observation (239 Features total):
 
 **Bestehende Modelle (135 Features) sind inkompatibel mit Version 1.2 (239 Features)** — vollständiges Neutraining erforderlich.
 
-**50-Seed-Messung:** Ausstehend — nächster Trainingsrun nach Implementierung.
+**50-Seed-Messung (14.05.2026):** 
+
+| Algorithmus | Erfolge | Success Rate | Mittl. Ep.-Länge | Mittl. Return | Datum |
+|---|---|---|---|---|---|
+| DQN (v1.2 baseline) | 3 / 50 | 6.0 % | 1880.5 | −108.37 | 14.05.2026 |
+
+**Analyse:** Gleich schlechte Rate wie Version 0, obwohl Grid-Encoding und Reward korrekt sind.
+**Root Cause:** Curriculum-Bug — Stage 4 (35-45 Tiles) startete erst bei 100% des Trainings (Zeitlimit forced_fraction=1.00). Agent trainierte 91% der Zeit bei 22-35 Tiles, wird aber bei 35-45 Tiles evaluiert. Aktionsverteilung biased: `hoch=41%, rechts=10%` — feste Richtungsneigung statt adaptiver Navigation. Manhattan-Shaping bei 0.02 zu schwach als Lern-Signal; BFS-Shaping fehlt noch.
+
+---
+
+### Version 1.3 — BFS-Distanz + Curriculum-Fix (14.05.2026)
+
+**Problem:** v1.2 Baseline: 6% Success — gleich wie Ausgangszustand. Zwei neue Bugs identifiziert: (1) Curriculum lässt Agent nie bei 35-45 Tiles trainieren; (2) Manhattan-Shaping ist in Labyrinthen falsch.
+
+**Was geändert wurde:**
+
+| Parameter / Datei | Vorher | Nachher | Problem das geloest wurde |
+|---|---|---|---|
+| Reward-Shaping (`simulation.cpp`) | Manhattan +0.02×delta | **BFS +0.10×delta** | Manhattan belohnt falsche Schritte (Richtung Wand, weg von Lücke) |
+| BFS-Distanzfeld (`simulation.cpp`, `simulation.hpp`) | nicht vorhanden | `computeBfsDistances()` 1× pro Episode, O(1) Lookup | Echte Pfadlänge statt Luftlinie |
+| Curriculum Stage 4 `forced_fraction` (`train.py`) | `1.00` (nur am Ende!) | bleibt `1.00` | aber Stage 3 force bei `0.50` statt `0.70` → Stage 4 startet bei 50% |
+| Curriculum Thresholds (`train.py`) | `-4.0 / -18.0 / -35.0` (zu niedrig, trivial erfüllt) | `40.0 / 15.0 / 0.0` (braucht echte Erfolge) | Stages avancierten in 7-9% weil threshold sofort erfüllt |
+| Curriculum Distanzen (`train.py`) | 5-12 / 12-22 / 22-35 / 35-45 | **5-12 / 12-25 / 25-38 / 35-45** | Bessere Abstufung |
+
+**Neue Curriculum-Zeitplanung (bei 1M Steps):**
+
+| Stage | Exit-Distanz | Threshold | force_fraction | Steps |
+|---|---|---|---|---|
+| 1 | 5–12 Tiles | ≥ 40 (~60% Erfolg) | 10 % | 0–100K |
+| 2 | 12–25 Tiles | ≥ 15 (~45% Erfolg) | 25 % | 100–250K |
+| 3 | 25–38 Tiles | ≥ 0 (~35% Erfolg) | 50 % | 250–500K |
+| **4** | **35–45 Tiles** | — (final) | **100 %** | **500K–1M = 50%!** |
+
+**Vollständige neue Reward-Tabelle:**
+
+| Event | Reward | Änderung |
+|---|---|---|
+| Jeder Schritt | −0.01 | unverändert |
+| Neues Tile besucht | +0.02 | unverändert |
+| Idle-Aktion | **−0.05** gesamt | unverändert |
+| Bewegung geblockt | 0 | unverändert (entfernt) |
+| **BFS-Schritt Richtung Exit** | **+0.10 × delta** | neu statt Manhattan 0.02 |
+| Nähe-Bonus (dist ≤ 15, BFS) | +0.05 | unverändert |
+| Exit erreicht | +100.0 | unverändert |
+| Episode fehlgeschlagen | −10.0 | unverändert |
+
+**Warum BFS statt Manhattan:**
+```
+Situation: Exit ist rechts hinter einer Wand, Lücke ist oben.
+
+Mit Manhattan 0.02:
+  Schritt oben (zur Lücke, RICHTIG!): Manhattan steigt → Reward −0.01
+  Schritt rechts (gegen Wand):        Manhattan sinkt → Reward +0.01
+  → Agent lernt: "rechts ist gut" obwohl Wand im Weg ist
+
+Mit BFS 0.10:
+  Schritt oben (zur Lücke, RICHTIG!): BFS sinkt → Reward +0.09
+  Schritt rechts (gegen Wand):        BFS steigt → Reward −0.11
+  → Agent lernt: "oben ist der Weg"   ← korrekt!
+```
+
+**Technische Implementierung BFS:**
+- `computeBfsDistances()`: BFS rückwärts vom Exit, Bounding-Box `[min(spawn,exit)-20, max(spawn,exit)+20]`
+- O(N) einmal pro `reset()`, danach O(1) via `unordered_map<int64_t, int>`
+- Fallback: Manhattan wenn Position außerhalb Suchbereich
+
+**50-Seed-Messung:** Ausstehend — Training gestartet (dqn_run_18+).
+
+---
+
+### Version 1.4 — Stuck-Against-Wall Penalty (14.05.2026)
+
+**Problem:** Detaillierte Verhaltensanalyse zeigt: Agent drückt 93+ Schritte gegen dieselbe Wand, weil -0.01/Schritt den gelernten Q-Wert "rechts" nicht bricht. BFS-Shaping allein reicht nicht — der Agent muss aktiv bestraft werden wenn er stecken bleibt.
+
+**Diagnose (Seed 7000, deterministisch):**
+```
+Steps 1-6:   → (rechts) — exitDx sinkt 35→23, reward=+0.110 ✓  (Agent nähert sich)
+Step 7:      → (rechts) — WAND RECHTS (0.333), reward=-0.010 ✗  (geblockt)
+Steps 8-100: → (rechts) — WAND RECHTS (0.333), reward=-0.010 ✗  (93× stecken!)
+Aktionsverteilung: ↑=0%, ↓=1%, ←=0%, →=99%  ← komplettes Versagen
+```
+
+Der Agent SIEHT die Wand (0.333 rechts), WEISS der Exit ist rechts (exitDx=30), und drückt trotzdem 93× rechts. Ursache: Q(s, rechts) wurde in tausenden offenen Feldern auf "Richtung Exit = gut" trainiert. Dieser Wert überwindet -0.01/Schritt nicht.
+
+**Was geändert wurde:**
+
+| Parameter / Datei | Vorher | Nachher | Problem das gelöst wurde |
+|---|---|---|---|
+| Stuck-Penalty (`simulation.hpp`, `simulation.cpp`) | nicht vorhanden | -0.20/Schritt nach 5 konsekutiven Blocks | Agent drückt unbegrenzt gegen Wände |
+| `consecutiveBlockedSteps_` counter | nicht vorhanden | Reset bei Bewegung, Inkrement bei Block | Zählt wie lange der Agent steckt |
+
+**Reward-Vergleich am Beispiel Wand rechts, Exit rechts:**
+
+| Aktion | Vorher (v1.3) | Nachher (v1.4, nach 5 Blocks) |
+|---|---|---|
+| Rechts (geblockt) | -0.01/Schritt | **-0.21/Schritt** |
+| Unten (Umweg, BFS näher) | +0.09/Schritt | +0.09/Schritt |
+| **Differenz** | 0.10 | **0.30** |
+
+Der Anreiz zum Umweg ist 3× stärker als zuvor. Q-Learning wird erzwungen, "seitlich navigieren wenn geblockt" als klar bessere Option zu lernen.
+
+**Vollständige Reward-Tabelle (v1.4):**
+
+| Event | Reward | Änderung |
+|---|---|---|
+| Jeder Schritt | −0.01 | unverändert |
+| Neues Tile besucht | +0.02 | unverändert |
+| Idle-Aktion | −0.05 gesamt | unverändert |
+| Bewegung geblockt | 0 | unverändert (kein Penalty) |
+| **Stuck (>5 konsekutive Blocks)** | **−0.20 zusätzlich** | **NEU** |
+| BFS-Schritt Richtung Exit | +0.10 × delta | unverändert |
+| Nähe-Bonus (dist ≤ 15, BFS) | +0.05 | unverändert |
+| Exit erreicht | +100.0 | unverändert |
+| Episode fehlgeschlagen | −10.0 | unverändert |
+
+**Training:** `dqn_run_24`, 1.000.000 Steps, Curriculum aktiv (v1.3-Stufen), Start 14.05.2026.
+
+**50-Seed-Messung:** Ausstehend.
 
 ---
 
@@ -1029,6 +1147,219 @@ Neuer Agent (Version 1.2 mit BFS):
 - 200K: Episode variance should emerge (indicating exits found)
 - 300K-400K: Target >-10 reward with variance
 - 600K+: Expect convergence signals toward 70% success
+
+---
+
+---
+
+### Version 1.4 — Stuck-Against-Wall Penalty (14.05.2026)
+
+**Problem:** Agent drückt 93+ Schritte gegen dieselbe Wand. BFS-Shaping allein reicht nicht — Q-Wert "Richtung Exit" überwindet -0.01/Schritt nicht.
+
+| Parameter / Datei | Vorher | Nachher | Problem das gelöst wurde |
+|---|---|---|---|
+| `consecutiveBlockedSteps_` (`simulation.hpp`, `simulation.cpp`) | nicht vorhanden | Counter: +1 bei Block, Reset bei Bewegung | Zählt konsekutive Wandkontakte |
+| Stuck-Penalty (`simulation.cpp` `computeReward()`) | nicht vorhanden | `-0.20` wenn `consecutiveBlockedSteps_ > 5` | Agent drückt unbegrenzt gegen Wände |
+
+**Reward-Tabelle nach v1.4:**
+
+| Event | Reward |
+|---|---|
+| Jeder Schritt | −0.01 |
+| Neues Tile besucht | +0.02 |
+| Idle-Aktion | −0.05 gesamt |
+| **Stuck (>5 Blocks)** | **−0.20 zusätzlich** |
+| BFS-Schritt Richtung Exit | +0.10 × delta |
+| Nähe-Bonus (dist ≤ 15) | +0.05 |
+| Exit erreicht | +100.0 |
+| Episode fehlgeschlagen | −10.0 |
+
+---
+
+### Version 1.5 — Pendel-Penalty / Position-Loop-Erkennung (14.05.2026)
+
+**Problem:** Agent findet Exploit: alterniert ↑↓↑↓ → kein moveBlocked → keine Stuck-Penalty, aber kein Fortschritt.
+
+| Parameter / Datei | Vorher | Nachher | Problem das gelöst wurde |
+|---|---|---|---|
+| `prevPos_`, `prevPrevPos_` (`simulation.hpp`) | nicht vorhanden | 2-Schritt Positionsgedächtnis | Erkennt ↑↓↑↓ Oszillation |
+| `positionLoop_` flag (`simulation.hpp`, `simulation.cpp`) | nicht vorhanden | `true` wenn `player_ == prevPrevPos_ && player_ != prevPos_` | Exaktes 2-Schritt-Loop-Signal |
+| Pendel-Penalty (`computeReward()`) | nicht vorhanden | `−0.15` wenn `positionLoop_ == true` | Alternieren zwischen 2 Positionen wird bestraft |
+
+**Zusatz in `reset()`:** `prevPos_ = player_; prevPrevPos_ = player_; positionLoop_ = false;`
+
+---
+
+### Version 1.6 — Curriculum-Redesign (3 Stufen) + RecurrentPPO (14.05.2026)
+
+**Motivation:** DQN leidet strukturell an Pendel-Verhalten. RecurrentPPO (LSTM-PPO) aus `sb3-contrib` gibt dem Agenten temporales Gedächtnis — er merkt sich die letzten Schritte und kann ↑↓-Pendeln strukturell vermeiden.
+
+**Algorithmus-Änderung:**
+
+| | DQN (alt) | RecurrentPPO (neu) |
+|---|---|---|
+| Paket | `stable-baselines3` | `sb3-contrib` |
+| Policy | `MlpPolicy` | `MlpLstmPolicy` |
+| Gedächtnis | keins (Markov) | LSTM hidden_size=256 |
+| Envs | 1 | 8 parallel |
+| Hauptvorteil | Off-Policy, Replay Buffer | Temporales Gedächtnis |
+
+**Hyperparameter RecurrentPPO:**
+
+| Parameter | Wert | Begründung |
+|---|---|---|
+| `n_steps` | 512 | Rolloutzeitraum pro Env |
+| `batch_size` | 256 | Stabile Gradienten |
+| `n_epochs` | 4 | Standard für PPO |
+| `learning_rate` | 3e-4 | Bewährt |
+| `gamma` | 0.995 | Langer Horizont |
+| `ent_coef` | 0.01 | Exploration erhalten |
+| `lstm_hidden_size` | 256 | Genug Kapazität für ~20 Schritte |
+| `n_lstm_layers` | 1 | Standard |
+| `net_arch` | [256, 256] | Wie DQN |
+
+**Curriculum-Redesign (3 statt 4 Stufen):**
+
+| Stufe | Exit-Distanz | Reward-Threshold | forced_fraction | Anteil Training |
+|---|---|---|---|---|
+| 1 | 5–15 Tiles | ≥ 50.0 | 20% | 0–20% |
+| 2 | 15–30 Tiles | ≥ 15.0 | 40% | 20–40% |
+| 3 | **35–45 Tiles** | — (final) | **40%** | **40–100% (60%!)** |
+
+Stage 3 startet bei 40% → 60% des Trainings auf voller Schwierigkeit.
+
+**Neue Wrapper-Reihenfolge:**
+```
+StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedActionEnv → SymmetryAugmentationWrapper
+```
+
+**Data Augmentation (SymmetryAugmentationWrapper):**
+
+Inspiriert vom ETH-Labyrinth-Paper: Pro Episode wird zufällig LR und/oder UD gespiegelt → effektiv 4× Trainingsdaten.
+
+| Flip | Grid | exitDx/exitDy | PotentialField-Richtungen | Aktionen |
+|---|---|---|---|---|
+| Links/Rechts | Spalten gespiegelt | exitDx negiert | E↔W, NE↔NW, SE↔SW | links↔rechts |
+| Oben/Unten | Zeilen gespiegelt | exitDy negiert | N↔S, NE↔SE, NW↔SW | oben↔unten |
+
+Augmentation nur im Training aktiv (`augment=True`), Eval-Env ohne Augmentation.
+
+**Training `rppo_run_1`:** ~118K Steps erreicht, `ep_rew_mean=69.26`, `ep_len_mean=719`, `explained_variance=0.005`. Training abgebrochen für Visited-Mask-Implementierung.
+
+---
+
+### Version 1.7 — Visited Mask in Observation + Multi-Visit-Penalty (14.05.2026)
+
+**Motivation:** Aus dem PokeRL-Paper (Mudireddy & Patibandla, 2026): Visited Mask als Observation-Channel brachte +40% unique positions, Karten-Coverage von 12% → 41%. Der Agent braucht explizites Gedächtnis "wo war ich schon" — nicht nur implizit über LSTM.
+
+**Technische Implementierung:**
+
+#### C++ Seite (`src/core/simulation.cpp`, `simulation.hpp`)
+
+| Änderung | Details |
+|---|---|
+| `tileVisitCounts_` (`unordered_map<int64_t, int>`) | Zählt Besuche pro Tile diese Episode |
+| `reset()` | `tileVisitCounts_.clear()` |
+| `step()` | `tileVisitCounts_[tileKey]++` nach Bewegung |
+| `getObservation()` | Appended 225 binäre Werte an `obs.grid`: `1` wenn Tile besucht, `0` sonst |
+| `observationSize()` | `2 * side*side + 5 = 455` (war `side*side + 5 = 230`) |
+| `computeReward()` | Neuer Parameter `int visitCount`, Multi-Visit-Penalty |
+
+#### Multi-Visit-Penalty in `computeReward()`:
+
+| visitCount | Penalty |
+|---|---|
+| ≤ 3 | keine |
+| > 3 | −0.05 (nach Abschwächung: −0.02) |
+| > 5 | −0.15 (nach Abschwächung: −0.05) |
+
+#### Python Seite (`python/stoneforge_env.py`)
+
+**Neue Observation-Struktur (464 Features nach ExitPotentialFieldWrapper):**
+
+```
+grid(225) | visited_mask(225) | hp | energy | inventory | exitDx | exitDy | field(8) | proximity(1)
+  idx 0         idx 225        450   451       452        453      454      455-462     463
+```
+
+**Normalisierung fix (war `n_grid = len(out) - 5`, jetzt explizite Indizes):**
+- `out[:225] /= 30.0` — Grid
+- `out[225:450]` — Visited Mask: bereits binär, keine Normalisierung
+- `out[450:455]` — Skalare mit expliziten Divisoren
+
+**SymmetryAugmentationWrapper:** Visited Mask wird ebenfalls korrekt LR/UD gespiegelt (wie Grid).
+
+**Observation wächst:** 239 → 464 Features. Alle alten Modelle inkompatibel.
+
+#### Trainingsergebnisse `rppo_run_2` (464 Features, ursprüngliche Penalty):
+
+| Metrik | Wert | Bewertung |
+|---|---|---|
+| `ep_rew_mean` | −150 bis −165 | ⚠️ Stagniert ab 80K bis 303K Steps |
+| `ep_len_mean` | ~1.650 Steps | ⚠️ Zu lang für Stage 1 (5–15 Tiles) |
+| `explained_variance` | 0.722 | ✅ Value-Head lernt gut |
+| `eval/mean_reward` | −707 → −655 | ⚠️ Sehr negativ |
+
+**Problem:** Multi-Visit-Penalty zu aggressiv (−0.15 bei >5 Besuchen). Solange LSTM noch random exploriert, revisitiert Agent viele Tiles → massive Strafpunkte → Lern-Kollaps.
+
+---
+
+### Version 1.8 — Multi-Visit-Penalty abgeschwächt (14.05.2026)
+
+**Problem:** `rppo_run_2` stagniert bei `ep_rew_mean ≈ −155` für 220K Steps ohne Verbesserung. Die ursprüngliche Penalty (>5: −0.15) ist zu aggressiv für die LSTM-Lernphase.
+
+**Änderung in `src/core/simulation.cpp` → `computeReward()`:**
+
+| Penalty | Vorher (v1.7) | Nachher (v1.8) | Begründung |
+|---|---|---|---|
+| visitCount > 3 | −0.05 | **−0.02** | Sanfter Gradient — reicht als Hinweis |
+| visitCount > 5 | −0.15 | **−0.05** | Kein Lern-Kollaps mehr möglich |
+
+**Vollständige Reward-Tabelle (v1.8, aktuell):**
+
+| Event | Reward |
+|---|---|
+| Jeder Schritt | −0.01 |
+| Neues Tile besucht | +0.02 |
+| Idle-Aktion | −0.05 gesamt |
+| Stuck (>5 konsekutive Blocks) | −0.20 |
+| Multi-Visit (visitCount > 3) | −0.02 |
+| Multi-Visit (visitCount > 5) | −0.05 zusätzlich |
+| Pendel-Loop (↑↓↑↓) | −0.15 |
+| BFS-Schritt Richtung Exit | +0.10 × delta |
+| Nähe-Bonus (dist ≤ 15, BFS) | +0.05 |
+| Exit erreicht | +100.0 |
+| Episode fehlgeschlagen | −10.0 |
+
+**Aktuelle vollständige Architektur (v1.8):**
+
+```
+StoneforgeWorldEnv (455 Features roh)
+  → ExitPotentialFieldWrapper (+9 = 464 Features)
+  → ReducedActionEnv (4 Aktionen: hoch/runter/links/rechts)
+  → SymmetryAugmentationWrapper (LR/UD Flip, 4× Daten)
+
+Observation (464 Features):
+  [0:225]    Grid 15×15 (passierbarkeitsbasiert: 0/0.333/0.5/0.667/1.0)
+  [225:450]  Visited Mask 15×15 (binär: 1=besucht, 0=nicht besucht)
+  [450]      HP / 10
+  [451]      Energy / 100
+  [452]      Inventory / 24
+  [453]      exitDx / 128
+  [454]      exitDy / 128
+  [455:463]  8 Potential-Field-Richtungen
+  [463]      Proximity zum Exit
+
+Algorithmus: RecurrentPPO (LSTM-PPO, sb3-contrib)
+  LSTM hidden_size=256, 8 parallele Envs, net_arch=[256,256]
+
+Curriculum (3 Stufen):
+  0–20%:  5–15 Tiles (Stage 1)
+  20–40%: 15–30 Tiles (Stage 2)
+  40–100%: 35–45 Tiles (Stage 3, 60% des Trainings!)
+```
+
+**Training `rppo_run_3` (v1.8):** Gestartet 14.05.2026, PID 27025. Ergebnisse ausstehend.
 
 ---
 

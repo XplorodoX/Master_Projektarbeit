@@ -10,6 +10,7 @@ from typing import Optional
 
 import numpy as np
 from stable_baselines3 import DQN, PPO
+from sb3_contrib import RecurrentPPO
 
 from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
 
@@ -102,12 +103,13 @@ def _ensure_game_binary() -> Optional[str]:
 
 
 def load_model(path: str):
-    try:
-        model = PPO.load(path)
-        return model, True
-    except Exception:
-        model = DQN.load(path)
-        return model, True  # bestes Modell → immer deterministisch
+    for cls in (RecurrentPPO, PPO, DQN):
+        try:
+            model = cls.load(path)
+            return model, True
+        except Exception:
+            continue
+    raise ValueError(f"Konnte Modell nicht laden: {path}")
 
 
 def sanitize_action(action: int) -> int:

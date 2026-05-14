@@ -33,6 +33,23 @@ _FIELD_ANGLES = np.linspace(0.0, 2.0 * np.pi, 8, endpoint=False)
 _FIELD_COS = np.cos(_FIELD_ANGLES).astype(np.float32)
 _FIELD_SIN = np.sin(_FIELD_ANGLES).astype(np.float32)
 
+# Permutation indices for potential-field direction samples under symmetry flips.
+# Directions in order: E(0°), NE(45°), N(90°), NW(135°), W(180°), SW(225°), S(270°), SE(315°)
+_LR_FLIP_DIRS = np.array([4, 3, 2, 1, 0, 7, 6, 5], dtype=int)  # negate x: E↔W, NE↔NW, SE↔SW
+_UD_FLIP_DIRS = np.array([0, 7, 6, 5, 4, 3, 2, 1], dtype=int)  # negate y: NE↔SE, N↔S, NW↔SW
+
+_GRID_SIDE = 15        # observationRadius=7 → side=15
+_N_GRID = _GRID_SIDE * _GRID_SIDE  # 225
+_N_VISITED = _N_GRID                # 225 — visited mask gleiche Größe wie Grid
+
+# Observation-Layout (464 Features nach ExitPotentialFieldWrapper):
+#   grid(225) | visited_mask(225) | hp | energy | inventory | exitDx | exitDy | field(8) | proximity
+# exitDx/exitDy Indizes in der vollen 464-Feature-Observation.
+_IDX_VISITED_START = _N_GRID                     # 225
+_IDX_DX = _N_GRID + _N_VISITED + 3              # 453
+_IDX_DY = _N_GRID + _N_VISITED + 4              # 454
+_IDX_FIELD_START = _N_GRID + _N_VISITED + 5     # 455 — erster von 8 Richtungssamples
+
 
 @dataclass
 class StoneforgeConfig:
@@ -77,19 +94,18 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
     def _normalize_observation(self, obs: np.ndarray) -> np.ndarray:
         out = obs.astype(np.float32, copy=True)
 
-        # Grid: 0=Luft, 1-6=Tile-Typen, 20=Mob, 30=Spieler → [0, 1]
-        # Ohne Normalisierung sieht das Netz den Spieler (30) als 30× wichtiger
-        # als eine leere Kachel (0), obwohl die Werte kategorisch sind.
-        n_grid = len(out) - 5
-        out[:n_grid] /= self._GRID_MAX
+        # Grid (0=floor, 10=wall, 15=exit, 20=mob, 30=player) → /30 → [0, 1]
+        out[:_N_GRID] /= self._GRID_MAX
 
-        # Skalare normalisieren → alle in [0, 1]
-        out[-5] /= self._HP_MAX       # hp
-        out[-4] /= self._ENERGY_MAX   # energy
-        out[-3] /= self._INVENTORY_MAX  # inventory
+        # Visited mask [225:450] ist bereits binär 0/1 — keine Normalisierung nötig.
 
-        # Zielrichtung: exitDx und exitDy in Tiles → /128 fuer [-1, 1]
-        out[-2:] /= 128.0
+        # Skalare an fixen Positionen nach grid + visited_mask
+        _BASE = _N_GRID + _N_VISITED  # 450
+        out[_BASE] /= self._HP_MAX
+        out[_BASE + 1] /= self._ENERGY_MAX
+        out[_BASE + 2] /= self._INVENTORY_MAX
+        out[_BASE + 3] /= 128.0   # exitDx
+        out[_BASE + 4] /= 128.0   # exitDy
         return out
 
     def set_curriculum_stage(self, *, exit_min_distance: int, exit_max_distance: int,
@@ -192,3 +208,73 @@ class ExitPotentialFieldWrapper(gym.ObservationWrapper):
 
         extra = np.append(field_samples, proximity)
         return np.concatenate([obs, extra])
+
+
+class SymmetryAugmentationWrapper(gym.Wrapper):
+    """Spiegelt Observation und Aktion zufällig — analog zur ETH-Labyrinth-Paper Methode.
+
+    Augmentierung wird einmal pro Episode bei reset() gewürfelt und dann
+    für alle Steps dieser Episode konstant gehalten.  Das ergibt effektiv
+    4× mehr Trainingsdaten ohne neue Simulator-Calls:
+      - Original
+      - Links/Rechts gespiegelt  (exitDx negiert, Grid-Spalten, Aktionen ←↔→)
+      - Oben/Unten gespiegelt    (exitDy negiert, Grid-Zeilen,  Aktionen ↑↔↓)
+      - Beide kombiniert
+
+    Nur für Training aktiv (augment=True).  Eval-Env bekommt augment=False.
+    """
+
+    def __init__(self, env: gym.Env, augment: bool = True) -> None:
+        super().__init__(env)
+        self._augment = augment
+        self._flip_lr = False
+        self._flip_ud = False
+
+    def reset(self, **kwargs: Any):
+        obs, info = self.env.reset(**kwargs)
+        if self._augment:
+            self._flip_lr = bool(np.random.randint(2))
+            self._flip_ud = bool(np.random.randint(2))
+        else:
+            self._flip_lr = False
+            self._flip_ud = False
+        return self._transform_obs(obs), info
+
+    def step(self, action: int):
+        real_action = self._untransform_action(int(action))
+        obs, reward, terminated, truncated, info = self.env.step(real_action)
+        return self._transform_obs(obs), reward, terminated, truncated, info
+
+    def _transform_obs(self, obs: np.ndarray) -> np.ndarray:
+        if not self._flip_lr and not self._flip_ud:
+            return obs
+        obs = obs.copy()
+        grid = obs[:_N_GRID].reshape(_GRID_SIDE, _GRID_SIDE)
+        visited = obs[_IDX_VISITED_START:_IDX_VISITED_START + _N_VISITED].reshape(_GRID_SIDE, _GRID_SIDE)
+        if self._flip_lr:
+            grid = grid[:, ::-1]
+            visited = visited[:, ::-1]
+            obs[_IDX_DX] = -obs[_IDX_DX]
+            obs[_IDX_FIELD_START:_IDX_FIELD_START + 8] = \
+                obs[_IDX_FIELD_START:_IDX_FIELD_START + 8][_LR_FLIP_DIRS]
+        if self._flip_ud:
+            grid = grid[::-1, :]
+            visited = visited[::-1, :]
+            obs[_IDX_DY] = -obs[_IDX_DY]
+            obs[_IDX_FIELD_START:_IDX_FIELD_START + 8] = \
+                obs[_IDX_FIELD_START:_IDX_FIELD_START + 8][_UD_FLIP_DIRS]
+        obs[:_N_GRID] = grid.flatten()
+        obs[_IDX_VISITED_START:_IDX_VISITED_START + _N_VISITED] = visited.flatten()
+        return obs
+
+    # Actions: 0=up, 1=down, 2=left, 3=right (ReducedActionEnv-Raum)
+    def _untransform_action(self, action: int) -> int:
+        if self._flip_lr and action == 2:
+            action = 3
+        elif self._flip_lr and action == 3:
+            action = 2
+        if self._flip_ud and action == 0:
+            action = 1
+        elif self._flip_ud and action == 1:
+            action = 0
+        return action
