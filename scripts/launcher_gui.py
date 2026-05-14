@@ -1170,33 +1170,66 @@ class App(tk.Tk):
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
             return
-        script = (
-            "import numpy as np\n"
-            "from stable_baselines3 import PPO, DQN\n"
-            "from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv\n"
-            "seeds=list(range(7000,7050))\n"
-            f"path={repr(model)}\n"
-            # Monster aus, Distanz 35-45 (volle Schwierigkeit) — identisch mit Eval-Env im Training
-            "cfg=StoneforgeConfig(disable_mobs=True)\n"
-            "make_env=lambda: ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg))\n"
-            "try:\n"
-            "    model=PPO.load(path); name='PPO'\n"
-            "except Exception:\n"
-            "    model=DQN.load(path); name='DQN'\n"
-            "env=make_env(); succ,lens,rets=0,[],[]\n"
-            "for i,seed in enumerate(seeds):\n"
-            "    obs,_=env.reset(seed=seed); done=False; ep=0.0; n=0; ok=False\n"
-            "    while not done and n<4000:\n"
-            "        a,_=model.predict(obs,deterministic=True)\n"
-            "        a=7 if int(a)==4 else int(a)\n"  # Mining blockieren
-            "        obs,r,t,tr,info=env.step(a); ep+=r; n+=1\n"
-            "        if info.get('reached_exit'): ok=True\n"
-            "        done=t or tr\n"
-            "    succ+=int(ok); lens.append(n); rets.append(ep)\n"
-            "    status='OK' if ok else 'FAIL'\n"
-            "    print(f'SEED_RESULT {i+1} {status} {n} {ep:.2f}', flush=True)\n"
-            "print(f'EVAL_FINAL {name} {succ} {np.mean(lens):.0f} {np.mean(rets):.2f}', flush=True)\n"
-        )
+        script = f"""\
+import numpy as np
+from stable_baselines3 import PPO, DQN
+try:
+    from sb3_contrib import RecurrentPPO
+except ImportError:
+    RecurrentPPO = None
+from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
+
+seeds = list(range(7000, 7050))
+path = {repr(model)}
+cfg = StoneforgeConfig(disable_mobs=True)
+env = ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg))
+
+model = None
+name = None
+is_recurrent = False
+if RecurrentPPO is not None:
+    try:
+        model = RecurrentPPO.load(path)
+        name = 'RPPO'
+        is_recurrent = True
+    except Exception:
+        pass
+if model is None:
+    try:
+        model = PPO.load(path)
+        name = 'PPO'
+    except Exception:
+        pass
+if model is None:
+    model = DQN.load(path)
+    name = 'DQN'
+
+succ, lens, rets = 0, [], []
+for i, seed in enumerate(seeds):
+    obs, _ = env.reset(seed=seed)
+    done = False; ep = 0.0; n = 0; ok = False
+    lstm_states = None
+    episode_starts = np.ones((1,), dtype=bool)
+    while not done and n < 4000:
+        if is_recurrent:
+            a, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
+            episode_starts = np.zeros((1,), dtype=bool)
+        else:
+            a, _ = model.predict(obs, deterministic=True)
+        a = 7 if int(a) == 4 else int(a)
+        obs, r, t, tr, info = env.step(a)
+        ep += r; n += 1
+        if info.get('reached_exit'):
+            ok = True
+        done = t or tr
+        if done:
+            lstm_states = None
+            episode_starts = np.ones((1,), dtype=bool)
+    succ += int(ok); lens.append(n); rets.append(ep)
+    status = 'OK' if ok else 'FAIL'
+    print(f'SEED_RESULT {{i+1}} {{status}} {{n}} {{ep:.2f}}', flush=True)
+print(f'EVAL_FINAL {{name}} {{succ}} {{np.mean(lens):.0f}} {{np.mean(rets):.2f}}', flush=True)
+"""
         self._eval_seeds_done = 0
         with tempfile.NamedTemporaryFile("w", suffix="_stoneforge_eval.py", delete=False,
                                          encoding="utf-8", newline="\n") as tmp:

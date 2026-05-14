@@ -142,6 +142,9 @@ def run_single(model_path: str, seed: int, speed: float, disable_mobs: bool = Tr
     time.sleep(1.5)
     step_delay = 0.1 / speed
 
+    lstm_states = None
+    episode_starts = np.ones((1,), dtype=bool)
+
     try:
         while game.poll() is None:
             # Adapt observation to model's expected shape (trim or pad)
@@ -154,13 +157,21 @@ def run_single(model_path: str, seed: int, speed: float, disable_mobs: bool = Tr
             else:
                 use_obs = obs
 
-            action, _ = model.predict(use_obs, deterministic=deterministic)
+            action, lstm_states = model.predict(
+                use_obs,
+                state=lstm_states,
+                episode_start=episode_starts,
+                deterministic=deterministic,
+            )
+            episode_starts = np.zeros((1,), dtype=bool)
             safe_action = sanitize_action(int(action))
             game.stdin.write(f"{safe_action}\n")
             game.stdin.flush()
             obs, _r, terminated, truncated, _ = env.step(safe_action)
             if terminated or truncated:
                 obs, _ = env.reset(seed=seed)
+                lstm_states = None
+                episode_starts = np.ones((1,), dtype=bool)
             time.sleep(step_delay)
     except (BrokenPipeError, KeyboardInterrupt):
         pass
@@ -197,13 +208,18 @@ def run_dual(model1_path: str, model2_path: str, seed: int, speed: float,
     time.sleep(1.5)
     step_delay = 0.1 / speed
 
-    try:
-        # Prepare expected shapes for both models
-        exp1 = getattr(model1, "observation_space", None)
-        exp2 = getattr(model2, "observation_space", None)
-        s1 = tuple(exp1.shape) if exp1 is not None else obs1.shape
-        s2 = tuple(exp2.shape) if exp2 is not None else obs2.shape
+    # Prepare expected shapes for both models
+    exp1 = getattr(model1, "observation_space", None)
+    exp2 = getattr(model2, "observation_space", None)
+    s1 = tuple(exp1.shape) if exp1 is not None else obs1.shape
+    s2 = tuple(exp2.shape) if exp2 is not None else obs2.shape
 
+    lstm1 = None
+    lstm2 = None
+    ep_start1 = np.ones((1,), dtype=bool)
+    ep_start2 = np.ones((1,), dtype=bool)
+
+    try:
         while game.poll() is None:
             # Adapt obs1
             if obs1.shape != s1:
@@ -225,8 +241,10 @@ def run_dual(model1_path: str, model2_path: str, seed: int, speed: float,
             else:
                 in2 = obs2
 
-            a1, _ = model1.predict(in1, deterministic=det1)
-            a2, _ = model2.predict(in2, deterministic=det2)
+            a1, lstm1 = model1.predict(in1, state=lstm1, episode_start=ep_start1, deterministic=det1)
+            a2, lstm2 = model2.predict(in2, state=lstm2, episode_start=ep_start2, deterministic=det2)
+            ep_start1 = np.zeros((1,), dtype=bool)
+            ep_start2 = np.zeros((1,), dtype=bool)
             safe_a1 = sanitize_action(int(a1))
             safe_a2 = sanitize_action(int(a2))
 
@@ -237,8 +255,12 @@ def run_dual(model1_path: str, model2_path: str, seed: int, speed: float,
             obs2, _r, t2, tr2, _ = env2.step(safe_a2)
             if t1 or tr1:
                 obs1, _ = env1.reset(seed=seed)
+                lstm1 = None
+                ep_start1 = np.ones((1,), dtype=bool)
             if t2 or tr2:
                 obs2, _ = env2.reset(seed=seed)
+                lstm2 = None
+                ep_start2 = np.ones((1,), dtype=bool)
 
             time.sleep(step_delay)
     except (BrokenPipeError, KeyboardInterrupt):

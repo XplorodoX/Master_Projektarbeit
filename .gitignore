@@ -23,3 +23,6 @@ python/*.so
 
 ppo_stoneforge_model.zip
 dqn_stoneforge_model.zip
+
+build/
+build_validation/

@@ -1430,10 +1430,10 @@ void Simulation::rebuildMobSpatialIndex() {
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
                                 bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {
-    float reward = -0.01F;
+    float reward = -0.02F;
 
     if(newTileVisited) {
-        reward += 0.02F;
+        reward += 0.01F;
     }
 
     // Idle staerker bestrafen als Bewegung — Agent soll sich immer bewegen.
@@ -1446,27 +1446,10 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)moveBlocked;
 
-    // Multi-Visit-Penalty: Tile das mehr als 3x besucht wurde deutet auf Loop hin.
-    // Abgeschwächt: -0.02 bei >3, -0.05 bei >5 — sanfter Gradient ohne Lern-Kollaps.
-    if(visitCount > 5) {
-        reward -= 0.05F;
-    } else if(visitCount > 3) {
-        reward -= 0.02F;
-    }
-
-    // Pendel-Penalty: Agent wechselt zwischen 2 Positionen hin und her.
-    // Ohne diese Penalty umgeht er die Stuck-Penalty durch Alternieren (↑↓↑↓).
-    if(positionLoop_) {
-        reward -= 0.15F;
-    }
-
-    // Stuck-Penalty: nach 5 konsekutiven Blocks eskaliert die Strafe.
-    // Ohne diese Penalty drückt der Agent 90+ Schritte gegen dieselbe Wand,
-    // weil -0.01/Schritt den Q-Wert "rechts" (gelernt in offenen Feldern) nicht bricht.
-    // Mit -0.20 nach 5 Blocks lohnt sich der Umweg definitiv mehr.
-    if(consecutiveBlockedSteps_ > 5) {
-        reward -= 0.20F;
-    }
+    // Multi-Visit-, Pendel- und Stuck-Penalties entfernt (v2.0 / rppo_run_5).
+    // Ersatz: RND-Wrapper in Python liefert intrinsischen Bonus für neue Zustände —
+    // der Agent meidet Loops strukturell durch sinkenden Novelty-Bonus, nicht durch Strafe.
+    (void)visitCount;
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
@@ -1478,14 +1461,14 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    // BFS-Shaping: +0.10 pro echtem Pfad-Schritt Richtung Exit.
-    // BFS ist korrekt in Labyrinthen — ein Schritt um die Ecke herum ist +0.10,
-    // nicht negativ wie bei Manhattan. Damit ist jeder richtige Schritt lohnend.
-    reward += static_cast<float>(progress) * 0.10F;
+    // BFS-Shaping: +0.50 pro echtem Pfad-Schritt Richtung Exit (rppo_run_4 BFS-Boost).
+    // Erhöht von 0.30 auf 0.50 damit der Richtungsgradient die Exploration-Rewards
+    // klar dominiert — Agent soll gezielt zum Exit laufen statt Tiles zu sammeln.
+    reward += static_cast<float>(progress) * 0.50F;
 
-    // Proximity-Bonus: jeder Schritt naeher, wenn der Agent < 15 Tiles entfernt ist.
+    // Proximity-Bonus: verstärkt auf 0.25 wenn Agent < 15 Tiles entfernt ist.
     if(currentDistance <= 15 && progress > 0) {
-        reward += 0.05F;
+        reward += 0.25F;
     }
 
     if(reachedExit) {

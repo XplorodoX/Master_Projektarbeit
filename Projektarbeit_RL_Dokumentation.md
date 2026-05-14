@@ -1359,7 +1359,94 @@ Curriculum (3 Stufen):
   40–100%: 35–45 Tiles (Stage 3, 60% des Trainings!)
 ```
 
-**Training `rppo_run_3` (v1.8):** Gestartet 14.05.2026, PID 27025. Ergebnisse ausstehend.
+**Training `rppo_run_3` (v1.8):** Gestartet 14.05.2026, PID 27025. Ergebnis: 2% Success Rate (1/50), ep_len_mean=1962 Steps — Agent hat lokales Optimum gefunden (Exploration-Farming statt Navigation).
+
+---
+
+### Version 1.9 — BFS-Boost (14.05.2026)
+
+**Problem:** `rppo_run_3` erreicht 2% Success Rate mit exakt 1962 Steps Episodenlänge. Der Agent stirbt nicht und wird nicht stuck — er wandert komfortabel und sammelt Exploration-Rewards (+0.005 neue Tiles), bis maxSteps abläuft. Der BFS-Gradient (+0.30) wird von der Exploration-Strategie unterboten.
+
+**Diagnose:** Der Reward für "zum Exit laufen" (+0.30 × delta) konkurriert noch mit dem Reward für "neue Tiles entdecken" (+0.005). Bei 1962 Steps á durchschnittlich 0.5 neuen Tiles = ~40 Punkte Exploration vs. BFS-Gradient. Der Agent hat kein "Druck" zum Exit.
+
+**Lösung:** Reward-Balance massiv zugunsten BFS-Navigation verschieben.
+
+**Änderungen in `src/core/simulation.cpp` → `computeReward()`:**
+
+| Event | Vorher (v1.8) | Nachher (v1.9) | Begründung |
+|---|---|---|---|
+| Jeder Schritt | −0.01 | **−0.02** | Zeitstrafe verdoppelt — "Zeit absitzen" kostet mehr |
+| Neues Tile besucht | +0.005 | **+0.01** | Exploration halbiert — kein Farming-Anreiz mehr |
+| BFS-Schritt Richtung Exit | +0.30 × delta | **+0.50 × delta** | 5× stärker — überstrahlt Exploration-Bonus komplett |
+| Nähe-Bonus (dist ≤ 15) | +0.05 | **+0.25** | Ziel "saugt" den Agent an wenn er nah ist |
+
+**Vollständige Reward-Tabelle (v1.9):**
+
+| Event | Reward |
+|---|---|
+| Jeder Schritt | −0.02 |
+| Neues Tile besucht | +0.01 |
+| Idle-Aktion | −0.05 gesamt |
+| Stuck (>5 konsekutive Blocks) | −0.20 |
+| Multi-Visit (visitCount > 3) | −0.02 |
+| Multi-Visit (visitCount > 5) | −0.05 zusätzlich |
+| Pendel-Loop (↑↓↑↓) | −0.15 |
+| BFS-Schritt Richtung Exit | +0.50 × delta |
+| Nähe-Bonus (dist ≤ 15, BFS) | +0.25 |
+| Exit erreicht | +100.0 |
+| Episode fehlgeschlagen | −10.0 |
+
+**Erwartetes Signal (erste 200K Steps):**
+- `ep_len_mean` muss von ~1962 abfallen → Agent findet Exit früher
+- `ep_rew_mean` sollte durch 5× BFS-Faktor deutlich positiver werden
+- Falls `ep_len_mean` nach 150K Steps noch auf 1962 → Problem ist Observation/Architektur, nicht Motivation
+
+**Training `rppo_run_4` (v1.9):** Gestartet 14.05.2026, PID 2188.
+
+| Algorithmus | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return | Datum |
+|-------------|---------|--------------|----------------------|---------------|-------|
+| RecurrentPPO (rppo_run_4) | 0 / 50 | 0.0 % | 1962.0 | −179.98 | 14.05.2026 |
+
+**Befund:** Training-Metriken verbesserten sich deutlich (ep_rew_mean: −139 → +17, ep_len_mean: 1962 → 1200 auf Curriculum-Stufen 1/2), aber kein Transfer auf die Evaluationsaufgabe (Seeds 7000–7049, 35–45 Tiles). Der Agent hat auf kurzen Distanzen (Stage 1: 5–15 Tiles) gelernt, generalisiert aber nicht auf die volle Schwierigkeit. **Generalisierungsproblem gesichert.**
+
+---
+
+---
+
+### Version 2.0 — RND (Random Network Distillation) statt harter Penalties (14.05.2026)
+
+**Motivation:** rppo_run_3 und rppo_run_4 zeigen 0% Success Rate auf dem Standardeval trotz positiver Training-Metriken. Kernproblem: Der Agent generalisiert nicht von Curriculum-Stufe 1/2 auf die volle Distanz (35–45 Tiles). Explizite Penalties (Multi-Visit, Stuck, Pendel) haben keinen nachhaltigen Trainings-Fortschritt erzeugt.
+
+**Lösung:** RND (Burda et al., 2018) als intrinsische Motivation — kein manuelles Penalty-Shaping mehr.
+
+**Technische Implementierung:**
+
+Neues Modul `python/rnd_wrapper.py`:
+- **Target-Netz:** Fixiertes MLP (input→128→128→64), nie aktualisiert
+- **Predictor-Netz:** Gleiches MLP, wird während Training trainiert
+- **Intrinsischer Reward:** `intrinsic_scale × (MSE / running_std)` — normalisiert
+- **Update-Rate:** 25% der Schritte (`update_proportion=0.25`) — verhindert sofortiges Auswendiglernen
+- **`intrinsic_scale=0.5`** — entspricht ~1 BFS-Schritt → balancierter Anreiz
+
+**Änderungen in `src/core/simulation.cpp` → `computeReward()`:**
+
+| Entfernt | Begründung |
+|---|---|
+| Multi-Visit-Penalty (−0.02 / −0.05) | RND reduziert Bonus für bekannte Tiles strukturell |
+| Pendel-Penalty (−0.15) | RND: ↑↓-Zustände werden nach wenigen Zyklen "bekannt" |
+| Stuck-Penalty (−0.20) | RND: Wände werden nach Exploration uninteressant |
+
+**Wrapper-Stack (v2.0):**
+```
+StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedActionEnv → RNDWrapper → SymmetryAugmentationWrapper
+```
+
+**Starten mit:**
+```bash
+python train.py --algo rppo --timesteps 1000000 --rnd
+```
+
+**Training `rppo_run_5` (v2.0):** Gestartet 14.05.2026, PID 7241. Ergebnisse ausstehend.
 
 ---
 

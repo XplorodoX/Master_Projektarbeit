@@ -15,6 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 from sb3_contrib import RecurrentPPO
 
 from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv, SymmetryAugmentationWrapper
+from rnd_wrapper import RNDWrapper
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -54,7 +55,7 @@ class ReducedActionEnv(gym.ActionWrapper):
         return self._ACTION_MAP[int(action)]
 
 
-def make_env(disable_mobs: bool = True, eval_mode: bool = False) -> gym.Env:
+def make_env(disable_mobs: bool = True, eval_mode: bool = False, use_rnd: bool = False) -> gym.Env:
     if eval_mode:
         # Eval immer bei voller Schwierigkeit (35-45 Tiles) — misst echten Fortschritt.
         cfg = StoneforgeConfig(disable_mobs=disable_mobs)
@@ -68,6 +69,8 @@ def make_env(disable_mobs: bool = True, eval_mode: bool = False) -> gym.Env:
             exit_max_distance=_CURRICULUM_STAGES[0][1],
         )
         base = ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
+        if use_rnd:
+            base = RNDWrapper(base, intrinsic_scale=0.5, update_proportion=0.25)
         return SymmetryAugmentationWrapper(base, augment=True)
 
 
@@ -170,18 +173,22 @@ def main() -> None:
                         help="Curriculum Learning deaktivieren (direkt volle Distanz)")
     parser.add_argument("--monsters", action="store_true",
                         help="Monster aktivieren (Standard: deaktiviert fuer sauberes Navigationstraining)")
+    parser.add_argument("--rnd", action="store_true",
+                        help="RND (Random Network Distillation) intrinsische Motivation aktivieren")
     args = parser.parse_args()
 
     _rebuild_sim()
 
     disable_mobs = not args.monsters
+    use_rnd = args.rnd
     print(f"Starte Training mit {args.algo.upper()} für {args.timesteps:,} Steps...")
     print(f"Monster: {'AN' if args.monsters else 'AUS (--monsters zum Aktivieren)'}")
+    print(f"RND: {'AN (intrinsic_scale=0.5)' if use_rnd else 'AUS (--rnd zum Aktivieren)'}")
     if not args.no_curriculum:
         print("Curriculum Learning: leistungsbasiert (4 Stufen)")
 
-    n_envs = 8 if args.algo in ("ppo", "rppo") else 1
-    env = make_vec_env(lambda: make_env(disable_mobs=disable_mobs), n_envs=n_envs)
+    n_envs = 4 if args.algo == "rppo" else (8 if args.algo == "ppo" else 1)
+    env = make_vec_env(lambda: make_env(disable_mobs=disable_mobs, use_rnd=use_rnd), n_envs=n_envs)
 
     best_model_path = f"./best_models_{args.algo}/"
 
