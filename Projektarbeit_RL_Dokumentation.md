@@ -682,8 +682,8 @@ Welt-Seed → StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedAction
                                                                        ↓
                                                               4 Aktionen: hoch/runter/links/rechts
                                                               
-Observation (135 Features total):
-  - 225 Grid-Zellen (15×15, normalisiert /30)
+Observation (239 Features total):
+  - 225 Grid-Zellen (15×15, normalisiert /30) — observationRadius=7
   - HP (normalisiert /10)
   - Energy (normalisiert /100)
   - Inventory (normalisiert /24)
@@ -701,6 +701,53 @@ Observation (135 Features total):
 | 4 | 35–45 Tiles | — (Finale) | 100 % | Volle Schwierigkeit |
 
 **Noch keine neue 50-Seed-Messung** — nächster Trainingsrun wird die Wirkung aller Verbesserungen zeigen.
+
+---
+
+### Version 1.2 — Grid-Encoding + Reward-Fix + observationRadius (14.05.2026)
+
+**Problem:** Agent fror ein — stand still oder wanderte sinnlos. Drei strukturelle Bugs identifiziert (siehe Abschnitt 6g).
+
+**Was geändert wurde:**
+
+| Parameter / Datei | Vorher | Nachher | Problem das geloest wurde |
+|---|---|---|---|
+| Grid-Encoding (`simulation.cpp` `getObservation()`) | Roher TileType (0,1,2,3,4...) | Passierbarkeit (0=frei, 10=Wand, 15=Exit, 20=Mob, 30=Player) | Exit (3) war kleiner als manche Wände (4,5,6) → Netz verwirrend |
+| `moveBlocked`-Penalty (`simulation.cpp`) | `-0.05` | `0` (entfernt) | Hauptursache des Einfrierens: alle Richtungen negativ → idle optimal |
+| Manhattan-Shaping (`simulation.cpp`) | `+0.15 × delta` | `+0.02 × delta` | Potential-Field übernimmt Richtungsführung; Manhattan bei Labyrinthen falsch |
+| Idle-Penalty (`simulation.cpp`) | `-0.02` extra | `-0.04` extra | Jede Bewegung besser als stehen — auch ohne Fortschritt |
+| `observationRadius` (`game_config.json`) | 5 (11×11=121) | 7 (15×15=225) | Agent sieht Wand-Lücken früher |
+| Obs-Größe (gesamt) | 135 Features | 239 Features | Folge der Radius-Änderung |
+
+**Vollständige neue Reward-Tabelle:**
+
+| Event | Reward | Änderung |
+|---|---|---|
+| Jeder Schritt | −0.01 | unverändert |
+| Neues Tile besucht | +0.02 | unverändert |
+| Idle-Aktion (Warten) | **−0.05** gesamt | verschärft |
+| Bewegung geblockt | **0** | entfernt |
+| Schaden erhalten | −0.5 pro HP | unverändert |
+| Mob getötet | +2.0 | unverändert |
+| Exit freigeschaltet | +5.0 | unverändert |
+| Schritt näher am Exit | **+0.02 × delta** | reduziert von 0.15 |
+| Nähe-Bonus (dist ≤ 15, näher) | +0.05 | unverändert |
+| Exit erreicht | +100.0 | unverändert |
+| Episode fehlgeschlagen | −10.0 | unverändert |
+
+**Grid-Encoding nach Version 1.2:**
+
+| Semantic | Wert (roh) | Wert nach /30 |
+|---|---|---|
+| Passierbar (Luft/Boden) | 0 | 0.000 |
+| Wand / Hindernis | 10 | 0.333 |
+| Exit (Ziel) | 15 | 0.500 |
+| Mob (Entität) | 20 | 0.667 |
+| Player (Agent) | 30 | 1.000 |
+
+**Bestehende Modelle (135 Features) sind inkompatibel mit Version 1.2 (239 Features)** — vollständiges Neutraining erforderlich.
+
+**50-Seed-Messung:** Ausstehend — nächster Trainingsrun nach Implementierung.
 
 ---
 
@@ -827,6 +874,42 @@ Bestehende Modelle (135 Features) sind inkompatibel → alle Modelle müssen neu
 
 ---
 
+#### Fix D — BFS-Distanz statt Manhattan (14.05.2026, Commit 47bb719)
+
+**Das Kernproblem:** `previousDistance - currentDistance` benutzte Manhattan-Distanz (Luftlinie), nicht echte Pfadlänge. Ein Schritt um eine Wand herum ist in Manhattan-Distanz negativ (Schritt weg vom Ziel), obwohl es der einzige Weg ist.
+
+**Die Lösung:** BFS-Basierte Distanz in `src/core/simulation.cpp`:
+- `computeBfsDistances()` läuft einmalig in `reset()` → berechnet echte Pfadlänge vom Exit zu jedem erreichbaren Tile
+- `bfsDistanceToExit(x, y)` → O(1) Lookup pro Schritt
+- Bounded zu Spawn+Exit-Box (100-Tile Puffer) → keine Explosion
+- Fallback zu Manhattan wenn Position außerhalb Suchradius
+
+**Implementierung:**
+```cpp
+void Simulation::computeBfsDistances() {
+    // BFS vom Exit aus mit Grenze (spawn+exit area + buffer)
+    // Speichert: spatialKey(x,y,1) → Pfadlänge zum Exit
+}
+
+int Simulation::bfsDistanceToExit(int x, int y) const {
+    // O(1) Lookup in bfsDistances_ unordered_map
+    // Fallback: manhattan wenn außerhalb
+}
+```
+
+**Reward-Effekt:**
+```
+Vorher (Manhattan, falsch):
+  Schritt um Wand herum → -0.01 (Schritt) - 0.15 (Manhattan weg) = -0.16
+  Schritt zur Wand hin  → -0.01 (Schritt) + 0.15 (Manhattan näher) = +0.14 ← FALSCH POSITIV
+
+Nachher (BFS, richtig):
+  Schritt um Wand herum → -0.01 (Schritt) + 0.02 (BFS näher!) = +0.01 ← KORREKT
+  Schritt zur Wand hin  → -0.01 (Schritt) + 0.00 (BFS gleich)  = -0.01
+```
+
+---
+
 ### 6g.3 Warum diese Änderungen zusammen sinnvoll sind
 
 ```
@@ -835,11 +918,12 @@ Alter Agent (eingefroren):
   → moveBlocked macht alle Richtungen negativ → idle ist lokal optimal
   → Manhattan dominiert das Lernen → falsche Gradienten bei Labyrinthen
 
-Neuer Agent (Version 1.2):
+Neuer Agent (Version 1.2 mit BFS):
   → Grid zeigt Wand=0.333 klar von Luft=0 und Exit=0.5 → leicht erlernbar
   → Keine moveBlocked-Penalty → Agent MUSS nicht idle wählen
   → Idle stark bestraft (-0.05) → Agent bewegt sich immer
   → Manhattan nur schwacher Hint (0.02) → Potential-Field übernimmt Richtungsführung
+  → **BFS bestraft nicht um Wände gehen, sondern belohnt es** ← Hauptfix
   → Radius 7 → mehr Kontext für Wand-Lücken-Navigation
 ```
 
