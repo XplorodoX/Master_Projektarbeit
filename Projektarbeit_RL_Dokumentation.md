@@ -975,45 +975,60 @@ Neuer Agent (Version 1.2 mit BFS):
 
 ---
 
-#### Run 19 (NO CURRICULUM - Direktes Training auf vollem Difficulty) ✓
+#### Run 19 (NO CURRICULUM - Direktes Training) — TERMINATED ✓
 
-**Start:** 14.05.2026  
-**Status:** ACTIVE — läuft derzeit  
-**Terminal ID:** e718aabe-3c5e-4eea-b89c-9521ab7a1dc8
+**Duration:** 14.05.2026, 518K timesteps  
+**Final Results (Peak at 360K):**
 
-**Config:**
-- `observationRadius`: 7 (15×15 Grid, v1.2.0)
-- `--no-curriculum` Flag aktiviert (Training immer auf 35-45 Tile exits)
+| Metrik | Value | Status |
+|--------|-------|--------|
+| **Peak Eval Reward** | -27.28 ± 29.64 | ✓ At 360K steps |
+| **Episode Length** | 1865.75 ± 419.54 | ✓ **HUGE variance** = exits found! |
+| **Training Reward** | Peaked +85, declined to -10 | ↔ Oscillating pattern |
+| **Exploration Rate** | 0.297 (final) | ✗ Exploration too low late-stage |
+
+**Key Observations:**
+- Best performance at 280K-360K (eval -24.57 to -27.28)
+- After 360K: Reward regressed back to -33 (plateau/degradation)
+- Episode length variance peaked at 419 (agent finding exits on some seeds)
+- Oscillating behavior: peaks every ~80-100K, then regresses
+
+**Conclusion:** Training showed promise early but hit plateau. Curriculum-free approach better than Run 18, but still not converging to 70% success.
+
+---
+
+#### Run 20 (NO CURRICULUM + Enhanced Debugging) — ACTIVE ✓
+
+**Start:** 14.05.2026, ~11:20  
+**Status:** TRAINING — Currently at ~7.8K steps  
+**Terminal ID:** b8455ceb-ea42-48c0-b35e-1f86e181d44e
+
+**Config (Same as Run 19, + Debug Enhancements):**
+- `observationRadius`: 7 (15×15 Grid, 239 features)
+- `--no-curriculum` Flag (35-45 tile exits throughout)
 - `timesteps`: 1.000.000
-- **Reward-Shaping:** BFS Distance (neu)
-- **Grid-Encoding:** Passierbarkeit (neu)
+- **Reward-Shaping:** BFS Distance (corrected)
+- **Grid-Encoding:** Passierbarkeit (0.333=wall, 0.5=exit, etc.)
+- **Debug:** stoneforge_env.py now returns player_x, player_y, distance_to_exit in info dict
 
-**Progress Report (194K timesteps = 19% complete):**
+**Initial Metrics (7.8K steps):**
+- Eval Reward: -27.3 (baseline expected)
+- Episode Length: 1962 (maxSteps, not finding exits yet)
+- Training Reward: -27.3 (learning starting)
+- Exploration: 0.989 (high, good for early exploration)
 
-| Metrik | Wert | Interpretation |
-|--------|------|-----------------|
-| Eval Reward | -27.24 ± 29.95 | ✓ **+6.82 besser** als Run 18 @ 321K |
-| Episode Length | 1907.20 ± 238.87 | ✓ **Variance!** = exits found on some seeds |
-| Training Reward | +83 | ✓ Strong signal, agent actively learning |
-| Exploration | 0.741 | ✓ Still exploring, not overfitting |
-| Time Elapsed | 194 sec | ~2 sec per 1K steps → 1M in ~33 min |
+**Build Notes:**
+- Fresh CMake rebuild executed (stoneforge_sim, stoneforge_client)
+- All binaries up-to-date
+- PYTHONPATH correctly configured
 
-**Key Insight:** Episode length **variance (238.87)** is breakthrough — Run 18 had 0 variance (always 1962). Run 19 is finding exits!
+**TensorBoard:** `tensorboard_logs/dqn_run_20/`
 
-**Predicted Convergence Timeline:**
-```
-100K:  Reward -27→-20, learning grid + basic navigation
-200K:  Reward -20→-15, more consistent exits found
-400K:  Reward -15→+10, success rate starting to rise (20-30%)
-600K:  Reward +10→+25, stronger performance (50%+)
-800K:  Reward +25→+40, approaching 70% target
-1M:    Reward +40+,   ≥70% success likely
-```
-
-**Next Milestones to Monitor:**
-- 200K steps (est. 6.5 hours total): Episode length variance should increase
-- 300K steps: Eval reward should break below -25
-- 400K steps: First signs of >0 eval reward possible
+**Next Critical Checkpoints:**
+- 100K: Reward should improve to -20 range
+- 200K: Episode variance should emerge (indicating exits found)
+- 300K-400K: Target >-10 reward with variance
+- 600K+: Expect convergence signals toward 70% success
 
 ---
 
