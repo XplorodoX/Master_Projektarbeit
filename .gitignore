@@ -6,10 +6,20 @@
 __pycache__/
 *.pyc
 
+# Runtime artifacts
+game.log
+game.pid
+
+# Training artifacts
+best_models_dqn/
+best_models_ppo/
+checkpoints/
+logs/
+tensorboard_logs/
+python/*.so
+
 # macOS
 .DS_Store
 
-checkpoints
-tensorboard_logs
 ppo_stoneforge_model.zip
 dqn_stoneforge_model.zip
