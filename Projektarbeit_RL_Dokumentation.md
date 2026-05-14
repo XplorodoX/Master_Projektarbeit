@@ -929,6 +929,47 @@ Neuer Agent (Version 1.2 mit BFS):
 
 ---
 
+## 6h) Baseline und Trainingsläufe mit v1.2.0 (BFS Implementation)
+
+### 6h.1 50-Seed Baseline mit BFS (14.05.2026)
+
+**Kontext:** Mit dem neuen Grid-Encoding (Passierbarkeit statt Tile-Typ) sind die alten trainierten Modelle (v1.1) **nicht kompatibel**. Das alte DQN-Modell sieht komplett andere Observation-Werte und funktioniert nicht mehr.
+
+**Baseline mit altem Modell auf v1.2.0 Binary:**
+
+| Metrik | Wert |
+|--------|------|
+| Success Rate | 0/50 (0.0%) |
+| Mean Episode Length | 1962.0 |
+| Mean Return | -29.30 |
+| Min / Max Return | -34.44 / +3.08 |
+
+**Interpretation:** Dies ist zu erwarten — die Encodings sind zu unterschiedlich. Der Agent hat keine Orientierung mehr. → **Neutraining erforderlich**.
+
+### 6h.2 Training Run v1.2.0 + BFS
+
+**Start: 14.05.2026**  
+**Training Run:** `dqn_run_18`  
+**Algorithmus:** DQN  
+**Timesteps:** 1.000.000  
+**Config:**
+- `observationRadius`: 7 (15×15 Grid)
+- `buffer_size`: 500.000
+- `exploration_fraction`: 0.70
+- `n_eval_episodes`: 20
+- **Reward-Shaping:** BFS Distance (neu)
+- **Grid-Encoding:** Passierbarkeit (neu)
+
+**Initialer Status (7848 Timesteps):**
+- Episode Reward Mean: -27.4 bis -28.0
+- Episode Length Mean: ~1960 steps
+- Exploration Rate: 0.989 → 0.979
+- FPS: ~3000
+
+*Training läuft live... TensorBoard logs unter: `tensorboard_logs/dqn_run_18/`*
+
+---
+
 ## 7) Naechste Schritte fuer die Projektarbeit
 
 1. DQN als Hauptbaseline weiterfuehren (z. B. 1M bis 2M Timesteps).
