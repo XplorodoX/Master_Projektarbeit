@@ -74,6 +74,9 @@ struct GameplayConfig {
 
     // RL-Training: Mobs komplett deaktivieren fuer sauberes Navigationssignal.
     bool disableMobs = false;
+    
+    // When true, the simulation will not drain energy nor apply starvation damage.
+    bool disableEnergy = false;
 };
 
 struct MobSpawnConfig {

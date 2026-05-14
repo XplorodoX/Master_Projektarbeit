@@ -14,7 +14,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
 from sb3_contrib import RecurrentPPO
 
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv, SymmetryAugmentationWrapper
+from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv, SymmetryAugmentationWrapper, OneHotGridWrapper
 from rnd_wrapper import RNDWrapper
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -71,7 +71,9 @@ def make_env(disable_mobs: bool = True, eval_mode: bool = False, use_rnd: bool =
         base = ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
         if use_rnd:
             base = RNDWrapper(base, intrinsic_scale=0.5, update_proportion=0.25)
-        return SymmetryAugmentationWrapper(base, augment=True)
+        sym = SymmetryAugmentationWrapper(base, augment=True)
+        # One-hot encode grid for better spatial representation before feeding the policy
+        return OneHotGridWrapper(sym)
 
 
 # ---------------------------------------------------------------------------
@@ -119,13 +121,17 @@ class CurriculumCallback(BaseCallback):
         super().__init__(verbose)
         self._total_ts = total_timesteps
         self._stage = -1                              # aktuell aktive Stufe (Index)
-        self._reward_buf: deque[float] = deque(maxlen=_REWARD_WINDOW)
+        # Track success-rate (reached_exit) instead of raw reward to avoid
+        # being fooled by intrinsic bonuses (e.g. RND).
+        self._success_buf: deque[int] = deque(maxlen=_REWARD_WINDOW)
 
     def _on_step(self) -> bool:
         # Episode-Rewards aus dem Info-Dict sammeln (Monitor schreibt sie rein).
         for info in self.locals.get("infos", []):
             if "episode" in info:
-                self._reward_buf.append(float(info["episode"]["r"]))
+                # Prefer explicit success flag set by the env (info['reached_exit']).
+                succ = 1 if info.get("reached_exit", False) else 0
+                self._success_buf.append(succ)
 
         fraction = self.num_timesteps / self._total_ts
         next_stage = self._stage + 1
@@ -134,7 +140,8 @@ class CurriculumCallback(BaseCallback):
             return True   # letzte Stufe bereits aktiv
 
         emin, emax, threshold, forced = _CURRICULUM_STAGES[next_stage]
-        recent_mean = float(np.mean(self._reward_buf)) if len(self._reward_buf) >= 20 else -9999.0
+        # recent_mean now expresses success rate in percent over the window
+        recent_mean = (float(np.mean(self._success_buf)) * 100.0) if len(self._success_buf) >= 20 else -9999.0
 
         # Weiterschalten wenn Leistung gut genug ODER Zeitlimit erreicht.
         ready = (threshold is not None and recent_mean >= threshold

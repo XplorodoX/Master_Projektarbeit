@@ -302,12 +302,14 @@ StepResult Simulation::step(Action action) {
     prevPrevPos_ = prevPos_;
     prevPos_ = player_;
 
-    if(idleAction) {
-        if(energy_ < 100 && (steps_ % std::max(1, cfg.gameplay.idleEnergyRegenInterval) == 0)) {
-            energy_ = std::min(100, energy_ + 1);
+    if(!cfg.gameplay.disableEnergy) {
+        if(idleAction) {
+            if(energy_ < 100 && (steps_ % std::max(1, cfg.gameplay.idleEnergyRegenInterval) == 0)) {
+                energy_ = std::min(100, energy_ + 1);
+            }
+        } else if(steps_ % std::max(1, cfg.gameplay.activeEnergyDrainInterval) == 0) {
+            energy_ = std::max(0, energy_ - 1);
         }
-    } else if(steps_ % std::max(1, cfg.gameplay.activeEnergyDrainInterval) == 0) {
-        energy_ = std::max(0, energy_ - 1);
     }
 
     updateMobs();
@@ -344,10 +346,14 @@ StepResult Simulation::step(Action action) {
         proximityDamageAccumulator_ = 0.0F;
     }
 
-    if(energy_ <= 0) {
-        ++starvationTicks_;
-        if(starvationTicks_ >= std::max(1, cfg.gameplay.starvationTicksToDamage)) {
-            hp_ -= 1;
+    if(!cfg.gameplay.disableEnergy) {
+        if(energy_ <= 0) {
+            ++starvationTicks_;
+            if(starvationTicks_ >= std::max(1, cfg.gameplay.starvationTicksToDamage)) {
+                hp_ -= 1;
+                starvationTicks_ = 0;
+            }
+        } else {
             starvationTicks_ = 0;
         }
     } else {
@@ -1461,10 +1467,9 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
 
     (void)isExitUnlocked;
     const int progress = previousDistance - currentDistance;
-    // BFS-Shaping: +0.50 pro echtem Pfad-Schritt Richtung Exit (rppo_run_4 BFS-Boost).
-    // Erhöht von 0.30 auf 0.50 damit der Richtungsgradient die Exploration-Rewards
-    // klar dominiert — Agent soll gezielt zum Exit laufen statt Tiles zu sammeln.
-    reward += static_cast<float>(progress) * 0.50F;
+    // BFS-Shaping: only reward positive progress. Do not penalize backtracking
+    // via a negative shaping term — this traps agents in local minima.
+    reward += std::max(0.0F, static_cast<float>(progress) * 0.50F);
 
     // Proximity-Bonus: verstärkt auf 0.25 wenn Agent < 15 Tiles entfernt ist.
     if(currentDistance <= 15 && progress > 0) {

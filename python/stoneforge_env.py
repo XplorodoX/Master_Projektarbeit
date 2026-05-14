@@ -58,6 +58,8 @@ class StoneforgeConfig:
     exit_max_distance: int = 45
     force_guaranteed_path: bool = True
     disable_mobs: bool = True  # Standard: Mobs aus fuer sauberes Navigationstraining
+    disable_energy: bool = True  # Disable energy drain / starvation for navigation training
+    disable_potential_field: bool = True  # Disable euclidean potential field (conflicts with BFS reward)
 
 
 class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
@@ -83,6 +85,7 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             int(self.config.exit_max_distance),
             bool(self.config.force_guaranteed_path),
             bool(self.config.disable_mobs),
+            bool(self.config.disable_energy),
         )
 
     # Maximale Rohwerte aus der C++ Simulation.
@@ -155,11 +158,51 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         exit_dy = float(obs[-1])  # raw value in tiles
         distance_to_exit = int(np.hypot(exit_dx, exit_dy))
         info_dict['distance_to_exit'] = distance_to_exit
+        # Record extrinsic reward separately so Curriculum callback can use success-rate
+        info_dict['extrinsic_reward'] = float(reward)
         
         # Now normalize observation for network input
         obs_array = self._normalize_observation(obs_array)
         
         return obs_array, float(reward), bool(terminated), bool(truncated), info_dict
+
+
+class OneHotGridWrapper(gym.ObservationWrapper):
+    """Converts the flattened grid into a 4-channel one-hot-like representation.
+
+    Channels: walls, exit, player, visited (each 15x15 flattened). The rest of
+    the observation (scalars + any appended potential-field features) is kept
+    in-order. This wrapper preserves the end-of-array positions of exitDx/exitDy
+    so it is safe to place before the `ExitPotentialFieldWrapper` or after it.
+    """
+
+    def __init__(self, env: gym.Env) -> None:
+        super().__init__(env)
+        old_size = int(env.observation_space.shape[0])  # type: ignore[index]
+        # New size: replace 1*225 grid with 4*225 channels -> +225*3 = +675? Actually +450
+        # old = 225(grid) + 225(visited) + rest
+        # new = 4*225(channels) + rest => increase by 450
+        new_size = old_size + (_N_GRID * 2)
+        self.observation_space = spaces.Box(low=-1_000_000.0, high=1_000_000.0, shape=(new_size,), dtype=np.float32)
+
+    def observation(self, obs: np.ndarray) -> np.ndarray:
+        a = obs.astype(np.float32, copy=True)
+        grid = a[:_N_GRID]
+        visited = a[_IDX_VISITED_START:_IDX_VISITED_START + _N_VISITED]
+
+        # Masks derived from normalized grid values (0..1):
+        # floor ~0.0, wall ~0.333, exit ~0.5, mob ~0.667, player ~1.0
+        walls = ((grid >= 0.20) & (grid < 0.45)).astype(np.float32)
+        exit_mask = (grid >= 0.45).astype(np.float32)
+        player = (grid > 0.9).astype(np.float32)
+
+        # Compose channels: walls, exit, player, visited
+        channels = np.concatenate([walls, exit_mask, player, visited]).astype(np.float32)
+
+        # Scalars + tail (everything after grid+visited)
+        tail = a[_N_GRID + _N_VISITED:]
+
+        return np.concatenate([channels, tail])
 
 
 class ExitPotentialFieldWrapper(gym.ObservationWrapper):
@@ -189,6 +232,14 @@ class ExitPotentialFieldWrapper(gym.ObservationWrapper):
         )
 
     def observation(self, obs: np.ndarray) -> np.ndarray:
+        # If the environment config requests disabling the potential field (recommended
+        # for BFS-shaped reward training), append neutral zeros and keep the
+        # observation size identical to avoid breaking pretrained models.
+        env_config = getattr(self.env, "config", None)
+        if env_config is not None and getattr(env_config, "disable_potential_field", False):
+            extra = np.zeros(9, dtype=np.float32)
+            return np.concatenate([obs, extra])
+
         # Undo the /128 normalisation applied by StoneforgeWorldEnv.
         raw_dx = obs[-2] * 128.0
         raw_dy = obs[-1] * 128.0
