@@ -1433,6 +1433,10 @@ void Simulation::rebuildMobSpatialIndex() {
     }
 }
 
+int Simulation::currentBfsDistanceToExit() const {
+    return bfsDistanceToExit(player_.x, player_.y);
+}
+
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
                                 bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {

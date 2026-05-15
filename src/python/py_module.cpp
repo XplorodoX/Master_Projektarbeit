@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <filesystem>
 #include <stdexcept>
 #include <vector>
 
@@ -11,6 +12,22 @@
 namespace py = pybind11;
 
 namespace {
+
+std::filesystem::path resolveGameConfigPath() {
+    const std::filesystem::path candidates[] = {
+        "assets/base/game_config.json",
+        "../assets/base/game_config.json",
+        "../../assets/base/game_config.json",
+    };
+
+    for(const auto& candidate : candidates) {
+        if(std::filesystem::exists(candidate)) {
+            return candidate;
+        }
+    }
+
+    return candidates[0];
+}
 
 std::vector<int> flattenObservation(const stoneforge::Observation& obs) {
     std::vector<int> out = obs.grid;
@@ -26,7 +43,7 @@ class StoneforgeCoreEnv {
 public:
     explicit StoneforgeCoreEnv(std::uint64_t baseSeed = 42) : baseSeed_(baseSeed) {
         std::string configError;
-        (void)stoneforge::loadGameConfigFile("assets/base/game_config.json", &configError);
+        (void)stoneforge::loadGameConfigFile(resolveGameConfigPath(), &configError);
         sim_.reset(baseSeed_);
     }
 
@@ -46,6 +63,7 @@ public:
         py::dict info;
         info["reached_exit"] = result.reachedExit;
         info["step"] = result.step;
+        info["bfs_distance"] = sim_.currentBfsDistanceToExit();
 
         const bool terminated = result.done;
         const bool truncated = false;
@@ -59,6 +77,10 @@ public:
 
     int observationSize() const {
         return sim_.observationSize();
+    }
+
+    int currentBfsDistanceToExit() const {
+        return sim_.currentBfsDistanceToExit();
     }
 
     py::tuple playerPos() const {
@@ -92,6 +114,7 @@ PYBIND11_MODULE(stoneforge_sim, m) {
         .def("step", &StoneforgeCoreEnv::step, py::arg("action"))
         .def("action_space_n", &StoneforgeCoreEnv::actionSpaceN)
         .def("observation_size", &StoneforgeCoreEnv::observationSize)
+        .def("current_bfs_distance_to_exit", &StoneforgeCoreEnv::currentBfsDistanceToExit)
            .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,
                py::arg("exit_min_distance"), py::arg("exit_max_distance"),
                py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false,

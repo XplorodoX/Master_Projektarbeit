@@ -16,13 +16,14 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _IS_WIN = platform.system() == "Windows"
 
 _BINDING_SEARCH_PATHS = [
-    os.path.join(_ROOT, "python"),
     os.path.join(_ROOT, "build"),
     os.path.join(_ROOT, "build", "Release"),
     os.path.join(_ROOT, "build", "Debug"),
+    _ROOT,
+    os.path.join(_ROOT, "python"),
 ]
 
-for _path in _BINDING_SEARCH_PATHS:
+for _path in reversed(_BINDING_SEARCH_PATHS):
     if _path not in sys.path and os.path.isdir(_path):
         sys.path.insert(0, _path)
 
@@ -69,6 +70,7 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         super().__init__()
         self.config = config or StoneforgeConfig()
         self.core = stoneforge_sim.StoneforgeCoreEnv(self.config.base_seed)
+        self._current_seed = int(self.config.base_seed)
         self._apply_worldgen_config()
 
         self.action_space = spaces.Discrete(self.core.action_space_n())
@@ -129,18 +131,24 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             actual_seed = int(self.np_random.integers(0, np.iinfo(np.int32).max))
         else:
             actual_seed = int(seed)
+        self._current_seed = actual_seed
         obs = np.array(self.core.reset(int(actual_seed)), dtype=np.float32)
-        
-        # Add player position and distance to exit BEFORE normalization
+
+        # Query BFS distance from the simulation before normalization so the
+        # value is available as the auxiliary supervision signal.
         player_x, player_y = self.core.player_pos()
-        exit_dx = float(obs[-2])  # raw value in tiles
-        exit_dy = float(obs[-1])  # raw value in tiles
-        distance_to_exit = int(np.hypot(exit_dx, exit_dy))
+        distance_to_exit = int(self.core.current_bfs_distance_to_exit())
         
         # Now normalize observation
         obs = self._normalize_observation(obs)
         
-        return obs, {"world_seed": actual_seed, "player_x": player_x, "player_y": player_y, "distance_to_exit": distance_to_exit}
+        return obs, {
+            "world_seed": actual_seed,
+            "player_x": player_x,
+            "player_y": player_y,
+            "distance_to_exit": distance_to_exit,
+            "bfs_distance": distance_to_exit,
+        }
 
     def step(self, action: int):
         obs, reward, terminated, truncated, info = self.core.step(int(action))
@@ -151,13 +159,13 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         info_dict = dict(info)
         info_dict['player_x'] = player_x
         info_dict['player_y'] = player_y
+        info_dict['world_seed'] = self._current_seed
         
-        # Add distance to exit (from RAW observation exitDx and exitDy BEFORE normalization)
-        # Raw observation last two values are exit offset in tiles
-        exit_dx = float(obs[-2])  # raw value in tiles
-        exit_dy = float(obs[-1])  # raw value in tiles
-        distance_to_exit = int(np.hypot(exit_dx, exit_dy))
+        # Use the true BFS distance from the C++ simulation rather than the
+        # straight-line proxy from exitDx/exitDy.
+        distance_to_exit = int(info_dict.get('bfs_distance', self.core.current_bfs_distance_to_exit()))
         info_dict['distance_to_exit'] = distance_to_exit
+        info_dict['bfs_distance'] = distance_to_exit
         # Record extrinsic reward separately so Curriculum callback can use success-rate
         info_dict['extrinsic_reward'] = float(reward)
         

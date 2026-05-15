@@ -130,6 +130,7 @@ public:
     );
     bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
+    int currentBfsDistanceToExit() const;
 
 private:
     bool tryMove(const Vec2i& delta);
