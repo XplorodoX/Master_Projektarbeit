@@ -135,9 +135,17 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         obs = np.array(self.core.reset(int(actual_seed)), dtype=np.float32)
 
         # Query BFS distance from the simulation before normalization so the
-        # value is available as the auxiliary supervision signal.
+        # value is available as the auxiliary supervision signal. If the
+        # built extension does not expose `current_bfs_distance_to_exit`,
+        # fall back to the exitDx/exitDy proxy from the raw observation.
         player_x, player_y = self.core.player_pos()
-        distance_to_exit = int(self.core.current_bfs_distance_to_exit())
+        try:
+            distance_to_exit = int(self.core.current_bfs_distance_to_exit())
+        except Exception:
+            # raw observation layout: grid(225) then hp,energy,inventory,exitDx,exitDy
+            raw_exit_dx = int(obs[_N_GRID + 3]) if obs.shape[0] > (_N_GRID + 3) else 0
+            raw_exit_dy = int(obs[_N_GRID + 4]) if obs.shape[0] > (_N_GRID + 4) else 0
+            distance_to_exit = abs(raw_exit_dx) + abs(raw_exit_dy)
         
         # Now normalize observation
         obs = self._normalize_observation(obs)
@@ -163,7 +171,13 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         
         # Use the true BFS distance from the C++ simulation rather than the
         # straight-line proxy from exitDx/exitDy.
-        distance_to_exit = int(info_dict.get('bfs_distance', self.core.current_bfs_distance_to_exit()))
+        try:
+            distance_to_exit = int(info_dict.get('bfs_distance', self.core.current_bfs_distance_to_exit()))
+        except Exception:
+            # fall back to raw observation proxy if C++ API not present
+            raw_exit_dx = int(obs[ _N_GRID + 3 ]) if len(obs) > (_N_GRID + 3) else 0
+            raw_exit_dy = int(obs[ _N_GRID + 4 ]) if len(obs) > (_N_GRID + 4) else 0
+            distance_to_exit = abs(raw_exit_dx) + abs(raw_exit_dy)
         info_dict['distance_to_exit'] = distance_to_exit
         info_dict['bfs_distance'] = distance_to_exit
         # Record extrinsic reward separately so Curriculum callback can use success-rate

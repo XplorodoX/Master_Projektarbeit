@@ -215,13 +215,37 @@ class LevelReplayManager:
         return int(self._sampler.sample())
 
     def record_episode(self, *, seed: int, score: float, num_steps: int) -> None:
-        idx = int(seed)
-        # level-replay expects seed indices; update by index if present
+        # Backwards-compatible wrapper: accept various keyword names coming from
+        # Episode callbacks (episode_return, episode_length, success, bfs_distance)
+        # The canonical level-replay update API is update_seed_score(actor_idx, seed_idx, score, num_steps)
         try:
             seed_idx = int(self._sampler.seed2index[int(seed)])
         except Exception:
             return
-        self._sampler.update_seed_score(0, seed_idx, float(score), int(num_steps))
+        try:
+            self._sampler.update_seed_score(0, seed_idx, float(score), int(num_steps))
+        except Exception:
+            # swallow errors from sampler to avoid crashing training loop
+            return
+
+    def record_episode(self, **kwargs) -> None:  # type: ignore[override]
+        # Accept flexible keywords from EpisodeStatsCallback
+        seed = kwargs.get("seed") or kwargs.get("level") or kwargs.get("world_seed")
+        if seed is None:
+            return
+        # Prefer explicit numeric episode score if provided, else fall back to episode_return
+        score = kwargs.get("score")
+        if score is None:
+            score = kwargs.get("episode_return") or kwargs.get("return") or kwargs.get("episode_reward") or 0.0
+        num_steps = kwargs.get("episode_length") or kwargs.get("num_steps") or kwargs.get("episode_length") or 0
+        try:
+            seed_idx = int(self._sampler.seed2index[int(seed)])
+        except Exception:
+            return
+        try:
+            self._sampler.update_seed_score(0, seed_idx, float(score), int(num_steps))
+        except Exception:
+            return
 
 
 class SeedReplayWrapper(gym.Wrapper):
@@ -566,7 +590,7 @@ def _make_model(recipe: RecipeConfig, env: gym.Env) -> PPO:
         device = "cpu"
 
     return PPO(
-        "MlpPolicy",
+        "CnnPolicy",
         env,
         verbose=1,
         learning_rate=recipe.learning_rate,

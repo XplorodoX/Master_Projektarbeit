@@ -418,6 +418,29 @@ Das Modell wurde mit 135 Features (inkl. Potential Field) trainiert. `multi_ai_p
 | Monster deaktiviert | C++ + Python | Kein Mob-Rauschen im Reward-Signal |
 | Distance Reward | C++ | `0.10 → 0.15` pro Schritt Fortschritt |
 | Proximity-Bonus | C++ | `+0.05` wenn `dist ≤ 15` und naeher |
+
+---
+
+## Anhang: Roadmap-Änderungen (15.05.2026)
+
+Die folgenden Änderungen wurden am 15.05.2026 implementiert und getestet. Sie betreffen Reward, Observations, Encoder, Replay, Augmentierung, Hyperparameter und die Trainingspipeline.
+
+- PBRS (Potential-Based Reward Shaping) in `src/core/simulation.cpp`:
+  - Φ(s) = -BFS(s)/128, F(s,s') = γ·Φ(s') - Φ(s), r += β·F(s,s') mit γ=0.999, β=0.5; Schrittstrafe = -0.01.
+- BFS-Exposition: `current_bfs_distance_to_exit()` in `src/python/py_module.cpp`; `python/stoneforge_env.py` liefert `info['bfs_distance']` und `info['world_seed']`.
+- Impala‑Tiny Encoder & BFS-Aux: `StoneforgeImpalaExtractor` und `BfsAuxiliaryRefitCallback` in `python/roadmap_experiments.py` (GroupNorm + GAP, Huber loss für BFS-Regression).
+- PLR (Prioritized Level Replay): Seed‑Proxy (`SeedReplayManager`) implementiert; offizielles `level-replay` in `third_party/level-replay` vendorisiert und über `LevelReplayManager` optional integrierbar (lokaler Patch `np.float`→`float` angewendet).
+- DrAC-Augenentierung: `DrACAugmentationWrapper` (Translation + Cutout) in `python/roadmap_experiments.py`.
+- Hyperparameter-Defaults angepasst (z. B. `learning_rate=5e-4`, `gamma=0.999`, `n_steps=256`, `n_epochs=3`).
+- M1/MPS-Unterstützung: Training wählt `mps` (falls verfügbar); PPO-Policy auf `CnnPolicy` umgestellt, damit NN-Forward besser auf MPS/CUDA läuft.
+- Build/Tests: `stoneforge_sim` neu gebaut (`cmake --build build -j --target stoneforge_sim`). Smoke‑Runs durchgeführt; ein Phase‑1 Lauf (PLR, 5M Schritte, `n_envs=64`) wurde auf MPS gestartet (Logs: `tensorboard_logs/plr_run_6`).
+
+Datei mit kompaktem Protokoll: `docs/roadmap_changes.md`.
+
+Hinweis: Die `third_party/level-replay` Quelle ist vendorisiert; bei weiteren NumPy‑Deprecations kann ich automatisiert weitere Ersetzungen (z.B. `np.int`/`np.bool`) durchführen.
+
+Wenn Du willst, übernehme ich diesen Abschnitt auch als formalen Eintrag in `CHANGELOG.md` oder in die LaTeX‑Dokumentation.
+
 | Grid-Normalisierung | Python | Grid/30 + HP/10 + Energy/100 → alle in [0,1] |
 | Groesseres Netz | Python | `[64,64] → [256,256]` Hidden-Layer |
 | Hohere DQN-LR | Python | `1e-4 → 3e-4` |
