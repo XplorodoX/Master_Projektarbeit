@@ -60,7 +60,8 @@ def make_env(disable_mobs: bool = True, eval_mode: bool = False, use_rnd: bool =
         # Eval immer bei voller Schwierigkeit (35-45 Tiles) — misst echten Fortschritt.
         cfg = StoneforgeConfig(disable_mobs=disable_mobs)
         base = ReducedActionEnv(ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg)))
-        return SymmetryAugmentationWrapper(base, augment=False)
+        sym = SymmetryAugmentationWrapper(base, augment=False)
+        return OneHotGridWrapper(sym)
     else:
         # Training startet bei Stage-0-Distanz; CurriculumCallback schaltet weiter.
         cfg = StoneforgeConfig(
@@ -145,12 +146,12 @@ class CurriculumCallback(BaseCallback):
 
         # Weiterschalten wenn Leistung gut genug ODER Zeitlimit erreicht.
         ready = (threshold is not None and recent_mean >= threshold
-                 and len(self._reward_buf) >= 20)
+                 and len(self._success_buf) >= 20)
         forced_now = fraction >= forced
 
         if ready or forced_now:
             self._stage = next_stage
-            self._reward_buf.clear()   # frisches Fenster für neue Stufe
+            self._success_buf.clear()   # frisches Fenster für neue Stufe
             self.training_env.env_method(
                 "set_curriculum_stage",
                 exit_min_distance=emin,
@@ -233,7 +234,7 @@ def main() -> None:
             "MlpLstmPolicy",
             env,
             verbose=1,
-            n_steps=512,
+            n_steps=2048,
             batch_size=256,
             n_epochs=4,
             learning_rate=3e-4,

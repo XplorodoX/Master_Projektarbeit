@@ -193,7 +193,7 @@ class OneHotGridWrapper(gym.ObservationWrapper):
         # Masks derived from normalized grid values (0..1):
         # floor ~0.0, wall ~0.333, exit ~0.5, mob ~0.667, player ~1.0
         walls = ((grid >= 0.20) & (grid < 0.45)).astype(np.float32)
-        exit_mask = (grid >= 0.45).astype(np.float32)
+        exit_mask = ((grid >= 0.45) & (grid < 0.9)).astype(np.float32)
         player = (grid > 0.9).astype(np.float32)
 
         # Compose channels: walls, exit, player, visited
