@@ -1573,10 +1573,11 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
 
     stoneforge::Simulation sim;
     stoneforge::Simulation sim2;
-    if(aiMode) {
-        sim.reset(aiSeed);
-        if(aiDualMode) { sim2.reset(aiSeed); }
-    }
+    // AI disabled: ignore incoming AI runtime flags and seeds.
+    (void)aiSeed;
+    aiMode = false;
+    aiDualMode = false;
+    // No AI runtime initialization when AI is disabled.
     Texture2D atlas = buildSpriteAtlas();
 
     ScreenState screenState = aiMode ? ScreenState::Playing : ScreenState::Menu;
