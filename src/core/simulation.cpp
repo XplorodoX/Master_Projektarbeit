@@ -1440,7 +1440,8 @@ int Simulation::currentBfsDistanceToExit() const {
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
                                 bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {
-    float reward = -0.02F;
+    // Minimal step penalty (small negative incentive to finish episodes)
+    float reward = -0.01F;
 
     if(newTileVisited) {
         reward += 0.01F;
@@ -1470,15 +1471,18 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     }
 
     (void)isExitUnlocked;
-    const int progress = previousDistance - currentDistance;
-    // BFS-Shaping: only reward positive progress. Do not penalize backtracking
-    // via a negative shaping term — this traps agents in local minima.
-    reward += std::max(0.0F, static_cast<float>(progress) * 0.50F);
+    // Potential-Based Reward Shaping (PBRS) using BFS distance as potential.
+    // Φ(s) = -BFS(s) / MAX_DIST  -> in [-1, 0]
+    // F(s, s') = γ · Φ(s') - Φ(s)
+    // r_total = R_env + β · F(s, s')  (plus the minimal step-penalty above)
+    constexpr float PBRS_MAX_DIST = 128.0F;   // normalisation constant (matches Python aux target scaling)
+    constexpr float PBRS_GAMMA = 0.999F;      // discount used in shaping term (matches experiment spec)
+    constexpr float PBRS_BETA = 0.5F;         // shaping strength (tunable; 0.5..1.0 recommended)
 
-    // Proximity-Bonus: verstärkt auf 0.25 wenn Agent < 15 Tiles entfernt ist.
-    if(currentDistance <= 15 && progress > 0) {
-        reward += 0.25F;
-    }
+    const float phi_prev = -static_cast<float>(previousDistance) / PBRS_MAX_DIST;
+    const float phi_cur = -static_cast<float>(currentDistance) / PBRS_MAX_DIST;
+    const float shaping = PBRS_GAMMA * phi_cur - phi_prev;
+    reward += PBRS_BETA * shaping;
 
     if(reachedExit) {
         reward += 100.0F;

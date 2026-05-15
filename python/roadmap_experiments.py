@@ -44,12 +44,12 @@ class RecipeConfig:
     description: str
     n_envs: int = 8
     total_timesteps: int = 1_000_000
-    learning_rate: float = 3e-4
-    gamma: float = 0.995
+    learning_rate: float = 5e-4
+    gamma: float = 0.999
     gae_lambda: float = 0.95
-    n_steps: int = 1024
+    n_steps: int = 256
     batch_size: int = 256
-    n_epochs: int = 4
+    n_epochs: int = 3
     ent_coef: float = 0.01
     vf_coef: float = 0.5
     clip_range: float = 0.2
@@ -189,6 +189,39 @@ class SeedReplayManager:
                 }
             )
         return out
+
+
+# Optional integration with facebookresearch/level-replay if present in
+# third_party/level-replay. If available, prefer LevelSampler-based manager.
+LevelReplayAvailable = False
+try:
+    import sys as _sys
+    _lr_path = str(PROJECT_ROOT / "third_party" / "level-replay")
+    if _lr_path not in _sys.path:
+        _sys.path.insert(0, _lr_path)
+    from level_replay.level_sampler import LevelSampler as _LevelSampler  # type: ignore
+    LevelReplayAvailable = True
+except Exception:
+    LevelReplayAvailable = False
+
+
+class LevelReplayManager:
+    def __init__(self, *, seeds: list[int], obs_space, action_space, **kwargs) -> None:
+        if not LevelReplayAvailable:
+            raise RuntimeError("level-replay not available")
+        self._sampler = _LevelSampler(seeds, obs_space, action_space, **kwargs)
+
+    def sample_seed(self) -> int:
+        return int(self._sampler.sample())
+
+    def record_episode(self, *, seed: int, score: float, num_steps: int) -> None:
+        idx = int(seed)
+        # level-replay expects seed indices; update by index if present
+        try:
+            seed_idx = int(self._sampler.seed2index[int(seed)])
+        except Exception:
+            return
+        self._sampler.update_seed_score(0, seed_idx, float(score), int(num_steps))
 
 
 class SeedReplayWrapper(gym.Wrapper):
@@ -522,6 +555,16 @@ def _policy_kwargs() -> dict[str, Any]:
 
 
 def _make_model(recipe: RecipeConfig, env: gym.Env) -> PPO:
+    # Prefer Apple MPS on macOS when available (for M1/M2 chips), then CUDA, else CPU.
+    device = "cpu"
+    try:
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+    except Exception:
+        device = "cpu"
+
     return PPO(
         "MlpPolicy",
         env,
@@ -537,7 +580,7 @@ def _make_model(recipe: RecipeConfig, env: gym.Env) -> PPO:
         clip_range=recipe.clip_range,
         policy_kwargs=_policy_kwargs(),
         tensorboard_log=str(PROJECT_ROOT / "tensorboard_logs"),
-        device="auto",
+        device=device,
     )
 
 
@@ -608,12 +651,17 @@ def run_recipe(recipe_name: str, *, timesteps: int | None = None, eval_seeds: It
     seed_manager = None
     level_callback: EpisodeStatsCallback
     if recipe.use_plr:
-        seed_manager = SeedReplayManager(
-            pool_size=recipe.plr_pool_size,
-            fresh_probability=recipe.plr_fresh_probability,
-            priority_alpha=recipe.plr_priority_alpha,
-            seed_start=recipe.target_seed_start,
-        )
+        if LevelReplayAvailable:
+            # Build a LevelReplayManager mapping to the official implementation
+            seed_list = list(range(recipe.target_seed_start, recipe.target_seed_start + recipe.plr_pool_size))
+            seed_manager = LevelReplayManager(seeds=seed_list, obs_space=None, action_space=None, num_actors=recipe.n_envs, strategy='random', score_transform='rank', alpha=recipe.plr_priority_alpha, staleness_coef=0.1)
+        else:
+            seed_manager = SeedReplayManager(
+                pool_size=recipe.plr_pool_size,
+                fresh_probability=recipe.plr_fresh_probability,
+                priority_alpha=recipe.plr_priority_alpha,
+                seed_start=recipe.target_seed_start,
+            )
 
     env = make_vec_env(
         lambda: _build_base_env(recipe=recipe, eval_mode=False, seed_manager=seed_manager),
