@@ -17,15 +17,68 @@
 
 **Modelle:** `best_models_ppo_phase3/final_model.zip` (1M Steps), `best_models_ppo_phase3/best_model.zip` (80% stochastisch, gespeichert bei 2% Deterministic-Eval)
 
-**Testset B — Generalisierungstest (Seeds 8000–8049, nie während Training gesehen):**
+**Wiederholungsläufe — 3 unabhängige Runs (exit=5–45, 1M Steps, PPO, stochastisch, exit=35-45):**
 
-| Eval-Modus | Exit-Bereich | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return |
-|------------|--------------|---------|--------------|----------------------|---------------|
-| Stochastisch | 35–45 (Projekt-Ziel) | 43 / 50 | **86.0 %** ✓ | 884 | 16.7 |
-| Stochastisch | 5–45 (Trainingsbereich) | 46 / 50 | **92.0 %** ✓ | 757 | 40.6 |
-| Deterministisch | 35–45 | 0 / 50 | **0.0 %** ✗ | 4000 | −383.0 |
+| Run | Seed | Testset A (7000–7049) | mean_len A | Testset B (8000–8049) | mean_len B |
+|-----|------|-----------------------|------------|------------------------|------------|
+| Run 1 | — | 88.0 % | 856 | 84.0 % | 936 |
+| Run 2 | 42 | 80.0 % | 1081 | 68.0 % | 1825 |
+| Run 3 | 123 | 88.0 % | 752 | 86.0 % | 940 |
+| **Mittelwert ± Std** | | **85.3 % ± 3.8 %** | | **79.3 % ± 8.1 %** | |
 
-**Fazit:** Agent generalisiert nahezu perfekt auf unbekannte Seeds. Testset A (86%) = Testset B (86%) — kein Overfitting auf die Trainings-Seeds. Beide Projektarbeit-Kriterien erfüllt (A ≥ 70% ✓, B ≥ 60% ✓).
+**Projektarbeit-Kriterien:**
+- Testset A ≥ 70 %: **85.3 % ± 3.8 %** ✓  
+- Testset B ≥ 60 %: **79.3 % ± 8.1 %** ✓ (Run 2 mit 68 % knappste Messung)
+
+**Modelle:** `best_models_ppo_phase3_run2/` (Run 2, best_model 92%), `best_models_ppo_phase3_run3/` (Run 3, best_model 94%)
+
+---
+
+### Phase-4 Ergebnisse — Verbesserte Reward-Struktur (exit=5–45, 1M Steps, PPO, seed=0)
+
+| Modell | Testset A (7000–7049) | mean_len A | Testset B (8000–8049) | mean_len B | Datum |
+|--------|----------------------|------------|------------------------|------------|-------|
+| final_model | **98.0 %** ✓ | 285 | **94.0 %** ✓ | 466 | 16.05.2026 |
+| best_model (100% @ Eval) | 86.0 % ✓ | 893 | 94.0 % ✓ | 722 | 16.05.2026 |
+
+**Verbesserung gegenüber Phase-3:**
+- Success Rate A: 88% → **98%** (+10 Prozentpunkte)
+- Success Rate B: 84% → **94%** (+10 Prozentpunkte)
+- Episodenlänge: 856 → **285 Steps** (3× effizienter — Agent findet Exit viel schneller)
+
+**Deterministisch:** weiterhin 2% (high-entropy Policy, Argmax-Loops — bekanntes PPO-Problem)
+
+**Verhaltens-Diagnose vor/nach:** Seed 7004 (schlechtester Fall Phase-3):
+- Phase-3: 57× gegen Nordwand (BFS bleibt 38, exitDy-Bias überwältigt BFS-Signal)
+- Phase-4: BFS 41→17, navigiert korrekt durch Wände, kleiner Rest-Loop bei BFS≈18
+
+**Modell:** `best_models_ppo_phase4/final_model.zip`
+
+---
+
+#### Änderung 6 — Loop- und Wand-Penalties + Stuck-Feature in Obs
+
+**Dateien:** `src/core/simulation.cpp`, `include/stoneforge/simulation.hpp`, `src/python/py_module.cpp`, `python/stoneforge_env.py`
+
+**Problem (Diagnose aus Verhaltensanalyse, Seeds 7000–7005):**
+- Seed 7004: Agent läuft **57× gegen dieselbe Nordwand** obwohl BFS↑=9999 (Wand) und BFS→=37 (optimal). `exitDy`-Bias überschreibt BFS-Signal. moveBlocked-Penalty -0.05 zu schwach.
+- Seeds 7001–7003, 7005: Agent pendelt in 2-Positions-Loops (z.B. (29,0)↔(30,0)) hunderte Schritte. Stagnation-Counter resettet bei jedem Rechtsschritt neu; Loop wird nie teuer genug.
+- Stagnation-Penalty (-0.05 ab Schritt 30) zu flach für beide Fälle.
+
+**Lösung:**
+1. **Eskalierender Wand-Penalty** (nutzt `consecutiveBlockedSteps_`): 1. Block -0.05, ab 2. konsek. Block -0.25 → 5× stärker bei Wand-Bangen.
+2. **2-Schritt-Loop-Penalty** (nutzt `positionLoop_`): -0.15 pro Schritt wenn A→B→A erkannt → feuert auf BEIDEN Seiten des Pendels.
+3. **Eskalierender Stagnation-Penalty**: 30–59 Steps -0.05, ab 60 Steps -0.15.
+4. **Stuck-Feature in Observation** (+1 Feature): `min(stepsWithoutProgress / 60, 1.0)` → Agent kann lernen "ich stecke fest, ändere Strategie". Obs-Größe: 235 → 236.
+
+| Änderung | vorher | nachher | Begründung |
+|----------|--------|---------|------------|
+| moveBlocked (konsek.) | -0.05 immer | -0.05 (1.), -0.25 (2.+) | Wand-Bangen sofort unattraktiv |
+| positionLoop_ Penalty | nicht genutzt | -0.15/Schritt | Direkte A↔B-Loop-Erkennung |
+| Stagnation-Penalty | -0.05 ab 30 Steps | -0.05 (30+), -0.15 (60+) | Stärkere Eskalation bei längeren Loops |
+| Obs-Größe | 235 | 236 | +1 Stuck-Feature |
+
+**Ergebnis:** Rebuild erfolgreich. Wand-Penalty verifiziert (-0.260 statt -0.060 nach 2+ Blocks). Loop-Penalty verifiziert (-0.15 auf beiden Seiten des Pendels). Neues Training erforderlich (Obs-Größe geändert).
 
 ---
 

@@ -388,13 +388,9 @@ StepResult Simulation::step(Action action) {
 
     float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
                                  mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
-                                 newTileVisited, idleAction, visitCount);
-
-    // Stagnation penalty: after 30 steps without new BFS best, -0.05 per step.
-    // Breaks ↑↓-loops and wall-hugging without harming corner navigation (≤30 steps sideway allowed).
-    if(!reachedExit_ && stepsWithoutProgress_ >= 30) {
-        reward -= 0.05F;
-    }
+                                 newTileVisited, idleAction, visitCount,
+                                 consecutiveBlockedSteps_, positionLoop_,
+                                 stepsWithoutProgress_);
 
     return StepResult{reward, done_, reachedExit_, steps_};
 }
@@ -1457,13 +1453,13 @@ int Simulation::bfsDistanceAt(int x, int y) const {
 
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
-                                bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {
-    // Minimal step penalty (small negative incentive to finish episodes)
+                                bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount,
+                                int consecutiveBlocked, bool positionLoop, int stepsWithoutProgress) const {
     float reward = -0.01F;
 
     (void)newTileVisited;
+    (void)visitCount;
 
-    // Idle staerker bestrafen als Bewegung — Agent soll sich immer bewegen.
     if(idleAction) {
         reward -= 0.04F;
     }
@@ -1471,14 +1467,25 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
+    // Eskalierender Wand-Penalty: erst block -0.05, ab 2. konsek. Block -0.25.
+    // Verhindert dauerhaftes Laufen gegen Wände (z.B. exitDy-Bias gegen Nordwand).
     if(moveBlocked) {
-        reward -= 0.05F;
+        reward -= consecutiveBlocked >= 2 ? 0.25F : 0.05F;
     }
 
-    // Multi-Visit-, Pendel- und Stuck-Penalties entfernt (v2.0 / rppo_run_5).
-    // Ersatz: RND-Wrapper in Python liefert intrinsischen Bonus für neue Zustände —
-    // der Agent meidet Loops strukturell durch sinkenden Novelty-Bonus, nicht durch Strafe.
-    (void)visitCount;
+    // 2-Schritt-Loop-Penalty: A→B→A→B erkennen und direkt bestrafen.
+    if(positionLoop) {
+        reward -= 0.15F;
+    }
+
+    // Eskalierender Stagnation-Penalty: je laenger ohne neuen BFS-Rekord, desto staerker.
+    if(!reachedExit) {
+        if(stepsWithoutProgress >= 60) {
+            reward -= 0.15F;
+        } else if(stepsWithoutProgress >= 30) {
+            reward -= 0.05F;
+        }
+    }
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;

@@ -97,6 +97,10 @@ public:
         return py::make_tuple(p.x, p.y);
     }
 
+    int stepsWithoutProgress() const {
+        return sim_.stepsWithoutProgress();
+    }
+
     void configureWorldGeneration(int exitMinDistance, int exitMaxDistance, bool forceGuaranteedPath,
                                    bool disableMobs = false, bool disableEnergy = false) {
         auto& cfg = stoneforge::mutableGameConfig();
@@ -130,5 +134,6 @@ PYBIND11_MODULE(stoneforge_sim, m) {
                py::arg("exit_min_distance"), py::arg("exit_max_distance"),
                py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false,
                py::arg("disable_energy") = false)
-        .def("player_pos", &StoneforgeCoreEnv::playerPos);
+        .def("player_pos", &StoneforgeCoreEnv::playerPos)
+        .def("steps_without_progress", &StoneforgeCoreEnv::stepsWithoutProgress);
 }

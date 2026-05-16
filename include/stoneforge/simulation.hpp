@@ -131,7 +131,8 @@ public:
     bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
     int currentBfsDistanceToExit() const;
-    int bfsDistanceAt(int x, int y) const;   // BFS-Kraftfeld: Pfad-Abstand an beliebiger Position
+    int bfsDistanceAt(int x, int y) const;
+    int stepsWithoutProgress() const { return stepsWithoutProgress_; }   // BFS-Kraftfeld: Pfad-Abstand an beliebiger Position
 
 private:
     bool tryMove(const Vec2i& delta);
@@ -160,7 +161,8 @@ private:
 
     float computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                         int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
-                        bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const;
+                        bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount,
+                        int consecutiveBlocked, bool positionLoop, int stepsWithoutProgress) const;
 
     // BFS-Distanzfeld: einmal pro Episode berechnet, danach O(1) Lookup.
     // Garantiert korrektes Reward-Shaping auch wenn Waende zwischen Agent und Exit liegen.

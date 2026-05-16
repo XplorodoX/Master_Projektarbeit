@@ -3,10 +3,9 @@
 #include "stoneforge/client/render_engine.hpp"
 
 int main(int argc, char** argv) {
-    // AI/RL runtime disabled by default
-    const bool aiMode = false;
-    const bool aiDualMode = false;
-    const std::uint64_t aiSeed = 42;
+    bool aiMode = false;
+    bool aiDualMode = false;
+    std::uint64_t aiSeed = 42;
     int winX = -1;
     int winY = -1;
     int winW = -1;
@@ -16,14 +15,12 @@ int main(int argc, char** argv) {
 
     for(int i = 1; i < argc; ++i) {
         const std::string arg(argv[i]);
-        if(arg == "--window-pos" && i + 2 < argc) {
-            winX = std::atoi(argv[++i]);
-            winY = std::atoi(argv[++i]);
-        } else if(arg == "--window-size" && i + 2 < argc) {
-            winW = std::atoi(argv[++i]);
-            winH = std::atoi(argv[++i]);
-        } else if(arg == "--title" && i + 1 < argc) {
-            winTitle = argv[++i];
+        if(arg == "--ai") {
+            aiMode = true;
+        } else if(arg == "--ai-dual") {
+            aiDualMode = true;
+        } else if(arg == "--ai-seed" && i + 1 < argc) {
+            aiSeed = static_cast<std::uint64_t>(std::strtoull(argv[++i], nullptr, 10));
         } else if(arg == "--window-pos" && i + 2 < argc) {
             winX = std::atoi(argv[++i]);
             winY = std::atoi(argv[++i]);

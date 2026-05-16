@@ -18,19 +18,19 @@ stoneforge_sim = importlib.import_module("stoneforge_sim")
 #  [gs+3]        exitDx       — (exit.x - player.x) / 64   Luftlinie Richtung X
 #  [gs+4]        exitDy       — (exit.y - player.y) / 64   Luftlinie Richtung Y
 #
-#  BFS-Kraftfeld (neu): 5 Features, Index gs+5 .. gs+9
+#  BFS-Kraftfeld: 5 Features, Index gs+5 .. gs+9
 #  [gs+5]  bfs_current  — aktueller Pfad-Abstand / 64         (0 = am Exit, 1 = weit)
 #  [gs+6]  bfs_up       — Pfad-Abstand nach ↑ Schritt / 64
 #  [gs+7]  bfs_down     — Pfad-Abstand nach ↓ Schritt / 64
 #  [gs+8]  bfs_left     — Pfad-Abstand nach ← Schritt / 64
 #  [gs+9]  bfs_right    — Pfad-Abstand nach → Schritt / 64
 #
-#  Interpretation Kraftfeld: kleinster Wert = optimale Richtung.
-#  Wände → Manhattan-Fallback (großer Wert, nahe 1.0 nach Normalisierung).
-#  Mit diesem Signal kann das Netz direkt den BFS-Gradienten folgen,
-#  ohne die 225 Grid-Features dekodieren zu müssen.
+#  Stagnation-Feature: 1 Feature, Index gs+10
+#  [gs+10] stuck        — min(stepsWithoutProgress / 60, 1.0)
+#                         0 = Fortschritt, 1 = seit 60+ Schritten kein neuer BFS-Rekord
+#                         Gibt dem Agenten direktes Signal: "ich stecke fest, ändere Strategie"
 #
-#  Total: gs + 5 + 5 = 235  (für observationRadius=7 → gs=225)
+#  Total: gs + 5 + 5 + 1 = 236  (für observationRadius=7 → gs=225)
 
 _N_ACTIONS = 4
 _BFS_MAX = 64.0   # Normalisierungskonstante (>= maximale Exit-Distanz im Eval-Set)
@@ -65,7 +65,7 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
 
         n_base = self.core.observation_size()   # gs + 5 = 230
         self._gs = n_base - 5                   # 225 für radius=7
-        self._n_obs = n_base + 5                # +5 BFS-Kraftfeld-Features = 235
+        self._n_obs = n_base + 6                # +5 BFS-Kraftfeld + 1 Stagnation = 236
 
         self.action_space = spaces.Discrete(_N_ACTIONS)
         self.observation_space = spaces.Box(
@@ -86,6 +86,11 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             0.0, 1.0
         )
 
+    def _stuck_feature(self) -> np.ndarray:
+        """1 Feature: wie lange kein BFS-Fortschritt (normalisiert auf [0,1])."""
+        swp = self.core.steps_without_progress()
+        return np.array([min(swp / 60.0, 1.0)], dtype=np.float32)
+
     def _normalize(self, raw: list[int]) -> np.ndarray:
         arr = np.asarray(raw, dtype=np.float32)
         gs = self._gs
@@ -95,7 +100,7 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         arr[gs+2]   = np.clip(arr[gs+2], 0.0, 64.0) / 64.0          # inventory
         arr[gs+3]  /= 64.0                                            # exitDx
         arr[gs+4]  /= 64.0                                            # exitDy
-        return np.concatenate([arr, self._bfs_field()])
+        return np.concatenate([arr, self._bfs_field(), self._stuck_feature()])
 
     # ------------------------------------------------------------------
 
