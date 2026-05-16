@@ -82,6 +82,37 @@
 
 ---
 
+#### Änderung 7 — exitDx/exitDy aus Observation entfernt (Phase 5)
+
+**Datei:** `python/stoneforge_env.py`
+
+**Problem:** Verhaltensanalyse (Seeds 7004, 7020, 7036, 7042) zeigte, dass der Agent einen starken Luftlinien-Bias durch `exitDx`/`exitDy` gelernt hat: Er läuft Richtung Exit-Richtung auch dann, wenn Wände im Weg sind. Der BFS-Gradient (der korrekte Pfad) wird von den exitDx/exitDy-Features überstimmt. Diese Features sind redundant, weil der BFS-Gradient bereits die Richtungsinformation enthält — nur ohne Wand-Bias.
+
+**Lösung:** `exitDx` und `exitDy` werden in `_normalize()` nicht mehr an die Observation angehängt. Obs-Größe: 236 → 234.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| exitDx in Obs | enthalten (gs+3) | entfernt | BFS-Gradient enthält die gleiche Info, nur korrekt um Wände |
+| exitDy in Obs | enthalten (gs+4) | entfernt | Erzeugte Luftlinien-Bias → Agent lief gegen Wände |
+| Obs-Größe | 236 | 234 | -2 Features |
+
+**Erwartung:** Agent ohne Luftlinien-Bias lernt, dem BFS-Gradienten zu folgen. Die verbleibenden 6% Fehlrate (Seeds 7020, 7036, 7042 in Phase 4) sollten sich deutlich verringern.
+
+**Ergebnis (Phase 5, abgebrochen bei 737k/1M Steps):**
+
+| Checkpoint | Success (Testset A, exit=35-45) |
+|---|---|
+| 25k | 24.0% |
+| 225k | 14.0% |
+| 325k | 40.0% |
+| 400k | 32.0% |
+| 475k | 32.0% |
+| 725k | 28.0% ↓ |
+
+**Hypothese widerlegt.** exitDx/exitDy sind notwendig. Der BFS-Gradient zwischen Nachbarzellen beträgt bei 40 Tiles Entfernung nur ~0.016 Unterschied — zu schwach als einziger Fernbereich-Hinweis. Ohne Luftlinien-Features findet der Agent den Exit nicht zuverlässig. Training abgebrochen, exitDx/exitDy wiederhergestellt. **Bestes Modell bleibt Phase 4 (98%/94%).**
+
+---
+
 #### Änderung 5 — Eval-Callback auf stochastischen Modus umgestellt
 
 **Datei:** `python/train.py` — `SeedEvalCallback._run_eval()`
