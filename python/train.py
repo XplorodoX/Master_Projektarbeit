@@ -22,6 +22,7 @@ import numpy as np
 from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.utils import set_random_seed
 
 # Stoneforge env muss im PYTHONPATH liegen (build/ + python/).
 from stoneforge_env import StoneforgeWorldEnv
@@ -167,6 +168,8 @@ def parse_args() -> argparse.Namespace:
                    help="Maximale Exit-Distanz")
     p.add_argument("--load-model", type=str, default=None,
                    help="Pfad zu einem bestehenden Modell (.zip) zum Weitertrainieren")
+    p.add_argument("--seed", type=int, default=None,
+                   help="Zufalls-Seed für Reproduzierbarkeit (Policy-Init, Env-Reset)")
     return p.parse_args()
 
 
@@ -175,13 +178,17 @@ def main() -> None:
     algo = args.algo.lower()
     save_dir = args.save_dir or f"best_models_{algo}"
 
+    if args.seed is not None:
+        set_random_seed(args.seed)
+
     print(f"Starte Training: algo={algo.upper()}, timesteps={args.timesteps:,}, "
-          f"n_envs={args.n_envs}, exit={args.exit_min}-{args.exit_max}, save_dir={save_dir}")
+          f"n_envs={args.n_envs}, exit={args.exit_min}-{args.exit_max}, "
+          f"seed={args.seed}, save_dir={save_dir}")
 
     def make_env():
         return StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
 
-    env = make_vec_env(make_env, n_envs=args.n_envs)
+    env = make_vec_env(make_env, n_envs=args.n_envs, seed=args.seed)
 
     # Eval läuft immer auf dem Ziel-Testset (Phase-3-Distanz), damit Fortschritt vergleichbar ist
     eval_cb = SeedEvalCallback(
