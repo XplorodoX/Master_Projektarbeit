@@ -1477,7 +1477,10 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     // r_total = R_env + β · F(s, s')  (plus the minimal step-penalty above)
     constexpr float PBRS_MAX_DIST = 128.0F;   // normalisation constant (matches Python aux target scaling)
     constexpr float PBRS_GAMMA = 0.999F;      // discount used in shaping term (matches train.py gamma)
-    constexpr float PBRS_BETA = 5.0F;         // shaping strength: +0.03 net per tile forward at d=40
+    constexpr float PBRS_BETA = 2.5F;         // shaping strength: +0.01 net per tile forward at d=40
+    // β=2.5 statt 5.0: konservativer nach BFS-Buffer-Fix (BUFFER 20→80).
+    // Mit β=5 und altem Buffer=20 bekam der Agent +2.5/Schritt beim Rücklaufen aus Manhattan-
+    // Fallback-Gebiet → falsches Lernziel. Jetzt korrekt: +0.01 netto pro Tile Fortschritt.
 
     const float phi_prev = -static_cast<float>(previousDistance) / PBRS_MAX_DIST;
     const float phi_cur = -static_cast<float>(currentDistance) / PBRS_MAX_DIST;
@@ -1502,8 +1505,12 @@ void Simulation::computeBfsDistances() {
     const Vec2i spawn = world_.spawnPoint();
 
     // Suchbereich: Bounding-Box um Spawn + Exit mit Puffer.
-    // Der garantierte Pfad liegt innerhalb dieses Bereichs.
-    const int BUFFER = 20;
+    // BUFFER muss groß genug sein, dass der Agent während der gesamten Episode
+    // (maxSteps bis 4000) fast nie aus der Box läuft.
+    // Random Walk in 2D driftet ~sqrt(maxSteps) ≈ 63 Tiles → BUFFER 80 deckt >95% ab.
+    // Bei BUFFER=20 lief der Agent raus, bekam Manhattan-Fallback (bis 100+) statt BFS (35),
+    // und kassierte beim Rücklaufen β×(100−35)/128 ≈ +2.5 pro Schritt — falsches Signal.
+    const int BUFFER = 80;
     const int minX = std::min(spawn.x, exit.x) - BUFFER;
     const int maxX = std::max(spawn.x, exit.x) + BUFFER;
     const int minY = std::min(spawn.y, exit.y) - BUFFER;
