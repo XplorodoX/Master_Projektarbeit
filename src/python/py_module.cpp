@@ -83,6 +83,15 @@ public:
         return sim_.currentBfsDistanceToExit();
     }
 
+    // BFS-Distanz an einer relativen Position zum Spieler.
+    // Gibt BFS(player + offset) zurück — oder Manhattan-Fallback wenn außerhalb BFS-Box.
+    // Hauptnutzen: 4-direktionales Kraftfeld (bfs_at(0,-1), bfs_at(0,1), bfs_at(-1,0), bfs_at(1,0))
+    // zeigt dem Agenten direkt welche Richtung den Pfad zum Exit wirklich verkürzt.
+    int bfsDistanceAtOffset(int dx, int dy) const {
+        const auto p = sim_.playerPos();
+        return sim_.bfsDistanceAt(p.x + dx, p.y + dy);
+    }
+
     py::tuple playerPos() const {
         const auto p = sim_.playerPos();
         return py::make_tuple(p.x, p.y);
@@ -115,7 +124,9 @@ PYBIND11_MODULE(stoneforge_sim, m) {
         .def("action_space_n", &StoneforgeCoreEnv::actionSpaceN)
         .def("observation_size", &StoneforgeCoreEnv::observationSize)
         .def("current_bfs_distance_to_exit", &StoneforgeCoreEnv::currentBfsDistanceToExit)
-           .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,
+        .def("bfs_distance_at_offset", &StoneforgeCoreEnv::bfsDistanceAtOffset,
+             py::arg("dx"), py::arg("dy"))
+        .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,
                py::arg("exit_min_distance"), py::arg("exit_max_distance"),
                py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false,
                py::arg("disable_energy") = false)

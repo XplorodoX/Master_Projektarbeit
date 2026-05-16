@@ -228,6 +228,8 @@ void Simulation::reset(std::uint64_t seed) {
     reachedExit_ = false;
     exitUnlocked_ = !mobsKilledUnlocksExit_;
     totalKills_ = 0;
+    stepsWithoutProgress_ = 0;
+    bestBfsInEpisode_ = 9999;
     visitedTiles_.clear();
     visitedTiles_.insert(spatialKey(player_.x, player_.y, 1));
     tileVisitCounts_.clear();
@@ -375,9 +377,24 @@ StepResult Simulation::step(Action action) {
     }
 
     const int distanceAfter = bfsDistanceToExit(player_.x, player_.y);
-    const float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
-                                       mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
-                                       newTileVisited, idleAction, visitCount);
+
+    // Stagnation tracking: reset counter whenever agent reaches a new BFS best.
+    if(distanceAfter < bestBfsInEpisode_) {
+        bestBfsInEpisode_ = distanceAfter;
+        stepsWithoutProgress_ = 0;
+    } else {
+        ++stepsWithoutProgress_;
+    }
+
+    float reward = computeReward(reachedExit_, hpBefore, distanceBefore, distanceAfter,
+                                 mobsKilled, exitJustUnlocked, exitUnlocked_, moveBlocked,
+                                 newTileVisited, idleAction, visitCount);
+
+    // Stagnation penalty: after 30 steps without new BFS best, -0.05 per step.
+    // Breaks ↑↓-loops and wall-hugging without harming corner navigation (≤30 steps sideway allowed).
+    if(!reachedExit_ && stepsWithoutProgress_ >= 30) {
+        reward -= 0.05F;
+    }
 
     return StepResult{reward, done_, reachedExit_, steps_};
 }
@@ -428,15 +445,9 @@ Observation Simulation::getObservation() const {
     out.exitDx = exit.x - player_.x;
     out.exitDy = exit.y - player_.y;
 
-    // Visited mask: für jede Zelle im 15×15-Fenster 1 wenn dieses Tile besucht wurde, sonst 0.
-    // Ermöglicht dem Agenten "wo war ich schon" ohne rekurrente Netze — analog PokeRL Visited Mask.
-    for(int dy = -observationRadius_; dy <= observationRadius_; ++dy) {
-        for(int dx = -observationRadius_; dx <= observationRadius_; ++dx) {
-            const int wx = player_.x + dx;
-            const int wy = player_.y + dy;
-            out.grid.push_back(visitedTiles_.count(spatialKey(wx, wy, 1)) ? 1 : 0);
-        }
-    }
+    // Visited mask entfernt: ändert sich jeden Schritt und destabilisiert den Q-Wert-Argmax
+    // bei flachem Reward-Signal (jede 1-Bit-Änderung kann Richtungspräferenz kippen).
+    // visitedTiles_ wird weiterhin intern für Stagnation-Tracking gepflegt.
 
     return out;
 }
@@ -912,7 +923,7 @@ int Simulation::observationRadius() const {
 
 int Simulation::observationSize() const {
     const int side = 2 * observationRadius_ + 1;
-    return 2 * side * side + 5;  // grid + visited_mask + 5 scalars
+    return side * side + 5;  // grid + 5 scalars (hp, energy, inventory, exitDx, exitDy)
 }
 
 int Simulation::steps() const {
@@ -1437,15 +1448,20 @@ int Simulation::currentBfsDistanceToExit() const {
     return bfsDistanceToExit(player_.x, player_.y);
 }
 
+int Simulation::bfsDistanceAt(int x, int y) const {
+    if(!world_.isPassable(x, y)) {
+        return 9999;   // wall tile: BFS field should strongly deter this direction
+    }
+    return bfsDistanceToExit(x, y);
+}
+
 float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDistance, int currentDistance,
                                 int mobsKilledThisStep, bool exitJustUnlocked, bool isExitUnlocked,
                                 bool moveBlocked, bool newTileVisited, bool idleAction, int visitCount) const {
     // Minimal step penalty (small negative incentive to finish episodes)
     float reward = -0.01F;
 
-    if(newTileVisited) {
-        reward += 0.01F;
-    }
+    (void)newTileVisited;
 
     // Idle staerker bestrafen als Bewegung — Agent soll sich immer bewegen.
     if(idleAction) {
@@ -1455,7 +1471,9 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
-    (void)moveBlocked;
+    if(moveBlocked) {
+        reward -= 0.05F;
+    }
 
     // Multi-Visit-, Pendel- und Stuck-Penalties entfernt (v2.0 / rppo_run_5).
     // Ersatz: RND-Wrapper in Python liefert intrinsischen Bonus für neue Zustände —
@@ -1473,10 +1491,10 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     (void)isExitUnlocked;
     // Potential-Based Reward Shaping (PBRS) using BFS distance as potential.
     // Φ(s) = -BFS(s) / MAX_DIST  -> in [-1, 0]
-    // F(s, s') = γ · Φ(s') - Φ(s)
+    // F(s, s') = Φ(s') - Φ(s)
     // r_total = R_env + β · F(s, s')  (plus the minimal step-penalty above)
     constexpr float PBRS_MAX_DIST = 128.0F;   // normalisation constant (matches Python aux target scaling)
-    constexpr float PBRS_GAMMA = 0.999F;      // discount used in shaping term (matches train.py gamma)
+    constexpr float PBRS_GAMMA = 1.0F;         // shaping discount stays separate from the RL discount
     constexpr float PBRS_BETA = 2.5F;         // shaping strength: +0.01 net per tile forward at d=40
     // β=2.5 statt 5.0: konservativer nach BFS-Buffer-Fix (BUFFER 20→80).
     // Mit β=5 und altem Buffer=20 bekam der Agent +2.5/Schritt beim Rücklaufen aus Manhattan-

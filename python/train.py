@@ -48,15 +48,19 @@ class SeedEvalCallback(BaseCallback):
 
     def __init__(
         self,
-        eval_freq: int = 50_000,
+        eval_freq: int = 25_000,
         best_model_path: str = "best_models_ppo",
         n_eval_episodes: int = 50,
+        eval_exit_min: int = 5,
+        eval_exit_max: int = 12,
         verbose: int = 1,
     ) -> None:
         super().__init__(verbose)
         self.eval_freq = eval_freq
         self.best_model_path = best_model_path
         self.n_eval_episodes = n_eval_episodes
+        self.eval_exit_min = eval_exit_min
+        self.eval_exit_max = eval_exit_max
         self._best_rate = -1.0
         os.makedirs(best_model_path, exist_ok=True)
 
@@ -67,7 +71,7 @@ class SeedEvalCallback(BaseCallback):
 
     def _run_eval(self) -> None:
         seeds = EVAL_SEEDS_A[: self.n_eval_episodes]
-        env = StoneforgeWorldEnv()
+        env = StoneforgeWorldEnv(exit_min=self.eval_exit_min, exit_max=self.eval_exit_max)
         successes = 0
 
         for seed in seeds:
@@ -151,12 +155,16 @@ DQN_KWARGS = dict(
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Stoneforge RL Training")
     p.add_argument("--algo", choices=["ppo", "dqn"], default="ppo")
-    p.add_argument("--timesteps", type=int, default=1_000_000)
+    p.add_argument("--timesteps", type=int, default=500_000)
     p.add_argument("--n-envs", type=int, default=8)
-    p.add_argument("--eval-freq", type=int, default=50_000,
-                   help="Eval alle N Umgebungs-Steps (nicht Wall-Clock-Steps)")
-    p.add_argument("--save-dir", type=str, default=None,
-                   help="Speicherordner (default: best_models_<algo>)")
+    p.add_argument("--eval-freq", type=int, default=25_000)
+    p.add_argument("--save-dir", type=str, default=None)
+    p.add_argument("--exit-min", type=int, default=5,
+                   help="Minimale Exit-Distanz (Curriculum Phase 1=5, Phase 2=15, Phase 3=35)")
+    p.add_argument("--exit-max", type=int, default=12,
+                   help="Maximale Exit-Distanz")
+    p.add_argument("--load-model", type=str, default=None,
+                   help="Pfad zu einem bestehenden Modell (.zip) zum Weitertrainieren")
     return p.parse_args()
 
 
@@ -166,24 +174,37 @@ def main() -> None:
     save_dir = args.save_dir or f"best_models_{algo}"
 
     print(f"Starte Training: algo={algo.upper()}, timesteps={args.timesteps:,}, "
-          f"n_envs={args.n_envs}, save_dir={save_dir}")
+          f"n_envs={args.n_envs}, exit={args.exit_min}-{args.exit_max}, save_dir={save_dir}")
 
-    # Trainings-Envs (parallele Welten mit zufälligen Seeds)
-    env = make_vec_env(StoneforgeWorldEnv, n_envs=args.n_envs)
+    def make_env():
+        return StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
 
+    env = make_vec_env(make_env, n_envs=args.n_envs)
+
+    # Eval läuft immer auf dem Ziel-Testset (Phase-3-Distanz), damit Fortschritt vergleichbar ist
     eval_cb = SeedEvalCallback(
-        eval_freq=max(1, args.eval_freq // args.n_envs),  # in Rollout-Steps umrechnen
+        eval_freq=max(1, args.eval_freq // args.n_envs),
         best_model_path=save_dir,
         n_eval_episodes=50,
+        eval_exit_min=args.exit_min,
+        eval_exit_max=args.exit_max,
         verbose=1,
     )
 
     if algo == "ppo":
-        tb_name = "ppo_run"
-        model = PPO(env=env, **PPO_KWARGS)
+        tb_name = f"ppo_exit{args.exit_min}-{args.exit_max}"
+        if args.load_model:
+            model = PPO.load(args.load_model, env=env, **{k: v for k, v in PPO_KWARGS.items() if k != "verbose"})
+            print(f"  Lade Modell: {args.load_model}")
+        else:
+            model = PPO(env=env, **PPO_KWARGS)
     else:
-        tb_name = "dqn_run"
-        model = DQN(env=env, **DQN_KWARGS)
+        tb_name = f"dqn_exit{args.exit_min}-{args.exit_max}"
+        if args.load_model:
+            model = DQN.load(args.load_model, env=env)
+            print(f"  Lade Modell: {args.load_model}")
+        else:
+            model = DQN(env=env, **DQN_KWARGS)
 
     model.learn(
         total_timesteps=args.timesteps,

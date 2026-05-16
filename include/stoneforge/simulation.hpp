@@ -131,6 +131,7 @@ public:
     bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
     int currentBfsDistanceToExit() const;
+    int bfsDistanceAt(int x, int y) const;   // BFS-Kraftfeld: Pfad-Abstand an beliebiger Position
 
 private:
     bool tryMove(const Vec2i& delta);
@@ -204,6 +205,8 @@ private:
     bool mobsKilledUnlocksExit_ = false;
     int killsRequired_ = 0;
     int totalKills_ = 0;
+    int stepsWithoutProgress_ = 0;
+    int bestBfsInEpisode_ = 9999;
     std::unordered_set<std::int64_t> visitedTiles_;
     std::unordered_map<std::int64_t, int> tileVisitCounts_;
 
