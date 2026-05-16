@@ -437,6 +437,117 @@ Die folgenden Änderungen wurden am 15.05.2026 implementiert und getestet. Sie b
 
 Datei mit kompaktem Protokoll: `docs/roadmap_changes.md`.
 
+---
+
+## v2.0 — Phase-0-Sanity-Run: PBRS einschalten + saubere Codebasis (16.05.2026)
+
+### Diagnose: Warum bisherige Runs fehlgeschlagen sind
+
+Nach dem großen Refactor (Commit f944780) enthält die Codebase eine sauber implementierte PBRS-Funktion in `simulation.cpp` — aber mit `PBRS_BETA = 0.0`. Damit gibt es im aktuellen Code **kein einziges richtungsweisendes Signal** für den Agenten:
+
+| Term | Wert pro Schritt | Nettowirkung |
+|---|---|---|
+| Schrittstrafe | -0.010 | immer negativ |
+| Neues Tile | +0.010 | netto 0 auf frischer Kachel |
+| PBRS (β=0.0) | 0.000 | komplett aus |
+| Exit-Bonus | +100 | nur bei Erfolg |
+
+Bei 35–45 Tiles Distanz ist der Exit-Bonus durch rein zufällige Exploration nicht erreichbar. Alle Messungen mit 0–6% Success Rate waren kein Algorithmus-Versagen, sondern fehlende Motivation.
+
+**Zusätzlich**: Die Roadmap (15.05.2026) setzte β=0.5 — das war ebenfalls zu klein:
+
+```
+F pro Tile Fortschritt (d=40): (0.001·40 + 0.999) / 128 ≈ 0.0081
+β=0.5 → shaping = +0.004 → netto = +0.004 - 0.010 = -0.006  ← immer noch negativ!
+β=5.0 → shaping = +0.040 → netto = +0.040 - 0.010 = +0.030  ← klar positiv ✓
+```
+
+### Änderung 1 — PBRS_BETA korrigiert
+
+**Datei:** `src/core/simulation.cpp` — `computeReward()`
+
+| Parameter | vorher | nachher | Begründung |
+|---|---|---|---|
+| `PBRS_BETA` | `0.0F` | `5.0F` | Netto-Reward pro Tile vorwärts = +0.030, rückwärts = −0.048; Differenz 0.078 → starkes, klares Signal |
+| `PBRS_GAMMA` | `0.999F` | `0.999F` | Unverändert — muss mit `gamma` in `train.py` übereinstimmen |
+| `PBRS_MAX_DIST` | `128.0F` | `128.0F` | Unverändert |
+
+> **Rebuild erforderlich** nach dieser Änderung:
+> ```bash
+> cmake --build build -j
+> export PYTHONPATH="$PWD/build:$PWD/python:$PYTHONPATH"
+> ```
+
+**Warum β=5 und nicht β=0.5 (Roadmap) oder β=1?**
+
+Ein Tile Fortschritt ergibt F≈0.008. Die Schrittstrafe beträgt -0.010. Erst ab β>1.25 wird ein Schritt vorwärts netto positiv. β=5 ergibt +0.030 netto — das ist 3× über der Schrittstrafe, was dem Agenten einen unmissverständlichen Gradienten liefert, ohne den terminalen +100-Bonus zu überschatten.
+
+### Änderung 2 — `python/stoneforge_env.py` neu geschrieben
+
+**Datei:** `python/stoneforge_env.py` (neu, ersetzt Worktree-Version)
+
+**Was geändert wurde:**
+
+- `configure_world_generation(disable_mobs=True, disable_energy=True)` — sauberes Navigationssignal ohne Mob-Rauschen, kein Energieverbrauch
+- Aktionsraum: `Discrete(4)` — nur Bewegung (Aktionen 0–3 = MoveUp/Down/Left/Right)
+- Manuelle Obs-Normalisierung aller Features auf `[-1, 1]`:
+
+| Feature | Rohwert | Normalisierung | Ergebnis |
+|---|---|---|---|
+| Grid (0..225) | `{0, 10, 15, 20, 30}` | `/30` | `{0.0, 0.33, 0.5, 0.67, 1.0}` |
+| Visited mask (225..450) | `{0, 1}` | unverändert | `{0.0, 1.0}` |
+| HP | `0..10` | `/10` | `[0.0, 1.0]` |
+| Energy | `0..100` | `/100` | `[0.0, 1.0]` |
+| Inventory | `0..64+` | `clip/64` | `[0.0, 1.0]` |
+| exitDx | `−45..+45` | `/64` | `[−0.70, 0.70]` |
+| exitDy | `−45..+45` | `/64` | `[−0.70, 0.70]` |
+
+- `reset(seed=None)` zieht per Gym-RNG einen neuen Seed → Agent sieht pro Episode eine andere Welt → automatische Generalisierung
+- Kein ExitPotentialFieldWrapper, kein ReducedActionEnv-Wrapper mehr nötig (direkt integriert)
+
+### Änderung 3 — `python/train.py` neu geschrieben
+
+**Datei:** `python/train.py` (neu, ersetzt alten Einstiegspunkt)
+
+**Was geändert wurde:**
+
+| Parameter | vorher | nachher | Begründung |
+|---|---|---|---|
+| `gamma` | `0.99` | `0.999` | Mit γ=0.99: `0.99^4000≈0` → Exit-Bonus nach 400 Schritten unsichtbar. Mit γ=0.999: `0.999^4000≈0.018` → +100 noch ~1.8 wert. **Muss mit PBRS_GAMMA übereinstimmen.** |
+| `ent_coef` | — | `0.01` | Kleiner Entropie-Bonus für Exploration in offenem Gelände |
+| `n_steps` | `1024` | `2048` | Längere Rollouts bei maxSteps=4000 |
+| Curriculum | vorhanden | **entfernt** | Kein Curriculum; Domain-Randomization (35–45 Tiles, zufälliger Seed jede Episode) ist robuster |
+| EvalCallback | SB3-Default | `SeedEvalCallback` | Deterministisch auf Seeds 7000–7049; loggt Success Rate in TensorBoard; speichert bestes Modell |
+
+**Eval-Logik im Callback:**
+```python
+# Alle 50.000 Steps: 50 Episoden auf Seeds 7000–7049
+# Deterministisch (model.predict(..., deterministic=True))
+# Gibt Success Rate als TB-Log aus + speichert best_model.zip
+```
+
+### Erwartung für den Sanity-Run (Vorher festschreiben!)
+
+| Metrik | Erwartung nach 1M Steps PPO | Grundlage |
+|---|---|---|
+| Success Rate (7000–7049) | > 20% | Signal ist klar positiv, Aufgabe ist PointGoal auf offenem Gelände |
+| Mean Episode Length | < 2000 | Erfolgreiche Episoden kürzer als 4000-Step-Limit |
+| Trend TensorBoard | monoton steigend | Kein Reward-Kollaps ohne Curriculum |
+
+**Wenn Success Rate nach 1M Steps < 5%:** Bug in der Observation oder im Binding — nicht am Algorithmus weiterdrehen.
+
+### Nächster Schritt nach dem Sanity-Run
+
+1. Ergebnis messen (50-Seed-Eval, exakt wie oben)
+2. Eintrag in diese Dokumentation ergänzen (Tabelle unten)
+3. Erst danach Phase 1 (Architektur, BFS-Aux-Head) oder Phase 2 (Holdout B) angehen
+
+### Ergebnisse (auszufüllen nach Training)
+
+| Algorithmus | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return | Datum |
+|---|---|---|---|---|---|
+| PPO (β=5.0, γ=0.999) | — / 50 | — % | — | — | — |
+
 Hinweis: Die `third_party/level-replay` Quelle ist vendorisiert; bei weiteren NumPy‑Deprecations kann ich automatisiert weitere Ersetzungen (z.B. `np.int`/`np.bool`) durchführen.
 
 Wenn Du willst, übernehme ich diesen Abschnitt auch als formalen Eintrag in `CHANGELOG.md` oder in die LaTeX‑Dokumentation.

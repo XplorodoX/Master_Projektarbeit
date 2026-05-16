@@ -1476,8 +1476,8 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     // F(s, s') = γ · Φ(s') - Φ(s)
     // r_total = R_env + β · F(s, s')  (plus the minimal step-penalty above)
     constexpr float PBRS_MAX_DIST = 128.0F;   // normalisation constant (matches Python aux target scaling)
-    constexpr float PBRS_GAMMA = 0.999F;      // discount used in shaping term (matches experiment spec)
-    constexpr float PBRS_BETA = 0.0F;         // shaping strength (tunable; 0.5..1.0 recommended)
+    constexpr float PBRS_GAMMA = 0.999F;      // discount used in shaping term (matches train.py gamma)
+    constexpr float PBRS_BETA = 5.0F;         // shaping strength: +0.03 net per tile forward at d=40
 
     const float phi_prev = -static_cast<float>(previousDistance) / PBRS_MAX_DIST;
     const float phi_cur = -static_cast<float>(currentDistance) / PBRS_MAX_DIST;
