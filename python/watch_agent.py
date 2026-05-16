@@ -41,6 +41,16 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+ACT_NAMES = {0: '↑', 1: '↓', 2: '←', 3: '→'}
+
+
+def bfs_best_action(env: StoneforgeWorldEnv) -> int:
+    """Gibt die BFS-optimale Aktion zurück (niedrigste Nachbar-Distanz)."""
+    nbrs = [env.core.bfs_distance_at_offset(dx, dy)
+            for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]]
+    return int(np.argmin(nbrs))
+
+
 def main() -> None:
     args = parse_args()
 
@@ -73,21 +83,48 @@ def main() -> None:
             steps = 0
             ep_ret = 0.0
             reached = False
+            last_pos = None
+            stuck_steps = 0
 
+            print(f"\n--- Episode {ep+1} (seed={seed}) ---")
             while not done and steps < 4000:
                 action, _ = model.predict(obs, deterministic=args.deterministic)
                 action = int(action)
+
+                # BFS-Fallback: wenn Agent >= 4 Schritte an derselben Position feststeckt,
+                # erzwinge BFS-optimale Richtung statt Policy
+                pos = env.core.player_pos()
+                if pos == last_pos:
+                    stuck_steps += 1
+                else:
+                    stuck_steps = 0
+                last_pos = pos
+
+                if stuck_steps >= 4:
+                    action = bfs_best_action(env)
 
                 # Aktion an C++-Client senden
                 client.stdin.write(f"{action}\n")
                 client.stdin.flush()
 
                 obs, reward, term, trunc, info = env.step(action)
+                bfs = env.core.current_bfs_distance_to_exit()
                 ep_ret += float(reward)
                 steps += 1
                 if info.get("reached_exit", False):
                     reached = True
+
                 done = term or trunc
+
+                fallback = " [BFS-Fallback]" if stuck_steps >= 4 else ""
+                print(f"  Step {steps:3d} | pos={str(pos):>10} | BFS={bfs:3d} | "
+                      f"act={ACT_NAMES[action]}{fallback}")
+
+                if reached:
+                    print(f"  => EXIT GEFUNDEN ✓ | steps={steps} | return={ep_ret:.1f}")
+                    time.sleep(1.5)   # kurz warten damit man es sieht
+                    client.terminate()
+                    break
 
                 time.sleep(args.speed)
 
@@ -95,13 +132,11 @@ def main() -> None:
                     print("Client wurde geschlossen.")
                     return
 
-            successes += int(reached)
-            status = "EXIT GEFUNDEN ✓" if reached else "Timeout ✗"
-            bfs = env.core.current_bfs_distance_to_exit()
-            print(
-                f"  Episode {ep+1:2d} (seed={seed}): {status} | "
-                f"steps={steps} | return={ep_ret:.1f} | bfs_remaining={bfs}"
-            )
+            if not reached:
+                status = "Timeout ✗"
+                bfs = env.core.current_bfs_distance_to_exit()
+                print(f"  => {status} | steps={steps} | bfs_remaining={bfs}")
+                client.terminate()
 
     except BrokenPipeError:
         print("Client geschlossen.")
@@ -110,7 +145,10 @@ def main() -> None:
     finally:
         if client.poll() is None:
             client.stdin.close()
-            client.wait(timeout=2)
+            try:
+                client.wait(timeout=10)
+            except Exception:
+                client.kill()
 
     print(f"\nGesamt: {successes}/{args.episodes} Exits gefunden ({successes/args.episodes:.1%})")
 

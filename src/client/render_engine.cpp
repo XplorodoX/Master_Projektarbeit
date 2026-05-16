@@ -1583,6 +1583,13 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
     std::uint64_t currentSeed = aiMode ? aiSeed : 42ULL;
     bool hasRun = aiMode;
 
+    // AI-Modus: Simulation sofort mit korrektem Seed initialisieren.
+    // Ohne diesen Reset rendert der Client eine leere Default-Welt statt der Agenten-Welt.
+    if(aiMode) {
+        sim.reset(aiSeed);
+        if(aiDualMode) { sim2.reset(aiSeed); }
+    }
+
     float stepTimer = 0.0F;
     float zoom = 1.0F;
     float swordSwingTimer = 0.0F;
