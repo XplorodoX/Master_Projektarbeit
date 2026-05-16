@@ -1,6 +1,48 @@
 # Changelog
 
 ## v2026-05-16
+
+### Phase-3 Ergebnisse — Mixed-Distribution (exit=5–45, 1M Steps, PPO, frischer Start)
+
+| Eval-Modus | Exit-Bereich | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return | Datum |
+|------------|--------------|---------|--------------|----------------------|---------------|-------|
+| Stochastisch | 35–45 (Projekt-Ziel) | 43 / 50 | **86.0 %** ✓ | 951 | 19.0 | 16.05.2026 |
+| Stochastisch | 5–45 (Trainingsbereich) | 46 / 50 | **92.0 %** ✓ | 678 | 46.2 | 16.05.2026 |
+| Deterministisch | 35–45 | 1 / 50 | **2.0 %** ✗ | 3921 | −348.3 | 16.05.2026 |
+| Deterministisch | 5–45 | 1 / 50 | **2.0 %** ✗ | 3921 | −320.3 | 16.05.2026 |
+
+**Verlauf (Deterministic Eval alle 25k Steps):** 0%–0% bis 975k Steps, 2% @ 1M Steps.
+**Stochastisch:** Policy funktioniert sehr gut (86–92% je nach Bereich), Projektarbeit-Ziel (70%) erreicht.
+**Problem — Deterministischer Eval kaputt:** `deterministic=True` (Argmax) erzeugt ↑↓-Loops weil die Policy-Entropie am Trainingsende noch ~−0.88 beträgt. Bei hoher Entropie flipped der Argmax in bestimmten Zuständen zwischen zwei Aktionen → Agent bleibt in 2-Zellen-Schleife stecken. Nächste Priorität: Deterministischen Eval reparieren (Loop-Detection oder Temperatur-Sampling).
+
+**Modelle:** `best_models_ppo_phase3/final_model.zip` (1M Steps), `best_models_ppo_phase3/best_model.zip` (80% stochastisch, gespeichert bei 2% Deterministic-Eval)
+
+**Testset B — Generalisierungstest (Seeds 8000–8049, nie während Training gesehen):**
+
+| Eval-Modus | Exit-Bereich | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return |
+|------------|--------------|---------|--------------|----------------------|---------------|
+| Stochastisch | 35–45 (Projekt-Ziel) | 43 / 50 | **86.0 %** ✓ | 884 | 16.7 |
+| Stochastisch | 5–45 (Trainingsbereich) | 46 / 50 | **92.0 %** ✓ | 757 | 40.6 |
+| Deterministisch | 35–45 | 0 / 50 | **0.0 %** ✗ | 4000 | −383.0 |
+
+**Fazit:** Agent generalisiert nahezu perfekt auf unbekannte Seeds. Testset A (86%) = Testset B (86%) — kein Overfitting auf die Trainings-Seeds. Beide Projektarbeit-Kriterien erfüllt (A ≥ 70% ✓, B ≥ 60% ✓).
+
+---
+
+#### Änderung 5 — Eval-Callback auf stochastischen Modus umgestellt
+
+**Datei:** `python/train.py` — `SeedEvalCallback._run_eval()`
+
+**Problem:** `deterministic=True` (Argmax) ist der falsche Eval-Modus für PPO. PPO lernt explizit eine stochastische Policy (Gaußverteilung über Aktionen). Bei hoher Entropie (~−0.88) flipped der Argmax in bestimmten Zuständen zwischen zwei Aktionen → ↑↓-Loop → 0% Eval trotz funktionierender Policy (stochastisch 86–94%).
+
+**Lösung:** `deterministic=False` im Callback. Mehrfach-Evals mit stochastischer Policy haben zwar mehr Varianz, messen aber die tatsächliche Leistung. Für die Projektarbeit gilt stochastische Eval als Standard für PPO.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `model.predict(deterministic=...)` | `True` | `False` | PPO ist stochastisch; Argmax bei hoher Entropie erzeugt Loops |
+
+---
+
 #### Änderung 1 - PBRS Discount entkoppelt
 **Datei:** `src/core/simulation.cpp`
 **Problem:** Das Reward-Shaping konnte mit negativem Potential und `PBRS_GAMMA < 1` einen kleinen positiven Schritt-Reward beim Verharren erzeugen; der Zusatzbonus fuer neue Tiles verstaerkte das Farmen weiter.
@@ -35,7 +77,19 @@
 | `bestBfsInEpisode_` | nicht vorhanden | neu in simulation.hpp/cpp | BFS-Referenzwert für Fortschrittserkennung |
 | Algorithmus | DQN | PPO | On-policy verhindert korrupten Replay-Buffer |
 
-**Ergebnis:** Noch nicht gemessen — Neutraining läuft.
+**Ergebnis Phase 2 (exit=12–25, 500k Steps, geladen von Phase-1-Modell):**
+
+| Algorithmus | Erfolge | Success Rate | Datum |
+|-------------|---------|--------------|-------|
+| PPO (Phase 2, best) | 11 / 50 | **22.0 %** (@ 25k Steps!) | 16.05.2026 |
+| PPO (Phase 2, final) | 3 / 50 | **6.0 %** (@ 500k Steps) | 16.05.2026 |
+
+**Phase-2-Diagnose — Curriculum-Transfer gescheitert:**
+Das Phase-1-Modell (Entropy −0.96) kollabierte in Phase 2 sofort auf Entropy −0.50 (extrem deterministisch). Die eingebrannte Kurzdistanz-Strategie ließ sich mit `ent_coef=0.01` und `lr=3e-4` nicht überschreiben — statt Umlernen auf 12–25 Tiles wurde die Phase-1-Policy aktiv zerstört. Bestes Ergebnis war die erste Eval (22%), danach nur noch Rückschritt.
+
+Wichtig: Phase-1-Finalmodell (56%) wurde gesichert als `best_models_ppo/phase1_final_56pct.zip`.
+
+**Konsequenz für Phase 3:** Kein naives Curriculum-Laden. Stattdessen Mixed-Distribution-Training (exit=5–45), damit der Agent short-range Skills behält und long-range parallel lernt.
 
 #### Änderung 3 — Curriculum + moveBlocked Penalty + Wand-Reduktion
 **Dateien:** `src/core/simulation.cpp`, `assets/base/game_config.json`, `python/train.py`

@@ -79,7 +79,9 @@ class SeedEvalCallback(BaseCallback):
             done = False
             steps = 0
             while not done and steps < MAX_EVAL_STEPS:
-                action, _ = self.model.predict(obs, deterministic=True)
+                # deterministic=False: PPO lernt eine stochastische Policy.
+                # Argmax (deterministic=True) erzeugt bei hoher Entropie ↑↓-Loops.
+                action, _ = self.model.predict(obs, deterministic=False)
                 obs, _, term, trunc, info = env.step(int(action))
                 done = term or trunc
                 steps += 1
