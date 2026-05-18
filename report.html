@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stoneforge RL — Experimentbericht</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #5b8dee;
+      --green: #3ecf8e;
+      --red: #f66;
+      --yellow: #f5c542;
+      --orange: #f0944d;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .page { max-width: 1100px; margin: 0 auto; }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2.5rem 2rem;
+      background: linear-gradient(135deg, #1a1d27 0%, #1e2540 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 0%, rgba(91,141,238,0.12) 0%, transparent 60%);
+    }
+    header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; position: relative; }
+    header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: .5rem; font-size: .95rem; position: relative; }
+    .badge {
+      display: inline-block;
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      margin: .75rem .25rem 0;
+      position: relative;
+    }
+    .badge-blue { background: rgba(91,141,238,.15); color: var(--accent); border: 1px solid rgba(91,141,238,.3); }
+    .badge-green { background: rgba(62,207,142,.15); color: var(--green); border: 1px solid rgba(62,207,142,.3); }
+
+    /* Section */
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .3px;
+      margin-bottom: 1.25rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    h2 .icon { font-size: 1.1rem; }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+    .stat-card .val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: .3rem;
+    }
+    .stat-card .label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+    .stat-card .sub { font-size: .78rem; color: var(--muted); margin-top: .25rem; }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .yellow { color: var(--yellow); }
+    .blue { color: var(--accent); }
+
+    /* Chart containers */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .chart-card h3 { font-size: .95rem; font-weight: 600; color: var(--muted); margin-bottom: 1.2rem; }
+    .chart-wrap { position: relative; }
+    .chart-wrap canvas { max-height: 300px; }
+
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+
+    /* Table */
+    .tbl-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      padding: .65rem 1rem;
+      text-align: left;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    .pill {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .pill-green { background: rgba(62,207,142,.15); color: var(--green); }
+    .pill-red { background: rgba(255,102,102,.15); color: var(--red); }
+    .pill-yellow { background: rgba(245,197,66,.15); color: var(--yellow); }
+    .pill-blue { background: rgba(91,141,238,.15); color: var(--accent); }
+    .pill-orange { background: rgba(240,148,77,.15); color: var(--orange); }
+
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .tl-item {
+      display: flex;
+      gap: 1.5rem;
+      position: relative;
+    }
+    .tl-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 38px;
+      bottom: -12px;
+      width: 2px;
+      background: var(--border);
+    }
+    .tl-dot {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: .85rem;
+      border: 2px solid;
+      position: relative;
+      z-index: 1;
+    }
+    .tl-body { flex: 1; padding-bottom: 1.75rem; }
+    .tl-title { font-weight: 700; font-size: 1rem; margin-bottom: .25rem; }
+    .tl-meta { font-size: .8rem; color: var(--muted); margin-bottom: .6rem; }
+    .tl-desc { font-size: .88rem; color: #b0b8cc; line-height: 1.55; }
+
+    /* Tag row */
+    .tag-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+    .tag {
+      font-size: .72rem;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Callout */
+    .callout {
+      display: flex;
+      gap: .75rem;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: .9rem;
+      margin-top: 1rem;
+    }
+    .callout-green { background: rgba(62,207,142,.08); border: 1px solid rgba(62,207,142,.25); }
+    .callout-red { background: rgba(255,102,102,.08); border: 1px solid rgba(255,102,102,.25); }
+    .callout-blue { background: rgba(91,141,238,.08); border: 1px solid rgba(91,141,238,.25); }
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.5; }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: .4rem;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .4s;
+    }
+
+    /* Obs table */
+    .obs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; }
+    .obs-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .obs-block .obs-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .4rem; }
+    .obs-block .obs-val { font-family: 'Courier New', monospace; font-size: .85rem; color: var(--text); }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: .8rem;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <h1>Stoneforge <span>RL</span> — Experimentbericht</h1>
+    <p>Reinforcement Learning · Prozedurale 2D-Welten · Exit-Navigation</p>
+    <div>
+      <span class="badge badge-blue">PPO · Stable-Baselines3</span>
+      <span class="badge badge-blue">C++ Kernsimulation · Pybind11</span>
+      <span class="badge badge-green">Bestes Ergebnis: 98 % / 94 %</span>
+    </div>
+  </header>
+
+  <!-- BEST RESULTS -->
+  <section>
+    <h2><span class="icon">🏆</span> Bestes Modell — Phase 4</h2>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="val green">98%</div>
+        <div class="label">Testset A</div>
+        <div class="sub">Seeds 7000–7049 · Ziel: ≥ 70 %</div>
+      </div>
+      <div class="stat-card">
+        <div class="val green">94%</div>
+        <div class="label">Testset B</div>
+        <div class="sub">Seeds 8000–8049 · Ziel: ≥ 60 %</div>
+      </div>
+      <div class="stat-card">
+        <div class="val blue">285</div>
+        <div class="label">Mittl. Steps</div>
+        <div class="sub">Testset A · vs. 856 in Phase 3</div>
+      </div>
+      <div class="stat-card">
+        <div class="val yellow">1 M</div>
+        <div class="label">Trainings-Steps</div>
+        <div class="sub">PPO · exit = 5–45 Tiles</div>
+      </div>
+    </div>
+    <div class="callout callout-green" style="margin-top:1rem">
+      <span class="callout-icon">✅</span>
+      <span>Beide Projektarbeit-Kriterien erfüllt: Testset A ≥ 70 % (<strong>98 %</strong>) und Testset B ≥ 60 % (<strong>94 %</strong>). Der Agent findet den Exit 3× schneller als in Phase 3.</span>
+    </div>
+  </section>
+
+  <!-- PHASE COMPARISON CHART -->
+  <section>
+    <h2><span class="icon">📊</span> Erfolgsrate über alle Phasen</h2>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>Success Rate — Testset A (Seeds 7000–7049)</h3>
+        <div class="chart-wrap">
+          <canvas id="chartPhases"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Mittlere Episodenlänge (Steps) — Testset A</h3>
+        <div class="chart-wrap">
+          <canvas id="chartSteps"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRAINING TIMELINE -->
+  <section>
+    <h2><span class="icon">🗓</span> Trainingsverlauf</h2>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(91,141,238,.15);color:var(--accent);border-color:var(--accent)">1</div>
+        <div class="tl-body">
+          <div class="tl-title">Phase 1 — Kurzdistanz-Bootstrapping</div>
+          <div class="tl-meta">500k Steps · exit = 5–12 Tiles · PPO</div>
+          <div class="tl-desc">
+            Agent sieht den Exit-Reward (+100) zum ersten Mal. Random-Walk-Erfolg bei 5–12 Tiles beträgt ~45 %,
+            damit erhält PPO genug positives Signal. Finale Success Rate auf Trainingsbereich: <strong>56 %</strong>.
+          </div>
+          <div class="tag-row">
+            <span class="tag">56 % @ 500k Steps</span>
+            <span class="tag">Phase-1 gesichert als phase1_final_56pct.zip</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(255,102,102,.15);color:var(--red);border-color:var(--red)">2</div>
+        <div class="tl-body">
+          <div class="tl-title">Phase 2 — Curriculum-Transfer (gescheitert)</div>
+          <div class="tl-meta">500k Steps · exit = 12–25 Tiles · Fine-Tune von Phase 1</div>
+          <div class="tl-desc">
+            Phase-1-Modell kollabierte sofort: Entropy −0.96 → −0.50, die eingebrannte Kurzdistanz-Strategie
+            wurde aktiv zerstört. Bestes Ergebnis war die <em>erste</em> Eval bei 25k Steps (22 %),
+            danach Rückschritt bis 6 %.
+          </div>
+          <div class="callout callout-red" style="margin-top:.75rem;font-size:.83rem">
+            <span class="callout-icon">💡</span>
+            <span><strong>Lektion:</strong> Naives Curriculum-Loading funktioniert nicht wenn die Policy bereits zu deterministisch ist. Lösung für Phase 3: Mixed-Distribution (exit=5–45) von Grund auf.</span>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Best: 22 % @ 25k</span>
+            <span class="tag">Final: 6 % @ 500k</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(245,197,66,.15);color:var(--yellow);border-color:var(--yellow)">3</div>
+        <div class="tl-body">
+          <div class="tl-title">Phase 3 — Mixed-Distribution (frischer Start)</div>
+          <div class="tl-meta">1M Steps · exit = 5–45 Tiles · PPO · 3 unabhängige Runs</div>
+          <div class="tl-desc">
+            Kein Curriculum-Laden — Training startet von vorne mit exit=5–45. Agent lernt Short- und
+            Long-Range parallel. Stochastische Eval: <strong>86–92 %</strong>. Projektarbeit-Ziel 70 % erstmals überschritten.<br><br>
+            Problem entdeckt: Deterministischer Eval (deterministic=True) erzeugt 0–2 % wegen ↑↓-Loops
+            (hohe Policy-Entropie −0.88 → Argmax flipped). Fix: Callback auf deterministic=False umgestellt.
+          </div>
+          <div class="tag-row">
+            <span class="tag">Testset A Ø: 85.3 % ± 3.8 %</span>
+            <span class="tag">Testset B Ø: 79.3 % ± 8.1 %</span>
+            <span class="tag">mean_len: 856 Steps</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(62,207,142,.15);color:var(--green);border-color:var(--green)">4</div>
+        <div class="tl-body">
+          <div class="tl-title">Phase 4 — Verbesserte Reward-Struktur ⭐ Bestes Modell</div>
+          <div class="tl-meta">1M Steps · exit = 5–45 · PPO · Neue Penalties</div>
+          <div class="tl-desc">
+            Verhaltensanalyse (Seeds 7000–7005) identifizierte zwei Hauptprobleme:
+            Agent lief 57× gegen dieselbe Nordwand und pendelte in A↔B-Loops.
+            Drei neue Penalties: eskalierender Wand-Penalty (−0.05 / −0.25), 2-Schritt-Loop-Penalty (−0.15),
+            eskalierender Stagnation-Penalty (−0.05 / −0.15). Plus: Stuck-Feature in Observation.
+          </div>
+          <div class="callout callout-green" style="margin-top:.75rem;font-size:.83rem">
+            <span class="callout-icon">🚀</span>
+            <span><strong>Ergebnis:</strong> 88 % → <strong>98 %</strong> (Testset A), 84 % → <strong>94 %</strong> (Testset B), Episodenlänge 856 → <strong>285 Steps</strong> (3× effizienter).</span>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Testset A: 98 %</span>
+            <span class="tag">Testset B: 94 %</span>
+            <span class="tag">mean_len A: 285 Steps</span>
+            <span class="tag">mean_len B: 466 Steps</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:rgba(255,102,102,.15);color:var(--red);border-color:var(--red)">5</div>
+        <div class="tl-body">
+          <div class="tl-title">Phase 5 — exitDx/exitDy entfernt (Hypothese widerlegt)</div>
+          <div class="tl-meta">Abgebrochen @ 737k/1M Steps · Hypothese: BFS-Gradient reicht allein</div>
+          <div class="tl-desc">
+            Hypothese: exitDx/exitDy erzeugen Luftlinien-Bias → Entfernung verbessert Generalisierung.
+            Realität: Bei 40 Tiles Entfernung ist der BFS-Gradient zwischen Nachbarzellen nur ~0.016 Unterschied —
+            zu schwach als einziger Hinweis. Success Rate stagnierte/fiel auf max. 40 %, Tendenz abwärts.
+          </div>
+          <div class="callout callout-red" style="margin-top:.75rem;font-size:.83rem">
+            <span class="callout-icon">❌</span>
+            <span><strong>exitDx/exitDy sind notwendig</strong> als Fernbereich-Signal. Der BFS-Gradient ist ein lokales Signal (4 Nachbarn), kein globaler Kompass. Wiederhergestellt. Bestes Modell bleibt Phase 4.</span>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Max: 40 % @ 325k</span>
+            <span class="tag">Ende: 28 % @ 725k</span>
+            <span class="tag">Abgebrochen</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PHASE 3 REPETITION RUNS -->
+  <section>
+    <h2><span class="icon">🔁</span> Phase-3 Wiederholungsläufe (3 unabhängige Runs)</h2>
+    <div class="chart-card" style="margin-bottom:1rem">
+      <h3>Success Rate — Testset A vs. B pro Run</h3>
+      <div class="chart-wrap">
+        <canvas id="chartReps"></canvas>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Run</th>
+            <th>Seed</th>
+            <th>Testset A (7000–7049)</th>
+            <th>Mean Len A</th>
+            <th>Testset B (8000–8049)</th>
+            <th>Mean Len B</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Run 1</td>
+            <td>—</td>
+            <td><strong>88.0 %</strong></td>
+            <td>856</td>
+            <td><strong>84.0 %</strong></td>
+            <td>936</td>
+            <td><span class="pill pill-green">✓ Ziel A</span> <span class="pill pill-green">✓ Ziel B</span></td>
+          </tr>
+          <tr>
+            <td>Run 2</td>
+            <td>42</td>
+            <td><strong>80.0 %</strong></td>
+            <td>1081</td>
+            <td><strong>68.0 %</strong></td>
+            <td>1825</td>
+            <td><span class="pill pill-green">✓ Ziel A</span> <span class="pill pill-yellow">⚠ Ziel B knapp</span></td>
+          </tr>
+          <tr>
+            <td>Run 3</td>
+            <td>123</td>
+            <td><strong>88.0 %</strong></td>
+            <td>752</td>
+            <td><strong>86.0 %</strong></td>
+            <td>940</td>
+            <td><span class="pill pill-green">✓ Ziel A</span> <span class="pill pill-green">✓ Ziel B</span></td>
+          </tr>
+          <tr style="background:rgba(91,141,238,.05)">
+            <td colspan="2"><strong>Mittelwert ± Std</strong></td>
+            <td><strong>85.3 % ± 3.8 %</strong></td>
+            <td>896</td>
+            <td><strong>79.3 % ± 8.1 %</strong></td>
+            <td>1234</td>
+            <td><span class="pill pill-green">✓ Stabil</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PHASE 5 LEARNING CURVE -->
+  <section>
+    <h2><span class="icon">📉</span> Phase 5 — Lernkurve (abgebrochen)</h2>
+    <div class="chart-card">
+      <h3>Success Rate während Training (Testset A, exit = 35–45) — ohne exitDx/exitDy</h3>
+      <div class="chart-wrap">
+        <canvas id="chartPhase5"></canvas>
+      </div>
+    </div>
+    <div class="callout callout-blue" style="margin-top:1rem">
+      <span class="callout-icon">🔬</span>
+      <span>Kurzzeitig 40 % bei 325k Steps — danach Stagnation und Rückgang auf 28 %. Der BFS-Gradient allein (lokale 4-Nachbar-Differenz ~0.016 bei großen Distanzen) ist zu schwach als globales Navigationssignal. exitDx/exitDy wiederhergestellt.</span>
+    </div>
+  </section>
+
+  <!-- REWARD STRUCTURE -->
+  <section>
+    <h2><span class="icon">⚖️</span> Reward-Struktur (Phase 4)</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ereignis</th>
+            <th>Reward</th>
+            <th>Kondition</th>
+            <th>Typ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Exit erreicht</td>
+            <td class="green"><strong>+100</strong></td>
+            <td>reachedExit = true</td>
+            <td><span class="pill pill-green">Terminal</span></td>
+          </tr>
+          <tr>
+            <td>BFS-Fortschritt (PBRS)</td>
+            <td class="green"><strong>+β · ΔΦ</strong></td>
+            <td>Φ(s) = −BFS/64, β = 2.5</td>
+            <td><span class="pill pill-blue">Shaping</span></td>
+          </tr>
+          <tr>
+            <td>Wandkollision (1.)</td>
+            <td class="red">−0.05</td>
+            <td>moveBlocked, consecutiveBlocked = 1</td>
+            <td><span class="pill pill-red">Penalty</span></td>
+          </tr>
+          <tr>
+            <td>Wandkollision (2.+)</td>
+            <td class="red"><strong>−0.25</strong></td>
+            <td>moveBlocked, consecutiveBlocked ≥ 2</td>
+            <td><span class="pill pill-red">Penalty eskalierend</span></td>
+          </tr>
+          <tr>
+            <td>A↔B Loop erkannt</td>
+            <td class="red">−0.15</td>
+            <td>positionLoop = true (A→B→A)</td>
+            <td><span class="pill pill-red">Penalty</span></td>
+          </tr>
+          <tr>
+            <td>Stagnation 30–59 Steps</td>
+            <td class="red">−0.05</td>
+            <td>stepsWithoutProgress ∈ [30, 60)</td>
+            <td><span class="pill pill-orange">Penalty</span></td>
+          </tr>
+          <tr>
+            <td>Stagnation ≥ 60 Steps</td>
+            <td class="red"><strong>−0.15</strong></td>
+            <td>stepsWithoutProgress ≥ 60</td>
+            <td><span class="pill pill-red">Penalty eskalierend</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- OBSERVATION SPACE -->
+  <section>
+    <h2><span class="icon">👁</span> Observation Space (236 Features)</h2>
+    <div class="obs-grid">
+      <div class="obs-block">
+        <div class="obs-label">Grid [0 : 225)</div>
+        <div class="obs-val">15×15 Tiles<br>÷ 30 → [0, 1]</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">HP [225]</div>
+        <div class="obs-val">÷ 10 → [0, 1]</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">Energy [226]</div>
+        <div class="obs-val">÷ 100 → [0, 1]</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">Inventory [227]</div>
+        <div class="obs-val">clip/64 → [0, 1]</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">exitDx [228]</div>
+        <div class="obs-val">÷ 64 → [−1, 1]<br>Richtung X zum Exit</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">exitDy [229]</div>
+        <div class="obs-val">÷ 64 → [−1, 1]<br>Richtung Y zum Exit</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">BFS current [230]</div>
+        <div class="obs-val">Pfadabstand / 64</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">BFS ↑↓←→ [231–234]</div>
+        <div class="obs-val">4 Nachbarn / 64<br>Wand → 1.0</div>
+      </div>
+      <div class="obs-block">
+        <div class="obs-label">Stuck [235]</div>
+        <div class="obs-val">min(SWP/60, 1.0)<br>0=Fortschritt · 1=fest</div>
+      </div>
+    </div>
+    <div class="callout callout-blue" style="margin-top:1rem">
+      <span class="callout-icon">💡</span>
+      <span>exitDx/exitDy = globaler Kompass (Fernbereich). BFS-Gradient = lokaler Pfadfinder (Wand-korrekt). Beide sind notwendig — Phase 5 bewies: BFS allein reicht nicht bei ≥ 35 Tiles Distanz.</span>
+    </div>
+  </section>
+
+  <!-- KEY BUGS FIXED -->
+  <section>
+    <h2><span class="icon">🐛</span> Kritische Bugs & Fixes</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bug</th>
+            <th>Symptom</th>
+            <th>Ursache</th>
+            <th>Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>C++ Client zeigte falsche Welt</strong></td>
+            <td>Agent navigiert korrekt (Python), Client zeigt andere Karte</td>
+            <td><code>Simulation</code> default-konstruiert mit done_=false → <code>sim.reset(aiSeed)</code> nie aufgerufen</td>
+            <td>Initialer <code>sim.reset(aiSeed)</code> vor Render-Loop</td>
+          </tr>
+          <tr>
+            <td><strong>BFS-Feld: Wand-Fallback</strong></td>
+            <td>BFS-Oracle blieb in ALLEN Seeds bei erster Wand stecken</td>
+            <td><code>bfsDistanceAt(wall)</code> gab Manhattan-Fallback zurück (~12) statt ∞</td>
+            <td>Rückgabe 9999 wenn <code>!world_.isPassable(x,y)</code></td>
+          </tr>
+          <tr>
+            <td><strong>Eval-Callback deterministisch</strong></td>
+            <td>0–2 % Eval trotz 86–94 % stochastisch</td>
+            <td>PPO Argmax bei hoher Entropie → ↑↓-Loop in 2-Zellen</td>
+            <td><code>deterministic=False</code> in Callback</td>
+          </tr>
+          <tr>
+            <td><strong>Visited-Mask destabilisiert DQN</strong></td>
+            <td>Q-Werte 6.7 für alle Aktionen, keine Richtungspräferenz</td>
+            <td>225 Extra-Features änderten sich jeden Step → Argmax-Instabilität</td>
+            <td>Visited-Mask entfernt, PPO statt DQN</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CRITERIA -->
+  <section>
+    <h2><span class="icon">🎯</span> Projektarbeit-Kriterien</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="chart-card">
+        <h3>Testset A — Seeds 7000–7049 (Ziel: ≥ 70 %)</h3>
+        <div style="margin:1rem 0">
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
+            <span>Phase 4 Final</span><span class="green">98 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:98%;background:var(--green)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:.8rem;margin-bottom:.3rem">
+            <span>Phase 3 Ø (3 Runs)</span><span class="yellow">85.3 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:85.3%;background:var(--yellow)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:.8rem;margin-bottom:.3rem">
+            <span>Ziel (Minimum)</span><span class="blue">70 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Testset B — Seeds 8000–8049 (Ziel: ≥ 60 %)</h3>
+        <div style="margin:1rem 0">
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
+            <span>Phase 4 Final</span><span class="green">94 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:94%;background:var(--green)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:.8rem;margin-bottom:.3rem">
+            <span>Phase 3 Ø (3 Runs)</span><span class="yellow">79.3 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:79.3%;background:var(--yellow)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:.8rem;margin-bottom:.3rem">
+            <span>Ziel (Minimum)</span><span class="blue">60 %</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Stoneforge RL · Masterarbeit · 16.05.2026 · PPO via Stable-Baselines3 · C++ Core via Pybind11
+  </footer>
+
+</div>
+
+<script>
+  const FONT = "'Segoe UI', system-ui, sans-serif";
+  Chart.defaults.font.family = FONT;
+  Chart.defaults.color = '#8892a4';
+
+  const gridColor = 'rgba(46,51,80,0.8)';
+
+  // Chart 1 — Success Rate per Phase (Testset A)
+  new Chart(document.getElementById('chartPhases'), {
+    type: 'bar',
+    data: {
+      labels: ['Phase 1\n(5-12 Tiles)', 'Phase 2\n(gescheitert)', 'Phase 3\n(Ø 3 Runs)', 'Phase 4\n(Bestes)'],
+      datasets: [{
+        label: 'Success Rate Testset A (%)',
+        data: [56, 6, 85.3, 98],
+        backgroundColor: [
+          'rgba(91,141,238,0.7)',
+          'rgba(255,102,102,0.7)',
+          'rgba(245,197,66,0.7)',
+          'rgba(62,207,142,0.8)',
+        ],
+        borderColor: [
+          'rgba(91,141,238,1)',
+          'rgba(255,102,102,1)',
+          'rgba(245,197,66,1)',
+          'rgba(62,207,142,1)',
+        ],
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} %` }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: 110,
+          grid: { color: gridColor },
+          ticks: { callback: v => v + ' %' }
+        },
+        x: { grid: { color: 'transparent' } }
+      }
+    }
+  });
+
+  // Chart 2 — Mean episode length
+  new Chart(document.getElementById('chartSteps'), {
+    type: 'bar',
+    data: {
+      labels: ['Phase 1', 'Phase 3 (Ø)', 'Phase 4'],
+      datasets: [{
+        label: 'Mittlere Steps',
+        data: [40, 856, 285],
+        backgroundColor: ['rgba(91,141,238,0.7)', 'rgba(245,197,66,0.7)', 'rgba(62,207,142,0.8)'],
+        borderColor: ['rgba(91,141,238,1)', 'rgba(245,197,66,1)', 'rgba(62,207,142,1)'],
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { callback: v => v + ' Steps' }
+        },
+        x: { grid: { color: 'transparent' } }
+      }
+    }
+  });
+
+  // Chart 3 — Repetition runs grouped
+  new Chart(document.getElementById('chartReps'), {
+    type: 'bar',
+    data: {
+      labels: ['Run 1 (seed=—)', 'Run 2 (seed=42)', 'Run 3 (seed=123)', 'Mittelwert'],
+      datasets: [
+        {
+          label: 'Testset A (7000–7049)',
+          data: [88, 80, 88, 85.3],
+          backgroundColor: 'rgba(91,141,238,0.75)',
+          borderColor: 'rgba(91,141,238,1)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+        },
+        {
+          label: 'Testset B (8000–8049)',
+          data: [84, 68, 86, 79.3],
+          backgroundColor: 'rgba(240,148,77,0.75)',
+          borderColor: 'rgba(240,148,77,1)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} %` } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: 110,
+          grid: { color: gridColor },
+          ticks: { callback: v => v + ' %' }
+        },
+        x: { grid: { color: 'transparent' } }
+      }
+    }
+  });
+
+  // Chart 4 — Phase 5 learning curve
+  new Chart(document.getElementById('chartPhase5'), {
+    type: 'line',
+    data: {
+      labels: ['25k', '225k', '325k', '400k', '475k', '725k'],
+      datasets: [
+        {
+          label: 'Phase 5 — ohne exitDx/exitDy',
+          data: [24, 14, 40, 32, 32, 28],
+          borderColor: 'rgba(255,102,102,0.9)',
+          backgroundColor: 'rgba(255,102,102,0.1)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        },
+        {
+          label: 'Phase 4 Ziel (98 %)',
+          data: [98, 98, 98, 98, 98, 98],
+          borderColor: 'rgba(62,207,142,0.4)',
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} %` } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: 110,
+          grid: { color: gridColor },
+          ticks: { callback: v => v + ' %' }
+        },
+        x: {
+          title: { display: true, text: 'Trainings-Steps', color: '#8892a4' },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
