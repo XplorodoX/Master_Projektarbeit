@@ -78,7 +78,7 @@ from stoneforge_env import StoneforgeWorldEnv
 seeds = list(range(7000, 7050))
 
 def evaluate(model, name):
-    env = StoneforgeWorldEnv()
+    env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
     succ, lens, rets = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -87,11 +87,8 @@ def evaluate(model, name):
         steps = 0
         reached = False
         while not done and steps < 4000:
-            action, _ = model.predict(obs, deterministic=True)
-            a = int(action)
-            if a == 4:
-                a = 7
-            obs, r, term, trunc, info = env.step(a)
+            action, _ = model.predict(obs, deterministic=False)  # PPO: stochastisch
+            obs, r, term, trunc, info = env.step(int(action))
             ep_ret += float(r)
             steps += 1
             if info.get("reached_exit", False):

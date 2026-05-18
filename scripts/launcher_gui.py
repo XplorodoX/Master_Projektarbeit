@@ -1133,13 +1133,9 @@ class App(tk.Tk):
         algo = self._algo_var.get()
         ts = self._ts_var.get()
         self._total_ts = ts
-        cur = self._curriculum_var.get()
         parts = [_quote(PY), "python/train.py",
-                 "--algo", algo, "--timesteps", str(ts)]
-        if not cur:
-            parts.append("--no-curriculum")
-        if self._monsters_train_var.get():
-            parts.append("--monsters")
+                 "--algo", algo, "--timesteps", str(ts),
+                 "--exit-min", "5", "--exit-max", "45"]
         self._run(" ".join(parts), mode="train")
 
     def _do_play(self) -> None:
@@ -1150,16 +1146,10 @@ class App(tk.Tk):
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
             return
-        parts = [_quote(PY), "python/ai_play.py",
+        parts = [_quote(PY), "python/watch_agent.py",
                  "--model", _quote(model),
                  "--seed", str(self._play_seed.get()),
                  "--speed", str(self._play_speed.get())]
-        if self._dual_var.get():
-            m2 = self._play_picker2.get_path()
-            if m2:
-                parts += ["--model2", _quote(m2)]
-        if self._play_monsters_var.get():
-            parts.append("--monsters")
         self._run(" ".join(parts))
 
     def _do_eval(self) -> None:
@@ -1173,33 +1163,19 @@ class App(tk.Tk):
         script = f"""\
 import numpy as np
 from stable_baselines3 import PPO, DQN
-try:
-    from sb3_contrib import RecurrentPPO
-except ImportError:
-    RecurrentPPO = None
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeConfig, StoneforgeWorldEnv
+from stoneforge_env import StoneforgeWorldEnv
 
 seeds = list(range(7000, 7050))
 path = {repr(model)}
-cfg = StoneforgeConfig(disable_mobs=True)
-env = ExitPotentialFieldWrapper(StoneforgeWorldEnv(cfg))
+env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
 
 model = None
 name = None
-is_recurrent = False
-if RecurrentPPO is not None:
-    try:
-        model = RecurrentPPO.load(path)
-        name = 'RPPO'
-        is_recurrent = True
-    except Exception:
-        pass
-if model is None:
-    try:
-        model = PPO.load(path)
-        name = 'PPO'
-    except Exception:
-        pass
+try:
+    model = PPO.load(path)
+    name = 'PPO'
+except Exception:
+    pass
 if model is None:
     model = DQN.load(path)
     name = 'DQN'
@@ -1208,23 +1184,13 @@ succ, lens, rets = 0, [], []
 for i, seed in enumerate(seeds):
     obs, _ = env.reset(seed=seed)
     done = False; ep = 0.0; n = 0; ok = False
-    lstm_states = None
-    episode_starts = np.ones((1,), dtype=bool)
     while not done and n < 4000:
-        if is_recurrent:
-            a, lstm_states = model.predict(obs, state=lstm_states, episode_start=episode_starts, deterministic=True)
-            episode_starts = np.zeros((1,), dtype=bool)
-        else:
-            a, _ = model.predict(obs, deterministic=True)
-        a = 7 if int(a) == 4 else int(a)
-        obs, r, t, tr, info = env.step(a)
+        a, _ = model.predict(obs, deterministic=False)
+        obs, r, t, tr, info = env.step(int(a))
         ep += r; n += 1
         if info.get('reached_exit'):
             ok = True
         done = t or tr
-        if done:
-            lstm_states = None
-            episode_starts = np.ones((1,), dtype=bool)
     succ += int(ok); lens.append(n); rets.append(ep)
     status = 'OK' if ok else 'FAIL'
     print(f'SEED_RESULT {{i+1}} {{status}} {{n}} {{ep:.2f}}', flush=True)

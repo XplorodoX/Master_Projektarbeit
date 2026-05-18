@@ -52,8 +52,9 @@ python python/eval_hard_world.py --model best_models_ppo/best_model.zip
 
 | Modell | Testset A Hard | mean_len A | Testset B Hard | mean_len B | Datum |
 |--------|---------------|------------|----------------|------------|-------|
-| PPO (Phase-4, Hard, stoch.) | — | — | — | — | — |
-| PPO (nach Retraining, Hard, stoch.) | — | — | — | — | — |
+| PPO (Phase-4, Hard, stoch.) | nicht gemessen (Encoding-Mismatch) | — | — | — | — |
+| PPO (Delta-BFS, stoch.) | 100.0 % ✓ | 298.0 | 100.0 % ✓ | 274.1 | 18.05.2026 |
+| PPO (Delta-BFS, det.) | **100.0 % ✓** | **50.2** | **100.0 % ✓** | **52.7** | 18.05.2026 |
 
 ---
 
@@ -97,6 +98,66 @@ Delta-Semantik:
 **Erwartung:** MLP kann Richtungspräferenz aus ±0.5-Signal 32× zuverlässiger lernen. Deterministischer Eval sollte signifikant über 2% steigen. Diese Änderung widerlegt auch die Phase-5-Schlussfolgerung: exitDx/exitDy kann wieder entfernt werden sobald der Delta-BFS-Gradient das Training stabilisiert (bleibt vorläufig drin als redundantes Backup-Signal).
 
 **Ergebnis:** Noch nicht neu gemessen — nächster Schritt ist Neutraining + 50-Seed-Eval (Seeds 7000–7049) mit `deterministic=True` und `deterministic=False`.
+
+---
+
+## v2026-05-18
+
+### Delta-BFS Training — Ergebnisse (exit=5–45, 1M Steps, PPO, Delta-BFS-Encoding)
+
+**Modell:** `best_models_ppo_delta_v1/best_model.zip`
+**Trainingszeit:** ~245 Sekunden (~4 Minuten) @ 4.1k FPS
+**Konvergenz:** 100 % Success ab Step 75.000, stabil bis 1M
+**Entropy-Loss Ende:** −0.106 (Phase 4: −0.88) → Policy stark konvergiert
+
+#### Standard-Welt Eval (game_config.json, exit=35–45, Seeds 7000–7049 / 8000–8049)
+
+| Eval-Modus | Testset | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return | Datum |
+|------------|---------|---------|--------------|----------------------|---------------|-------|
+| Stochastisch | A (7000–7049) | 50 / 50 | **100.0 %** ✓ | 467.9 | 57.18 | 18.05.2026 |
+| Stochastisch | B (8000–8049) | 50 / 50 | **100.0 %** ✓ | 480.9 | 56.97 | 18.05.2026 |
+| Deterministisch | A (7000–7049) | 21 / 50 | **42.0 %** | 2353.1 | −682.24 | 18.05.2026 |
+| Deterministisch | B (8000–8049) | 19 / 50 | **38.0 %** | 2512.5 | −735.63 | 18.05.2026 |
+
+#### Hard-World Eval (coldWallThreshold=0.15, enableCellularSmoothing=true, exit=35–45)
+
+| Eval-Modus | Testset | Erfolge | Success Rate | Mittl. Episodenlänge | Mittl. Return | Datum |
+|------------|---------|---------|--------------|----------------------|---------------|-------|
+| Stochastisch | A (7000–7049) | 50 / 50 | **100.0 %** ✓ | 298.0 | 82.66 | 18.05.2026 |
+| Stochastisch | B (8000–8049) | 50 / 50 | **100.0 %** ✓ | 274.1 | 84.89 | 18.05.2026 |
+| Deterministisch | A (7000–7049) | 50 / 50 | **100.0 %** ✓ | 50.2 | 100.47 | 18.05.2026 |
+| Deterministisch | B (8000–8049) | 50 / 50 | **100.0 %** ✓ | 52.7 | 100.30 | 18.05.2026 |
+
+**Vergleich Phase 4 → Delta-BFS:**
+
+| Metrik | Phase 4 | Delta-BFS |
+|--------|---------|-----------|
+| Stoch. Success A | 98.0 % | **100.0 %** |
+| Stoch. Success B | 94.0 % | **100.0 %** |
+| Det. Success A | 2.0 % | **42.0 %** (Standard) / **100.0 %** (Hard) |
+| Stoch. mean_len A | 285 | 467.9 (Standard) / 298.0 (Hard) |
+| Det. mean_len A | 3921 | 2353 (Standard) / **50.2** (Hard) |
+| Entropy-Loss | −0.88 | **−0.106** |
+
+**Kernbefund — Hard-World deterministisch besser als Standard-Welt:**
+Der Argmax ist auf der harten Welt (Cellular Smoothing, dichte Wände) stabiler als auf dem offenen Feld:
+- Offene Welt: viele Positionen mit gleicher BFS-Distanz in mehrere Richtungen → Policy unentschlossen → Argmax-Loops → 42 % det.
+- Höhlen-Korridor: Wände geben Delta +1.0, genau eine Richtung gibt −0.5 → eindeutiges Signal → Argmax stabil → 100 % det. in ~50 Steps (nahezu optimal)
+- mean_len deterministisch Hard = 50 Steps ≈ BFS-Pfadlänge → Agent läuft den optimalen Pfad
+
+Dies widerlegt die Hypothese aus Phase 5 ("BFS-Gradient zu schwach"): Das Problem war die **Absolutwert-Kodierung**, nicht die BFS-Methode selbst.
+
+---
+
+#### Änderung 10 — Eval-Distribution im Callback fix auf 35–45
+**Datei:** `python/train.py`
+**Problem:** `SeedEvalCallback` bekam `eval_exit_min=args.exit_min, eval_exit_max=args.exit_max`. Bei Mixed-Training (`--exit-min 5 --exit-max 45`) wurde `best_model.zip` nach Performance auf dem **Trainingsbereich 5–45** gespeichert, nicht nach Projektkriterium 35–45.
+**Lösung:** Eval-Env im Callback fix auf `eval_exit_min=35, eval_exit_max=45`.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `eval_exit_min` | `args.exit_min` | `35` | Selektion nach Projektkriterium |
+| `eval_exit_max` | `args.exit_max` | `45` | dto. |
 
 ---
 

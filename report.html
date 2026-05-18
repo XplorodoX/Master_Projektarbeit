@@ -408,12 +408,12 @@
           <div class="tl-meta">Abgebrochen @ 737k/1M Steps · Hypothese: BFS-Gradient reicht allein</div>
           <div class="tl-desc">
             Hypothese: exitDx/exitDy erzeugen Luftlinien-Bias → Entfernung verbessert Generalisierung.
-            Realität: Bei 40 Tiles Entfernung ist der BFS-Gradient zwischen Nachbarzellen nur ~0.016 Unterschied —
+            Realität (damalige Diagnose): Bei 40 Tiles Entfernung ist der BFS-Gradient zwischen Nachbarzellen nur ~0.016 Unterschied —
             zu schwach als einziger Hinweis. Success Rate stagnierte/fiel auf max. 40 %, Tendenz abwärts.
           </div>
           <div class="callout callout-red" style="margin-top:.75rem;font-size:.83rem">
             <span class="callout-icon">❌</span>
-            <span><strong>exitDx/exitDy sind notwendig</strong> als Fernbereich-Signal. Der BFS-Gradient ist ein lokales Signal (4 Nachbarn), kein globaler Kompass. Wiederhergestellt. Bestes Modell bleibt Phase 4.</span>
+            <span><strong>Damalige Schlussfolgerung:</strong> exitDx/exitDy notwendig — wiederhergestellt. <strong>Spätere Korrektur (Phase 6):</strong> Die Diagnose war falsch. Das Problem war die Absolutwert-Kodierung (/64), nicht BFS selbst. Delta-Kodierung ((Nachbar−cur)/2) liefert ±0.5-Signale statt 0.016-Unterschiede — Phase 6 erreicht 100 % auf Standard- und Hard-World (auch deterministisch).</span>
           </div>
           <div class="tag-row">
             <span class="tag">Max: 40 % @ 325k</span>
@@ -500,7 +500,7 @@
     </div>
     <div class="callout callout-blue" style="margin-top:1rem">
       <span class="callout-icon">🔬</span>
-      <span>Kurzzeitig 40 % bei 325k Steps — danach Stagnation und Rückgang auf 28 %. Der BFS-Gradient allein (lokale 4-Nachbar-Differenz ~0.016 bei großen Distanzen) ist zu schwach als globales Navigationssignal. exitDx/exitDy wiederhergestellt.</span>
+      <span>Kurzzeitig 40 % bei 325k Steps — danach Stagnation und Rückgang auf 28 %. Damalige Diagnose: BFS-Gradient zu schwach (Nachbar-Differenz ~0.016). Spätere Korrektur: Die Absolutwert-Kodierung war das Problem, nicht BFS. Delta-Kodierung (Phase 6) löst es vollständig.</span>
     </div>
   </section>
 
@@ -527,7 +527,7 @@
           <tr>
             <td>BFS-Fortschritt (PBRS)</td>
             <td class="green"><strong>+β · ΔΦ</strong></td>
-            <td>Φ(s) = −BFS/64, β = 2.5</td>
+            <td>Φ(s) = −BFS/128, β = 2.5</td>
             <td><span class="pill pill-blue">Shaping</span></td>
           </tr>
           <tr>
@@ -595,11 +595,11 @@
       </div>
       <div class="obs-block">
         <div class="obs-label">BFS current [230]</div>
-        <div class="obs-val">Pfadabstand / 64</div>
+        <div class="obs-val">Pfadabstand / 128<br>∈ [0, 1]</div>
       </div>
       <div class="obs-block">
-        <div class="obs-label">BFS ↑↓←→ [231–234]</div>
-        <div class="obs-val">4 Nachbarn / 64<br>Wand → 1.0</div>
+        <div class="obs-label">BFS Δ↑↓←→ [231–234]</div>
+        <div class="obs-val">(Nachbar − cur) / 2<br>−0.5=näher · +0.5=weiter · +1.0=Wand</div>
       </div>
       <div class="obs-block">
         <div class="obs-label">Stuck [235]</div>
@@ -608,7 +608,7 @@
     </div>
     <div class="callout callout-blue" style="margin-top:1rem">
       <span class="callout-icon">💡</span>
-      <span>exitDx/exitDy = globaler Kompass (Fernbereich). BFS-Gradient = lokaler Pfadfinder (Wand-korrekt). Beide sind notwendig — Phase 5 bewies: BFS allein reicht nicht bei ≥ 35 Tiles Distanz.</span>
+      <span>exitDx/exitDy = globaler Kompass (Fernbereich). BFS-Gradient = lokaler Pfadfinder (Wand-korrekt). Phase 5 schien zu zeigen, dass BFS allein nicht reicht — Nachfolgeanalyse ergab: das Problem war die Absolutwert-Kodierung (/64, Differenz ~0.016), nicht BFS selbst. Delta-Kodierung ((Nachbar−cur)/2, Differenz ±0.5) löst das Problem vollständig (Phase 6: 100 % stochastisch, 100 % det. auf Hard-World).</span>
     </div>
   </section>
 

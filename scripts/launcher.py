@@ -71,25 +71,19 @@ def run(cmd: str, cwd: Optional[str] = None, check: bool = True) -> int:
     return proc.returncode
 
 
-    
-    On Windows looks for .pyd files, on Unix looks for .so files.
-    """
+def _find_so() -> Optional[str]:
+    """Find the built stoneforge_sim module (.pyd on Windows, .so on Unix)."""
     if _IS_WIN:
-        # Windows: look for .pyd (Python Dynamic module)
         patterns = [
             os.path.join(BUILD_DIR, "Release", "stoneforge_sim*.pyd"),
             os.path.join(BUILD_DIR, "stoneforge_sim*.pyd"),
             os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
         ]
     else:
-        # Unix: look for .so (shared object)
         patterns = [
             os.path.join(BUILD_DIR, "stoneforge_sim*.so"),
             os.path.join(ROOT, "python", "stoneforge_sim*.so"),
         ]
-       os.path.join(ROOT, "python", "stoneforge_sim*.so"),
-        os.path.join(ROOT, "python", "stoneforge_sim*.pyd"),
-    ]
     for pattern in patterns:
         matches = glob.glob(pattern)
         if matches:
@@ -142,8 +136,7 @@ def build_bindings(force: bool = False) -> bool:
     return True
 
 
-def train(algo: str = "dqn", timesteps: int = 1_000_000,
-          curriculum: bool = True) -> int:
+def train(algo: str = "dqn", timesteps: int = 1_000_000) -> int:
     if not build_bindings():
         return 1
     parts = [
@@ -151,26 +144,22 @@ def train(algo: str = "dqn", timesteps: int = 1_000_000,
         "python/train.py",
         "--algo", _quote(algo),
         "--timesteps", str(int(timesteps)),
+        "--exit-min", "5",
+        "--exit-max", "45",
     ]
-    if not curriculum:
-        parts.append("--no-curriculum")
-    # cwd=ROOT so "python/train.py" resolves correctly and PYTHONPATH covers build/.
     return run(" ".join(parts), cwd=ROOT)
 
 
-def play(model: str, seed: int = 42, speed: float = 1.0,
-         model2: Optional[str] = None) -> int:
+def play(model: str, seed: int = 42, speed: float = 1.0) -> int:
     if not build_bindings():
         return 1
     parts = [
         _quote(PY),
-        "python/ai_play.py",
+        "python/watch_agent.py",
         "--model", _quote(model),
         "--seed", str(int(seed)),
         "--speed", str(float(speed)),
     ]
-    if model2:
-        parts += ["--model2", _quote(model2)]
     return run(" ".join(parts), cwd=ROOT)
 
 
@@ -182,13 +171,10 @@ def eval_50_seeds(model_path: str) -> int:
     script = f"""
 import numpy as np
 from stable_baselines3 import PPO, DQN
-from stoneforge_env import ExitPotentialFieldWrapper, StoneforgeWorldEnv
+from stoneforge_env import StoneforgeWorldEnv
 
 seeds = list(range(7000, 7050))
 path = {repr(model_path)}
-
-def make_env():
-    return ExitPotentialFieldWrapper(StoneforgeWorldEnv())
 
 def evaluate(path):
     try:
@@ -197,7 +183,7 @@ def evaluate(path):
     except Exception:
         model = DQN.load(path)
         name = "DQN"
-    env = make_env()
+    env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
     succ, lens, rets = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -206,7 +192,7 @@ def evaluate(path):
         steps = 0
         reached = False
         while not done and steps < 4000:
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs, deterministic=False)
             obs, r, term, trunc, info = env.step(int(action))
             ep_ret += float(r)
             steps += 1
@@ -287,13 +273,11 @@ def menu() -> None:
 
         if choice == "1":
             ts = prompt_int("Timesteps", 1_000_000)
-            cur = prompt_bool("Curriculum Learning", default=True)
-            train("dqn", ts, curriculum=cur)
+            train("dqn", ts)
 
         elif choice == "2":
             ts = prompt_int("Timesteps", 1_000_000)
-            cur = prompt_bool("Curriculum Learning", default=True)
-            train("ppo", ts, curriculum=cur)
+            train("ppo", ts)
 
         elif choice == "3":
             m = prompt_str("Modellpfad", _default_model())
@@ -302,13 +286,10 @@ def menu() -> None:
             play(m, seed=seed, speed=speed)
 
         elif choice == "4":
-            default1 = DEFAULT_MODEL_DQN
-            default2 = DEFAULT_MODEL_PPO
-            m1 = prompt_str("Modell 1 (links)", default1)
-            m2 = prompt_str("Modell 2 (rechts)", default2)
+            m = prompt_str("Modellpfad", _default_model())
             seed = prompt_int("Seed", 42)
             speed = prompt_float("Geschwindigkeit", 1.0)
-            play(m1, seed=seed, speed=speed, model2=m2)
+            play(m, seed=seed, speed=speed)
 
         elif choice == "5":
             m = prompt_str("Modellpfad", _default_model())
