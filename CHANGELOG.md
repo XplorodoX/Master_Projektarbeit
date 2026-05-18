@@ -1,5 +1,105 @@
 # Changelog
 
+## v2026-05-18
+
+#### Änderung 10 — Eval-Distribution im Callback fix auf 35–45
+
+**Datei:** `python/train.py` — `main()`, Zeilen `eval_exit_min` / `eval_exit_max`
+
+**Problem:** `SeedEvalCallback` bekam `eval_exit_min=args.exit_min, eval_exit_max=args.exit_max`. Bei Mixed-Training (`--exit-min 5 --exit-max 45`) wurde `best_model.zip` also nach Performance auf dem **Trainingsbereich 5–45** gespeichert — nicht nach dem Projektkriterium 35–45. Das Modell wurde möglicherweise auf einer leichteren Verteilung als "best" selektiert.
+
+**Lösung:** Eval-Env im Callback fix auf `eval_exit_min=35, eval_exit_max=45`.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `eval_exit_min` | `args.exit_min` (z.B. 5) | `35` | Selektion nach Projektkriterium |
+| `eval_exit_max` | `args.exit_max` (z.B. 45) | `45` | dto. |
+
+---
+
+#### Änderung 9 — Hard-World Eval Infrastruktur
+
+**Datei:** `python/eval_hard_world.py` (neu)
+
+**Problem:** Alle bisherigen Eval-Ergebnisse (inkl. 98%) wurden auf einer nahezu leeren Welt gemessen (`coldWallThreshold=0.05`, `enableCellularSmoothing=false`). Das ist kein Maze — das ist ein offenes Feld mit garantiertem Korridor. Im Exposé stehen Cellular Automata, Höhlensysteme, Sackgassen. Für die wissenschaftliche Aussage muss gezeigt werden, dass das Modell auch auf der beschriebenen Welt funktioniert.
+
+**Lösung:** Eval-Skript, das `game_config.json` temporär mit einer härteren Konfiguration überschreibt, den Eval durchführt, und die Originaldatei im `finally`-Block sicher wiederherstellt. Kein C++-Rebuild nötig.
+
+Hard-World-Parameter vs. Standard:
+
+| Parameter | Standard | Hard |
+|-----------|----------|------|
+| `cold/warm/mossWallThreshold` | 0.05 | **0.15** (3× dichter) |
+| `enableCellularSmoothing` | false | **true** (cave-artige Strukturen) |
+| `forceGuaranteedPath` | true | **true** (bleibt!) |
+| `exitMin/MaxDistance` | 35–45 | 35–45 (gleich) |
+
+`forceGuaranteedPath=true` bleibt bewusst gesetzt: ohne Garantie lässt sich "Karte unlösbar" nicht von "Agent versagt" trennen.
+
+**`--legacy-bfs`-Flag:** Phase-4-Modell wurde mit der alten Absolutwert-BFS-Kodierung (`_BFS_MAX=64`) trainiert. Nach Änderung 8 (Delta-Encoding) würde das Modell falsche Feature-Werte erhalten. Das Flag patcht `env._bfs_field()` zur Laufzeit auf die alte Kodierung — kein Modell-Reload, kein Rebuild nötig.
+
+**Verwendung:**
+```bash
+# Phase-4-Modell (Absolut-BFS):
+python python/eval_hard_world.py \
+    --model best_models_ppo_phase4/final_model.zip --legacy-bfs
+
+# Nach Retraining mit Delta-BFS:
+python python/eval_hard_world.py --model best_models_ppo/best_model.zip
+```
+
+**Ergebnis:** Noch nicht gemessen. Ergebnisse werden nach Retraining + Eval hier eingetragen.
+
+| Modell | Testset A Hard | mean_len A | Testset B Hard | mean_len B | Datum |
+|--------|---------------|------------|----------------|------------|-------|
+| PPO (Phase-4, Hard, stoch.) | — | — | — | — | — |
+| PPO (nach Retraining, Hard, stoch.) | — | — | — | — | — |
+
+---
+
+#### Änderung 8 — BFS-Feature-Kodierung: Absolutwerte → Deltas
+
+**Datei:** `python/stoneforge_env.py` — `_bfs_field()`, Konstanten `_BFS_MAX` → `_BFS_CUR_MAX` / `_BFS_DELTA_DIV`
+
+**Problem (Wurzelursache für deterministisch=2%):**
+Änderung 7 (Phase 5) schloss aus dem Scheitern ohne exitDx/exitDy: "BFS-Gradient ist zu schwach als einziger Fernbereich-Hinweis." Diese Diagnose war **falsch**: Der BFS-Gradient ist nicht schwach — die *Kodierung* war kaputt.
+
+Mit `_BFS_MAX = 64.0` und typischer Distanz 40–60 Tiles:
+- Alle 5 Absolutwerte liegen bei ~0.7–1.0
+- Differenz zwischen Nachbarzellen = 1/64 ≈ **0.016** — für den MLP fast unsichtbar
+- Wand-Sentinel (9999/64 = 155.9) wird auf 1.0 geclampt → **Aliasing**: Wand und "weit weg aber passierbar" nicht unterscheidbar
+
+Das erklärt auch, warum die deterministischen Argmax-Entscheidungen instabil sind: Das Netz kann aus 0.016-Unterschieden keine robuste Richtungspräferenz lernen.
+
+**Lösung:** Deltas statt Absolutwerte für die 4 Richtungsfeatures.
+
+```
+vorher: [cur, up, down, left, right] / 64.0   → alle ~0.7–1.0, Richtungsdiff = 0.016
+nachher: [cur/128, (up-cur)/2, (down-cur)/2, (left-cur)/2, (right-cur)/2]
+         → cur ∈ [0, 0.5], Richtungsdeltas ∈ {-0.5, 0, +0.5}, Wand → clipped +1.0
+```
+
+Delta-Semantik:
+- `-0.5` = ein Schritt näher (klares positives Signal)
+- `0.0` = selbe Distanz (neutral)
+- `+0.5` = ein Schritt weiter (negatives Signal)
+- `+1.0` = Wand (9999 − cur) / 2 → clip, eindeutig von "+0.5" unterscheidbar
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `_BFS_MAX` | `64.0` | entfernt | Ersetzt durch zwei getrennte Konstanten |
+| `_BFS_CUR_MAX` | — | `128.0` | Verhindert Sättigung; cur bei 56 Tiles = 0.44 statt 0.875 |
+| `_BFS_DELTA_DIV` | — | `2.0` | Einzelschritt-Delta (1) → 0.5; Wand-Delta (9943) → clip 1.0 |
+| Richtungs-Features | Absolutwerte / 64 | (neighbor − cur) / 2, clip[−1,1] | Richtungssignal 32× stärker (0.5 statt 0.016) |
+| Wand-Aliasing | Wand ≡ "weit weg" (beide 1.0) | Wand = +1.0, "weiter" = +0.5 | Distinct encoding, kein Aliasing |
+| Obs-Shape | 236 | **236** (unverändert) | Kein Rebuild nötig, kein C++-Code geändert |
+
+**Erwartung:** MLP kann Richtungspräferenz aus ±0.5-Signal 32× zuverlässiger lernen. Deterministischer Eval sollte signifikant über 2% steigen. Diese Änderung widerlegt auch die Phase-5-Schlussfolgerung: exitDx/exitDy kann wieder entfernt werden sobald der Delta-BFS-Gradient das Training stabilisiert (bleibt vorläufig drin als redundantes Backup-Signal).
+
+**Ergebnis:** Noch nicht neu gemessen — nächster Schritt ist Neutraining + 50-Seed-Eval (Seeds 7000–7049) mit `deterministic=True` und `deterministic=False`.
+
+---
+
 ## v2026-05-16
 
 ### Phase-3 Ergebnisse — Mixed-Distribution (exit=5–45, 1M Steps, PPO, frischer Start)

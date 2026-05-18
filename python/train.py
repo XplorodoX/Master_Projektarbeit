@@ -190,13 +190,14 @@ def main() -> None:
 
     env = make_vec_env(make_env, n_envs=args.n_envs, seed=args.seed)
 
-    # Eval läuft immer auf dem Ziel-Testset (Phase-3-Distanz), damit Fortschritt vergleichbar ist
+    # Eval immer auf Projektarbeit-Zielbereich 35-45, unabhängig vom Trainingsbereich.
+    # best_model.zip wird so nach dem tatsächlichen Kriterium selektiert.
     eval_cb = SeedEvalCallback(
         eval_freq=max(1, args.eval_freq // args.n_envs),
         best_model_path=save_dir,
         n_eval_episodes=50,
-        eval_exit_min=args.exit_min,
-        eval_exit_max=args.exit_max,
+        eval_exit_min=35,
+        eval_exit_max=45,
         verbose=1,
     )
 
