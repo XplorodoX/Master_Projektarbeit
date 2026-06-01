@@ -216,6 +216,85 @@ std::string_view World::biomeNameForTag(int tag) {
     }
 }
 
+void World::placeBiomeStructure(int cx, int cy, Chunk& chunk) const {
+    constexpr double kStructureChance = 0.10;
+
+    const auto& cfg = gameConfig().world;
+    const double roll = noise01(cx, cy, cfg.biomeSalt ^ 0x6c8f5a21ULL);
+    if(roll >= kStructureChance) {
+        return;
+    }
+
+    const int chunkMinX = cx * kChunkSize;
+    const int chunkMinY = cy * kChunkSize;
+    const int chunkMaxX = chunkMinX + kChunkSize - 1;
+    const int chunkMaxY = chunkMinY + kChunkSize - 1;
+    if(spawn_.x >= chunkMinX && spawn_.x <= chunkMaxX && spawn_.y >= chunkMinY && spawn_.y <= chunkMaxY) {
+        return;
+    }
+    if(exit_.x >= chunkMinX && exit_.x <= chunkMaxX && exit_.y >= chunkMinY && exit_.y <= chunkMaxY) {
+        return;
+    }
+
+    const int biomeTag = biomeTagForChunk(cx, cy);
+    TileType structureTile = TileType::StructureGrassland;
+    std::array<std::string_view, 5> pattern = {
+        "..#..",
+        ".###.",
+        "#####",
+        ".###.",
+        "..#..",
+    };
+
+    switch(biomeTag) {
+        case 0:
+            structureTile = TileType::StructureGrassland;
+            pattern = std::array<std::string_view, 5>{"#...#", ".#.#.", "#####", ".###.", "#...#"};
+            break;
+        case 1:
+            structureTile = TileType::StructureForest;
+            pattern = std::array<std::string_view, 5>{"..#..", ".###.", "##.##", "#...#", "#####"};
+            break;
+        case 2:
+            structureTile = TileType::StructureDesert;
+            pattern = std::array<std::string_view, 5>{"..#..", ".###.", "#####", ".###.", "..#.."};
+            break;
+        case 3:
+            structureTile = TileType::StructureMountain;
+            pattern = std::array<std::string_view, 5>{".###.", ".#.#.", "#####", "..#..", "..#.."};
+            break;
+        case 4:
+            structureTile = TileType::StructureSteppe;
+            pattern = std::array<std::string_view, 5>{"#...#", ".#.#.", "#####", ".#.#.", "#...#"};
+            break;
+        case 5:
+            structureTile = TileType::StructureTundra;
+            pattern = std::array<std::string_view, 5>{"..#..", ".###.", "##.##", "#...#", ".###."};
+            break;
+        case 6:
+            structureTile = TileType::StructureHelle;
+            pattern = std::array<std::string_view, 5>{".#.#.", "#####", ".###.", ".#.#.", "#####"};
+            break;
+        default:
+            break;
+    }
+
+    const int maxOffsetX = std::max(0, kChunkSize - 5);
+    const int maxOffsetY = std::max(0, kChunkSize - 5);
+    const int originX = static_cast<int>(noise01(cx + 11, cy - 7, cfg.biomeSalt ^ 0x9b4a3d11ULL) * static_cast<double>(maxOffsetX + 1));
+    const int originY = static_cast<int>(noise01(cx - 5, cy + 13, cfg.biomeSalt ^ 0xa27f19c5ULL) * static_cast<double>(maxOffsetY + 1));
+
+    for(int y = 0; y < 5; ++y) {
+        const std::string_view row = pattern[static_cast<std::size_t>(y)];
+        for(int x = 0; x < 5 && x < static_cast<int>(row.size()); ++x) {
+            if(row[static_cast<std::size_t>(x)] != '#') {
+                continue;
+            }
+            chunk.tiles[(originY + y) * kChunkSize + (originX + x)] = structureTile;
+        }
+    }
+}
+
 int World::biomeTagAt(int x, int y) const {
     const int cx = floorDiv(x, kChunkSize);
     const int cy = floorDiv(y, kChunkSize);
@@ -568,6 +647,9 @@ void World::generateChunk(int cx, int cy, Chunk& chunk) const {
 
     // Stage 2: optional local smoothing with deterministic halo sampling.
     runCellularSmoothingStage(cx, cy, chunk, cfg);
+
+    // Stage 3: rare biome-specific landmark structure.
+    placeBiomeStructure(cx, cy, chunk);
 }
 
 void World::carveGuaranteedPath() {

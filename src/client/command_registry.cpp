@@ -107,6 +107,13 @@ std::vector<std::string> builtinBlockIds() {
         "stoneforge:workbench",
         "stoneforge:wood_wall",
         "stoneforge:wood_log",
+        "stoneforge:structure_grassland",
+        "stoneforge:structure_forest",
+        "stoneforge:structure_desert",
+        "stoneforge:structure_mountain",
+        "stoneforge:structure_steppe",
+        "stoneforge:structure_tundra",
+        "stoneforge:structure_helle",
     };
 }
 
@@ -133,7 +140,7 @@ std::vector<std::string> builtinEntityIds() {
 bool parseTileId(const std::string& token, stoneforge::TileType& outTile, std::string& outCanonicalId) {
     int numeric = 0;
     if(parseIntStrict(token, numeric)) {
-        if(numeric >= 0 && numeric <= static_cast<int>(stoneforge::TileType::WoodLog)) {
+        if(numeric >= 0 && numeric <= static_cast<int>(stoneforge::TileType::StructureHelle)) {
             outTile = static_cast<stoneforge::TileType>(numeric);
             outCanonicalId = builtinBlockIds()[static_cast<std::size_t>(numeric)];
             return true;
@@ -158,6 +165,20 @@ bool parseTileId(const std::string& token, stoneforge::TileType& outTile, std::s
         outTile = stoneforge::TileType::WoodWall;
     } else if(id == "stoneforge:wood_log") {
         outTile = stoneforge::TileType::WoodLog;
+    } else if(id == "stoneforge:structure_grassland") {
+        outTile = stoneforge::TileType::StructureGrassland;
+    } else if(id == "stoneforge:structure_forest") {
+        outTile = stoneforge::TileType::StructureForest;
+    } else if(id == "stoneforge:structure_desert") {
+        outTile = stoneforge::TileType::StructureDesert;
+    } else if(id == "stoneforge:structure_mountain") {
+        outTile = stoneforge::TileType::StructureMountain;
+    } else if(id == "stoneforge:structure_steppe") {
+        outTile = stoneforge::TileType::StructureSteppe;
+    } else if(id == "stoneforge:structure_tundra") {
+        outTile = stoneforge::TileType::StructureTundra;
+    } else if(id == "stoneforge:structure_helle") {
+        outTile = stoneforge::TileType::StructureHelle;
     } else {
         return false;
     }

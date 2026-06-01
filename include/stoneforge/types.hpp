@@ -21,7 +21,14 @@ enum class TileType : std::uint8_t {
     Tree = 4,
     Workbench = 5,
     WoodWall = 6,
-    WoodLog = 7
+    WoodLog = 7,
+    StructureGrassland = 8,
+    StructureForest = 9,
+    StructureDesert = 10,
+    StructureMountain = 11,
+    StructureSteppe = 12,
+    StructureTundra = 13,
+    StructureHelle = 14
 };
 
 enum class Action : int {
