@@ -38,8 +38,8 @@ BUILD_DIR = os.path.join(ROOT, "build")
 _EXE_NAME = "stoneforge_client.exe" if _IS_WIN else "stoneforge_client"
 GAME_BINARY = os.path.join(BUILD_DIR, _EXE_NAME)
 
-DEFAULT_DQN = os.path.join(ROOT, "best_models_dqn", "best_model.zip")
-DEFAULT_PPO = os.path.join(ROOT, "best_models_ppo", "best_model.zip")
+DEFAULT_DQN = os.path.join(ROOT, "models", "dqn", "best_model.zip")
+DEFAULT_PPO = os.path.join(ROOT, "models", "ppo_phase4", "best_model.zip")
 
 
 def _quote(path: str) -> str:
@@ -193,7 +193,8 @@ def _scan_models() -> list[tuple[str, str, str, str]]:
     results: list[tuple[str, str, str, str]] = []
 
     search_patterns = [
-        os.path.join(ROOT, "best_models_*", "*.zip"),
+        os.path.join(ROOT, "models", "*", "*.zip"),
+        os.path.join(ROOT, "best_models_*", "*.zip"),  # backward compat
         os.path.join(ROOT, "checkpoints", "*.zip"),
         os.path.join(ROOT, "*.zip"),
     ]
@@ -424,6 +425,7 @@ class App(tk.Tk):
         self._total_ts = 1_000_000      # set from training form
         self._current_mode = ""         # "train" | "build" | "eval" | ""
         self._eval_tmp_script: Optional[str] = None
+        self._best_model_path: Optional[str] = None
 
         self._setup_styles()
         self._build_ui()
@@ -533,6 +535,7 @@ class App(tk.Tk):
         ttk.Separator(sidebar, orient="horizontal").pack(fill="x", pady=14)
 
         sections = [
+            ("⚡  Schnellstart",   "home"),
             ("🔧  Build",          "build"),
             ("🧠  Training",       "training"),
             ("▶   Abspielen",     "play"),
@@ -571,6 +574,7 @@ class App(tk.Tk):
             f.grid(row=0, column=0, sticky="nsew")
             self._sections[key] = f
 
+        self._build_section_home(self._sections["home"])
         self._build_section_build(self._sections["build"])
         self._build_section_training(self._sections["training"])
         self._build_section_play(self._sections["play"])
@@ -589,7 +593,7 @@ class App(tk.Tk):
         log_frame.columnconfigure(0, weight=1)
         self._build_log(log_frame)
 
-        self._show_section("training")
+        self._show_section("home")
 
     # ------------------------------------------------------------------
     # Live Metrics Panel
@@ -756,6 +760,149 @@ class App(tk.Tk):
     # ------------------------------------------------------------------
     # Section builders
     # ------------------------------------------------------------------
+    def _build_section_home(self, f: ttk.Frame) -> None:
+        self._section_header(f, "Schnellstart",
+                             "System-Status und häufigste Aktionen — dein Einstiegspunkt.")
+
+        # ── Status Card ──────────────────────────────────────────────
+        sc = self._card(f)
+        self._sec_label(sc, "System-Status")
+
+        grid_f = tk.Frame(sc, bg=BG3)
+        grid_f.pack(fill="x", padx=14, pady=(0, 6))
+
+        self._home_status_rows: dict[str, tuple[tk.Label, tk.Label]] = {}
+        for i, (key, label) in enumerate([
+            ("bindings", "Python Bindings  (stoneforge_sim)"),
+            ("models",   "Trainierte Modelle  (.zip)"),
+            ("client",   "Spiel-Client  (stoneforge_client)"),
+        ]):
+            dot = tk.Label(grid_f, text="●", bg=BG3, fg=DIM,
+                           font=("Helvetica", 13))
+            dot.grid(row=i, column=0, padx=(4, 10), pady=5, sticky="w")
+            tk.Label(grid_f, text=label, bg=BG3, fg=TEXT,
+                     font=("Helvetica", 10)).grid(row=i, column=1, sticky="w")
+            detail = tk.Label(grid_f, text="…", bg=BG3, fg=DIM,
+                              font=("Helvetica", 9))
+            detail.grid(row=i, column=2, padx=(20, 0), sticky="w")
+            self._home_status_rows[key] = (dot, detail)
+
+        ttk.Button(sc, text="↻  Status aktualisieren", style="Secondary.TButton",
+                   command=self._refresh_home_status).pack(anchor="w", padx=14, pady=(8, 12))
+
+        self._sep(sc)
+        self._sec_label(sc, "Schnellaktionen")
+
+        btn_f = tk.Frame(sc, bg=BG3)
+        btn_f.pack(fill="x", padx=14, pady=(0, 14))
+
+        for text, color, cmd in [
+            ("▶  Training",          ACCENT,  lambda: self._show_section("training")),
+            ("🤖  Modell abspielen", GREEN,   lambda: self._show_section("play")),
+            ("📊  Evaluation",       ACCENT2, lambda: self._show_section("eval")),
+            ("🎮  Spiel starten",    ORANGE,  lambda: self._show_section("game")),
+            ("🔧  Build",            DIM,     lambda: self._show_section("build")),
+        ]:
+            b = tk.Button(btn_f, text=text, bg=BG4, fg=color,
+                          font=("Helvetica", 10, "bold"), relief="flat",
+                          padx=14, pady=10, cursor="hand2", command=cmd,
+                          activebackground=BG2, activeforeground=color, bd=0)
+            b.pack(side="left", padx=(0, 6), pady=4)
+
+        # ── Best Model Card ───────────────────────────────────────────
+        bc = self._card(f)
+        self._sec_label(bc, "Zuletzt trainiertes Modell")
+
+        self._best_model_info = tk.Label(bc, text="—", bg=BG3, fg=DIM,
+                                         font=("Menlo", 9))
+        self._best_model_info.pack(anchor="w", padx=14, pady=(0, 8))
+
+        br = tk.Frame(bc, bg=BG3)
+        br.pack(anchor="w", padx=14, pady=(0, 14))
+        ttk.Button(br, text="▶  Sofort abspielen",
+                   style="Action.TButton",
+                   command=self._quick_play_best).pack(side="left", padx=(0, 8))
+        ttk.Button(br, text="📊  Sofort evaluieren",
+                   style="Secondary.TButton",
+                   command=self._quick_eval_best).pack(side="left")
+
+    def _refresh_home_status(self) -> None:
+        if not hasattr(self, "_home_status_rows"):
+            return
+
+        if _find_so() is not None:
+            self._home_status_rows["bindings"][0].config(fg=GREEN)
+            self._home_status_rows["bindings"][1].config(text="Bereit  ✓", fg=GREEN)
+        else:
+            self._home_status_rows["bindings"][0].config(fg=RED)
+            self._home_status_rows["bindings"][1].config(
+                text="Nicht gebaut  →  Build → Python Bindings", fg=RED)
+
+        models = _scan_models()
+        if models:
+            newest = max(models,
+                         key=lambda m: os.path.getmtime(m[1]) if os.path.exists(m[1]) else 0)
+            self._home_status_rows["models"][0].config(fg=GREEN)
+            self._home_status_rows["models"][1].config(
+                text=f"{len(models)} Modell(e) gefunden  ✓", fg=GREEN)
+            label, path, date_str, size_str = newest
+            rel = os.path.relpath(path, ROOT)
+            self._best_model_info.config(
+                text=f"{rel}  ·  {date_str}  ·  {size_str}", fg=TEXT)
+            self._best_model_path = path
+        else:
+            self._home_status_rows["models"][0].config(fg=YELLOW)
+            self._home_status_rows["models"][1].config(
+                text="Kein Modell gefunden  →  Training starten", fg=YELLOW)
+            self._best_model_info.config(text="Kein Modell gefunden", fg=DIM)
+            self._best_model_path = None
+
+        if os.path.exists(GAME_BINARY):
+            self._home_status_rows["client"][0].config(fg=GREEN)
+            self._home_status_rows["client"][1].config(text="Bereit  ✓", fg=GREEN)
+        else:
+            self._home_status_rows["client"][0].config(fg=DIM)
+            self._home_status_rows["client"][1].config(
+                text="Optional  —  Build → Spiel-Client", fg=DIM)
+
+    def _quick_play_best(self) -> None:
+        model = self._best_model_path
+        if not model:
+            models = _scan_models()
+            if not models:
+                self._log("✗ Kein Modell gefunden.\n", "err")
+                return
+            model = max(models,
+                        key=lambda m: os.path.getmtime(m[1]) if os.path.exists(m[1]) else 0)[1]
+        if not _ensure_requirements():
+            self._log("✗ Anforderungen konnten nicht installiert werden.\n", "err")
+            return
+        parts = [_quote(PY), "scripts/watch_agent.py",
+                 "--model", _quote(model),
+                 "--seed", "7000", "--speed", "0.12"]
+        self._show_section("play")
+        self._run(" ".join(parts))
+
+    def _quick_eval_best(self) -> None:
+        model = self._best_model_path
+        if not model:
+            models = _scan_models()
+            if not models:
+                self._log("✗ Kein Modell gefunden.\n", "err")
+                return
+            model = max(models,
+                        key=lambda m: os.path.getmtime(m[1]) if os.path.exists(m[1]) else 0)[1]
+        self._show_section("eval")
+        self._eval_picker.refresh()
+        try:
+            idx = self._eval_picker._paths.index(model)
+            self._eval_picker._lb.selection_clear(0, "end")
+            self._eval_picker._lb.selection_set(idx)
+            self._eval_picker._lb.see(idx)
+        except (ValueError, AttributeError):
+            pass
+        self._do_eval()
+
     def _build_section_build(self, f: ttk.Frame) -> None:
         self._section_header(f, "Build",
                              "Python-Bindings und Spiel-Client kompilieren.")
@@ -785,8 +932,8 @@ class App(tk.Tk):
         self._sec_label(card, "Algorithmus")
         row = tk.Frame(card, bg=BG3)
         row.pack(fill="x", padx=14, pady=(0, 8))
-        self._algo_var = tk.StringVar(value="dqn")
-        for text, val in [("DQN  (empfohlen)", "dqn"), ("PPO", "ppo")]:
+        self._algo_var = tk.StringVar(value="ppo")
+        for text, val in [("PPO  (empfohlen)", "ppo"), ("DQN", "dqn"), ("A2C", "a2c")]:
             ttk.Radiobutton(row, text=text, variable=self._algo_var,
                             value=val).pack(side="left", padx=(0, 24))
 
@@ -989,6 +1136,8 @@ class App(tk.Tk):
 
         if key in ("play", "eval"):
             self._refresh_model_pickers()
+        if key == "home":
+            self._refresh_home_status()
 
     # ------------------------------------------------------------------
     # Timestep slider
@@ -1133,7 +1282,7 @@ class App(tk.Tk):
         algo = self._algo_var.get()
         ts = self._ts_var.get()
         self._total_ts = ts
-        parts = [_quote(PY), "python/train.py",
+        parts = [_quote(PY), "scripts/train.py",
                  "--algo", algo, "--timesteps", str(ts),
                  "--exit-min", "5", "--exit-max", "45"]
         self._run(" ".join(parts), mode="train")
@@ -1146,10 +1295,12 @@ class App(tk.Tk):
         if not model:
             self._log("✗ Kein Modell ausgewählt.\n", "err")
             return
-        parts = [_quote(PY), "python/watch_agent.py",
+        parts = [_quote(PY), "scripts/watch_agent.py",
                  "--model", _quote(model),
                  "--seed", str(self._play_seed.get()),
                  "--speed", str(self._play_speed.get())]
+        if self._play_monsters_var.get():
+            parts.append("--monsters")
         self._run(" ".join(parts))
 
     def _do_eval(self) -> None:
@@ -1162,7 +1313,7 @@ class App(tk.Tk):
             return
         script = f"""\
 import numpy as np
-from stable_baselines3 import PPO, DQN
+from stable_baselines3 import A2C, DQN, PPO
 from stoneforge_env import StoneforgeWorldEnv
 
 seeds = list(range(7000, 7050))
@@ -1171,14 +1322,15 @@ env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
 
 model = None
 name = None
-try:
-    model = PPO.load(path)
-    name = 'PPO'
-except Exception:
-    pass
+for _Cls, _name in [(PPO, 'PPO'), (A2C, 'A2C'), (DQN, 'DQN')]:
+    try:
+        model = _Cls.load(path)
+        name = _name
+        break
+    except Exception:
+        pass
 if model is None:
-    model = DQN.load(path)
-    name = 'DQN'
+    raise RuntimeError(f'Konnte Modell nicht laden: {{path}}')
 
 succ, lens, rets = 0, [], []
 for i, seed in enumerate(seeds):
@@ -1322,6 +1474,7 @@ print(f'EVAL_FINAL {{name}} {{succ}} {{np.mean(lens):.0f}} {{np.mean(rets):.2f}}
             # Nach Training automatisch Model-Picker aktualisieren (neues best_model.zip).
             if prev_mode == "train":
                 self.after(1000, self._refresh_model_pickers)
+                self.after(1000, self._refresh_home_status)
 
     def _animate_spinner(self) -> None:
         if self._running:

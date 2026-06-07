@@ -4,8 +4,8 @@ Zeigt pro Episode: Position-Trajektorie, BFS-Distanz, Reward, gewählte vs. opti
 Erkennt Loops (↑↓-Fallen), Stagnation und Fortschritt.
 
 Aufruf:
-    python python/analyze_agent.py [--seeds 7000,7001,7002] [--model best_models_ppo/best_model.zip]
-    python python/analyze_agent.py --exit-min 5 --exit-max 12 --model best_models_ppo/best_model.zip
+    python scripts/analyze_agent.py [--seeds 7000,7001,7002] [--model models/ppo_baseline/best_model.zip]
+    python scripts/analyze_agent.py --exit-min 5 --exit-max 12 --model models/ppo_baseline/best_model.zip
 """
 from __future__ import annotations
 
@@ -16,9 +16,10 @@ from collections import Counter, deque
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../build"))
-sys.path.insert(0, os.path.dirname(__file__))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
+sys.path.insert(0, os.path.join(_ROOT, "build"))
+sys.path.insert(0, os.path.join(_ROOT, "python"))
 
 from stable_baselines3 import PPO, DQN
 from stoneforge_env import StoneforgeWorldEnv

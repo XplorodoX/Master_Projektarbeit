@@ -20,11 +20,11 @@ BFS-Encoding-Kompatibilität:
 
 Verwendung:
   # Phase-4-Modell (Absolut-BFS, 98% auf Standard-Welt):
-  python python/eval_hard_world.py \\
-      --model best_models_ppo_phase4/final_model.zip --legacy-bfs
+  python scripts/eval_hard_world.py \\
+      --model models/ppo_phase4/final_model.zip --legacy-bfs
 
   # Nach Retraining mit Delta-BFS:
-  python python/eval_hard_world.py --model best_models_ppo/best_model.zip
+  python scripts/eval_hard_world.py --model models/ppo_phase5/best_model.zip
 """
 
 from __future__ import annotations
@@ -146,7 +146,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Stoneforge Hard-World Eval")
     parser.add_argument(
         "--model",
-        default="best_models_ppo_phase4/final_model.zip",
+        default="models/ppo_phase4/final_model.zip",
         help="Pfad zum Modell relativ zum Projektroot",
     )
     parser.add_argument(

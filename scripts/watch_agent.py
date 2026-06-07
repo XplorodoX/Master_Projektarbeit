@@ -4,10 +4,10 @@ Startet den grafischen C++-Client (build/stoneforge_client --ai) und
 steuert ihn per stdin mit dem trainierten PPO-Modell.
 
 Verwendung:
-    python python/watch_agent.py
-    python python/watch_agent.py --model best_models_ppo_phase3/final_model.zip
-    python python/watch_agent.py --seeds 7000 7001 7002 --speed 0.15
-    python python/watch_agent.py --episodes 5 --seed 7042
+    python scripts/watch_agent.py
+    python scripts/watch_agent.py --model models/ppo_phase4/best_model.zip
+    python scripts/watch_agent.py --seeds 7000 7001 7002 --speed 0.15
+    python scripts/watch_agent.py --episodes 5 --seed 7042
 """
 from __future__ import annotations
 
@@ -17,15 +17,16 @@ import sys
 import time
 
 import numpy as np
-from stable_baselines3 import PPO
+import torch
+from stable_baselines3 import A2C, DQN, PPO
 
 from stoneforge_env import StoneforgeWorldEnv
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Watch trained agent in game")
-    p.add_argument("--model", default="best_models_ppo_phase3/final_model.zip",
-                   help="Pfad zum PPO-Modell (.zip)")
+    p.add_argument("--model", default="models/ppo_phase4/best_model.zip",
+                   help="Pfad zum Modell (.zip) — PPO, A2C oder DQN (wird automatisch erkannt)")
     p.add_argument("--seed", type=int, default=7000,
                    help="Startseed (wird für alle Episoden inkrementiert)")
     p.add_argument("--episodes", type=int, default=10,
@@ -34,8 +35,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--exit-max", type=int, default=45)
     p.add_argument("--speed", type=float, default=0.12,
                    help="Sekunden pro Schritt (0.05=schnell, 0.2=langsam)")
+    p.add_argument("--temperature", type=float, default=0.2,
+                   help="Temperatur fürs Sampling, wenn --deterministic nicht gesetzt ist")
     p.add_argument("--deterministic", action="store_true",
                    help="Deterministisch (argmax) statt stochastisch — kann Loops erzeugen")
+    p.add_argument("--monsters", action="store_true",
+                   help="Monster aktivieren (Standard: aus)")
     p.add_argument("--client", default="build/stoneforge_client",
                    help="Pfad zum stoneforge_client Binary")
     return p.parse_args()
@@ -51,11 +56,38 @@ def bfs_best_action(env: StoneforgeWorldEnv) -> int:
     return int(np.argmin(nbrs))
 
 
+def sample_temperature_action(model, obs: np.ndarray, temperature: float) -> int:
+    if temperature <= 0:
+        action, _ = model.predict(obs, deterministic=True)
+        return int(action)
+
+    obs_tensor, _ = model.policy.obs_to_tensor(obs)
+    with torch.no_grad():
+        distribution = model.policy.get_distribution(obs_tensor)
+        logits = distribution.distribution.logits
+        scaled_logits = logits / float(temperature)
+        probs = torch.softmax(scaled_logits, dim=-1)
+        action = torch.multinomial(probs, num_samples=1)
+    return int(action.squeeze(0).item())
+
+
 def main() -> None:
     args = parse_args()
 
     print(f"Lade Modell: {args.model}")
-    model = PPO.load(args.model)
+    model = None
+    model_name = ""
+    for Cls, name in [(PPO, "PPO"), (A2C, "A2C"), (DQN, "DQN")]:
+        try:
+            model = Cls.load(args.model)
+            model_name = name
+            break
+        except Exception:
+            pass
+    if model is None:
+        print(f"Fehler: Konnte Modell nicht als PPO oder DQN laden: {args.model}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Algorithmus: {model_name}")
 
     env = StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
 
@@ -63,9 +95,10 @@ def main() -> None:
         args.client,
         "--ai",
         "--ai-seed", str(args.seed),
-        "--no-monsters",
         "--title", "Stoneforge RL — Agent Watch",
     ]
+    if not args.monsters:
+        client_cmd.append("--no-monsters")
     print(f"Starte Client: {' '.join(client_cmd)}")
     client = subprocess.Popen(
         client_cmd,
@@ -88,8 +121,11 @@ def main() -> None:
 
             print(f"\n--- Episode {ep+1} (seed={seed}) ---")
             while not done and steps < 4000:
-                action, _ = model.predict(obs, deterministic=args.deterministic)
-                action = int(action)
+                if args.deterministic:
+                    action, _ = model.predict(obs, deterministic=True)
+                    action = int(action)
+                else:
+                    action = sample_temperature_action(model, obs, args.temperature)
 
                 # BFS-Fallback: wenn Agent >= 4 Schritte an derselben Position feststeckt,
                 # erzwinge BFS-optimale Richtung statt Policy
@@ -117,8 +153,11 @@ def main() -> None:
                 done = term or trunc
 
                 fallback = " [BFS-Fallback]" if stuck_steps >= 4 else ""
-                print(f"  Step {steps:3d} | pos={str(pos):>10} | BFS={bfs:3d} | "
-                      f"act={ACT_NAMES[action]}{fallback}")
+                temp_tag = "det" if args.deterministic else f"tau={args.temperature:g}"
+                print(
+                    f"  Step {steps:3d} | pos={str(pos):>10} | BFS={bfs:3d} | "
+                    f"act={ACT_NAMES[action]}{fallback} | {temp_tag}"
+                )
 
                 if reached:
                     print(f"  => EXIT GEFUNDEN ✓ | steps={steps} | return={ep_ret:.1f}")

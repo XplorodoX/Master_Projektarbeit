@@ -1,8 +1,8 @@
 """Stoneforge RL — Trainings-Einstiegspunkt (PPO / DQN).
 
 Verwendung:
-    python python/train.py --algo ppo --timesteps 1000000
-    python python/train.py --algo dqn --timesteps 1000000
+    python scripts/train.py --algo ppo --timesteps 1000000
+    python scripts/train.py --algo dqn --timesteps 1000000
 
 Sanity-Run-Kriterium (Phase 0):
     PPO sollte nach 1M Steps klar über 0% Success Rate kommen.
@@ -19,7 +19,8 @@ import os
 import sys
 
 import numpy as np
-from stable_baselines3 import DQN, PPO
+import torch
+from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import set_random_seed
@@ -54,6 +55,7 @@ class SeedEvalCallback(BaseCallback):
         n_eval_episodes: int = 50,
         eval_exit_min: int = 5,
         eval_exit_max: int = 12,
+        eval_temperature: float = 0.2,
         verbose: int = 1,
     ) -> None:
         super().__init__(verbose)
@@ -62,6 +64,7 @@ class SeedEvalCallback(BaseCallback):
         self.n_eval_episodes = n_eval_episodes
         self.eval_exit_min = eval_exit_min
         self.eval_exit_max = eval_exit_max
+        self.eval_temperature = eval_temperature
         self._best_rate = -1.0
         os.makedirs(best_model_path, exist_ok=True)
 
@@ -74,11 +77,16 @@ class SeedEvalCallback(BaseCallback):
         seeds = EVAL_SEEDS_A[: self.n_eval_episodes]
         env = StoneforgeWorldEnv(exit_min=self.eval_exit_min, exit_max=self.eval_exit_max)
         successes = 0
+        temp_successes = 0
 
         for seed in seeds:
             obs, _ = env.reset(seed=seed)
             done = False
             steps = 0
+            temp_done = False
+            temp_obs = obs
+            temp_steps = 0
+            temp_reached = False
             while not done and steps < MAX_EVAL_STEPS:
                 # deterministic=False: PPO lernt eine stochastische Policy.
                 # Argmax (deterministic=True) erzeugt bei hoher Entropie ↑↓-Loops.
@@ -90,18 +98,33 @@ class SeedEvalCallback(BaseCallback):
                     successes += 1
                     break
 
+            temp_obs, _ = env.reset(seed=seed)
+            while not temp_done and temp_steps < MAX_EVAL_STEPS:
+                action = self._sample_temperature_action(temp_obs, self.eval_temperature)
+                temp_obs, _, term, trunc, info = env.step(action)
+                temp_done = term or trunc
+                temp_steps += 1
+                if info.get("reached_exit"):
+                    temp_reached = True
+                    temp_successes += 1
+                    break
+
         rate = successes / len(seeds)
+        temp_rate = temp_successes / len(seeds)
 
         if self.verbose:
             print(
                 f"  [Eval @ {self.num_timesteps:,}] "
-                f"success={successes}/{len(seeds)} ({rate:.1%})",
+                f"success={successes}/{len(seeds)} ({rate:.1%}) | "
+                f"temp@{self.eval_temperature:g}={temp_successes}/{len(seeds)} ({temp_rate:.1%})",
                 flush=True,
             )
 
         # TensorBoard
         self.logger.record("eval/success_rate", rate)
         self.logger.record("eval/successes", successes)
+        self.logger.record(f"eval/temp_{self.eval_temperature:g}_success_rate", temp_rate)
+        self.logger.record(f"eval/temp_{self.eval_temperature:g}_successes", temp_successes)
         self.logger.dump(self.num_timesteps)
 
         if rate > self._best_rate:
@@ -110,6 +133,20 @@ class SeedEvalCallback(BaseCallback):
             self.model.save(save_path)
             if self.verbose:
                 print(f"  → Neues bestes Modell gespeichert ({rate:.1%}): {save_path}.zip")
+
+    def _sample_temperature_action(self, obs: np.ndarray, temperature: float) -> int:
+        if temperature <= 0:
+            action, _ = self.model.predict(obs, deterministic=True)
+            return int(action)
+
+        obs_tensor, _ = self.model.policy.obs_to_tensor(obs)
+        with torch.no_grad():
+            distribution = self.model.policy.get_distribution(obs_tensor)
+            logits = distribution.distribution.logits
+            scaled_logits = logits / float(temperature)
+            probs = torch.softmax(scaled_logits, dim=-1)
+            action = torch.multinomial(probs, num_samples=1)
+        return int(action.squeeze(0).item())
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -129,10 +166,10 @@ PPO_KWARGS = dict(
     gamma=0.999,
     gae_lambda=0.95,
     clip_range=0.2,
-    ent_coef=0.01,        # kleiner Entropie-Bonus für Exploration
+    ent_coef=0.01,
     vf_coef=0.5,
     verbose=1,
-    tensorboard_log="tensorboard_logs/",
+    tensorboard_log="logs/tensorboard/",
 )
 
 DQN_KWARGS = dict(
@@ -147,7 +184,22 @@ DQN_KWARGS = dict(
     train_freq=4,
     target_update_interval=1000,
     verbose=1,
-    tensorboard_log="tensorboard_logs/",
+    tensorboard_log="logs/tensorboard/",
+)
+
+# A2C: on-policy wie PPO, aber einfachere Advantage-Schätzung (kein Clipping).
+# n_steps=2048 passt zum selben Rollout-Horizont wie PPO.
+# gae_lambda=1.0 = reiner Monte-Carlo-Return (kein GAE-Bias).
+A2C_KWARGS = dict(
+    policy="MlpPolicy",
+    n_steps=2048,
+    learning_rate=7e-4,
+    gamma=0.999,
+    gae_lambda=1.0,
+    ent_coef=0.01,
+    vf_coef=0.5,
+    verbose=1,
+    tensorboard_log="logs/tensorboard/",
 )
 
 
@@ -157,7 +209,7 @@ DQN_KWARGS = dict(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Stoneforge RL Training")
-    p.add_argument("--algo", choices=["ppo", "dqn"], default="ppo")
+    p.add_argument("--algo", choices=["ppo", "dqn", "a2c"], default="ppo")
     p.add_argument("--timesteps", type=int, default=500_000)
     p.add_argument("--n-envs", type=int, default=8)
     p.add_argument("--eval-freq", type=int, default=25_000)
@@ -176,7 +228,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     algo = args.algo.lower()
-    save_dir = args.save_dir or f"best_models_{algo}"
+    save_dir = args.save_dir or f"models/{algo}"
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -204,10 +256,19 @@ def main() -> None:
     if algo == "ppo":
         tb_name = f"ppo_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
-            model = PPO.load(args.load_model, env=env, **{k: v for k, v in PPO_KWARGS.items() if k != "verbose"})
+            model = PPO.load(args.load_model, env=env,
+                             **{k: v for k, v in PPO_KWARGS.items() if k != "verbose"})
             print(f"  Lade Modell: {args.load_model}")
         else:
             model = PPO(env=env, **PPO_KWARGS)
+    elif algo == "a2c":
+        tb_name = f"a2c_exit{args.exit_min}-{args.exit_max}"
+        if args.load_model:
+            model = A2C.load(args.load_model, env=env,
+                             **{k: v for k, v in A2C_KWARGS.items() if k != "verbose"})
+            print(f"  Lade Modell: {args.load_model}")
+        else:
+            model = A2C(env=env, **A2C_KWARGS)
     else:
         tb_name = f"dqn_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
