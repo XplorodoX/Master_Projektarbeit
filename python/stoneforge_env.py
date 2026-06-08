@@ -18,10 +18,13 @@ stoneforge_sim = importlib.import_module("stoneforge_sim")
 #  [gs+3]        exitDx       — euklidische X-Richtung zum Exit, normalisiert /64  ∈ [-1, 1]
 #  [gs+4]        exitDy       — euklidische Y-Richtung zum Exit, normalisiert /64  ∈ [-1, 1]
 #
-#  Total: gs + 5 = 230  (für observationRadius=7 → gs=225)
+#  [gs+5]        step_frac    — aktueller Schritt / maxSteps (0..1), Phase 7
+#
+#  Total: gs + 6 = 231  (für observationRadius=7 → gs=225)
 #
 #  Kein BFS in der Observation. Der Agent kennt die Richtung zum Exit (Luftlinie),
 #  muss aber selbst lernen um Wände zu navigieren — echter RL-Beitrag.
+#  step_frac hilft dem LSTM zwischen "früh in Episode" und "fast am Limit" zu unterscheiden.
 
 _N_ACTIONS = 4
 
@@ -54,7 +57,9 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
 
         n_base = self.core.observation_size()   # gs + 5 = 230
         self._gs = n_base - 5                   # 225 für radius=7
-        self._n_obs = n_base                    # 230, kein BFS-Anhang
+        self._n_obs = n_base + 1                # 231: +1 für step_frac (Phase 7)
+        self._step_count = 0
+        self._max_steps = 4000
 
         self.action_space = spaces.Discrete(_N_ACTIONS)
         self.observation_space = spaces.Box(
@@ -72,7 +77,8 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         arr[gs+2]   = np.clip(arr[gs+2], 0.0, 64.0) / 64.0 # inventory
         arr[gs+3]  /= 64.0                                   # exitDx (euklidisch)
         arr[gs+4]  /= 64.0                                   # exitDy (euklidisch)
-        return arr
+        step_frac = np.float32(self._step_count / self._max_steps)
+        return np.append(arr, step_frac)                     # 231. Feature: Episodenfortschritt
 
     # ------------------------------------------------------------------
 
@@ -86,9 +92,11 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         actual_seed = seed if seed is not None else (
             self.np_random.integers(0, 2**31 - 1)
         )
+        self._step_count = 0
         raw = self.core.reset(int(actual_seed))
         return self._normalize(raw), {}
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
+        self._step_count += 1
         raw, reward, terminated, truncated, info = self.core.step(int(action))
         return self._normalize(raw), float(reward), bool(terminated), bool(truncated), dict(info)

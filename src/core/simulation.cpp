@@ -1457,7 +1457,11 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
                                 int consecutiveBlocked, bool positionLoop, int stepsWithoutProgress) const {
     float reward = -0.01F;
 
-    (void)newTileVisited;
+    // Phase 7: Exploration-Bonus für erste Zell-Betreten (+0.02).
+    // newTileVisited wird bereits korrekt via visitedTiles_.insert().second berechnet.
+    if(newTileVisited) {
+        reward += 0.02F;
+    }
     (void)visitCount;
 
     if(idleAction) {
@@ -1478,14 +1482,7 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
         reward -= 0.15F;
     }
 
-    // Eskalierender Stagnation-Penalty: je laenger ohne neuen BFS-Rekord, desto staerker.
-    if(!reachedExit) {
-        if(stepsWithoutProgress >= 60) {
-            reward -= 0.15F;
-        } else if(stepsWithoutProgress >= 30) {
-            reward -= 0.05F;
-        }
-    }
+    // Stagnation-Penalty entfernt: bestraft legitime Umgehungsmanöver ohne BFS in der Obs.
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;

@@ -19,6 +19,7 @@ import time
 import numpy as np
 import torch
 from stable_baselines3 import A2C, DQN, PPO
+from sb3_contrib import RecurrentPPO
 
 from stoneforge_env import StoneforgeWorldEnv
 
@@ -77,15 +78,17 @@ def main() -> None:
     print(f"Lade Modell: {args.model}")
     model = None
     model_name = ""
-    for Cls, name in [(PPO, "PPO"), (A2C, "A2C"), (DQN, "DQN")]:
+    is_recurrent = False
+    for Cls, name in [(RecurrentPPO, "RecurrentPPO (LSTM)"), (PPO, "PPO"), (A2C, "A2C"), (DQN, "DQN")]:
         try:
             model = Cls.load(args.model)
             model_name = name
+            is_recurrent = (Cls is RecurrentPPO)
             break
         except Exception:
             pass
     if model is None:
-        print(f"Fehler: Konnte Modell nicht als PPO oder DQN laden: {args.model}", file=sys.stderr)
+        print(f"Fehler: Konnte Modell nicht laden: {args.model}", file=sys.stderr)
         sys.exit(1)
     print(f"Algorithmus: {model_name}")
 
@@ -109,6 +112,9 @@ def main() -> None:
 
     successes = 0
     try:
+        lstm_states = None
+        ep_start = np.ones((1,), dtype=bool)
+
         for ep in range(args.episodes):
             seed = args.seed + ep
             obs, _ = env.reset(seed=seed)
@@ -118,10 +124,19 @@ def main() -> None:
             reached = False
             last_pos = None
             stuck_steps = 0
+            lstm_states = None
+            ep_start = np.ones((1,), dtype=bool)
 
             print(f"\n--- Episode {ep+1} (seed={seed}) ---")
             while not done and steps < 4000:
-                if args.deterministic:
+                if is_recurrent:
+                    action_arr, lstm_states = model.predict(
+                        obs.reshape(1, -1), state=lstm_states,
+                        episode_start=ep_start, deterministic=args.deterministic,
+                    )
+                    action = int(action_arr[0])
+                    ep_start = np.zeros((1,), dtype=bool)
+                elif args.deterministic:
                     action, _ = model.predict(obs, deterministic=True)
                     action = int(action)
                 else:
@@ -160,6 +175,7 @@ def main() -> None:
                 )
 
                 if reached:
+                    successes += 1
                     print(f"  => EXIT GEFUNDEN ✓ | steps={steps} | return={ep_ret:.1f}")
                     time.sleep(1.5)   # kurz warten damit man es sieht
                     client.terminate()

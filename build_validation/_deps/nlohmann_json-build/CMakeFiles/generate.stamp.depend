@@ -1,9 +1,0 @@
-# CMake generation dependency list for this directory.
-C:/Strawberry/c/share/cmake-3.26/Modules/CMakePackageConfigHelpers.cmake
-C:/Strawberry/c/share/cmake-3.26/Modules/ExternalProject.cmake
-C:/Strawberry/c/share/cmake-3.26/Modules/GNUInstallDirs.cmake
-C:/Strawberry/c/share/cmake-3.26/Modules/WriteBasicConfigVersionFile.cmake
-C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-src/CMakeLists.txt
-C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-src/cmake/config.cmake.in
-C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-src/cmake/nlohmann_jsonConfigVersion.cmake.in
-C:/Users/PC/Desktop/projekt_lecon_master_sem2/Master_Projektarbeit/build_validation/_deps/nlohmann_json-src/cmake/pkg-config.pc.in

@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/cmake")
 include(CompilerWarnings)
 
 include(FetchContent)
@@ -33,7 +33,7 @@ add_library(stoneforge_core
 
 target_include_directories(stoneforge_core
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 
 target_compile_features(stoneforge_core PUBLIC cxx_std_20)
@@ -145,7 +145,7 @@ if(BUILD_PYTHON_BINDINGS)
 
         pybind11_add_module(stoneforge_sim src/python/py_module.cpp)
         target_link_libraries(stoneforge_sim PRIVATE stoneforge_core)
-        target_include_directories(stoneforge_sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_include_directories(stoneforge_sim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/include)
         
         # Use platform-specific suffix: .so on Unix, .pyd on Windows
         if(WIN32)
