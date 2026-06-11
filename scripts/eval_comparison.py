@@ -1,18 +1,19 @@
-"""Vergleichs-Evaluation: Ablation A → B → C
+"""Vergleichs-Evaluation: Ablation A → B → C → D
 
 Fragestellung:
-  A: MLP + BFS in Obs  → Baseline (historisch, ppo_phase4)
-  B: MLP, kein BFS     → Was kostet das Entfernen von BFS?  (ppo_no_bfs)
-  C: LSTM, kein BFS    → Hilft Gedächtnis ohne BFS?         (ppo_lstm_curriculum)
+  A: MLP + BFS in Obs       → Baseline (historisch, ppo_phase4)
+  B: MLP, kein BFS          → Was kostet das Entfernen von BFS?  (ppo_no_bfs)
+  C: LSTM, kein BFS         → Hilft Gedächtnis ohne BFS?         (ppo_lstm_curriculum)
+  D: LSTM+CNN, kein BFS     → Hilft CNN + Visited Mask?          (ppo_lstm_cnn)
 
-B vs. C ist der saubere Vergleich (gleiche Env, gleiche Seeds, nur Architektur unterschiedlich).
+B vs. C vs. D ist der saubere Vergleich (gleiche Env, gleiche Seeds, nur Architektur).
 A ist historische Baseline (236-Feature-Env, forceGuaranteedPath=true — andere Bedingungen,
 daher nur als Referenz-Obergrenze zu interpretieren).
 
 Verwendung:
     python scripts/eval_comparison.py
     python scripts/eval_comparison.py --seeds-b 8000 8050
-    python scripts/eval_comparison.py --stochastic          # deterministic=False (wie Training-Callback)
+    python scripts/eval_comparison.py --stochastic
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from stable_baselines3 import PPO
 from sb3_contrib import RecurrentPPO
 
 from stoneforge_env import StoneforgeWorldEnv
+from cnn_extractor import StoneforgeGridCNN  # noqa: F401 — wird beim Laden von Condition D benötigt
 
 # ──────────────────────────────────────────────────────────────────────────────
 EXPERIMENTS = {
@@ -47,6 +49,24 @@ EXPERIMENTS = {
         "label": "C — LSTM, kein BFS",
         "note":  "231-Feature-Env, forceGuaranteedPath=false, Curriculum",
         "skip":  False,
+        "visited_mask": False,
+    },
+    "C_v5_ppo_lstm": {
+        "path":  "models/ppo_lstm_curriculum_v5/best_model.zip",
+        "algo":  "rppo",
+        "label": "C v5 — LSTM, last action/reward, batch=256",
+        "note":  "236-Feature-Env, forceGuaranteedPath=false, Curriculum",
+        "skip":  False,
+        "visited_mask": False,
+        "use_last_action_reward": True,
+    },
+    "D_ppo_lstm_cnn": {
+        "path":  "models/ppo_lstm_cnn/best_model.zip",
+        "algo":  "rppo",
+        "label": "D — LSTM+CNN, kein BFS",
+        "note":  "456-Feature-Env (2×15×15 CNN + Visited Mask), Curriculum",
+        "skip":  False,
+        "visited_mask": True,
     },
 }
 
@@ -54,8 +74,10 @@ MAX_STEPS = 4000
 
 
 def eval_ppo(model, seeds: list[int], exit_min: int, exit_max: int,
-             deterministic: bool = True) -> dict:
-    env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max)
+             deterministic: bool = True,
+             use_last_action_reward: bool = False) -> dict:
+    env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max,
+                              use_last_action_reward=use_last_action_reward)
     successes, lengths, returns = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -74,8 +96,12 @@ def eval_ppo(model, seeds: list[int], exit_min: int, exit_max: int,
 
 
 def eval_rppo(model, seeds: list[int], exit_min: int, exit_max: int,
-              deterministic: bool = True) -> dict:
-    env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max)
+              deterministic: bool = True,
+              use_visited_mask: bool = False,
+              use_last_action_reward: bool = False) -> dict:
+    env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max,
+                              use_visited_mask=use_visited_mask,
+                              use_last_action_reward=use_last_action_reward)
     successes, lengths, returns = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -108,10 +134,15 @@ def run_eval(key: str, cfg: dict, seeds: list[int], exit_min: int, exit_max: int
     try:
         if cfg["algo"] == "rppo":
             model = RecurrentPPO.load(cfg["path"])
-            res = eval_rppo(model, seeds, exit_min, exit_max, deterministic=deterministic)
+            res = eval_rppo(model, seeds, exit_min, exit_max,
+                            deterministic=deterministic,
+                            use_visited_mask=cfg.get("visited_mask", False),
+                            use_last_action_reward=cfg.get("use_last_action_reward", False))
         else:
             model = PPO.load(cfg["path"])
-            res = eval_ppo(model, seeds, exit_min, exit_max, deterministic=deterministic)
+            res = eval_ppo(model, seeds, exit_min, exit_max,
+                            deterministic=deterministic,
+                            use_last_action_reward=cfg.get("use_last_action_reward", False))
         return res
     except Exception as e:
         print(f"  ⚠️  Fehler bei {key}: {e}", file=sys.stderr)
@@ -126,7 +157,7 @@ def print_table(results: dict, seeds_label: str, deterministic: bool = True) -> 
     print(f"  {'Bedingung':<30} {'SR':>6}  {'Erfolge':>8}  {'Ø Len':>7}  {'Ø Return':>9}")
     print(f"{'─'*72}")
 
-    # Historisches Ergebnis für A
+    # Historisches Ergebnis für A (hartcodiert, andere Env-Bedingungen)
     print(f"  {'A — MLP + BFS (Baseline)':<30} {'100.0%':>6}  {'50/50':>8}  {'49.0':>7}  {'+100.5':>9}")
     print(f"    ↳ historisch, andere Env-Bedingungen (236 Features, guaranteed path)")
 

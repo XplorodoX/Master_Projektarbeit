@@ -131,6 +131,7 @@ public:
     bool commandGiveItem(std::string_view itemId, int amount);
     bool commandTeleportPlayer(const Vec2i& target);
     int currentBfsDistanceToExit() const;
+    bool isPathToExitReachable() const;
     int bfsDistanceAt(int x, int y) const;
     int stepsWithoutProgress() const { return stepsWithoutProgress_; }   // BFS-Kraftfeld: Pfad-Abstand an beliebiger Position
 

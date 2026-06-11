@@ -83,6 +83,10 @@ public:
         return sim_.currentBfsDistanceToExit();
     }
 
+    bool isPathToExitReachable() const {
+        return sim_.isPathToExitReachable();
+    }
+
     // BFS-Distanz an einer relativen Position zum Spieler.
     // Gibt BFS(player + offset) zurück — oder Manhattan-Fallback wenn außerhalb BFS-Box.
     // Hauptnutzen: 4-direktionales Kraftfeld (bfs_at(0,-1), bfs_at(0,1), bfs_at(-1,0), bfs_at(1,0))
@@ -128,6 +132,7 @@ PYBIND11_MODULE(stoneforge_sim, m) {
         .def("action_space_n", &StoneforgeCoreEnv::actionSpaceN)
         .def("observation_size", &StoneforgeCoreEnv::observationSize)
         .def("current_bfs_distance_to_exit", &StoneforgeCoreEnv::currentBfsDistanceToExit)
+        .def("is_path_to_exit_reachable", &StoneforgeCoreEnv::isPathToExitReachable)
         .def("bfs_distance_at_offset", &StoneforgeCoreEnv::bfsDistanceAtOffset,
              py::arg("dx"), py::arg("dy"))
         .def("configure_world_generation", &StoneforgeCoreEnv::configureWorldGeneration,

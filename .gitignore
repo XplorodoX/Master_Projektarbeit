@@ -36,3 +36,6 @@ best_models_ppo/
 best_models_ppo_*/
 ppo_stoneforge_model.zip
 dqn_stoneforge_model.zip
+logs/
+PokemonRedExperiments-master/
+OLD/

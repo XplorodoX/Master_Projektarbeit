@@ -44,6 +44,10 @@ def parse_args() -> argparse.Namespace:
                    help="Monster aktivieren (Standard: aus)")
     p.add_argument("--client", default="build/stoneforge_client",
                    help="Pfad zum stoneforge_client Binary")
+    p.add_argument("--no-live-map", action="store_true",
+                   help="Live Map Server NICHT starten (default: immer an)")
+    p.add_argument("--live-map-port", type=int, default=8642,
+                   help="Port des Live Map Servers (default: 8642)")
     return p.parse_args()
 
 
@@ -74,6 +78,16 @@ def sample_temperature_action(model, obs: np.ndarray, temperature: float) -> int
 
 def main() -> None:
     args = parse_args()
+
+    # Live Map Server starten (default: immer, außer --no-live-map)
+    _send_update = None
+    if not args.no_live_map:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from live_map_server import start_server, send_update as _su
+        start_server(args.live_map_port)
+        _send_update = lambda data: _su(data, args.live_map_port)
+        print(f"  Live Map: http://localhost:{args.live_map_port}")
 
     print(f"Lade Modell: {args.model}")
     model = None
@@ -127,6 +141,16 @@ def main() -> None:
             lstm_states = None
             ep_start = np.ones((1,), dtype=bool)
 
+            if _send_update:
+                _send_update({
+                    "episode": ep + 1, "seed": seed, "step": 0,
+                    "x": 0, "y": 0, "bfs": env.core.current_bfs_distance_to_exit(),
+                    "success": None, "successes": successes,
+                    "total_eps": ep, "sr": successes / max(ep, 1),
+                    "exit_dx": float(obs[228]), "exit_dy": float(obs[229]),
+                    "running": True,
+                })
+
             print(f"\n--- Episode {ep+1} (seed={seed}) ---")
             while not done and steps < 4000:
                 if is_recurrent:
@@ -167,6 +191,20 @@ def main() -> None:
 
                 done = term or trunc
 
+                if _send_update:
+                    cur = env.core.player_pos()
+                    _send_update({
+                        "episode": ep + 1, "seed": seed, "step": steps,
+                        "x": cur[0], "y": cur[1], "bfs": bfs,
+                        "success": True if reached else None,
+                        "successes": successes + int(reached),
+                        "total_eps": ep + 1,
+                        "sr": (successes + int(reached)) / (ep + 1),
+                        "exit_dx": float(obs[228]),
+                        "exit_dy": float(obs[229]),
+                        "running": True,
+                    })
+
                 fallback = " [BFS-Fallback]" if stuck_steps >= 4 else ""
                 temp_tag = "det" if args.deterministic else f"tau={args.temperature:g}"
                 print(
@@ -191,6 +229,13 @@ def main() -> None:
                 status = "Timeout ✗"
                 bfs = env.core.current_bfs_distance_to_exit()
                 print(f"  => {status} | steps={steps} | bfs_remaining={bfs}")
+                if _send_update:
+                    cur = env.core.player_pos()
+                    _send_update({
+                        "success": False, "successes": successes,
+                        "total_eps": ep + 1, "sr": successes / (ep + 1),
+                        "x": cur[0], "y": cur[1], "running": True,
+                    })
                 client.terminate()
 
     except BrokenPipeError:

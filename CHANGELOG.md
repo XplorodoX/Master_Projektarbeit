@@ -2,6 +2,196 @@
 
 ---
 
+## v2026-06-11 — Verbesserungen Stoneforge RL (LSTM-Curriculum)
+
+### v2026-06-11.A — Behebung methodischer Fehler & Lernverbesserungen
+**Dateien:** `src/core/simulation.cpp`, `src/include/stoneforge/simulation.hpp`, `src/python/py_module.cpp`, `python/stoneforge_env.py`, `scripts/train_curriculum.py`, `scripts/train_cnn.py`, `scripts/eval_comparison.py`, `scripts/check_solvability.py` (neu), `scripts/run_experiment.py` (neu)
+
+**Motivation:** Behebung von methodischen Fehlern (Data Leakage, Lösbarkeit) und Verbesserung der Lernleistung zur Schließung des Det/Stoch-Gaps auf der Zielverteilung.
+
+#### Änderung 1 — Validierungs-Seeds & Beseitigung des Data-Leakages
+**Dateien:** [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
+**Problem:** Der Curriculum-Callback nutzte die Seeds 7000–7049, welche dem Testset A entsprechen. Dies führte zu Data Leakage bei der Modellselektion.
+**Lösung:** Einführung von `VAL_SEEDS = list(range(6000, 6050))` für die Phasensteuerung und Modellselektion im Callback. Die Test-Seeds werden nur noch in der finalen Evaluation genutzt.
+
+#### Änderung 2 — Lösbarkeitsprüfung
+**Dateien:** [simulation.cpp](file:///Users/merluee/Master_Projektarbeit/src/core/simulation.cpp), [simulation.hpp](file:///Users/merluee/Master_Projektarbeit/src/include/stoneforge/simulation.hpp), [py_module.cpp](file:///Users/merluee/Master_Projektarbeit/src/python/py_module.cpp), [stoneforge_env.py](file:///Users/merluee/Master_Projektarbeit/python/stoneforge_env.py), [check_solvability.py](file:///Users/merluee/Master_Projektarbeit/scripts/check_solvability.py) (neu)
+**Problem:** Das Training lief mit `force_guaranteed_path=False`, was möglicherweise unlösbare Welten erzeugte.
+**Lösung:** BFS-Prüfung `isPathToExitReachable()` in C++ implementiert und nach Python exportiert. Überprüfung von 3.150 Seeds (inkl. Val/Test/Holdout und Trainingsphasen) ergab 100.0% Lösbarkeit, da der Generierungsalgorithmus nur verbundene Exits wählt. Kein Eingriff in die Generierung nötig.
+
+#### Änderung 3 — Batch-Größe & Trainingseffizienz
+**Dateien:** [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
+**Problem:** `batch_size=16` war extrem verrauscht und ineffizient.
+**Lösung:** Erhöhung der Batch-Größe auf `256` (32 Minibatches pro Epoche) für stabilere Gradienten und deutlich höhere FPS (~330 vs ~110).
+
+#### Änderung 4 — Letzte Aktion + Reward in der Observation
+**Dateien:** [stoneforge_env.py](file:///Users/merluee/Master_Projektarbeit/python/stoneforge_env.py)
+**Problem:** Der LSTM-Agent litt unter Oszillationsschleifen an Wänden. Ohne Kenntnis über die blockierte Aktion konnte der Belief-State dies schwer auflösen.
+**Lösung:** Erweiterung der Observation um die letzte Aktion (One-Hot, 4 Dims) und den letzten Reward (geclippt, 1 Dim). Optionale Aktivierung per Parameter `use_last_action_reward` zur Erhaltung der Rückwärtskompatibilität.
+
+#### Änderung 5 — Entropie-Annealing in Phase 3
+**Dateien:** [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
+**Problem:** Ein konstantes `ent_coef=0.01` führt dazu, dass die Policy bis zum Ende stochastisch bleibt, was den Det/Stoch-Gap vergrößert.
+**Lösung:** Lineare Absenkung des `ent_coef` in Phase 3 von `0.01` auf `0.001` über die ersten 500k Schritte, um eine stabile Greedy-Strategie zu erzwingen.
+
+#### Änderung 6 — Curriculum-Anpassungen & Consecutive Success Check
+**Dateien:** [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
+**Problem:** Phase 1 (40%) und Phase 2 (30%) stoppten zu früh, wodurch Phase 3 mit einer halbgaren Policy startete. Zudem konnte ein einzelnes gutes Eval ein Ausreißer sein.
+**Lösung:** Anhebung der Ziel-Success-Rate auf `85%` (Phase 1) und `70%` (Phase 2). Stoppen einer Phase erst nach **zwei aufeinanderfolgenden** Evals über dem Ziel.
+
+#### Änderung 7 — PLR-Swarm (Swarm-Pool invertieren)
+**Dateien:** [stoneforge_env.py](file:///Users/merluee/Master_Projektarbeit/python/stoneforge_env.py), [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
+**Problem:** Der SwarmPool wiederholte bereits gelöste Seeds, was das Training auf einfache Fälle verzerrte.
+**Lösung:** PLR-Semantik (Prioritized Level Replay): Fehlgeschlagene Seeds (Timeout/Early Stop) kommen in den Pool, gelöste Seeds werden gelöscht. Per Flag `--plr` aktivierbar.
+
+#### Änderung 8 — Stuck-Penalty & PBRS-Gamma-Anpassung
+**Dateien:** [stoneforge_env.py](file:///Users/merluee/Master_Projektarbeit/python/stoneforge_env.py), [simulation.cpp](file:///Users/merluee/Master_Projektarbeit/src/core/simulation.cpp)
+**Problem:** Stuck-Penalty ab 300 Schritten wurde wegen des 256-Schritte-Early-Stops nie erreicht. `PBRS_GAMMA` von `1.0F` wich vom RL-Discount ab.
+**Lösung:** Stuck-Penalty-Schwelle auf `25` Schritte gesenkt und Strafe skaliert. `PBRS_GAMMA` auf `0.999F` gesetzt.
+
+#### Änderung 9 — Wrapper für das 3-Läufe-Protokoll
+**Dateien:** [run_experiment.py](file:///Users/merluee/Master_Projektarbeit/scripts/run_experiment.py) (neu)
+**Lösung:** Automatisierungsskript zur Ausführung des Trainings über 3 Seeds und anschließender Evaluierung (Mittelwert ± Standardabweichung).
+
+---
+
+## v2026-06-08 — PokéRL-Inspiration: Swarm, Live Map (WS), Hyperparameter-Tuning
+
+---
+
+### v2026-06-08.A — Swarm-Training + HTTP-Live-Map + Heatmap-Eval
+**Dateien:** `python/stoneforge_env.py`, `scripts/train_curriculum.py`, `scripts/live_map_server.py`, `scripts/live_map.html`, `scripts/heatmap_eval.py`
+
+**Motivation:** Inspiration durch das PokéRL-Projekt (PokemonRedExperiments). Drei Features eingebaut:
+
+#### Änderung 1 — SwarmSeedPool
+**Datei:** `python/stoneforge_env.py`
+**Problem:** Alle 8 Parallel-Envs trainieren auf zufälligen Seeds — schwierige Seeds werden nie wiederholt.
+**Lösung:** Thread-sicherer `SwarmSeedPool`: wenn ein Agent den Exit findet, landet sein Seed im Pool. Mit Wahrscheinlichkeit `swarm_prob=0.3` zieht eine Env beim nächsten Reset einen erfolgreichen Seed.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| Seed-Wiederholung | keine | 30% Chance auf Erfolgs-Seed | Fokussiert Training auf lösbare Karten |
+| Pool-Größe | — | max 200 Seeds (FIFO) | Neueste erfolgreiche Seeds bevorzugt |
+
+**Hinweis:** PokéRL's "Swarm" ist nur Visualisierung (WebSocket-Koordinaten). Unser SwarmSeedPool ist tatsächlich ausgefeilter — echter Lernmechanismus.
+
+#### Änderung 2 — HTTP Live Map (Zwischenstand, später durch WS ersetzt)
+**Datei:** `scripts/live_map_server.py`, `scripts/live_map.html`
+Stdlib-HTTPServer, kein extra Dependency. GET `/` → HTML, GET `/state` → JSON, POST `/update` → State setzen. Browser pollt alle 250ms. Training-Modus: 8 farbige Agenten-Trails auf gemeinsamer Canvas.
+
+#### Änderung 3 — Heatmap-Evaluation
+**Datei:** `scripts/heatmap_eval.py`
+```bash
+python scripts/heatmap_eval.py --model path --stochastic --holdout --show
+```
+3-Panel-Matplotlib: alle Episoden (hot), Erfolge (YlGn), Misserfolge (OrRd). Log-Skala (`np.log1p`). Wird nach Training automatisch per Subprocess gestartet.
+
+---
+
+### v2026-06-08.B — Ablation D: CNN + Visited Mask
+**Dateien:** `python/cnn_extractor.py` (neu), `scripts/train_cnn.py` (neu), `scripts/eval_comparison.py`
+
+**Motivation:** Hypothese: Ein 2D-CNN mit Visited Mask als zweitem Kanal ermöglicht bessere räumliche Generalisierung als flacher MLP.
+
+**Architektur (StoneforgeGridCNN):**
+```
+Input: 2×15×15 (Kanal 0: Tile-Typen, Kanal 1: Visited Mask)
+Conv(2→16, 3×3) → ReLU → Conv(16→32, 3×3) → ReLU →
+MaxPool(3,3) [15→5] → Conv(32→64, 3×3) → ReLU →
+Flatten → Linear(1600→128) → ReLU
+Output: concat(cnn_out(128), extras(6)) = 134 dims → LSTM
+```
+
+| Parameter | vorher (Ablation C) | Ablation D |
+|-----------|---------------------|------------|
+| Obs-Shape | 231 (flach) | **456** (2×225 Grid + 6 Extras) |
+| Feature-Extraktor | MLP (implizit) | **StoneforgeGridCNN** |
+| Kanal 1 | — | Visited Mask (1.0 = betreten) |
+
+Ablationsmatrix vollständig:
+- **A** — MLP + BFS: 100% det (Referenz-Obergrenze, historisch)
+- **B** — MLP, kein BFS: 0% det (Negativ-Ergebnis)
+- **C** — LSTM, kein BFS: 86% stoch / 36% det
+- **D** — LSTM+CNN, kein BFS: *ausstehend (ppo_lstm_cnn)*
+
+---
+
+### v2026-06-08.C — WebSocket Live Map (PokéRL-Architektur)
+**Dateien:** `scripts/ws_map_server.py` (neu), `python/stream_wrapper.py` (neu), `scripts/ws_map.html` (neu)
+**Ersetzt:** `scripts/live_map_server.py` (HTTP-Polling)
+
+**Architektur-Vergleich:**
+
+| | PokéRL | Stoneforge |
+|--|--------|------------|
+| Sender | `StreamWrapper` per WS zu `wss://transdimensional.xyz` | `StreamWrapper` ruft `ws_map_server.update_agent()` in-process auf |
+| Server | externer Broadcast-Server | lokaler asyncio WS-Server (`ws://localhost:8765`) |
+| Viewer | Browser verbindet zu externem Server | Browser öffnet `ws_map.html` direkt (`file://`), verbindet zu localhost |
+| Update-Rate | pro Step | pro Step (StreamWrapper) + ~10fps Push an Browser |
+
+**StreamWrapper** erbt von `gymnasium.Wrapper` → kompatibel mit `DummyVecEnv`.
+Pro Step: `player_pos()`, `current_bfs_distance_to_exit()` → JSON an WS-Server.
+
+**Wichtig:** HTTP Live Map (`live_map_server.py`) bleibt als Fallback erhalten (z.B. für `watch_agent.py`). WS-Map ist default für `train_curriculum.py`.
+
+---
+
+### v2026-06-08.D — Hyperparameter-Tuning (PokéRL-inspiriert + Skalierung)
+
+#### Änderung 1 — Stuck-Penalty
+**Datei:** `python/stoneforge_env.py`
+**Problem:** Agent kann eine Tile beliebig oft besuchen ohne Strafe — fördert Schleifen.
+**Lösung:** `_visit_counts` dict zählt Besuche pro Tile. Bei >300 Besuchen: `reward -= 0.03 * min(count/300, 2.0)` (max −0.06/Schritt).
+
+#### Änderung 2 — Early Stopping
+**Datei:** `python/stoneforge_env.py`
+**Problem:** Agent "lebt" 4000 Schritte lang auch wenn er völlig feststeckt → schlechte Daten, langsames Training.
+**Lösung:** `_steps_no_reward` zählt Schritte ohne positiven Reward. Bei ≥256: Episode wird truncated (`info["early_stop"] = True`).
+
+#### Änderung 3 — n_epochs & ent_coef
+**Dateien:** `scripts/train_curriculum.py`, `scripts/train_cnn.py`
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `n_epochs` | 10 | **4** | 10 destabilisierte LSTM in Phase 2; 1 zu wenig (Value-Fn lernt nicht); 4 als Kompromiss |
+| `ent_coef` | 0.05 | **0.01** | Policy war nach Konvergenz noch zu zufällig |
+
+**Hinweis:** n_epochs=1 wurde in v3 getestet und führte zu 0% SR (explained_variance≈0 — Value-Fn nicht konvergierbar mit 1 Gradient-Step pro 2048 Transitions). PokéRL kompensiert das mit 64 Agents und Millionen Steps — für uns nicht übertragbar.
+
+#### Änderung 4 — Modell-Skalierung
+**Dateien:** `scripts/train_curriculum.py`, `scripts/train_cnn.py`
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `lstm_hidden_size` | 256 | **512** | Mehr Gedächtnis für Phase 3 (exit=25–45, längere Episoden) |
+| `n_steps` | 256 | **512** | Besserer Gradientenschätzer; Early-Stop bei 256 fällt sonst auf Rollout-Grenze |
+
+---
+
+### v2026-06-08.E — Trainingsläufe ppo_lstm_curriculum_v2/v3/v4
+
+#### v2 (VPS-Training, abgebrochen)
+Phase 1 abgeschlossen. Phase 2 kollabierte: Peak 28% SR → Absturz auf 0–8%.
+**Ursache:** n_epochs=10 destabilisiert LSTM-Hidden-State bei Umstellung auf neue Distanzverteilung.
+
+#### v3 (lokal, gestoppt nach 370k Steps)
+Erster Lauf mit allen PokéRL-Änderungen (Stuck-Penalty, Early-Stop, ent_coef=0.01). Fehler: n_epochs=1.
+
+| Metrik | Wert | Diagnose |
+|--------|------|----------|
+| SR Phase 1 @ 370k | 0/50 (0%) | kein Lernen |
+| `explained_variance` | ≈ 0 | Value-Fn nicht konvergiert |
+| `ep_len_mean` | ~3100 | Early-Stop triggert nicht (agent kriegt gelegentl. pos. Reward aber kein Exit) |
+
+**Konsequenz:** n_epochs auf 4 erhöht, v3 gestoppt.
+
+#### v4 (lokal, läuft seit 08.06.2026)
+Konfiguration: n_epochs=4, ent_coef=0.01, n_steps=512, lstm_hidden_size=512, Stuck-Penalty, Early-Stop, Swarm, WS-Live-Map.
+**Ergebnis: ausstehend.**
+
+---
+
 ## Wissenschaftliche Einordnung: Stoneforge als POMDP — Det/Stoch-Gap (08.06.2026)
 
 ### These: Stochastische Evaluation ist in Stoneforge wissenschaftlich legitim
