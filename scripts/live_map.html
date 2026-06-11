@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Stoneforge Live Map</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    #sidebar h2 { color: #58a6ff; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #30363d; }
+    .stat { display: flex; flex-direction: column; }
+    .stat .lbl { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat .val { font-size: 18px; font-weight: bold; color: #79c0ff; line-height: 1.2; }
+    .val.green  { color: #56d364; }
+    .val.red    { color: #f85149; }
+    .val.yellow { color: #e3b341; }
+    .val.white  { color: #f0f6fc; }
+    .val.small  { font-size: 13px; }
+    .divider    { border: none; border-top: 1px solid #30363d; margin: 2px 0; }
+    .stat-group { display: flex; flex-direction: column; gap: 6px; }
+    /* Agent-Liste */
+    #agent-list { display: flex; flex-direction: column; gap: 3px; }
+    .agent-row  { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+    .agent-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .agent-info { color: #8b949e; }
+    /* Fortschrittsbalken */
+    .progress-wrap { background: #21262d; border-radius: 3px; height: 6px; overflow: hidden; }
+    .progress-bar  { height: 100%; background: #58a6ff; transition: width 0.5s; border-radius: 3px; }
+    /* Warte-Overlay */
+    #waiting {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #484f58; font-size: 14px; text-align: center; pointer-events: none;
+    }
+    #canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; background: #0d1117; position: relative; overflow: hidden; }
+    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    #flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+    #flash.show { opacity: 0.15; }
+    #flash.success-flash { background: #56d364; }
+    #flash.fail-flash    { background: #f85149; }
+    #mode-badge {
+      position: absolute; top: 10px; right: 12px;
+      background: #21262d; border: 1px solid #30363d;
+      color: #8b949e; font-size: 10px; padding: 3px 8px; border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h2 id="sidebar-title">🗺 Live Map</h2>
+
+  <!-- Gemeinsame Stats -->
+  <div class="stat-group">
+    <div class="stat"><span class="lbl">Status</span><span class="val white" id="st-status">warte...</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Watch-Modus Stats -->
+  <div id="watch-stats">
+    <div class="stat-group">
+      <div class="stat"><span class="lbl">Episode</span><span class="val" id="st-ep">—</span></div>
+      <div class="stat"><span class="lbl">Seed</span><span class="val" id="st-seed">—</span></div>
+      <div class="stat"><span class="lbl">Schritt</span><span class="val" id="st-step">—</span></div>
+      <div class="stat"><span class="lbl">BFS-Distanz</span><span class="val" id="st-bfs">—</span></div>
+      <div class="stat"><span class="lbl">Position</span><span class="val" id="st-pos">—</span></div>
+    </div>
+    <hr class="divider">
+    <div class="stat-group">
+      <div class="stat"><span class="lbl">Erfolge</span><span class="val green" id="st-succ">—</span></div>
+      <div class="stat"><span class="lbl">Success Rate</span><span class="val yellow" id="st-sr">—</span></div>
+    </div>
+  </div>
+
+  <!-- Training-Modus Stats -->
+  <div id="train-stats" style="display:none">
+    <div class="stat-group">
+      <div class="stat"><span class="lbl">Phase</span><span class="val small white" id="tr-phase">—</span></div>
+      <div class="stat">
+        <span class="lbl">Timesteps</span>
+        <span class="val" id="tr-ts">—</span>
+        <div class="progress-wrap" style="margin-top:3px">
+          <div class="progress-bar" id="tr-progress" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat"><span class="lbl">Bestes SR (det)</span><span class="val yellow" id="tr-sr">—</span></div>
+      <div class="stat"><span class="lbl">Swarm Pool</span><span class="val green" id="tr-swarm">—</span></div>
+    </div>
+    <hr class="divider">
+    <div class="stat"><span class="lbl">Agenten (8)</span></div>
+    <div id="agent-list"></div>
+  </div>
+
+  <hr class="divider">
+  <div id="legend" style="font-size:10px; color:#555; line-height:1.8;">
+    <span id="lg-trail"></span>
+    <div>⭐ Startpunkt (0,0)</div>
+    <div id="lg-exit" style="color:#56d364">→ Exit-Richtung</div>
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <div id="waiting">Warte auf Daten...<br><br>Training oder watch_agent.py starten</div>
+  <canvas id="map"></canvas>
+  <div id="flash"></div>
+  <div id="mode-badge">—</div>
+</div>
+
+<script>
+// ─── Konfiguration ─────────────────────────────────────────────────────
+const CELL      = 7;
+const WORLD_R   = 70;
+const TRAIL_MAX = 400;
+const POLL_MS   = 220;
+
+const W = (WORLD_R * 2 + 1) * CELL;
+const H = (WORLD_R * 2 + 1) * CELL;
+
+const canvas = document.getElementById('map');
+canvas.width  = W;
+canvas.height = H;
+const ctx = canvas.getContext('2d');
+
+function wx(worldX) { return (worldX + WORLD_R) * CELL; }
+function wy(worldY) { return (worldY + WORLD_R) * CELL; }
+
+// Farben für 8 parallele Agenten
+const AGENT_COLORS = [
+  '#4fc3f7', '#81c784', '#ffb74d', '#f06292',
+  '#ce93d8', '#80cbc4', '#fff176', '#ef9a9a',
+];
+
+// ─── State ────────────────────────────────────────────────────────────
+let mode       = 'watch';   // 'watch' | 'training'
+let lastState  = null;
+let hasData    = false;
+let flashTimer = null;
+
+// Watch-Modus
+let trail = [];
+
+// Training-Modus: ein Trail pro Agent
+let agentTrails = {};   // id → [{x,y}]
+
+// ─── Zeichnen ─────────────────────────────────────────────────────────
+function renderBackground() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+  // Gitter
+  ctx.strokeStyle = 'rgba(48,54,61,0.4)';
+  ctx.lineWidth = 0.5;
+  for (let gx = 0; gx <= W; gx += CELL * 10) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+  for (let gy = 0; gy <= H; gy += CELL * 10) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+  // Achsen
+  const ox = wx(0), oy = wy(0);
+  ctx.strokeStyle = 'rgba(88,166,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(W, oy); ctx.stroke();
+}
+
+function drawTrail(trail, color) {
+  for (let i = 0; i < trail.length; i++) {
+    const frac = i / Math.max(trail.length - 1, 1);
+    const a = 0.15 + 0.55 * frac;
+    ctx.fillStyle = color.replace(')', `,${a})`).replace('rgb', 'rgba').replace('#', 'rgba(').replace('rgba(', 'rgba(');
+    // Einfacher: HSL mit Alpha
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.fillRect(wx(trail[i].x), wy(trail[i].y), CELL, CELL);
+  }
+  ctx.globalAlpha = 1.0;
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawTrailColored(trail, baseColor) {
+  for (let i = 0; i < trail.length; i++) {
+    const frac = i / Math.max(trail.length - 1, 1);
+    const a = 0.1 + 0.7 * frac;
+    ctx.fillStyle = hexToRgba(baseColor, a);
+    ctx.fillRect(wx(trail[i].x), wy(trail[i].y), CELL, CELL);
+  }
+}
+
+function drawExitArrow(cx, cy, dx, dy) {
+  const mag = Math.sqrt(dx*dx + dy*dy);
+  if (mag < 0.01) return;
+  const ux = dx/mag, uy = dy/mag;
+  const len = 40;
+  const ex = cx + ux*len, ey = cy + uy*len;
+  const ang = Math.atan2(uy, ux);
+  ctx.strokeStyle = 'rgba(86,211,100,0.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.fillStyle = 'rgba(86,211,100,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 8*Math.cos(ang-0.45), ey - 8*Math.sin(ang-0.45));
+  ctx.lineTo(ex - 8*Math.cos(ang+0.45), ey - 8*Math.sin(ang+0.45));
+  ctx.closePath(); ctx.fill();
+}
+
+function drawStartDot() {
+  ctx.beginPath();
+  ctx.arc(wx(0)+CELL/2, wy(0)+CELL/2, CELL*0.8, 0, 2*Math.PI);
+  ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 1.5; ctx.stroke();
+}
+
+// ─── Watch-Modus rendern ──────────────────────────────────────────────
+function renderWatch(s) {
+  renderBackground();
+
+  // Trail (blau → rot)
+  for (let i = 0; i < trail.length; i++) {
+    const frac = i / Math.max(trail.length-1, 1);
+    const r = Math.round(26  + frac*(248-26));
+    const g = Math.round(58  + frac*(81-58));
+    const b = Math.round(110 + frac*(73-110));
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.2+0.6*frac})`;
+    ctx.fillRect(wx(trail[i].x), wy(trail[i].y), CELL, CELL);
+  }
+
+  // Exit-Pfeil
+  if (s.exit_dx !== undefined) {
+    const cx = wx(s.x)+CELL/2, cy = wy(s.y)+CELL/2;
+    drawExitArrow(cx, cy, s.exit_dx, s.exit_dy);
+  }
+
+  drawStartDot();
+
+  // Agent (weiß + gelber Rand)
+  ctx.fillStyle = '#f0f6fc';
+  ctx.fillRect(wx(s.x), wy(s.y), CELL, CELL);
+  ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(wx(s.x)+0.75, wy(s.y)+0.75, CELL-1.5, CELL-1.5);
+}
+
+// ─── Training-Modus rendern ───────────────────────────────────────────
+function renderTraining(s) {
+  renderBackground();
+
+  // Trails aller Agenten
+  (s.agents || []).forEach(agent => {
+    const trail = agentTrails[agent.id] || [];
+    const color = AGENT_COLORS[agent.id % AGENT_COLORS.length];
+    drawTrailColored(trail, color);
+  });
+
+  drawStartDot();
+
+  // Agenten-Dots
+  (s.agents || []).forEach(agent => {
+    const color = AGENT_COLORS[agent.id % AGENT_COLORS.length];
+    // Ausgefülltes Quadrat in Agent-Farbe
+    ctx.fillStyle = color;
+    ctx.fillRect(wx(agent.x), wy(agent.y), CELL, CELL);
+    // Heller Rand
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(wx(agent.x)+0.4, wy(agent.y)+0.4, CELL-0.8, CELL-0.8);
+  });
+}
+
+// ─── Stats updaten ───────────────────────────────────────────────────
+function updateWatchStats(s) {
+  document.getElementById('st-ep').textContent   = s.episode ?? '—';
+  document.getElementById('st-seed').textContent = s.seed    ?? '—';
+  document.getElementById('st-step').textContent = s.step    ?? '—';
+  document.getElementById('st-bfs').textContent  = s.bfs     ?? '—';
+  document.getElementById('st-pos').textContent  = `${s.x ?? '—'}, ${s.y ?? '—'}`;
+  document.getElementById('st-succ').textContent = s.successes ?? '—';
+  const pct = ((s.sr ?? 0)*100).toFixed(1);
+  document.getElementById('st-sr').textContent   = `${pct}%`;
+
+  const statusEl = document.getElementById('st-status');
+  if (s.success === true)       { statusEl.textContent = '✓ EXIT!';      statusEl.className = 'val green'; }
+  else if (s.success === false) { statusEl.textContent = '✗ Timeout';    statusEl.className = 'val red'; }
+  else if (s.running)           { statusEl.textContent = '▶ läuft...';   statusEl.className = 'val white'; }
+  else                          { statusEl.textContent = 'warte...';     statusEl.className = 'val white'; }
+}
+
+function updateTrainingStats(s) {
+  document.getElementById('st-status').textContent  = '⚙ Training';
+  document.getElementById('st-status').className    = 'val yellow';
+  document.getElementById('tr-phase').textContent   = s.phase  ?? '—';
+  document.getElementById('tr-ts').textContent      = s.timesteps ? s.timesteps.toLocaleString('de') : '—';
+  document.getElementById('tr-sr').textContent      = s.best_sr != null ? `${(s.best_sr*100).toFixed(1)}%` : '—';
+  document.getElementById('tr-swarm').textContent   = s.swarm_pool != null ? `${s.swarm_pool} Seeds` : '—';
+
+  // Fortschrittsbalken (Phase-Längen: 500k / 500k / 1M)
+  const phaseLimits = { 'Phase 1': 500000, 'Phase 2': 500000, 'Phase 3': 1000000 };
+  let limit = 500000;
+  for (const [k, v] of Object.entries(phaseLimits)) {
+    if ((s.phase || '').includes(k.slice(-1))) { limit = v; break; }
+  }
+  // Timesteps modulo phase (rough estimate)
+  const pct = Math.min(100, ((s.timesteps ?? 0) % limit) / limit * 100);
+  document.getElementById('tr-progress').style.width = `${pct}%`;
+
+  // Agenten-Liste
+  const list = document.getElementById('agent-list');
+  list.innerHTML = '';
+  (s.agents || []).forEach(agent => {
+    const color = AGENT_COLORS[agent.id % AGENT_COLORS.length];
+    const row   = document.createElement('div');
+    row.className = 'agent-row';
+    row.innerHTML = `
+      <div class="agent-dot" style="background:${color}"></div>
+      <div class="agent-info">
+        #${agent.id} &nbsp;(${agent.x},${agent.y})&nbsp; BFS:${agent.bfs ?? '?'}
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+// ─── UI-Modus umschalten ─────────────────────────────────────────────
+function switchMode(newMode) {
+  if (mode === newMode) return;
+  mode = newMode;
+  document.getElementById('watch-stats').style.display  = newMode === 'watch'    ? '' : 'none';
+  document.getElementById('train-stats').style.display  = newMode === 'training' ? '' : 'none';
+  document.getElementById('mode-badge').textContent     = newMode === 'training' ? '⚙ Training' : '▶ Watch';
+  document.getElementById('sidebar-title').textContent  = newMode === 'training' ? '⚙ Swarm Training' : '🗺 Live Map';
+  const lg = document.getElementById('lg-trail');
+  lg.innerHTML = newMode === 'training'
+    ? AGENT_COLORS.map((c,i) => `<span style="color:${c}">● A${i}</span>`).join(' ')
+    : '<div style="color:#484f58">Blau→Rot: Pfad</div>';
+  document.getElementById('lg-exit').style.display = newMode === 'watch' ? '' : 'none';
+}
+
+// ─── Episode-Flash ───────────────────────────────────────────────────
+function flash(type) {
+  const el = document.getElementById('flash');
+  el.className = `show ${type}`;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { el.className = ''; }, 400);
+}
+
+// ─── Poll-Loop ───────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const r = await fetch('/state');
+    if (r.ok) {
+      const s = await r.json();
+
+      if (!hasData && s.running) {
+        document.getElementById('waiting').style.display = 'none';
+        hasData = true;
+      }
+
+      const isTraining = s.mode === 'training';
+      switchMode(isTraining ? 'training' : 'watch');
+
+      if (isTraining) {
+        // Trails für jeden Agenten akkumulieren
+        (s.agents || []).forEach(agent => {
+          if (!agentTrails[agent.id]) agentTrails[agent.id] = [];
+          const t = agentTrails[agent.id];
+          const last = t[t.length - 1];
+          if (!last || last.x !== agent.x || last.y !== agent.y) {
+            t.push({ x: agent.x, y: agent.y });
+            if (t.length > TRAIL_MAX) t.shift();
+          }
+        });
+        renderTraining(s);
+        updateTrainingStats(s);
+
+      } else {
+        // Watch-Modus
+        if (lastState && s.episode !== lastState.episode) {
+          if (lastState.success === true)  flash('success-flash');
+          if (lastState.success === false) flash('fail-flash');
+          trail = [];
+        }
+        if (!lastState || s.x !== lastState.x || s.y !== lastState.y) {
+          trail.push({ x: s.x, y: s.y });
+          if (trail.length > TRAIL_MAX) trail.shift();
+        }
+        renderWatch(s);
+        updateWatchStats(s);
+      }
+
+      lastState = s;
+    }
+  } catch (_) { /* Server noch nicht bereit */ }
+
+  setTimeout(poll, POLL_MS);
+}
+
+poll();
+</script>
+</body>
+</html>

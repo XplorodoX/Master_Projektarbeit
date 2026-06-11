@@ -1,0 +1,5 @@
+gymnasium>=0.29
+stable-baselines3>=2.3
+numpy>=1.26
+tensorboard>=2.14
+websockets>=13.0

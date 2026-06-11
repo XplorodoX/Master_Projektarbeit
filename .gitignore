@@ -1,28 +1,41 @@
-# Build outputs
-/build/
+# ── Build-Ausgaben ───────────────────────────────────────────────────────────
+build/
+build_validation/
+OLD/build_validation/
 
-# Python
+# ── Python ───────────────────────────────────────────────────────────────────
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+python/*.so
+python/*.pyd
 
-# Runtime artifacts
-game.log
-game.pid
+# ── Laufzeit-Artefakte ───────────────────────────────────────────────────────
+logs/runtime/
+logs/game.log
+logs/game.pid
 
-# Training artifacts
+# ── Trainings-Artefakte (große Binaries) ────────────────────────────────────
+# models/ wird NICHT ignoriert — Modelle sollen ins Repo (für Reproduzierbarkeit)
+# Einzelne veraltete Pfade:
+checkpoints/
+
+# ── TensorBoard-Logs (groß, optional ignorieren) ─────────────────────────────
+# logs/tensorboard/    ← auskommentiert: TB-Logs WERDEN getrackt
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+
+# ── Alte veraltete Pfade (zur Sicherheit) ────────────────────────────────────
+tensorboard_logs/
 best_models_dqn/
 best_models_ppo/
-checkpoints/
-logs/
-tensorboard_logs/
-python/*.so
-
-# macOS
-.DS_Store
-
+best_models_ppo_*/
 ppo_stoneforge_model.zip
 dqn_stoneforge_model.zip
-
-build/
-build_validation/
+logs/
+PokemonRedExperiments-master/
+OLD/

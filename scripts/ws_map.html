@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Stoneforge — Live Training</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; font-size: 12px; overflow-x: hidden; }
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+#header {
+  display: flex; align-items: center; gap: 20px;
+  padding: 8px 16px; background: #161b22; border-bottom: 1px solid #30363d;
+}
+#header h1 { font-size: 14px; color: #f0f6fc; letter-spacing: 1px; white-space: nowrap; }
+.stat { display: flex; flex-direction: column; align-items: center; padding: 2px 12px; border-left: 1px solid #30363d; }
+.stat-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 15px; color: #f0f6fc; font-weight: bold; }
+#ws-badge { margin-left: auto; font-size: 11px; padding: 2px 10px; border-radius: 10px; background: #21262d; }
+#ws-badge.on  { color: #3fb950; }
+#ws-badge.off { color: #f85149; }
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+#layout { display: flex; gap: 0; height: calc(100vh - 46px); }
+
+/* ── Left: Agent Maps ─────────────────────────────────────────────────*/
+#maps-col { width: 55%; padding: 10px; overflow-y: auto; background: #0d1117; }
+#maps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.acard { background: #161b22; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+.acard-head {
+  display: flex; align-items: center; gap: 6px; padding: 4px 8px;
+  border-bottom: 1px solid #21262d; font-size: 11px;
+}
+.adot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.aname { font-weight: bold; color: #f0f6fc; }
+.astats { margin-left: auto; color: #8b949e; font-size: 10px; text-align: right; }
+.acanvas { display: block; width: 100%; image-rendering: pixelated; }
+
+/* ── Right: Charts ────────────────────────────────────────────────────*/
+#charts-col {
+  width: 45%; border-left: 1px solid #30363d;
+  display: flex; flex-direction: column; padding: 10px; gap: 10px; overflow-y: auto;
+}
+.chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+.chart-title { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+canvas.chart { display: block; width: 100%; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>⛏ STONEFORGE SWARM</h1>
+  <div class="stat"><span class="stat-label">Phase</span><span class="stat-value" id="m-phase">—</span></div>
+  <div class="stat"><span class="stat-label">Timesteps</span><span class="stat-value" id="m-ts">0</span></div>
+  <div class="stat"><span class="stat-label">Best SR</span><span class="stat-value" id="m-sr">—</span></div>
+  <div class="stat"><span class="stat-label">Swarm Pool</span><span class="stat-value" id="m-pool">—</span></div>
+  <div class="stat"><span class="stat-label">Agents</span><span class="stat-value" id="m-agents">0</span></div>
+  <span id="ws-badge" class="off">● offline</span>
+</div>
+
+<div id="layout">
+  <div id="maps-col"><div id="maps-grid"></div></div>
+  <div id="charts-col">
+    <div class="chart-box">
+      <div class="chart-title">Success Rate (Eval Checkpoints)</div>
+      <canvas class="chart" id="chart-sr" height="120"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Ø BFS-Distanz (alle Agents, live)</div>
+      <canvas class="chart" id="chart-bfs" height="120"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Ø Episode-Länge (gleitend)</div>
+      <canvas class="chart" id="chart-eplen" height="120"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Agents — BFS pro Step (live)</div>
+      <canvas class="chart" id="chart-agents" height="140"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Global Exploration Heatmap — alle Agents (relativ zu Start)</div>
+      <div style="font-size:10px;color:#8b949e;margin-bottom:4px;">blau = selten · grün = mittel · rot = oft besucht</div>
+      <canvas id="heatmap-cv" style="display:block;width:100%;image-rendering:pixelated;border-radius:3px;" height="280"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Konstanten ────────────────────────────────────────────────────────
+const COLORS = ['#4fc3f7','#81c784','#ffb74d','#f06292','#ce93d8','#80cbc4','#fff176','#ef9a9a',
+                '#4dd0e1','#aed581','#ffcc02','#f48fb1','#b39ddb','#80deea','#e6ee9c','#ffab91'];
+const MAP_SIZE = 160;   // canvas px
+const SCALE    = 3;     // px per tile
+const HALF     = MAP_SIZE / 2;
+const TRAIL    = 120;
+
+// ── State ────────────────────────────────────────────────────────────
+const agState  = {};    // id → { canvas, ctx, trail, explored Set, episode, color, start_x, start_y }
+
+// History für Charts (in JS akkumuliert)
+const hist = {
+  sr:     [],   // [{ts, sr}] — von Eval-Callbacks
+  bfs:    [],   // [{ts, val}] — Ø BFS aller Agents
+  eplen:  [],   // [{ts, val}] — Ø step pro Agent (aus BFS≈0 Episoden)
+  agBfs:  {},   // id → [val] — pro Agent (letzten 200 Werte)
+};
+let lastTs = 0;
+
+// ── Agent Map ────────────────────────────────────────────────────────
+function getOrCreate(id) {
+  if (agState[id]) return agState[id];
+  const color = COLORS[id % COLORS.length];
+  const card  = document.createElement('div');
+  card.className = 'acard';
+  card.innerHTML = `
+    <div class="acard-head">
+      <div class="adot" style="background:${color}"></div>
+      <span class="aname">Agent ${id}</span>
+      <span class="astats" id="as-${id}">—</span>
+    </div>
+    <canvas class="acanvas" id="ac-${id}" width="${MAP_SIZE}" height="${MAP_SIZE}"></canvas>`;
+  document.getElementById('maps-grid').appendChild(card);
+  const cv  = card.querySelector('canvas');
+  const ctx = cv.getContext('2d');
+  agState[id] = { cv, ctx, color, trail: [], explored: new Set(),
+                  episode: -1, start_x: null, start_y: null };
+  hist.agBfs[id] = [];
+  return agState[id];
+}
+
+function drawMap(id, d) {
+  const ag  = getOrCreate(id);
+
+  // Episode-Reset → explored leeren
+  if (d.episode !== ag.episode) {
+    ag.explored.clear();
+    ag.trail = [];
+    ag.episode = d.episode;
+    ag.start_x = d.start_x ?? d.x;
+    ag.start_y = d.start_y ?? d.y;
+  }
+  ag.explored.add(`${d.x},${d.y}`);
+  ag.trail.push([d.x, d.y]);
+  if (ag.trail.length > TRAIL) ag.trail.shift();
+
+  const ctx = ag.ctx;
+  const sx  = ag.start_x ?? d.x;
+  const sy  = ag.start_y ?? d.y;
+
+  // Koordinate → Canvas-Pixel (relativ zum Start)
+  const toP = (wx, wy) => [
+    HALF + (wx - sx) * SCALE,
+    HALF + (wy - sy) * SCALE,
+  ];
+
+  // Hintergrund
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+
+  // Grid-Linien (leicht)
+  ctx.strokeStyle = '#161b22';
+  ctx.lineWidth = 0.5;
+  for (let g = 0; g < MAP_SIZE; g += SCALE * 5) {
+    ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, MAP_SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(MAP_SIZE, g); ctx.stroke();
+  }
+
+  // Explored Tiles
+  ctx.fillStyle = '#1f2937';
+  for (const key of ag.explored) {
+    const [ex, ey] = key.split(',').map(Number);
+    const [px, py] = toP(ex, ey);
+    if (px >= 0 && px < MAP_SIZE && py >= 0 && py < MAP_SIZE)
+      ctx.fillRect(px - SCALE/2, py - SCALE/2, SCALE, SCALE);
+  }
+
+  // Trail (verblassend)
+  for (let i = 0; i < ag.trail.length - 1; i++) {
+    const alpha = 0.1 + 0.7 * (i / ag.trail.length);
+    const hex   = Math.round(alpha * 255).toString(16).padStart(2, '0');
+    ctx.fillStyle = ag.color + hex;
+    const [px, py] = toP(ag.trail[i][0], ag.trail[i][1]);
+    if (px >= 0 && px < MAP_SIZE && py >= 0 && py < MAP_SIZE)
+      ctx.fillRect(px - 1, py - 1, 3, 3);
+  }
+
+  // Start-Marker (grüner Kreis)
+  ctx.beginPath();
+  ctx.arc(HALF, HALF, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#3fb950';
+  ctx.fill();
+  ctx.strokeStyle = '#0d1117'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Exit-Pfeil (wenn exit_dx/exit_dy bekannt)
+  if (d.exit_dx !== undefined && d.exit_dx !== 0) {
+    const [cx, cy] = toP(d.x, d.y);
+    const ex = d.exit_dx, ey = d.exit_dy;
+    const len = Math.sqrt(ex*ex + ey*ey);
+    const nx  = ex / len, ny = ey / len;
+    const arrowLen = 18;
+    const ax = cx + nx * arrowLen, ay = cy + ny * arrowLen;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ax, ay);
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Pfeilspitze
+    const ang = Math.atan2(ny, nx);
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 5 * Math.cos(ang - 0.4), ay - 5 * Math.sin(ang - 0.4));
+    ctx.lineTo(ax - 5 * Math.cos(ang + 0.4), ay - 5 * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fillStyle = '#ffd700'; ctx.fill();
+  }
+
+  // Agent-Dot (aktuell)
+  const [cx, cy] = toP(d.x, d.y);
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = ag.color;
+  ctx.fill();
+  ctx.strokeStyle = '#0d1117'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Stats-Text
+  const el = document.getElementById(`as-${id}`);
+  if (el) el.textContent = `bfs=${d.bfs}  ep=${d.episode}`;
+}
+
+// ── Charts ────────────────────────────────────────────────────────────
+function drawLineChart(canvasId, data, color, yLabel, yMin, yMax, multiLine) {
+  const cv  = document.getElementById(canvasId);
+  if (!cv) return;
+  cv.width  = cv.offsetWidth * devicePixelRatio || 400;
+  const ctx = cv.getContext('2d');
+  const W   = cv.width, H = cv.height;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const pad = { l: 36, r: 10, t: 8, b: 20 };
+  const gW  = W - pad.l - pad.r;
+  const gH  = H - pad.t - pad.b;
+
+  // Axes
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t + gH); ctx.lineTo(pad.l + gW, pad.t + gH); ctx.stroke();
+
+  if (!multiLine) {
+    if (!data || data.length < 2) return;
+    const xs = data.map(p => p.ts ?? p[0]);
+    const ys = data.map(p => p.val ?? p.sr ?? p[1]);
+    const minX = xs[0], maxX = xs[xs.length - 1];
+    const minY = yMin ?? (Math.min(...ys) * 0.9);
+    const maxY = yMax ?? (Math.max(...ys) * 1.1 || 1);
+
+    const px = x => pad.l + (x - minX) / (maxX - minX || 1) * gW;
+    const py = y => pad.t + gH - (y - minY) / (maxY - minY || 1) * gH;
+
+    // Y-labels
+    ctx.fillStyle = '#8b949e'; ctx.font = `${9 * devicePixelRatio}px Courier New`; ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = minY + (maxY - minY) * i / 4;
+      ctx.fillText(v.toFixed(1), pad.l - 3, py(v) + 3);
+      ctx.strokeStyle = '#21262d'; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(pad.l, py(v)); ctx.lineTo(pad.l + gW, py(v)); ctx.stroke();
+    }
+
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.5 * devicePixelRatio;
+    xs.forEach((x, i) => {
+      i === 0 ? ctx.moveTo(px(x), py(ys[i])) : ctx.lineTo(px(x), py(ys[i]));
+    });
+    ctx.stroke();
+
+    // Letzte Value
+    if (ys.length) {
+      ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.font = `bold ${10 * devicePixelRatio}px Courier New`;
+      ctx.fillText(ys[ys.length-1].toFixed(1), pad.l + gW + 2, py(ys[ys.length-1]) + 4);
+    }
+  } else {
+    // Multi-line: data = {id → [val, ...]}
+    let allVals = [];
+    for (const vals of Object.values(data)) allVals = allVals.concat(vals);
+    if (!allVals.length) return;
+    const minY = yMin ?? 0;
+    const maxY = yMax ?? (Math.max(...allVals) * 1.1 || 10);
+    const py   = y => pad.t + gH - (y - minY) / (maxY - minY || 1) * gH;
+
+    ctx.fillStyle = '#8b949e'; ctx.font = `${9 * devicePixelRatio}px Courier New`; ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = minY + (maxY - minY) * i / 4;
+      ctx.fillText(v.toFixed(0), pad.l - 3, py(v) + 3);
+      ctx.strokeStyle = '#21262d'; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(pad.l, py(v)); ctx.lineTo(pad.l + gW, py(v)); ctx.stroke();
+    }
+
+    for (const [id, vals] of Object.entries(data)) {
+      if (vals.length < 2) continue;
+      const color = COLORS[Number(id) % COLORS.length];
+      ctx.beginPath(); ctx.strokeStyle = color + 'cc'; ctx.lineWidth = 1.2 * devicePixelRatio;
+      vals.forEach((v, i) => {
+        const x = pad.l + (i / (vals.length - 1)) * gW;
+        i === 0 ? ctx.moveTo(x, py(v)) : ctx.lineTo(x, py(v));
+      });
+      ctx.stroke();
+    }
+  }
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────
+let _hmapData = null;   // letzter Heatmap-Stand (wird nur jede Sekunde geliefert)
+
+function heatColor(t) {
+  // blau → cyan → grün → gelb → rot (identisch zu PokéRL / matplotlib 'jet')
+  t = Math.max(0, Math.min(1, t));
+  let r, g, b;
+  if (t < 0.125) { r=0;   g=0;   b=Math.round(128+t/0.125*127); }
+  else if (t < 0.375) { r=0;   g=Math.round((t-0.125)/0.25*255); b=255; }
+  else if (t < 0.625) { r=Math.round((t-0.375)/0.25*255); g=255; b=Math.round(255-(t-0.375)/0.25*255); }
+  else if (t < 0.875) { r=255; g=Math.round(255-(t-0.625)/0.25*255); b=0; }
+  else               { r=Math.round(255-(t-0.875)/0.125*128); g=0; b=0; }
+  return [r, g, b];
+}
+
+function drawHeatmap(data) {
+  if (!data || !data.cells || !data.cells.length) return;
+  _hmapData = data;
+
+  const cv  = document.getElementById('heatmap-cv');
+  if (!cv) return;
+  const R   = data.range;       // z.B. 70
+  const SZ  = R * 2 + 1;        // 141
+  cv.width  = SZ; cv.height = SZ;
+
+  // Pixelbuffer aufbauen
+  const imgData = cv.getContext('2d').createImageData(SZ, SZ);
+  const px      = imgData.data;
+
+  // Hintergrund schwarz
+  for (let i = 0; i < px.length; i += 4) { px[i]=13; px[i+1]=17; px[i+2]=23; px[i+3]=255; }
+
+  const maxLog = Math.log1p(data.max_count);
+  for (const [rx, ry, cnt] of data.cells) {
+    const cx = rx + R;
+    const cy = ry + R;
+    if (cx < 0 || cx >= SZ || cy < 0 || cy >= SZ) continue;
+    const t   = Math.log1p(cnt) / maxLog;
+    const [r, g, b] = heatColor(t);
+    const idx = (cy * SZ + cx) * 4;
+    px[idx]   = r; px[idx+1] = g; px[idx+2] = b; px[idx+3] = 255;
+  }
+
+  // Startpunkt markieren (weiß)
+  const ci = (R * SZ + R) * 4;
+  px[ci]=255; px[ci+1]=255; px[ci+2]=255; px[ci+3]=255;
+
+  cv.getContext('2d').putImageData(imgData, 0, 0);
+}
+
+// ── WS Message Handler ────────────────────────────────────────────────
+function onMessage(msg) {
+  const d = JSON.parse(msg.data);
+  const meta = d.meta || {};
+  const ts   = meta.timesteps || 0;
+
+  // Header
+  if (meta.phase)     document.getElementById('m-phase').textContent = meta.phase;
+  if (ts)             document.getElementById('m-ts').textContent    = ts.toLocaleString();
+  if (meta.best_sr !== undefined) {
+    const srPct = (meta.best_sr * 100).toFixed(1) + '%';
+    document.getElementById('m-sr').textContent = srPct;
+    // SR-History: nur wenn sich geändert hat
+    const last = hist.sr[hist.sr.length - 1];
+    if (!last || last.sr !== meta.best_sr) hist.sr.push({ ts, sr: meta.best_sr * 100 });
+  }
+  if (meta.swarm_pool !== undefined)
+    document.getElementById('m-pool').textContent = meta.swarm_pool;
+
+  const agents = d.agents || [];
+  document.getElementById('m-agents').textContent = agents.length;
+
+  // Agent maps
+  let totalBfs = 0, totalStep = 0, count = 0;
+  for (const ag of agents) {
+    drawMap(ag.id, ag);
+    totalBfs  += ag.bfs;
+    totalStep += ag.step;
+    count++;
+    // Per-Agent BFS History
+    if (!hist.agBfs[ag.id]) hist.agBfs[ag.id] = [];
+    hist.agBfs[ag.id].push(ag.bfs);
+    if (hist.agBfs[ag.id].length > 200) hist.agBfs[ag.id].shift();
+  }
+
+  if (count > 0 && ts !== lastTs) {
+    hist.bfs.push({ ts, val: totalBfs / count });
+    hist.eplen.push({ ts, val: totalStep / count });
+    if (hist.bfs.length   > 500) hist.bfs.shift();
+    if (hist.eplen.length > 500) hist.eplen.shift();
+    lastTs = ts;
+  }
+
+  // Heatmap (kommt nur jede Sekunde)
+  if (d.heatmap) drawHeatmap(d.heatmap);
+
+  // Charts neu zeichnen
+  drawLineChart('chart-sr',     hist.sr,    '#3fb950', 'SR%',  0, 100);
+  drawLineChart('chart-bfs',    hist.bfs,   '#4fc3f7', 'BFS',  0, null);
+  drawLineChart('chart-eplen',  hist.eplen, '#ffb74d', 'Len',  0, null);
+  drawLineChart('chart-agents', hist.agBfs, '#fff',    'BFS',  0, null, true);
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────
+function connect() {
+  const ws = new WebSocket(`ws://${location.host}/ws`);
+  const badge = document.getElementById('ws-badge');
+  ws.onopen    = () => { badge.textContent = '● online'; badge.className = 'on'; };
+  ws.onmessage = onMessage;
+  ws.onclose   = () => { badge.textContent = '● offline — retry...'; badge.className = 'off'; setTimeout(connect, 2000); };
+  ws.onerror   = () => ws.close();
+}
+connect();
+</script>
+</body>
+</html>
