@@ -1,5 +1,6 @@
 # Changelog
 
+
 ---
 
 ## v2026-06-11 — Verbesserungen Stoneforge RL (LSTM-Curriculum)
@@ -504,6 +505,24 @@ Da die Gewichte eines gespeicherten neuronalen Netzes exakt der Eingabegröße e
 **Fazit:** `ppo_phase5` ist wieder lauffähig. **Aktuell bestes Modell bleibt `ppo_phase4`** — dieses Modell soll für die Projektarbeit als primäres Ergebnis dokumentiert werden.
 
 ---
+## v2026-06-01
+
+#### Änderung 11 — Biome-Strukturen pro Chunk eingeführt
+
+**Datei:** `src/core/world.cpp`, `src/client/render_engine.cpp`, `src/core/object.cpp`, `include/stoneforge/types.hpp`, `src/client/command_registry.cpp`
+
+**Problem:** Biome unterschieden sich bisher vor allem über Basis-Tiles. Landmarken oder biomeabhängige Strukturen fehlten, dadurch wirkten Chunks trotz verschiedener Biome optisch sehr ähnlich.
+
+**Lösung:** Pro Chunk wird jetzt deterministisch mit `0.1` Chance eine kleine biomeabhängige Struktur platziert. Jede Struktur bekommt eine eigene Tile-/Sprite-Palette und bleibt kleiner als ein Chunk. Beispiele: Wüste = Pyramide aus Sandstein, Wald = Holzhütte, Gebirge = steinerner Turm.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| Struktur-Spawnchance | keine | `0.1` pro Chunk | Seltene Landmarken ohne Welt zu überfrachten |
+| Struktur-Tiles | keine | 7 biomeeigene Tile-Typen | Eigene Blocktexturen pro Biom |
+| Atlas-Sprites | 22 | 36 | Zusätzliche Strukturtexturen mit A/B-Varianten |
+
+**Ergebnis:** Noch nicht neu gemessen. Die Änderung betrifft Weltgenerierung und Rendering, nicht die RL-Trainingslogik.
+
 
 ## v2026-05-18
 

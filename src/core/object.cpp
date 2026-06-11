@@ -182,6 +182,27 @@ public:
     }
 };
 
+class StructureObject final : public WorldObject {
+public:
+    StructureObject(TileType tileType, const char* id) : tileType_(tileType), id_(id) {}
+
+    TileType tileType() const override {
+        return tileType_;
+    }
+
+    std::string_view id() const override {
+        return id_;
+    }
+
+    bool blocksLineOfSight() const override {
+        return true;
+    }
+
+private:
+    TileType tileType_;
+    const char* id_;
+};
+
 }  // namespace
 
 const WorldObject& objectForTile(TileType tile) {
@@ -193,6 +214,13 @@ const WorldObject& objectForTile(TileType tile) {
     static WorkbenchObject workbench;
     static WoodWallObject woodWall;
     static WoodLogObject woodLog;
+    static StructureObject grasslandStructure{TileType::StructureGrassland, "stoneforge:structure_grassland"};
+    static StructureObject forestStructure{TileType::StructureForest, "stoneforge:structure_forest"};
+    static StructureObject desertStructure{TileType::StructureDesert, "stoneforge:structure_desert"};
+    static StructureObject mountainStructure{TileType::StructureMountain, "stoneforge:structure_mountain"};
+    static StructureObject steppeStructure{TileType::StructureSteppe, "stoneforge:structure_steppe"};
+    static StructureObject tundraStructure{TileType::StructureTundra, "stoneforge:structure_tundra"};
+    static StructureObject hellStructure{TileType::StructureHelle, "stoneforge:structure_helle"};
 
     switch(tile) {
         case TileType::Empty:
@@ -211,6 +239,20 @@ const WorldObject& objectForTile(TileType tile) {
             return woodWall;
         case TileType::WoodLog:
             return woodLog;
+        case TileType::StructureGrassland:
+            return grasslandStructure;
+        case TileType::StructureForest:
+            return forestStructure;
+        case TileType::StructureDesert:
+            return desertStructure;
+        case TileType::StructureMountain:
+            return mountainStructure;
+        case TileType::StructureSteppe:
+            return steppeStructure;
+        case TileType::StructureTundra:
+            return tundraStructure;
+        case TileType::StructureHelle:
+            return hellStructure;
         default:
             return empty;
     }

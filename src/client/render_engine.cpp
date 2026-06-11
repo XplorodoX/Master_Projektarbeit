@@ -76,7 +76,21 @@ enum class SpriteId : int {
     WoodWall = 18,
     WoodLog = 19,
     SandA = 20,
-    SandB = 21
+    SandB = 21,
+    StructureGrasslandA = 22,
+    StructureGrasslandB = 23,
+    StructureForestA = 24,
+    StructureForestB = 25,
+    StructureDesertA = 26,
+    StructureDesertB = 27,
+    StructureMountainA = 28,
+    StructureMountainB = 29,
+    StructureSteppeA = 30,
+    StructureSteppeB = 31,
+    StructureTundraA = 32,
+    StructureTundraB = 33,
+    StructureHelleA = 34,
+    StructureHelleB = 35
 };
 
 enum class ScreenState {
@@ -144,7 +158,7 @@ std::vector<RuntimeBiome> buildRuntimeBiomes() {
 }
 
 Texture2D buildSpriteAtlas() {
-    Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 6, BLANK);
+    Image atlas = GenImageColor(kAtlasCell * 4, kAtlasCell * 9, BLANK);
 
     auto paintFloor = [&](int sx, int sy, Color baseA, Color speckA, Color speckB) {
         fillRect(atlas, sx, sy, kAtlasCell, kAtlasCell, baseA);
@@ -362,12 +376,82 @@ Texture2D buildSpriteAtlas() {
         }
     };
 
+    auto paintStructure = [&](int sx, int sy, Color base, Color highlight, Color shadow, Color seam, int salt) {
+        fillRect(atlas, sx, sy, kAtlasCell, kAtlasCell, base);
+        for(int x = 0; x < kAtlasCell; ++x) {
+            putPixel(atlas, sx + x, sy, highlight);
+            putPixel(atlas, sx + x, sy + kAtlasCell - 1, shadow);
+        }
+        for(int y = 0; y < kAtlasCell; ++y) {
+            putPixel(atlas, sx, sy + y, highlight);
+            putPixel(atlas, sx + kAtlasCell - 1, sy + y, shadow);
+        }
+
+        for(int y = 2; y < kAtlasCell - 2; y += 4) {
+            for(int x = 1; x < kAtlasCell - 1; ++x) {
+                if((x + y + salt) % 5 == 0) {
+                    putPixel(atlas, sx + x, sy + y, seam);
+                }
+            }
+        }
+
+        for(int i = 0; i < 12; ++i) {
+            const int px = sx + 1 + static_cast<int>(hash01(salt, i, 7101) * 13.0F);
+            const int py = sy + 1 + static_cast<int>(hash01(i, salt, 7103) * 13.0F);
+            if(hash01(px, py, 7105) > 0.72F) {
+                putPixel(atlas, px, py, Fade(highlight, 0.75F));
+            }
+            if(hash01(px, py, 7107) < 0.24F) {
+                putPixel(atlas, px, py, Fade(shadow, 0.75F));
+            }
+        }
+    };
+
     paintSand(0, 5 * kAtlasCell, Color{214, 196, 142, 255}, Color{233, 220, 173, 255}, Color{196, 175, 118, 255});
     paintSand(kAtlasCell, 5 * kAtlasCell, Color{206, 187, 130, 255}, Color{242, 232, 189, 255}, Color{182, 160, 103, 255});
+    paintStructure(2 * kAtlasCell, 5 * kAtlasCell, Color{154, 149, 134, 255}, Color{196, 191, 174, 255}, Color{105, 101, 92, 255}, Color{128, 123, 111, 255}, 1);
+    paintStructure(3 * kAtlasCell, 5 * kAtlasCell, Color{166, 160, 144, 255}, Color{208, 201, 184, 255}, Color{114, 107, 98, 255}, Color{136, 129, 117, 255}, 2);
+
+    paintStructure(0, 6 * kAtlasCell, Color{110, 90, 64, 255}, Color{153, 128, 93, 255}, Color{76, 60, 44, 255}, Color{126, 98, 69, 255}, 3);
+    paintStructure(kAtlasCell, 6 * kAtlasCell, Color{126, 105, 73, 255}, Color{170, 144, 105, 255}, Color{86, 70, 49, 255}, Color{144, 116, 82, 255}, 4);
+    paintStructure(2 * kAtlasCell, 6 * kAtlasCell, Color{98, 118, 86, 255}, Color{142, 163, 122, 255}, Color{63, 82, 55, 255}, Color{117, 139, 98, 255}, 5);
+    paintStructure(3 * kAtlasCell, 6 * kAtlasCell, Color{104, 126, 93, 255}, Color{148, 171, 132, 255}, Color{68, 89, 60, 255}, Color{124, 147, 104, 255}, 6);
+
+    paintStructure(0, 7 * kAtlasCell, Color{166, 164, 149, 255}, Color{207, 204, 190, 255}, Color{111, 108, 99, 255}, Color{137, 134, 122, 255}, 7);
+    paintStructure(kAtlasCell, 7 * kAtlasCell, Color{178, 176, 160, 255}, Color{220, 218, 202, 255}, Color{120, 118, 108, 255}, Color{148, 145, 133, 255}, 8);
+    paintStructure(2 * kAtlasCell, 7 * kAtlasCell, Color{210, 196, 134, 255}, Color{239, 226, 165, 255}, Color{148, 133, 84, 255}, Color{191, 176, 118, 255}, 9);
+    paintStructure(3 * kAtlasCell, 7 * kAtlasCell, Color{220, 206, 147, 255}, Color{245, 232, 175, 255}, Color{154, 140, 91, 255}, Color{198, 182, 127, 255}, 10);
+
+    paintStructure(0, 8 * kAtlasCell, Color{97, 103, 118, 255}, Color{140, 146, 162, 255}, Color{65, 70, 82, 255}, Color{111, 116, 129, 255}, 11);
+    paintStructure(kAtlasCell, 8 * kAtlasCell, Color{108, 114, 129, 255}, Color{151, 157, 174, 255}, Color{72, 77, 90, 255}, Color{122, 128, 140, 255}, 12);
+    paintStructure(2 * kAtlasCell, 8 * kAtlasCell, Color{70, 74, 92, 255}, Color{114, 118, 136, 255}, Color{44, 47, 58, 255}, Color{88, 92, 108, 255}, 13);
+    paintStructure(3 * kAtlasCell, 8 * kAtlasCell, Color{82, 86, 102, 255}, Color{126, 130, 148, 255}, Color{51, 54, 66, 255}, Color{98, 102, 118, 255}, 14);
     Texture2D atlasTexture = LoadTextureFromImage(atlas);
     UnloadImage(atlas);
     SetTextureFilter(atlasTexture, TEXTURE_FILTER_POINT);
     return atlasTexture;
+}
+
+SpriteId structureVariant(stoneforge::TileType type, int wx, int wy) {
+    const bool alt = hash01(wx, wy, 6111) > 0.5F;
+    switch(type) {
+        case stoneforge::TileType::StructureGrassland:
+            return alt ? SpriteId::StructureGrasslandB : SpriteId::StructureGrasslandA;
+        case stoneforge::TileType::StructureForest:
+            return alt ? SpriteId::StructureForestB : SpriteId::StructureForestA;
+        case stoneforge::TileType::StructureDesert:
+            return alt ? SpriteId::StructureDesertB : SpriteId::StructureDesertA;
+        case stoneforge::TileType::StructureMountain:
+            return alt ? SpriteId::StructureMountainB : SpriteId::StructureMountainA;
+        case stoneforge::TileType::StructureSteppe:
+            return alt ? SpriteId::StructureSteppeB : SpriteId::StructureSteppeA;
+        case stoneforge::TileType::StructureTundra:
+            return alt ? SpriteId::StructureTundraB : SpriteId::StructureTundraA;
+        case stoneforge::TileType::StructureHelle:
+            return alt ? SpriteId::StructureHelleB : SpriteId::StructureHelleA;
+        default:
+            return SpriteId::StructureGrasslandA;
+    }
 }
 
 SpriteId floorVariant(const std::vector<RuntimeBiome>& biomes, int biome, int wx, int wy) {
@@ -408,7 +492,11 @@ SpriteId sandVariant(int wx, int wy) {
 bool isSandBlockedTile(stoneforge::TileType type) {
     return type == stoneforge::TileType::Wall || type == stoneforge::TileType::Resource ||
            type == stoneforge::TileType::Tree || type == stoneforge::TileType::Workbench ||
-           type == stoneforge::TileType::WoodWall || type == stoneforge::TileType::WoodLog;
+           type == stoneforge::TileType::WoodWall || type == stoneforge::TileType::WoodLog ||
+           type == stoneforge::TileType::StructureGrassland || type == stoneforge::TileType::StructureForest ||
+           type == stoneforge::TileType::StructureDesert || type == stoneforge::TileType::StructureMountain ||
+           type == stoneforge::TileType::StructureSteppe || type == stoneforge::TileType::StructureTundra ||
+           type == stoneforge::TileType::StructureHelle;
 }
 
 void drawSpriteTile(const Texture2D& atlas, SpriteId id, int px, int py, int size, Color tint) {
@@ -839,6 +927,14 @@ void drawStyledTile(
         return;
     }
 
+    if(type == stoneforge::TileType::StructureGrassland || type == stoneforge::TileType::StructureForest ||
+       type == stoneforge::TileType::StructureDesert || type == stoneforge::TileType::StructureMountain ||
+       type == stoneforge::TileType::StructureSteppe || type == stoneforge::TileType::StructureTundra ||
+       type == stoneforge::TileType::StructureHelle) {
+        drawSpriteTile(atlas, structureVariant(type, wx, wy), px, py, tileSize, WHITE);
+        return;
+    }
+
     drawSpriteTile(atlas, SpriteId::Exit, px, py, tileSize, WHITE);
     const float pulse = 0.5F + 0.5F * std::sin(t * 3.0F + static_cast<float>((wx + wy) % 9));
     const int cx = px + tileSize / 2;
@@ -855,7 +951,11 @@ void drawStyledTile(
 bool isSolidTileForDetail(stoneforge::TileType type) {
     // Trees are visually drawn above the floor; treat them as non-solid for detail edges
     return type == stoneforge::TileType::Wall || type == stoneforge::TileType::Resource ||
-           type == stoneforge::TileType::Workbench || type == stoneforge::TileType::WoodWall || type == stoneforge::TileType::WoodLog;
+           type == stoneforge::TileType::Workbench || type == stoneforge::TileType::WoodWall || type == stoneforge::TileType::WoodLog ||
+           type == stoneforge::TileType::StructureGrassland || type == stoneforge::TileType::StructureForest ||
+           type == stoneforge::TileType::StructureDesert || type == stoneforge::TileType::StructureMountain ||
+           type == stoneforge::TileType::StructureSteppe || type == stoneforge::TileType::StructureTundra ||
+           type == stoneforge::TileType::StructureHelle;
 }
 
 void drawTileDetailPass(

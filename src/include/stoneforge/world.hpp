@@ -46,6 +46,7 @@ private:
     bool lakeMaskAt(int worldX, int worldY) const;
     Vec2i chooseExitPoint(const WorldGenConfig& cfg) const;
     TileType sampleBaseTile(int worldX, int worldY, const WorldGenConfig& cfg) const;
+    void placeBiomeStructure(int cx, int cy, Chunk& chunk) const;
     void runCellularSmoothingStage(int cx, int cy, Chunk& chunk, const WorldGenConfig& cfg) const;
 
     bool validateReachabilityWindow(int minX, int minY, int maxX, int maxY) const;
