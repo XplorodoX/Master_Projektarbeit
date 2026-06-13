@@ -52,7 +52,7 @@ EXPERIMENTS = {
         "visited_mask": False,
     },
     "C_v5_ppo_lstm": {
-        "path":  "models/ppo_lstm_curriculum_v5/best_model.zip",
+        "path":  "models/ppo_lstm_curriculum_v5_s0/best_model.zip",
         "algo":  "rppo",
         "label": "C v5 — LSTM, last action/reward, batch=256",
         "note":  "236-Feature-Env, forceGuaranteedPath=false, Curriculum",
