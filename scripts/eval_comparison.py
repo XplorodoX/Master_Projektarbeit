@@ -60,13 +60,22 @@ EXPERIMENTS = {
         "visited_mask": False,
         "use_last_action_reward": True,
     },
+    "C_v10_ppo_lstm": {
+        "path":  "models/ppo_lstm_curriculum_v10_reproduction/best_model.zip",
+        "algo":  "rppo",
+        "label": "C v10 — LSTM, reproduction (v2 params)",
+        "note":  "231-Feature-Env, forceGuaranteedPath=false, Curriculum",
+        "skip":  False,
+        "visited_mask": False,
+    },
     "D_ppo_lstm_cnn": {
-        "path":  "models/ppo_lstm_cnn/best_model.zip",
+        "path":  "models/ppo_lstm_cnn/best_model",
         "algo":  "rppo",
         "label": "D — LSTM+CNN, kein BFS",
-        "note":  "456-Feature-Env (2×15×15 CNN + Visited Mask), Curriculum",
+        "note":  "461-Feature-Env (2×15×15 CNN + Visited Mask + Action Buffer), PLR",
         "skip":  False,
         "visited_mask": True,
+        "use_last_action_reward": True,
     },
 }
 

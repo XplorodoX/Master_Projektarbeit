@@ -132,6 +132,9 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
 
         if use_visited_mask:
             self._n_obs = self._gs * 2 + 6                        # 456
+            if use_last_action_reward:
+                self._n_obs += self.action_buffer_len * _N_ACTIONS # + action buffer
+                self._n_obs += 1                                   # + last_reward
         else:
             self._n_obs = n_base + 1                               # 231 (+ step_frac)
             if use_visit_count:
@@ -195,15 +198,27 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
                 for e in extras
             ])
 
-        # CNN-Variante: [grid(225) | visited(225) | extras(6)]
+        # CNN-Variante: [grid(225) | visited(225) | extras]
         px, py   = self.core.player_pos()
         visited  = self._visited_mask_array(px, py)
-        extras   = np.array([
+        extras_list = [
             arr[gs], arr[gs+1], arr[gs+2],   # hp, energy, inventory
             arr[gs+3], arr[gs+4],             # exitDx, exitDy
             step_frac,
-        ], dtype=np.float32)
-        return np.concatenate([arr[:gs], visited, extras])   # 456 dims
+        ]
+        if self.use_last_action_reward:
+            for act in self._action_buffer:
+                oh = np.zeros(_N_ACTIONS, dtype=np.float32)
+                if act is not None and 0 <= act < _N_ACTIONS:
+                    oh[act] = 1.0
+                extras_list.append(oh)
+            extras_list.append(np.float32(np.clip(self._last_reward, -1.0, 1.0)))
+
+        extras = np.concatenate([
+            np.atleast_1d(np.float32(e)) if np.isscalar(e) else e
+            for e in extras_list
+        ])
+        return np.concatenate([arr[:gs], visited, extras])
 
     # ------------------------------------------------------------------
 

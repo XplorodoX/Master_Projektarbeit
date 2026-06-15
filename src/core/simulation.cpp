@@ -1476,15 +1476,15 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
-    // Wand-Penalty entfernt: Step-Penalty (-0.01) + kein PBRS-Bonus reicht als Signal.
-    // Eskalierender Penalty (-0.05 / -0.25) machte den Agenten übervorsichtig —
-    // Erkunden durch enge Korridore wurde stärker bestraft als der PBRS-Bonus (+0.02/Tile).
-    (void)moveBlocked;
-    (void)consecutiveBlocked;
+    // Eskalierender Wand-Penalty: erst block -0.05, ab 2. konsek. Block -0.25.
+    // Verhindert dauerhaftes Laufen gegen Wände (z.B. exitDy-Bias gegen Nordwand).
+    if(moveBlocked) {
+        reward -= consecutiveBlocked >= 2 ? 0.25F : 0.05F;
+    }
 
-    // 2-Schritt-Loop-Penalty reduziert: -0.15 → -0.05 (Erkennung bleibt, Strafe moderater).
+    // 2-Schritt-Loop-Penalty: A→B→A→B erkennen und direkt bestrafen.
     if(positionLoop) {
-        reward -= 0.05F;
+        reward -= 0.15F;
     }
 
     // Stagnation-Penalty entfernt: bestraft legitime Umgehungsmanöver ohne BFS in der Obs.

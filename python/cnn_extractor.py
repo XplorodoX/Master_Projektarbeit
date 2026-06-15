@@ -40,8 +40,8 @@ class StoneforgeGridCNN(BaseFeaturesExtractor):
           → ReLU + Flatten
           → Linear(1600 → cnn_out_features)
           → ReLU
-        concat mit Extras (6 dims)
-        → features_dim = cnn_out_features + N_EXTRAS
+        concat mit Extras (dynamische Dimension)
+        → features_dim = cnn_out_features + n_extras
     """
 
     def __init__(
@@ -49,10 +49,12 @@ class StoneforgeGridCNN(BaseFeaturesExtractor):
         observation_space: spaces.Box,
         cnn_out_features: int = 128,
     ) -> None:
-        features_dim = cnn_out_features + N_EXTRAS
+        n_extras = observation_space.shape[0] - SPATIAL_FLAT
+        features_dim = cnn_out_features + n_extras
         super().__init__(observation_space, features_dim=features_dim)
 
         self.cnn_out_features = cnn_out_features
+        self.n_extras = n_extras
 
         self.cnn = nn.Sequential(
             nn.Conv2d(N_CHANNELS, 16, kernel_size=3, padding=1),
@@ -76,12 +78,13 @@ class StoneforgeGridCNN(BaseFeaturesExtractor):
         )
 
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
-        # obs: (batch, 456)
+        # obs: (batch, SPATIAL_FLAT + n_extras)
         grid_flat = obs[:, :SPATIAL_FLAT]           # (batch, 450)
-        extras    = obs[:, SPATIAL_FLAT:]           # (batch, 6)
+        extras    = obs[:, SPATIAL_FLAT:]           # (batch, n_extras)
 
         # Reshape → (batch, 2, 15, 15)
         grid_2d   = grid_flat.view(-1, N_CHANNELS, GRID_SIDE, GRID_SIDE)
 
         cnn_out   = self.cnn_proj(self.cnn(grid_2d))  # (batch, cnn_out_features)
         return torch.cat([cnn_out, extras], dim=1)     # (batch, features_dim)
+

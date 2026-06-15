@@ -37,28 +37,24 @@ VAL_SEEDS     = list(range(6000, 6050))
 MAX_EVAL_STEPS = 4000
 
 PHASES = [
-    {"exit_min":  5, "exit_max": 12, "max_steps":   500_000, "target_sr": 0.85,
-     "eval_min":  5, "eval_max": 12,  "label": "Phase 1 (exit=5–12)"},
-    {"exit_min": 12, "exit_max": 25, "max_steps":   500_000, "target_sr": 0.70,
-     "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12–25)"},
-    {"exit_min": 25, "exit_max": 45, "max_steps": 1_000_000, "target_sr": 0.70,
-     "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25–45, eval 35–45)"},
+    {"exit_min":  5, "exit_max": 45, "max_steps": 2_000_000, "target_sr": 0.80,
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 1 (exit=5–45, eval 35–45)"},
 ]
 
 RPPO_KWARGS = dict(
     policy="MlpLstmPolicy",
-    n_steps=512,
-    batch_size=256,
-    n_epochs=4,
+    n_steps=256,
+    batch_size=8,
+    n_epochs=10,
     learning_rate=3e-4,
     gamma=0.999,
     gae_lambda=0.95,
     clip_range=0.2,
-    ent_coef=0.01,
+    ent_coef=0.05,
     vf_coef=0.5,
     policy_kwargs=dict(
         n_lstm_layers=1,
-        lstm_hidden_size=512,
+        lstm_hidden_size=256,
         shared_lstm=False,
         features_extractor_class=StoneforgeGridCNN,
         features_extractor_kwargs=dict(cnn_out_features=128),
@@ -101,10 +97,11 @@ class CurriculumEvalCallback(BaseCallback):
         return True
 
     def _run_eval(self) -> float:
-        # CNN-Variante: use_visited_mask=True
+        # CNN-Variante: use_visited_mask=True, use_last_action_reward=True
         env = StoneforgeWorldEnv(exit_min=self.eval_exit_min,
                                   exit_max=self.eval_exit_max,
-                                  use_visited_mask=True)
+                                  use_visited_mask=True,
+                                  use_last_action_reward=True)
         successes = 0
         for seed in VAL_SEEDS:
             obs, _ = env.reset(seed=seed)
@@ -189,6 +186,8 @@ def parse_args() -> argparse.Namespace:
                    help="Invertiert Swarm-Pool zu PLR-Semantik (auf knapp gescheiterte Seeds fokussieren)")
     p.add_argument("--subproc", action="store_true",
                    help="Verwende SubprocVecEnv statt DummyVecEnv")
+    p.add_argument("--timesteps",   type=int, default=None,
+                   help="Überschreibe max_steps der Phase für Smoke-Runs")
     return p.parse_args()
 
 
@@ -234,7 +233,8 @@ def main() -> None:
         def make_env(exit_min=phase["exit_min"], exit_max=phase["exit_max"],
                      _pool=swarm_pool):
             return StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max,
-                                      swarm_pool=_pool, use_visited_mask=True)
+                                      swarm_pool=_pool, use_visited_mask=True,
+                                      use_last_action_reward=True)
 
         if args.subproc:
             from stable_baselines3.common.vec_env import SubprocVecEnv
@@ -274,8 +274,9 @@ def main() -> None:
                    if k not in ("verbose", "policy", "policy_kwargs")},
             )
 
+        total_steps = args.timesteps if args.timesteps is not None else phase["max_steps"]
         model.learn(
-            total_timesteps=phase["max_steps"],
+            total_timesteps=total_steps,
             callback=callback,
             tb_log_name=tb_name,
             reset_num_timesteps=(i == 1),
@@ -289,12 +290,13 @@ def main() -> None:
                   f"added={s['total_added']}, sampled={s['total_sampled']}")
 
     import shutil
-    src = os.path.join(args.save_dir, "phase3_best_model.zip")
+    last_phase_idx = len(PHASES)
+    src = os.path.join(args.save_dir, f"phase{last_phase_idx}_best_model.zip")
     dst = os.path.join(args.save_dir, "best_model.zip")
     if os.path.exists(src):
         shutil.copy2(src, dst)
-    elif os.path.exists(os.path.join(args.save_dir, "phase3_model.zip")):
-        shutil.copy2(os.path.join(args.save_dir, "phase3_model.zip"), dst)
+    elif os.path.exists(os.path.join(args.save_dir, f"phase{last_phase_idx}_model.zip")):
+        shutil.copy2(os.path.join(args.save_dir, f"phase{last_phase_idx}_model.zip"), dst)
 
     print(f"\n{'═'*60}")
     print(f"  Ablation D abgeschlossen!")
