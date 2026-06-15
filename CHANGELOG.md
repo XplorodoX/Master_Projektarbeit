@@ -3,6 +3,233 @@
 
 ---
 
+## v2026-06-15 — Det/Stoch-Gap-Fixes (v7: visit_count + action_buffer + Phase 4)
+
+### v2026-06-15.A — Drei strukturelle Fixes gegen Det/Stoch-Gap
+**Dateien:** `python/stoneforge_env.py`, `scripts/train_curriculum.py`
+**Problem:** LSTM-Agent (86% stoch / 36% det) hat Stochastizität als Problemlöser internalisiert. Greedy-Policy steckt in Loops, weil der Agent deterministisch nicht sehen kann, dass er im Kreis läuft.
+
+#### Fix 1 — Besuchszähler in Observation (`use_visit_count=True`)
+**Datei:** `python/stoneforge_env.py`
+Neues Feature: wie oft wurde die aktuelle Tile in dieser Episode betreten? (0..10, normalisiert /10). Der LSTM sieht nun deterministisch "ich bin hier schon oft gewesen → andere Richtung". Obs: 231 → 249 dims (mit Fix 3).
+
+#### Fix 2 — Phase 4 Greedy Fine-Tune (`ent_coef=0.0001`)
+**Datei:** `scripts/train_curriculum.py`
+Neue Phase 4 nach Phase 3: 200k Steps auf exit=25–45, ent_coef=0.0001. Zwingt die Policy, deterministisch konsistent zu sein. Modellselektion in Phase 4 auf deterministischer SR (Phase-4-Best überschreibt Phase-3-Best als best_model.zip).
+
+#### Fix 3 — Aktions-Buffer 4 Schritte (`action_buffer_len=4`)
+**Datei:** `python/stoneforge_env.py`
+Statt nur letzter Aktion (4 dims): letzte 4 Aktionen als One-Hot-Matrix (16 dims). LSTM erkennt deterministisch ↑↓↑↓-Muster in der Observation.
+
+| Parameter | vorher | nachher |
+|-----------|--------|---------|
+| Obs-Dims | 236 (v5) | **249** |
+| visit_count in Obs | nein | **ja** |
+| Aktions-Buffer | 1 Schritt | **4 Schritte** |
+| Phasen | 3 | **4 (+ Greedy Fine-Tune)** |
+| ent_coef Phase 4 | — | **0.0001** |
+
+**Training gestartet:** 15.06.2026, `models/ppo_lstm_curriculum_v7_fixes`.
+**Ergebnis:** Gescheitert — siehe v2026-06-15.B.
+
+---
+
+### v2026-06-15.B — Hyperparameter-Suche n_epochs & lstm_hidden_size
+
+**Problem:** 249-dim Observation (größer als bisherige 236) destabilisiert Value-Funktion.
+`explained_variance ≈ 0` und steigender `value_loss` über alle v7-Varianten.
+Ursache: LSTM mit 512 Hidden Units hat zu viele Gewichte relativ zur neuen Obs-Größe;
+zu wenige Gradient-Steps lassen Critic nicht konvergieren.
+
+#### Versuch v7 — lstm=512, n_epochs=4
+`models/ppo_lstm_curriculum_v7_fixes`
+- explained_variance = 0.000 konstant bis Step 280k
+- value_loss = 138 (steigend)
+- SR Phase 1: max 4% bei 280k Steps → **abgebrochen**
+
+#### Versuch v7b — lstm=512, n_epochs=10
+`models/ppo_lstm_curriculum_v7b_fixes`
+- explained_variance = 0.22 bei Step 16k → kollabiert auf 0.000 bei Step 37k
+- value_loss: 3.75 → 182 (Explosion)
+- Diagnose: zu viele Epochen für LSTM — alte Hidden-States passen nicht mehr zu neuen Gewichten → **abgebrochen**
+
+#### Versuch v7c — lstm=512, n_epochs=6
+`models/ppo_lstm_curriculum_v7c_fixes`
+- explained_variance = 0.000, value_loss = 121 (steigend)
+- SR Phase 1: max 2% bei 75k Steps → **abgebrochen**
+
+#### Versuch v7d — lstm=256, n_epochs=4
+`models/ppo_lstm_curriculum_v7d_fixes`
+- Halbierung des LSTM (512→256): weniger Gewichte, schnellere Konvergenz
+- FPS: 424, value_loss stabil ~59 bis 350k, dann 415 (Divergenz)
+- Peak SR: 12% @ 250k Steps → abgebrochen bei 413k
+
+| Variante | lstm | n_epochs | Peak SR P1 | Abbruch |
+|----------|------|----------|------------|---------|
+| v7 | 512 | 4 | 4% | ja (Value kollabiert) |
+| v7b | 512 | 10 | 2% | ja (Value explodiert) |
+| v7c | 512 | 6 | 2% | ja (Value kollabiert) |
+| v7d | 256 | 4 | 12% | ja (Divergenz @ 405k) |
+
+---
+
+### v2026-06-15.C — Diagnose: Root-Cause-Analyse + Neustart mit v2-Hyperparametern
+
+#### Hintergrund: MLP-Baseline (ppo_phase4) deterministisch evaluiert
+
+Zum Vergleich wurde ppo_phase4 (MLP, 236-dim Obs) auf Seeds 7000–7049 (exit=35–45) gemessen:
+
+| Eval-Modus | Erfolge | SR | Mittl. Schritte |
+|------------|---------|-----|-----------------|
+| Deterministisch | 0 / 50 | **0.0%** | 275 (immer Early-Stop) |
+| Stochastisch | 16 / 50 | **32.0%** | 1401 |
+
+Befund: LSTM-Curriculum (86% stoch / 36% det) ist klar überlegen. MLP-Deterministik=0% bestätigt: POMDP-Navigation ohne Gedächtnis ist nicht deterministisch lösbar.
+
+Random-Agent auf Phase-1-Seeds (6000–6049, exit=5–12): **42% SR** (stochastisch, 2652 Schritte).
+Das zeigt: die Umgebung ist lösbar; das 0%-Problem lag im Training, nicht in der Umgebung.
+
+---
+
+#### Root-Cause-Analyse durch Reverse-Engineering von v2
+
+**Problem:** Alle v7–v9 Runs zeigten `approx_kl ≈ 4.9e-07` (Policy ändert sich nicht), `explained_variance ≈ 0`, SR ≤ 12%. Gleichzeitig existierte v2 mit 86% SR.
+
+**Methode:** `RecurrentPPO.load("models/ppo_lstm_curriculum_v2/phase1_best_model.zip")` + `inspect`.
+
+Das v2-Modell hatte diese Konfiguration (gemessen, nicht geschätzt):
+
+| Parameter | v2 (86% SR) | v7d–v9 (0–12% SR) | Grund für Unterschied |
+|-----------|-------------|--------------------|-----------------------|
+| `n_steps` | **256** | 512 / 128 | Zu lang → BPTT Vanishing Gradient |
+| `batch_size` | **8** | 256 | Zu groß → nur 1 Batch/Epoche statt 2 |
+| `n_epochs` | **10** | 4 / 1 / 2 | Zu wenige Gradient-Updates |
+| `ent_coef` | **0.05** | 0.01 | 5× weniger Exploration |
+| `obs_dim` | **231** | 249 / 232 | Extra-Features störten |
+| `enable_critic_lstm` | True | fehlt / True | critic hat eigenen LSTM |
+
+**Root Causes (priorisiert):**
+1. **`ent_coef=0.01` statt 0.05** — Agent exploriert nicht → findet Exit nie → approx_kl=0
+2. **`batch_size=256` statt 8** — bei 16 Envs × 256 n_steps = 4096 Transitions: nur 1 Batch/Epoche statt 2 → halb so viele Gradient-Steps bei ohnehin falschem ent_coef
+3. **`n_steps=512` (v7d)** — BPTT über 512 LSTM-Steps → Vanishing Gradient → approx_kl≈0
+4. **Obs-Erweiterungen (249-dim)** — waren nutzlos ohne funktionierende Basis-Konfiguration
+
+**Externe Bestätigung (Online-Recherche 15.06.2026):**
+- SB3-Doku: „approx_kl ≈ 0 = PPO does not learn" → direkt in unseren Logs sichtbar
+- RecurrentPPO-Defaults: n_steps=128, batch_size=128, n_epochs=10 (wir hatten n_steps=512, batch_size=256)
+- `truncated_bptt_steps` existiert NICHT in sb3_contrib — BPTT-Länge wird allein durch `n_steps` gesteuert
+
+---
+
+#### Versuch v8 — n_steps=128, n_epochs=1, kein clip_range_vf
+`models/ppo_lstm_curriculum_v8_stable` (abgebrochen @ 150k)
+
+| Metrik | Wert | Bewertung |
+|--------|------|-----------|
+| FPS | 1807 | sehr schnell, aber nutzlos |
+| approx_kl | 6.6e-05 | 100× besser als v7d, aber immer noch fast 0 |
+| SR@25k, @50k, @75k, @100k, @125k, @150k | 0% | kein Fortschritt |
+| Ursache | ent_coef=0.01 | zu wenig Exploration für Exits |
+
+clip_range_vf=0.2 wurde als mögliche Ursache identifiziert (verhindert schnelle Value-Konvergenz bei Random-Init), dann aber als Nebenursache eingestuft.
+
+---
+
+#### Versuch v9 — n_steps=128, n_epochs=2, lr=3e-4, 232-dim
+`models/ppo_lstm_curriculum_v9_stable` (abgebrochen @ 100k)
+
+| Metrik | Wert | Bewertung |
+|--------|------|-----------|
+| FPS | 660 | schnell |
+| approx_kl | bis 3.8e-03 | echter Lernfortschritt |
+| explained_variance | bis 0.024 | minimal positiv |
+| SR@25k bis @100k | 0% | ent_coef=0.01 blockiert Exploration |
+| Debugging | Random-Agent 42% SR | Umgebung ist lösbar! |
+
+Fazit: n_steps=128 hat das BPTT-Problem gelöst (approx_kl steigt), aber ent_coef=0.01 verhindert weiterhin, dass der Agent den Exit findet.
+
+---
+
+#### Versuch v10 — v2-Hyperparameter reproduziert ← läuft
+`models/ppo_lstm_curriculum_v10_reproduction`
+
+Konfiguration:
+```python
+n_steps=256, batch_size=8, n_epochs=10, ent_coef=0.05,
+obs=231-dim, enable_critic_lstm=True, lstm_hidden_size=256
+```
+
+Trainingsmetriken Phase 1 (15.06.2026, @ ~61k Steps):
+
+| Step | approx_kl | clip_frac | explained_var | value_loss | SR (det) |
+|------|-----------|-----------|---------------|------------|----------|
+| 8k | 0.014 | 0.118 | 0.0008 | 54 | — |
+| 12k | 0.021 | 0.188 | 0.006 | 46 | — |
+| 16k | 0.019 | 0.243 | -0.0001 | 31 | — |
+| 20k | **0.027** | **0.312** | **0.231** | **1.47** | — |
+| 25k (Eval) | 0.028 | 0.301 | 0.021 | 58 | **0%** |
+| 45k | 0.037 | — | 0.067 | 102 | — |
+| 50k (Eval) | 0.039 | — | 0.101 | 67 | **0%** |
+| 61k | 0.042 | 0.356 | 0.193 | 66 | — |
+| 65k | 0.048 | — | **0.939** | — | — |
+| 74k (Eval) | 0.045 | 0.356 | 0.296 | 285 | **0%** |
+| 77k | 0.048 | — | 0.568 | — | — |
+| 80k | 0.048 | — | 0.685 | — | — |
+
+_EV=0.939 @ 65k: Value-Funktion versteht diverse Returns (Exits gefunden via Stochastik)._
+_Det SR=0% erwartungsgemäß — Policy ist mit ent=0.05 noch zu stochastisch für Argmax-Navigation._
+
+Vergleich zur Kontrollgruppe:
+
+| Variante | n_steps | batch | n_epochs | ent_coef | Peak EV | approx_kl | SR@50k |
+|----------|---------|-------|----------|----------|---------|-----------|--------|
+| v7d | 512 | 256 | 4 | 0.01 | ~0 | 4.9e-07 | 0% |
+| v8 | 128 | 256 | 1 | 0.01 | 0.003 | 6.6e-05 | 0% |
+| v9 | 128 | 128 | 2 | 0.01 | 0.024 | 3.8e-03 | 0% |
+| **v10** | **256** | **8** | **10** | **0.05** | **0.231** | **0.042** | **0%** |
+
+**Bewertung v10:**
+Trainingsmetriken (approx_kl, EV, clip_frac) sind um Größenordnungen besser als alle Vorgänger.
+EV=0.939 @ ~65k Steps zeigt: Value-Funktion hat gelernt, diverse Returns (Exits gefunden + nicht gefunden) vorherzusagen.
+entropy_loss: -1.39 → -1.04 nats (von fast-uniform zu konzentrierter Verteilung).
+
+**Warum 0% det SR bei 25k/50k/75k mit ent_coef=0.05 erwartet ist:**
+Mit ent_coef=0.05 bleibt die Policy absichtlich stochastisch (H=1.0–1.4 nats ≈ fast-uniform über 4 Aktionen).
+Der Argmax einer fast-uniformen Verteilung ist fast zufällig → deterministische SR=0% ist normal.
+Die stochastische Policy FINDET Exits (EV=0.939 beweist diverse Returns), aber Argmax nutzt das nicht.
+Deterministischer Fortschritt kommt erst mit Entropie-Reduktion:
+- Phase 3: ent_coef 0.05 → 0.01 → 0.001 (Annealing über 500k Steps)
+- Phase 4: ent_coef 0.0001 (Greedy Fine-Tune, 200k Steps)
+
+**Gesamter Trainingsplan v10:**
+- Phase 1 (exit=5–12, 500k Steps, ent=0.05): Grundlegendes Navigationsprinzip lernen
+- Phase 2 (exit=12–25, 500k Steps, ent=0.05): Generalisierung auf mittlere Distanzen
+- Phase 3 (exit=25–45, 1M Steps, Annealing 0.05→0.001): Zielverteilung + Determinisierung
+- Phase 4 (exit=25–45, 200k Steps, ent=0.0001): Greedy Fine-Tune für Det/Stoch-Gap
+
+**ETA:** ~5.5h Gesamt auf CPU @ 110 FPS (500k+500k+1M+200k Steps).
+**Status:** läuft, 15.06.2026, Phase 1 bei ~75k/500k Steps.
+
+---
+
+## v2026-06-13 — Reward-Shaping-Dilemma behoben (No Wall Penalty)
+
+### v2026-06-13.A — Wand-Penalty entfernt, Loop-Penalty reduziert
+**Datei:** `src/core/simulation.cpp` → `computeReward()`
+**Problem:** Der eskalierende Wand-Penalty (−0.05 / −0.25) in Kombination mit dem Loop-Penalty (−0.15) machte den Agenten übervorsichtig. In engen Korridoren überwiegen die Strafen (bis −0.50 für 3 Erkundungsschritte) den PBRS-Bonus (+0.02/Tile). Der Agent lernt: Stehen ist billiger als Erkunden. Erklärt teilweise den Det/Stoch-Gap (86% → 36%).
+**Lösung:** Wand-Penalty komplett entfernt (Step-Penalty −0.01 + kein PBRS-Bonus reicht als Signal). Loop-Penalty von −0.15 auf −0.05 reduziert.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `moveBlocked` (1×) | −0.05 | **0** | Step-Penalty reicht; Wand-Tasten nicht katastrophal |
+| `moveBlocked` (≥2×) | −0.25 | **0** | Eskalation machte Erkunden unwirtschaftlich |
+| `positionLoop` | −0.15 | **−0.05** | Erkennung bleibt, Strafe moderater |
+
+**Training gestartet:** 13.06.2026, `models/ppo_lstm_curriculum_v6_nwp`, 8 Envs parallel.
+**Ergebnis:** ausstehend.
+
+---
+
 ## v2026-06-11 — Verbesserungen Stoneforge RL (LSTM-Curriculum)
 
 ### v2026-06-11.A — Behebung methodischer Fehler & Lernverbesserungen

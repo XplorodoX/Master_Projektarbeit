@@ -60,19 +60,22 @@ class SwarmSeedPool:
 
 # ─── Observation-Layout ───────────────────────────────────────────────────────
 #
-#  Ohne Visited Mask (use_visited_mask=False, default):
-#    [0   : gs)    grid channel — {0,10,15,20,30}/30 → {0,0.33,0.5,0.67,1.0}
-#    [gs+0]        hp / exitDx / exitDy / step_frac …
-#    Total: 231  (gs=225, radius=7)
+#  Standard (use_visited_mask=False):
+#    [0   : gs)    grid — {0,10,15,20,30}/30
+#    [gs+0..4]     hp, energy, inventory, exitDx, exitDy
+#    [gs+5]        step_frac
+#    [gs+6]        visit_count_here (wenn use_visit_count=True, sonst weggelassen)
+#    [gs+7..]      action_buffer: action_buffer_len × 4 one-hot (wenn use_last_action_reward)
+#    [gs+7+buf]    last_reward geclippt (wenn use_last_action_reward)
+#
+#  Beispiel-Dims (use_visit_count=True, action_buffer_len=4, use_last_action_reward=True):
+#    225 + 5 + 1 + 1 + 16 + 1 = 249
 #
 #  Mit Visited Mask (use_visited_mask=True, CNN-Variante):
-#    [0   : gs)    Kanal 0 — Tile-Typen (wie oben)
-#    [gs  : 2*gs)  Kanal 1 — Visited Mask: 1.0 wenn Tile in dieser Episode betreten
+#    [0   : gs)    Kanal 0 — Tile-Typen
+#    [gs  : 2*gs)  Kanal 1 — Visited Mask
 #    [2*gs: 2*gs+6) Extras — hp, energy, inventory, exitDx, exitDy, step_frac
 #    Total: 456
-#
-#  Beide Layouts sind rückwärtskompatibel: Modelle mit 231 Dims ignorieren die
-#  Visited-Mask-Variante; CNN-Modelle erwarten 456 Dims.
 
 _N_ACTIONS = 4
 _GRID_SIDE  = 15   # observationRadius=7 → 2*7+1=15
@@ -95,6 +98,8 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         swarm_pool: SwarmSeedPool | None = None,
         use_visited_mask: bool = False,
         use_last_action_reward: bool = False,
+        use_visit_count: bool = False,
+        action_buffer_len: int = 1,
     ) -> None:
         super().__init__()
         self.core = stoneforge_sim.StoneforgeCoreEnv(base_seed)
@@ -109,10 +114,15 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         self.swarm_pool = swarm_pool
         self.use_visited_mask = use_visited_mask
         self.use_last_action_reward = use_last_action_reward
+        self.use_visit_count = use_visit_count
+        self.action_buffer_len = max(1, action_buffer_len)
         self._current_seed: int = 0
         self._visited_tiles: set[tuple[int, int]] = set()
         self._visit_counts: dict[tuple[int, int], int] = {}
         self._steps_no_reward: int = 0
+        self._action_buffer: deque[int | None] = deque(
+            [None] * self.action_buffer_len, maxlen=self.action_buffer_len
+        )
 
         n_base = self.core.observation_size()   # gs + 5 = 230
         self._gs = n_base - 5                   # 225 für radius=7
@@ -120,14 +130,15 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         self._step_count = 0
         self._max_steps = 4000
 
-        # 231 ohne Visited Mask, 456 mit (2 Grid-Kanäle + 6 Extras)
-        # Wenn use_last_action_reward aktiv, kommen 5 Features hinzu (4-dim one-hot Action + 1-dim geclippter Reward)
         if use_visited_mask:
-            self._n_obs = self._gs * 2 + 6      # 450 + 6 = 456
+            self._n_obs = self._gs * 2 + 6                        # 456
         else:
-            self._n_obs = n_base + 1            # 230 + 1 = 231
+            self._n_obs = n_base + 1                               # 231 (+ step_frac)
+            if use_visit_count:
+                self._n_obs += 1                                   # + visit_count_here
             if use_last_action_reward:
-                self._n_obs += 5                # 231 + 5 = 236
+                self._n_obs += self.action_buffer_len * _N_ACTIONS # + action buffer
+                self._n_obs += 1                                   # + last_reward
 
         self.action_space = spaces.Discrete(_N_ACTIONS)
         self.observation_space = spaces.Box(
@@ -162,14 +173,27 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         step_frac   = np.float32(self._step_count / self._max_steps)
 
         if not self.use_visited_mask:
+            extras = [step_frac]
+
+            # Fix 1: Besuchszähler aktueller Tile → LSTM sieht Loops deterministisch
+            if self.use_visit_count:
+                px, py = self.core.player_pos()
+                vc = self._visit_counts.get((px, py), 0)
+                extras.append(np.float32(min(vc, 10) / 10.0))
+
+            # Fix 3: Aktions-Buffer (letzte N Aktionen als One-Hot-Matrix)
             if self.use_last_action_reward:
-                action_oh = np.zeros(4, dtype=np.float32)
-                if self._last_action is not None and 0 <= self._last_action < 4:
-                    action_oh[self._last_action] = 1.0
-                reward_clipped = np.float32(np.clip(self._last_reward, -1.0, 1.0))
-                return np.concatenate([arr, [step_frac], action_oh, [reward_clipped]])
-            else:
-                return np.append(arr, step_frac)                 # 231 dims
+                for act in self._action_buffer:
+                    oh = np.zeros(_N_ACTIONS, dtype=np.float32)
+                    if act is not None and 0 <= act < _N_ACTIONS:
+                        oh[act] = 1.0
+                    extras.append(oh)
+                extras.append(np.float32(np.clip(self._last_reward, -1.0, 1.0)))
+
+            return np.concatenate([arr] + [
+                np.atleast_1d(np.float32(e)) if np.isscalar(e) else e
+                for e in extras
+            ])
 
         # CNN-Variante: [grid(225) | visited(225) | extras(6)]
         px, py   = self.core.player_pos()
@@ -200,11 +224,12 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         )
         self._current_seed = actual_seed
         self._step_count = 0
-        self._visited_tiles = {(0, 0)}         # Startposition vormarkieren
+        self._visited_tiles = {(0, 0)}
         self._visit_counts = {(0, 0): 1}
         self._steps_no_reward = 0
         self._last_action = None
         self._last_reward = 0.0
+        self._action_buffer = deque([None] * self.action_buffer_len, maxlen=self.action_buffer_len)
         raw = self.core.reset(actual_seed)
         return self._normalize(raw), {}
 
@@ -232,7 +257,8 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             truncated = True
             info["early_stop"] = True
 
-        # Last Action und Last Reward speichern
+        # Aktions-Buffer und letzten Reward aktualisieren
+        self._action_buffer.append(action)
         self._last_action = action
         self._last_reward = reward
 

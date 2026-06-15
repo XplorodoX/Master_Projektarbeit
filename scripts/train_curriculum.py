@@ -42,20 +42,25 @@ PHASES = [
      "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12–25)"},
     {"exit_min": 25, "exit_max": 45, "max_steps": 1_000_000, "target_sr": 0.70,
      "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25–45, eval 35–45)"},
+    # Fix 2: Greedy Fine-Tune — ent_coef→0.0001, Modellselektion auf deterministischer SR
+    {"exit_min": 25, "exit_max": 45, "max_steps":   200_000, "target_sr": 0.60,
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 4 (Greedy Fine-Tune)",
+     "ent_coef_override": 0.0001},
 ]
 
 RPPO_KWARGS = dict(
     policy="MlpLstmPolicy",
-    n_steps=512,
-    batch_size=256,
-    n_epochs=4,
+    n_steps=256,          # v10: exakt wie v2 (das funktionierende Modell)
+    batch_size=8,         # v10: KRITISCH — kleiner Batch → 512 Gradient-Updates/Rollout (war 256→16/Rollout)
+    n_epochs=10,          # v10: wie v2 (default)
     learning_rate=3e-4,
     gamma=0.999,
     gae_lambda=0.95,
     clip_range=0.2,
-    ent_coef=0.01,
+    ent_coef=0.05,        # v10: wie v2 — 5× höher für Exploration (war 0.01)
     vf_coef=0.5,
-    policy_kwargs=dict(n_lstm_layers=1, lstm_hidden_size=512, shared_lstm=False),
+    policy_kwargs=dict(n_lstm_layers=1, lstm_hidden_size=256, shared_lstm=False,
+                       enable_critic_lstm=True),
     verbose=1,
     tensorboard_log="logs/tensorboard/",
 )
@@ -101,7 +106,10 @@ class CurriculumEvalCallback(BaseCallback):
         return True
 
     def _run_eval(self) -> float:
-        env = StoneforgeWorldEnv(exit_min=self.eval_exit_min, exit_max=self.eval_exit_max, use_last_action_reward=True)
+        env = StoneforgeWorldEnv(
+            exit_min=self.eval_exit_min, exit_max=self.eval_exit_max,
+            # v10: 231-dim wie v2
+        )
         successes = 0
 
         for seed in VAL_SEEDS:
@@ -252,7 +260,7 @@ def main() -> None:
 
     print("\n" + "═"*60)
     print("  Curriculum-Training: RecurrentPPO (LSTM), kein BFS")
-    print("  Obs: 236 Features (Grid + Kompass + Step-Counter + Last Action/Reward)")
+    print("  Obs: 231 Features (Grid 225 + Kompass 2 + HP/Energy/Inv + StepFrac) — wie v2")
     print("  Phasen: 5-12 → 12-25 → 25-45")
     if swarm_pool:
         if swarm_pool.plr_mode:
@@ -285,7 +293,11 @@ def main() -> None:
         # (analog zu PokéRL's StreamWrapper, aber in-process statt externer WS)
         def make_env_i(agent_id, exit_min=phase["exit_min"],
                        exit_max=phase["exit_max"], _pool=swarm_pool):
-            base = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max, swarm_pool=_pool, use_last_action_reward=True)
+            base = StoneforgeWorldEnv(
+                exit_min=exit_min, exit_max=exit_max, swarm_pool=_pool,
+                # v10: 231-dim obs wie v2 (das funktionierende Modell)
+                # Loop-Penalty ist immer aktiv in step() — kein extra Obs-Feature nötig
+            )
             return StreamWrapper(base, agent_id=agent_id)
 
         env_fns = [
@@ -320,10 +332,17 @@ def main() -> None:
                 swarm_pool=swarm_pool,
                 update_freq=200,
             )
-            eval_cb._meta_cb = meta_cb   # SR-Weitergabe
+            eval_cb._meta_cb = meta_cb
             callbacks.append(meta_cb)
         if i == 3:
+            # Entropie in Phase 3 linear 0.01 → 0.001
             callbacks.append(EntropyAnnealingCallback(duration_steps=500_000, start_ent=0.01, end_ent=0.001))
+        if i == 4:
+            # Fix 2: Phase 4 Greedy Fine-Tune — Entropie sofort auf 0.0001 setzen
+            ent_override = phase.get("ent_coef_override", 0.0001)
+            if model is not None:
+                model.ent_coef = ent_override
+            print(f"  ent_coef → {ent_override} (Greedy Fine-Tune)")
         callback = CallbackList(callbacks)
 
         if model is None and i == 1:
@@ -356,17 +375,16 @@ def main() -> None:
                   f"{stats['total_added']} hinzugefügt, "
                   f"{stats['total_sampled']} gesampled")
 
-    # Finales Modell = bestes Phase-3-Checkpoint (nicht letzter Stand) → als best_model.zip kopieren
+    # Finales Modell: Phase 4 > Phase 3 > Fallback letzter Stand
     import shutil
-    src = os.path.join(args.save_dir, "phase3_best_model.zip")
     dst = os.path.join(args.save_dir, "best_model.zip")
-    if os.path.exists(src):
-        shutil.copy2(src, dst)
-    else:
-        # Fallback: letzter Phase-3-Stand
-        src_fallback = os.path.join(args.save_dir, "phase3_model.zip")
-        if os.path.exists(src_fallback):
-            shutil.copy2(src_fallback, dst)
+    for candidate in ["phase4_best_model.zip", "phase3_best_model.zip",
+                      "phase4_model.zip", "phase3_model.zip"]:
+        src = os.path.join(args.save_dir, candidate)
+        if os.path.exists(src):
+            shutil.copy2(src, dst)
+            print(f"  Finales Modell aus: {candidate}")
+            break
 
     print(f"\n{'═'*60}")
     print(f"  Curriculum abgeschlossen!")
