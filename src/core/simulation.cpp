@@ -1444,6 +1444,11 @@ int Simulation::currentBfsDistanceToExit() const {
     return bfsDistanceToExit(player_.x, player_.y);
 }
 
+bool Simulation::isPathToExitReachable() const {
+    const auto it = bfsDistances_.find(spatialKey(player_.x, player_.y, 1));
+    return it != bfsDistances_.end();
+}
+
 int Simulation::bfsDistanceAt(int x, int y) const {
     if(!world_.isPassable(x, y)) {
         return 9999;   // wall tile: BFS field should strongly deter this direction
@@ -1457,7 +1462,11 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
                                 int consecutiveBlocked, bool positionLoop, int stepsWithoutProgress) const {
     float reward = -0.01F;
 
-    (void)newTileVisited;
+    // Phase 7: Exploration-Bonus für erste Zell-Betreten (+0.02).
+    // newTileVisited wird bereits korrekt via visitedTiles_.insert().second berechnet.
+    if(newTileVisited) {
+        reward += 0.02F;
+    }
     (void)visitCount;
 
     if(idleAction) {
@@ -1478,14 +1487,7 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
         reward -= 0.15F;
     }
 
-    // Eskalierender Stagnation-Penalty: je laenger ohne neuen BFS-Rekord, desto staerker.
-    if(!reachedExit) {
-        if(stepsWithoutProgress >= 60) {
-            reward -= 0.15F;
-        } else if(stepsWithoutProgress >= 30) {
-            reward -= 0.05F;
-        }
-    }
+    // Stagnation-Penalty entfernt: bestraft legitime Umgehungsmanöver ohne BFS in der Obs.
 
     if(mobsKilledThisStep > 0) {
         reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
@@ -1501,7 +1503,7 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     // F(s, s') = Φ(s') - Φ(s)
     // r_total = R_env + β · F(s, s')  (plus the minimal step-penalty above)
     constexpr float PBRS_MAX_DIST = 128.0F;   // normalisation constant (matches Python aux target scaling)
-    constexpr float PBRS_GAMMA = 1.0F;         // shaping discount stays separate from the RL discount
+    constexpr float PBRS_GAMMA = 0.999F;         // shaping discount matches the RL discount (0.999)
     constexpr float PBRS_BETA = 2.5F;         // shaping strength: +0.01 net per tile forward at d=40
     // β=2.5 statt 5.0: konservativer nach BFS-Buffer-Fix (BUFFER 20→80).
     // Mit β=5 und altem Buffer=20 bekam der Agent +2.5/Schritt beim Rücklaufen aus Manhattan-

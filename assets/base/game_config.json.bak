@@ -5,7 +5,7 @@
     "randomizeExitFromSpawn": true,
     "exitMinDistance": 35,
     "exitMaxDistance": 45,
-    "forceGuaranteedPath": false,
+    "forceGuaranteedPath": true,
     "guaranteedPathFallback": false,
     "coldBiomeMax": 0.33,
     "warmBiomeMax": 0.66,
