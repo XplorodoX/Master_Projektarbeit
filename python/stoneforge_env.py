@@ -43,6 +43,11 @@ class SwarmSeedPool:
         with self._lock:
             self._seeds.discard(seed)
 
+    def clear(self) -> None:
+        """Pool leeren (z. B. bei Phasenwechsel — Seeds sind dann nicht mehr aussagekräftig)."""
+        with self._lock:
+            self._seeds.clear()
+
     def sample(self) -> int | None:
         with self._lock:
             if self._seeds and random.random() < self.swarm_prob:
@@ -60,16 +65,22 @@ class SwarmSeedPool:
 
 # ─── Observation-Layout ───────────────────────────────────────────────────────
 #
-#  Standard (use_visited_mask=False):
+#  Standard (use_visited_mask=False, include_energy_inventory=False):
 #    [0   : gs)    grid — {0,10,15,20,30}/30
+#    [gs+0..2]     hp, exitDx, exitDy
+#    [gs+3]        step_frac
+#    → 225 + 3 + 1 = 229 dims
+#
+#  Energie und Inventar sind tote Features (disable_energy=True, kein Mining →
+#  konstant 100 bzw. 0) und werden standardmäßig entfernt. Für alte Modelle
+#  (231-dim, z.B. ppo_lstm_curriculum): include_energy_inventory=True.
+#
+#  Legacy (include_energy_inventory=True):
 #    [gs+0..4]     hp, energy, inventory, exitDx, exitDy
 #    [gs+5]        step_frac
 #    [gs+6]        visit_count_here (wenn use_visit_count=True, sonst weggelassen)
 #    [gs+7..]      action_buffer: action_buffer_len × 4 one-hot (wenn use_last_action_reward)
 #    [gs+7+buf]    last_reward geclippt (wenn use_last_action_reward)
-#
-#  Beispiel-Dims (use_visit_count=True, action_buffer_len=4, use_last_action_reward=True):
-#    225 + 5 + 1 + 1 + 16 + 1 = 249
 #
 #  Mit Visited Mask (use_visited_mask=True, CNN-Variante):
 #    [0   : gs)    Kanal 0 — Tile-Typen
@@ -79,6 +90,37 @@ class SwarmSeedPool:
 
 _N_ACTIONS = 4
 _GRID_SIDE  = 15   # observationRadius=7 → 2*7+1=15
+
+# Bekannte Obs-Layouts: Obs-Dimension eines Modells → Env-Konstruktor-Kwargs.
+# Damit funktionieren alte UND neue Modelle in allen Skripten automatisch.
+_OBS_DIM_KWARGS: dict[int, dict] = {
+    229: {},                                                       # Env v11 (aktuell)
+    231: {"include_energy_inventory": True},                       # v2–v10 LSTM-Curriculum
+    230: {"include_energy_inventory": True, "use_step_frac": False},   # ppo_no_bfs
+    236: {"include_energy_inventory": True, "use_last_action_reward": True},  # ppo_phase4
+    249: {"include_energy_inventory": True, "use_visit_count": True,
+          "use_last_action_reward": True, "action_buffer_len": 4},          # v7-Fixes
+    456: {"include_energy_inventory": True, "use_visited_mask": True},      # CNN
+    461: {"include_energy_inventory": True, "use_visited_mask": True,
+          "use_last_action_reward": True},                                  # CNN+PLR
+}
+
+
+def env_kwargs_for_model(model) -> dict:
+    """Leitet die Env-Kwargs aus der Observation-Dimension eines geladenen
+    SB3-Modells ab, damit alte (231-dim) und neue (229-dim) Modelle ohne
+    manuelles Flag-Setzen evaluiert/abgespielt werden können.
+
+    >>> env = StoneforgeWorldEnv(exit_min=35, exit_max=45, **env_kwargs_for_model(model))
+    """
+    n_obs = int(model.observation_space.shape[-1])
+    if n_obs not in _OBS_DIM_KWARGS:
+        known = ", ".join(str(k) for k in sorted(_OBS_DIM_KWARGS))
+        raise ValueError(
+            f"Unbekanntes Obs-Layout: Modell erwartet {n_obs} Dimensionen "
+            f"(bekannt: {known}). Env-Kwargs bitte manuell setzen."
+        )
+    return dict(_OBS_DIM_KWARGS[n_obs])
 
 
 class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
@@ -100,6 +142,8 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         use_last_action_reward: bool = False,
         use_visit_count: bool = False,
         action_buffer_len: int = 1,
+        use_step_frac: bool = True,
+        include_energy_inventory: bool = False,
     ) -> None:
         super().__init__()
         self.core = stoneforge_sim.StoneforgeCoreEnv(base_seed)
@@ -111,11 +155,15 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
             disable_energy=True,
         )
         self._base_seed = base_seed
+        self._exit_min = exit_min
+        self._exit_max = exit_max
         self.swarm_pool = swarm_pool
         self.use_visited_mask = use_visited_mask
         self.use_last_action_reward = use_last_action_reward
         self.use_visit_count = use_visit_count
         self.action_buffer_len = max(1, action_buffer_len)
+        self.use_step_frac = use_step_frac
+        self.include_energy_inventory = include_energy_inventory
         self._current_seed: int = 0
         self._visited_tiles: set[tuple[int, int]] = set()
         self._visit_counts: dict[tuple[int, int], int] = {}
@@ -130,13 +178,18 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         self._step_count = 0
         self._max_steps = 4000
 
+        # Energie + Inventar sind tote Features (konstant) → standardmäßig entfernt
+        n_dead = 0 if include_energy_inventory else 2
+
         if use_visited_mask:
-            self._n_obs = self._gs * 2 + 6                        # 456
+            self._n_obs = self._gs * 2 + 6 - n_dead               # 456 legacy / 454
             if use_last_action_reward:
                 self._n_obs += self.action_buffer_len * _N_ACTIONS # + action buffer
                 self._n_obs += 1                                   # + last_reward
         else:
-            self._n_obs = n_base + 1                               # 231 (+ step_frac)
+            self._n_obs = n_base - n_dead                          # 230 legacy / 228
+            if use_step_frac:
+                self._n_obs += 1                                   # + step_frac
             if use_visit_count:
                 self._n_obs += 1                                   # + visit_count_here
             if use_last_action_reward:
@@ -176,7 +229,9 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         step_frac   = np.float32(self._step_count / self._max_steps)
 
         if not self.use_visited_mask:
-            extras = [step_frac]
+            extras = []
+            if self.use_step_frac:
+                extras.append(step_frac)
 
             # Fix 1: Besuchszähler aktueller Tile → LSTM sieht Loops deterministisch
             if self.use_visit_count:
@@ -193,6 +248,9 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
                     extras.append(oh)
                 extras.append(np.float32(np.clip(self._last_reward, -1.0, 1.0)))
 
+            if not self.include_energy_inventory:
+                # Energie (gs+1) und Inventar (gs+2) entfernen: [grid | hp | exitDx | exitDy]
+                arr = np.concatenate([arr[:gs + 1], arr[gs + 3:]])
             return np.concatenate([arr] + [
                 np.atleast_1d(np.float32(e)) if np.isscalar(e) else e
                 for e in extras
@@ -201,11 +259,18 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         # CNN-Variante: [grid(225) | visited(225) | extras]
         px, py   = self.core.player_pos()
         visited  = self._visited_mask_array(px, py)
-        extras_list = [
-            arr[gs], arr[gs+1], arr[gs+2],   # hp, energy, inventory
-            arr[gs+3], arr[gs+4],             # exitDx, exitDy
-            step_frac,
-        ]
+        if self.include_energy_inventory:
+            extras_list = [
+                arr[gs], arr[gs+1], arr[gs+2],   # hp, energy, inventory
+                arr[gs+3], arr[gs+4],             # exitDx, exitDy
+                step_frac,
+            ]
+        else:
+            extras_list = [
+                arr[gs],                          # hp
+                arr[gs+3], arr[gs+4],             # exitDx, exitDy
+                step_frac,
+            ]
         if self.use_last_action_reward:
             for act in self._action_buffer:
                 oh = np.zeros(_N_ACTIONS, dtype=np.float32)
@@ -245,6 +310,16 @@ class StoneforgeWorldEnv(gym.Env[np.ndarray, int]):
         self._last_action = None
         self._last_reward = 0.0
         self._action_buffer = deque([None] * self.action_buffer_len, maxlen=self.action_buffer_len)
+        # Die WorldGen-Config ist im C++-Core PROZESS-GLOBAL (mutableGameConfig()):
+        # jede parallel existierende Env-Instanz (z.B. Eval-Env im Callback) überschreibt
+        # sie für alle. Daher vor jedem Reset die eigene Config neu stempeln.
+        self.core.configure_world_generation(
+            exit_min_distance=self._exit_min,
+            exit_max_distance=self._exit_max,
+            force_guaranteed_path=False,
+            disable_mobs=True,
+            disable_energy=True,
+        )
         raw = self.core.reset(actual_seed)
         return self._normalize(raw), {}
 

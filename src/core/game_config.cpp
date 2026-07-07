@@ -121,19 +121,8 @@ void parseWorldConfig(GameConfig& cfg, const json& root) {
     cfg.world.exitMinDistance = std::max(1, readInt(world, "exitMinDistance", cfg.world.exitMinDistance));
     cfg.world.exitMaxDistance = std::max(cfg.world.exitMinDistance, readInt(world, "exitMaxDistance", cfg.world.exitMaxDistance));
 
-    cfg.world.coldBiomeMax = readDouble(world, "coldBiomeMax", cfg.world.coldBiomeMax);
-    cfg.world.warmBiomeMax = readDouble(world, "warmBiomeMax", cfg.world.warmBiomeMax);
-
-    cfg.world.coldWallThreshold = readDouble(world, "coldWallThreshold", cfg.world.coldWallThreshold);
-    cfg.world.warmWallThreshold = readDouble(world, "warmWallThreshold", cfg.world.warmWallThreshold);
-    cfg.world.mossWallThreshold = readDouble(world, "mossWallThreshold", cfg.world.mossWallThreshold);
-
-    cfg.world.coldOreThreshold = readDouble(world, "coldOreThreshold", cfg.world.coldOreThreshold);
-    cfg.world.warmOreThreshold = readDouble(world, "warmOreThreshold", cfg.world.warmOreThreshold);
-    cfg.world.mossOreThreshold = readDouble(world, "mossOreThreshold", cfg.world.mossOreThreshold);
-
-    cfg.world.warmTreeThreshold = readDouble(world, "warmTreeThreshold", cfg.world.warmTreeThreshold);
-    cfg.world.mossTreeThreshold = readDouble(world, "mossTreeThreshold", cfg.world.mossTreeThreshold);
+    // Biom-Schwellwerte sind fest in World::sampleBaseTile() — frühere
+    // cold/warm/moss-Threshold-Keys waren tote Konfiguration (nie gelesen).
 
     cfg.world.spawnClearRadius = std::max(0, readInt(world, "spawnClearRadius", cfg.world.spawnClearRadius));
     cfg.world.exitClearRadius = std::max(0, readInt(world, "exitClearRadius", cfg.world.exitClearRadius));

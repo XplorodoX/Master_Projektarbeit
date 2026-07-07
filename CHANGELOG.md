@@ -3,6 +3,286 @@
 
 ---
 
+## v2026-07-07 — Live-Map-Redesign (uPlot, Viridis, det/stoch-SR) + v11-Trainingsstart
+
+#### Änderung 1 — Live Map komplett überarbeitet
+**Datei:** `scripts/ws_map.html` (komplett neu), Recherche-Basis: DataCamp-Dashboard-Prinzipien,
+PokéRL-Metrics, uPlot-Benchmarks, Viridis-Literatur.
+**Problem:** Handgezeichnete Canvas-Charts ohne Tooltips/Glättung, Jet-Farbskala der Heatmap
+(erzeugt künstliche Kontraste, nicht CVD-tauglich), keine visuelle Hierarchie, Det/Stoch-Gap
+(zentraler Untersuchungsgegenstand!) nicht sichtbar, 16-Linien-Spaghetti-Chart.
+**Lösung:**
+
+| Aspekt | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| Charts | Eigenbau-Canvas | **uPlot v1.6.32 (inline, 51 kB)** | Crosshair + Live-Legende, ~4× weniger CPU als Chart.js |
+| SR-Chart | nur Gate-Best-SR | **det- UND stoch-Kurve + Phasen-Marker** | Det/Stoch-Gap live sichtbar; Fallback auf Best-SR für alte Läufe |
+| Heatmap-Farbskala | Jet (Rainbow) | **Viridis, log-Skala, Floor 0.18** | perzeptuell uniform, CVD-tauglich; Floor weil dunkelstes Ende ≈ Hintergrund |
+| BFS/Episodenlänge | Rohwerte, zappelig | **EMA-geglättet, Rohkurve blass** | TensorBoard/W&B-Muster |
+| Pro-Agent-BFS-Chart | 16 Linien | **entfernt** | redundant zu Agent-Karten, >8 Farbklassen unlesbar |
+| KPI-Zeile | Textzeile | Kacheln: Phase, Timesteps, Steps/s, SR stoch/det, Pool | Inverted-Pyramid-Layout |
+| Agent-Karten | statisch | grüner Flash + ✓-Zähler bei Exit-Erfolg | Erfolge waren vorher unsichtbar |
+| Schrift | Courier New | system-ui, tabular-nums für Live-Zähler | ruhigeres Zahlenbild |
+
+Serienfarben (#3987e5/#199e70/#c98500) auf #0d1117 validiert (Kontrast ≥3:1, CVD-ΔE 41).
+Eval-Historie zusätzlich als aufklappbare Tabelle (Barrierefreiheit/Ablesbarkeit).
+
+#### Änderung 2 — det/stoch-Eval-Historie an Live Map senden
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** `MetaCallback` sendete nur `best_sr` (Gate) — die HTML konnte det/stoch nicht plotten.
+**Lösung:** `_run_eval()` pflegt modulglobale Liste `_LIVE_EVALS` (`{ts, det, stoch, phase}`) und
+sendet sie via `update_meta({"evals": ...})`. Überlebt Phasenwechsel; Browser, die später
+verbinden, sehen die volle Kurve. Greift ab dem nächsten Trainingsstart (laufender v11-Prozess
+nutzt noch den alten Code → HTML-Fallback auf Best-SR).
+
+#### Änderung 3 — Exit-Richtungspfeil für v11-Obs gefixt
+**Datei:** `python/stream_wrapper.py`
+**Problem:** `_stream()` kannte nur 231/456-dim Obs — bei v11 (229) blieb `exit_dx/dy = 0`,
+der Gold-Pfeil in den Agent-Karten fehlte.
+**Lösung:** Fall `n == 229` ergänzt (exitDx=Index 226, exitDy=227). Greift ab nächstem Lauf.
+
+#### Änderung 4 — Agent-Minimaps zeigen jetzt die echte Welt (Sichtfeld-Streaming)
+**Dateien:** `python/stream_wrapper.py`, `scripts/ws_map.html`
+**Problem:** Die Minimaps zeigten nur einen wandernden Punkt auf Schwarz — kein Weltkontext
+(Wände, Exit), feste Skalierung schnitt weite Wege ab. „Man erkennt nichts."
+**Lösung:** Wrapper streamt das Sichtfeld (`obs[:gs]` × 30 = Tile-IDs, Grid-Größe dynamisch
+aus `env._gs`); die Map akkumuliert daraus pro Episode eine Weltkarte: Boden blaugrau,
+Wände hellgrau, Bäume grün, Exit als goldene Raute (sobald gesehen), Agent mit weißem Ring.
+Auto-Zoom passt die Ansicht ans erkundete Gebiet an (1–6 px/Tile). Fallback für Läufe ohne
+Grid-Daten: besuchte Tiles + Trail wie bisher, aber mit Auto-Zoom und besserem Kontrast.
+E2E-verifiziert mit Test-Env auf Port 8767. Grid-Streaming greift ab dem nächsten Lauf.
+
+#### Änderung 5 — Swarm-Pool: Phasenwechsel-Bug gefixt + A/B-Test geplant (B8)
+**Dateien:** `python/stoneforge_env.py`, `scripts/train_curriculum.py`, `docs/BEWERTUNG_UND_PLAN.md`
+**Problem:** (1) Der Swarm-Pool überlebte Phasenwechsel — ein „gelöster" Seed aus Phase 1
+(Exit 5–12) ist in Phase 2 (Exit 12–25) aber eine andere Aufgabe; die Pool-Aussage galt
+über Phasengrenzen nicht. (2) Recherche (PLR, Jiang et al. ICML 2021): Replay bereits
+gemeisterter Levels ist lernineffizient und riskiert Layout-Memorierung — Literatur
+empfiehlt Replay von Levels mit hohem Lernpotenzial (≈ unser `--plr`-Modus).
+**Lösung:** `SwarmSeedPool.clear()` ergänzt; `train_curriculum.py` leert den Pool bei jedem
+Phasenstart. Semantik-Frage als A/B-Test B8 in `BEWERTUNG_UND_PLAN.md` dokumentiert
+(Erfolgs-Swarm vs. `--plr` vs. `--no-swarm`) — Entscheidung mit Daten, da der
+86%-Referenzlauf MIT Erfolgs-Swarm lief. Greift ab dem nächsten Lauf.
+
+#### Änderung 6 — Projektdokumentation: Etappe 5 + 2 neue Abbildungen; Stepzähler-Fix
+**Dateien:** `docs/Projektdokumentation.tex`, `docs/figures/fig_v11_lernkurve.pdf` (neu),
+`docs/figures/fig_livemap.png` (neu), `scripts/plot_run_curve.py` (neu), `scripts/ws_map.html`
+**Inhalt:** Neue Subsection „Etappe 5 (07.07.2026)" — erster v11-Gesamtlauf (Zwischenstand,
+Lernkurve det+stoch mit Phasen-Markern), Monitoring-Redesign, Swarm/PLR-Analyse (B8).
+Zeitleiste + Ausblick aktualisiert. PDF baut sauber (12 Seiten, keine offenen Referenzen).
+**Nebenbefund/Fix:** Beim Phasenwechsel lädt `train_curriculum.py` das Bestmodell der
+Vorphase — der SB3-Stepzähler springt dabei zurück (z. B. P3-Start bei „525k" statt 1M).
+Alle stepbasierten Zeitachsen wären damit nicht-monoton. Gefixt in `plot_run_curve.py`
+(kumulierte Achse) und `ws_map.html` (`displayTs()`-Rebase). `eval_history.json`
+enthält weiterhin die rohen SB3-Steps.
+
+#### Änderung 7 — Live Map: Chart-Historie überlebt jetzt Browser-Reloads
+**Datei:** `scripts/ws_map.html`
+**Problem:** Die gesamte Chart-Historie (SR, BFS, Episodenlängen, ✓-Zähler) lebte nur im
+Tab-JavaScript — jeder Refresh löschte alles (nur die Heatmap kam zurück, die hält der Server).
+**Lösung:** Zustand wird alle 5 s in `localStorage` gesichert und beim Laden wiederhergestellt
+(inkl. Stepzähler-Rebase-Zustand, damit die kumulierte x-Achse nahtlos weiterläuft).
+Neuer-Lauf-Erkennung: Springt der Stepzähler auf < 25 % des letzten Stands, wird die alte
+Historie automatisch verworfen; zusätzlich „↺ Reset"-Button im Header. Verifiziert per
+CDP-Reload-Test (identischer Datenpunkt und `_tsDisp` nach Reload). Wirkt sofort per Reload,
+auch für den laufenden Run.
+
+#### v11-Curriculum-Run Seed 0 — GESCHEITERT (abgebrochen @ 1,0M von 2,2M Steps)
+`python scripts/train_curriculum.py --save-dir models/ppo_lstm_curriculum_v11 --seed 0`
+Env v11 (229 Obs), batch=64/CPU, B1-Fix aktiv. Log: `logs/train_v11_seed0.log`,
+41 Eval-Checkpoints in `models/ppo_lstm_curriculum_v11/eval_history.json`.
+
+| Phase | Bestes SR (Gate) | Verlauf |
+|-------|------------------|---------|
+| 1 (exit 5–12, stoch) | 42 % @ 500k (Limit) | langsam; Validierung hatte 52 % @ 150k |
+| 2 (exit 12–25, stoch) | 48 % @ +25k | danach Seitwärtsband 16–36 % |
+| 3 (exit 25–45, det) | 2 % det | stoch konvergiert 30 % → 0–6 % nach unten |
+
+**Diagnose:** Critic hat nie gelernt (`explained_variance` ≈ 0,1 über den gesamten Lauf;
+Validierungslauf 06.07.: 0,72). Policy-Updates durchgehend gesund (approx_kl ≈ 0,03) — kein
+Kollaps, sondern schwache Value-Funktion (Initialisierungs-/Seed-Verdacht). Das Phase-3-
+Entropie-Annealing (0,05 → 0,001) legte die Schwäche offen: stoch-SR konvergierte auf die
+det-SR (~0 %) **nach unten** statt wie beim 86-%-Referenzlauf nach oben. Abbruch bei 975k
+(Phase 3), da Ausgang determiniert; Rechenzeit → Seed-1-Vergleichslauf.
+**Nächster Schritt:** Seed 1 (identische Konfiguration, `models/ppo_lstm_curriculum_v11_s1`,
+Auto-Start via Watcher). Lernt er normal → Seed-Pech; stagniert er ebenso → systematisch
+(Hauptverdacht: v11-Penalty-Entfernung → B7-A/B vorziehen).
+
+**KORREKTUR (gleicher Tag, nach Seed-1 @150k = 12 %):** Nachmessung der Seed-0-Bestmodelle
+mit vollem Episoden-Cap deckt ein **Messartefakt** auf — die am 06.07. eingeführten
+Eval-Caps (A3: P1=600, P2=1200 statt 4000) unterschätzen die echte Kompetenz massiv:
+
+| Modell | Cap (Gate) | SR stoch | Cap 4000 | SR stoch | det (4000) |
+|--------|-----------|----------|----------|----------|------------|
+| phase1_best (Seed 0) | 600 | 46 % | 4000 | **84 %** | 18 % |
+| phase2_best (Seed 0) | 1200 | 50 % | 4000 | **80 %** | 6 % |
+
+Seed 0 hat in P1/P2 also auf Referenzniveau gelernt (stochastisch) — nur **langsam**
+(Episoden > Cap). Konsequenzen: (1) Das 85-%-Gate unter Cap 600 ist praktisch unerreichbar
+→ Phasen enden immer am Limit; Modellselektion bevorzugt schnelle statt kompetente Policies;
+„Stagnation" in den Eval-Logs von Seed 0/1 ist großteils Artefakt. (2) Der P3-Kollaps
+(dort galt bereits Cap 4000) war real: det durchgehend 6–18 %, Annealing zog stoch auf det
+herunter — der bekannte Det/Stoch-Gap, nicht mangelnde Aufgabenkompetenz. (3) Die 52 % der
+A1-Validierung sind mit den 12 % der Curriculum-Evals nicht vergleichbar (anderes Cap).
+
+---
+
+## v2026-07-06 — Umgebungsversion v11: tote Features raus, Straf-Stacking entschärft, BFS-Exit-Platzierung, Config-Leck-Fix
+
+> ⚠️ **Breaking Change:** Neue Obs-Shape (231 → 229) und neue Exit-Platzierung.
+> Alte Modelle (z. B. `ppo_lstm_curriculum`) brauchen beim Eval jetzt
+> `StoneforgeWorldEnv(..., include_energy_inventory=True)` — und ihre alten Ergebnisse
+> sind mit neuen Läufen nicht mehr 1:1 vergleichbar (Exit-Distanzen waren real 42–75, jetzt echt 35–45).
+
+#### Änderung 1 — Tote Features entfernt: Energie + Inventar raus, HP bleibt
+**Datei:** `python/stoneforge_env.py`
+**Problem:** Energie (disable_energy=True → konstant 100) und Inventar (kein Mining → konstant 0)
+trugen null Information — 2 von 231 Obs-Dims waren tot.
+**Lösung:** Standardmäßig entfernt; Obs 231 → **229** (Grid 225 + HP + exitDx/Dy + step_frac).
+Rückwärtskompatibilität über neuen Parameter `include_energy_inventory=True` (alte 231-dim-Modelle).
+
+#### Änderung 2 — Straf-Stacking entschärft (Wand-Penalty raus, Loop-Penalty reduziert)
+**Datei:** `src/core/simulation.cpp` → `computeReward()`
+**Problem:** Eskalierender Wand-Penalty (−0.05/−0.25) + Loop-Penalty (−0.15) machten Erkunden in
+engen Korridoren teurer als Stillstand (Literatur: „Straf-Stacking"; eigene v6-Diagnose).
+**Hinweis zur Historie:** v2026-06-13 hatte das schon einmal entfernt; Commit `16dc8dd` hat es
+undokumentiert wieder eingebaut — dieser Eintrag holt die Doku nach und setzt den Stand erneut um.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `moveBlocked` (1×) | −0.05 | **0** | Step-Penalty + ausbleibender PBRS-Fortschritt reichen |
+| `moveBlocked` (≥2×) | −0.25 | **0** | Eskalation machte Erkunden unwirtschaftlich |
+| `positionLoop` | −0.15 | **−0.05** | Erkennung bleibt, Strafe moderat |
+
+#### Änderung 3 — Exit-Platzierung nach BFS-Laufweg statt Luftlinie
+**Datei:** `src/core/world.cpp` → `chooseExitPoint()`
+**Problem:** Kandidaten wurden nach euklidischer Distanz (dist² ∈ [min², max²]) gewählt. Realer
+Laufweg bei „35–45": **42–75 Tiles (Ø 55)** — Curriculum-Phasen und Eval-Angaben waren unscharf.
+Zusätzlich konnte die 5×5-Exit-Freiräumung den Laufweg nachträglich verkürzen (Ausreißer bis 13).
+**Lösung:** (a) Kandidaten nach **BFS-Tiefe** ∈ [exitMin, exitMax] sammeln; (b) Kandidat nur
+akzeptieren, wenn der Laufweg auch mit *virtueller* 5×5-Freiräumung ≥ exitMin bleibt (bis 24 Versuche).
+**Messung nach Fix (je 50 Seeds):** Val/Test A/Holdout B: min/Ø/max = 35/39.7–40.1/45, **150/150 in [35,45]**, 150/150 lösbar. Phase-1-Range (5–12): min/Ø/max = 5/8.9/12. ✓
+
+#### Änderung 4 — Prozess-globales Config-Leck gefixt
+**Dateien:** `python/stoneforge_env.py` (Fix), `src/python/py_module.cpp` (Ursache, unverändert)
+**Problem:** `configure_world_generation()` schreibt in `stoneforge::mutableGameConfig()` —
+**prozess-global**. Jede neu erstellte Env-Instanz überschreibt die Config aller anderen.
+Konsequenz fürs bisherige Training: Der Eval-Callback (erzeugt pro Eval ein Env mit eval_min/max)
+hat in **Phase 3 die Trainingsverteilung nach dem ersten Eval still von 25–45 auf 35–45 verschoben**.
+**Lösung:** Env stempelt seine eigene Config bei **jedem** `reset()` neu.
+**Verifikation:** Oracle auf Test-Seeds nach Erstellung eines zweiten Envs (5–12): weiterhin Ø 40.2 Schritte (vorher fälschlich 8.3). ✓
+
+**Gesamtverifikation (Skript `verify_v11.py`):** Obs 229/231 (legacy) inkl. Layout-Konsistenz ✓,
+150/150 lösbar ✓, Distanzen exakt in Range ✓, Wand-Penalty weg (3× Block → je ≈ −0.01, keine Eskalation) ✓,
+BFS-Oracle 10/10 mit Ø 40.2 Schritten ✓.
+
+#### Änderung 5 — Mining, Bauen & Kampf aus dem RL-Pfad entfernt
+**Dateien:** `src/python/py_module.cpp`, `src/core/simulation.cpp`
+**Problem:** Das RL-Binding akzeptierte weiterhin alle 9 Spielaktionen (Mine/Place/Use/Wait/Noop),
+obwohl nur Bewegung trainiert wird; im Reward standen tote Terme (+2/Mob-Kill, +5 Exit-Unlock).
+**Lösung:**
+- `StoneforgeCoreEnv.step()` erlaubt nur noch Aktionen 0–3 (Bewegung), Rest → RuntimeError;
+  `action_space_n()` liefert 4.
+- Reward-Terme für Mob-Kills und Exit-Unlock gestrichen. Reward besteht nur noch aus:
+  Step-Penalty −0.01, Explorations-Bonus +0.02, Loop-Penalty −0.05, Schadens-Penalty, PBRS, ±Terminal.
+- Das **spielbare Client-Spiel** (`stoneforge_client`) behält Mining/Crafting unverändert —
+  entfernt wurde nur der RL-Pfad.
+**Verifikation:** `action_space_n()==4` ✓, Aktionen 4–8 werfen RuntimeError ✓,
+Oracle-Regression 10/10, Ø 40.2 Schritte, Ø Return +101.20 ✓.
+
+#### Änderung 6 — Entropie-Annealing-Startwert gefixt
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** `EntropyAnnealingCallback` in Phase 3 startete bei `start_ent=0.01`, trainiert wird
+aber mit `ent_coef=0.05` (RPPO_KWARGS) → abrupter Entropie-Sprung 0.05 → 0.01 beim Phasenwechsel.
+**Lösung:** `start_ent=RPPO_KWARGS["ent_coef"]` (0.05) — Annealing jetzt stetig 0.05 → 0.001 über 500k Steps.
+
+#### Änderung 7 — Eval-Callback: phasengerechtes Gating + Det/Stoch-Doppelmessung
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** (a) Phase 1/2 gateten auf **deterministischer** SR — mit ent_coef=0.05 konstruktionsbedingt
+~0% (Argmax fast-uniformer Policy) → Phasen endeten nie vorzeitig, best_model-Auswahl lief auf Rauschen.
+(b) `MAX_EVAL_STEPS=4000` für alle Phasen — bei Exit 5–12 reine Eval-Verschwendung.
+(c) Nur eine Metrik gemessen — keine Det/Stoch-Gap-Kurve über das Annealing.
+**Lösung:**
+- Neue Phasen-Parameter `gate_metric` ("stoch" für P1/P2, "det" für P3/P4) und
+  `eval_max_steps` (600 / 1200 / 4000 / 4000).
+- Jedes Eval misst jetzt **beide** SRs (det + stoch); TensorBoard: `eval/sr_det`, `eval/sr_stoch`;
+  Gating + best_model-Auswahl auf der Phasen-Metrik; eval_history-Label enthält beide Werte.
+**Verifikation:** py_compile + Smoke-Test (PHASES-Parameter, Callback-Instanziierung) ✓.
+
+#### Änderung 8 — Device-Benchmark (CPU vs. MPS) + Batch-Ablation → batch_size=64
+**Datei:** `scripts/train_curriculum.py` (`RPPO_KWARGS`)
+**Fragestellung:** Kann MPS (Apple GPU) das Training beschleunigen? Ist batch=8 wirklich nötig?
+**Befund 1 — Bisheriges Training lief auf CPU:** SB3 `device="auto"` wählt nur CUDA, nie MPS.
+Das `"device": "mps"` in alten config.json war Fehlprotokollierung.
+**Befund 2 — MPS ist bei diesem Netz IMMER langsamer** (LSTM 256 zu klein, Kernel-Dispatch-Overhead
+dominiert; deckt sich mit SB3-Doku: GPU lohnt erst bei CNN/großen Netzen):
+
+| Konfiguration | FPS | Speedup vs. v10 |
+|---|---|---|
+| batch=8, CPU (v10-Status-quo) | 88 | 1.0× |
+| batch=8, MPS | 26 | **0.29×** |
+| batch=64, CPU | 163–187 | **1.9–2.1×** |
+| batch=64, MPS | 105 | 1.19× |
+| batch=128, CPU | 182 | 2.07× |
+| batch=256, CPU | 184 | Plateau (Env-Sim wird Bottleneck) |
+
+**Befund 3 — Batch-Validierung (A1):** 150k Phase-1-Steps (v11-Env, exit=5–12), batch=64, CPU:
+approx_kl 0.012→0.056 (gesund, v10-Bereich), EV bis 0.72, Entropie −1.38→−0.97 (wie v10),
+**SR @150k: 52% stoch / 22% det** (Val-Seeds 6000–6049). → batch=8 war NICHT der kritische
+v2-Erfolgsfaktor (das war ent_coef=0.05); batch=64 lernt gleichwertig bei doppelter Geschwindigkeit.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `batch_size` | 8 | **64** | validiert gleichwertig, 2.1× schneller; 64 statt 128, weil 64 lern-validiert ist |
+| Device | auto (=CPU) | CPU (explizit dokumentiert) | MPS 0.29–1.19× — nie schneller |
+
+**ETA v11-Gesamtlauf:** ~2.5–3h statt ~5.5h.
+
+#### Änderung 9 — Konsistenz-Bereinigung (Projekt-Analyse 06.07.2026)
+**Dateien:** `scripts/train.py`, `assets/base/game_config.json`, `src/core/game_config.cpp`,
+`src/include/stoneforge/game_config.hpp`, `python/README.md`, `.claude/CLAUDE.md`,
+`docs/stoneforge_game_description.md`
+
+1. **`train.py` synchronisiert:** RPPO `batch_size` 8 → 64 und `enable_critic_lstm=True`
+   (war mit `train_curriculum.py` auseinandergelaufen — `--algo rppo` trainierte halb so schnell).
+2. **Tote Konfiguration entfernt:** Die cold/warm/moss-Threshold-Keys in `game_config.json`
+   (+ Parser + Struct-Felder) wurden **nie gelesen** — die Biom-Schwellwerte sind fest in
+   `World::sampleBaseTile()` hinterlegt. Entfernt, um wirkungsloses Tuning über die JSON zu
+   verhindern; Hinweis-Kommentare in Header/Parser ergänzt.
+   **Regression verifiziert:** Weltgenerierung byte-identisch (Seeds 7000–7002: BFS 43/38/35 wie vorher).
+3. **Doku-Sync:** `python/README.md` (Wrapper `ExitPotentialFieldWrapper`/`ReducedActionEnv`
+   existieren nicht mehr; 229-dim Obs; Legacy-Flag; Config-Global-Hinweis), CLAUDE.md
+   (Environment-Abschnitt, Fallstricke aktualisiert: PBRS=BFS erledigt, Biom-Schwellwerte
+   hartkodiert, MPS langsamer, Legacy-Obs), `stoneforge_game_description.md`
+   (Exit-Räumung ist 3×3 nicht 5×5, BFS-Platzierung seit v11, Obs 229).
+
+#### Änderung 10 — Usability-Audit: Legacy-Modell-Regression, setup_env.sh, GUI-Training
+**Dateien:** `python/stoneforge_env.py`, `scripts/watch_agent.py`, `scripts/eval_comparison.py`,
+`scripts/launcher_gui.py`, `scripts/setup_env.sh`
+
+1. **Obs-Auto-Erkennung (`env_kwargs_for_model()`):** Nach der v11-Obs-Änderung (229-dim)
+   crashten ALLE Bestandsmodelle (231/236/…-dim) in `watch_agent.py`, `eval_comparison.py`
+   und im GUI-Quick-Eval mit Shape-Mismatch. Neuer Helper in `stoneforge_env.py` leitet die
+   Env-Kwargs automatisch aus der Obs-Dimension des geladenen Modells ab (Mapping für
+   229/230/231/236/249/456/461); alle drei Verbraucher umgestellt. `watch_agent.py` nutzte
+   zudem hartkodierte Obs-Indizes (obs[228/229] für exitDx/Dy) → layoutabhängig gemacht.
+   **Verifiziert:** Legacy-Modell (231) und v11-Modell (229) laufen beide automatisch.
+2. **`setup_env.sh` war defekt:** suchte venv/build/python unter `scripts/` statt Repo-Wurzel
+   (und meldete trotzdem „✓ activated"). Auf ROOT_DIR umgestellt + klare Fehlermeldung ohne venv.
+   **Verifiziert:** `source scripts/setup_env.sh && python -c "import stoneforge_sim"` ✓.
+3. **GUI-Quick-Eval konnte kein RecurrentPPO laden** (Loader-Liste nur PPO/A2C/DQN — das beste
+   Modell war in der GUI nicht evaluierbar) und lief für LSTM-Modelle zustandslos.
+   RecurrentPPO + LSTM-State-Loop + Obs-Auto-Erkennung ergänzt.
+4. **GUI-Training konnte die beste Methode nicht starten:** Der Trainings-Tab bot nur
+   PPO/DQN/A2C via `train.py`; die Checkboxen „Curriculum Learning" und „Monster aktivieren
+   (Training)" waren **nicht verdrahtet** (tote UI). Neu: Radio-Option „LSTM-Curriculum
+   (empfohlen)" (Default) startet `train_curriculum.py` mit Zeitstempel-`--save-dir`;
+   tote Checkboxen entfernt, Hinweistext ergänzt.
+
+**Nächster Schritt:** v11-Curriculum-Run mit dieser Umgebung (siehe `docs/BEWERTUNG_UND_PLAN.md`).
+
+---
+
 ## v2026-06-15 — Det/Stoch-Gap-Fixes (v7: visit_count + action_buffer + Phase 4)
 
 ### v2026-06-15.A — Drei strukturelle Fixes gegen Det/Stoch-Gap

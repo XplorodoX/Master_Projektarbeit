@@ -1,0 +1,69 @@
+\begin{thebibliography}{10}
+
+\bibitem{cobbe2020procgen}
+Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
+\newblock Leveraging procedural generation to benchmark reinforcement learning.
+\newblock In {\em International conference on machine learning}, pages
+  2048--2056. PMLR, 2020.
+\newblock \url{https://arxiv.org/abs/1912.01588}.
+
+\bibitem{risi2020increasing}
+Sebastian Risi and Julian Togelius.
+\newblock Increasing generality in machine learning through procedural content
+  generation.
+\newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
+\newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
+
+\bibitem{ng1999policy}
+Andrew~Y Ng, Daishi Harada, and Stuart Russell.
+\newblock Policy invariance under reward transformations: Theory and
+  application to reward shaping.
+\newblock In {\em Proceedings of the Sixteenth International Conference on
+  Machine Learning (ICML)}, pages 278--287, 1999.
+
+\bibitem{schulman2017ppo}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock {\em arXiv preprint arXiv:1707.06347}, 2017.
+\newblock \url{https://arxiv.org/abs/1707.06347}.
+
+\bibitem{hochreiter1997lstm}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock {\em Neural Computation}, 9(8):1735--1780, 1997.
+
+\bibitem{raffin2021stable}
+Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Maximilian
+  Ernestus, and Noah Dormann.
+\newblock Stable-baselines3: Reliable reinforcement learning implementations.
+\newblock {\em Journal of Machine Learning Research}, 22(268):1--8, 2021.
+\newblock \url{http://jmlr.org/papers/v22/20-1364.html}.
+
+\bibitem{jiang2021plr}
+Minqi Jiang, Edward Grefenstette, and Tim Rockt{\"a}schel.
+\newblock Prioritized level replay.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  4940--4950. PMLR, 2021.
+\newblock \url{https://arxiv.org/abs/2010.03934}.
+
+\bibitem{chevalier2023minigrid}
+Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, et~al.
+\newblock Minigrid \& miniworld: Modular \& customizable reinforcement learning
+  environments for goal-oriented tasks.
+\newblock {\em Advances in Neural Information Processing Systems}, 36, 2023.
+\newblock \url{https://arxiv.org/abs/2306.13831}.
+
+\bibitem{hafner2021crafter}
+Danijar Hafner.
+\newblock Benchmarking the spectrum of agent capabilities.
+\newblock {\em arXiv preprint arXiv:2109.06780}, 2021.
+\newblock \url{https://arxiv.org/abs/2109.06780}.
+
+\bibitem{oh2018sil}
+Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
+\newblock Self-imitation learning.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  3878--3887. PMLR, 2018.
+\newblock \url{https://arxiv.org/abs/1806.05635}.
+
+\end{thebibliography}

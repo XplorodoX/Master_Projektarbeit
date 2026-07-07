@@ -141,8 +141,10 @@ PY
 | `n_eval_episodes` | 50 |
 | Timesteps | 1.000.000 |
 
-Curriculum: leistungsbasiert (4 Stufen: 5–12 / 12–22 / 22–35 / 35–45 Tiles).
-Observation: Grid + exitDx/exitDy + ExitPotentialField (9 Features).
+Curriculum: leistungsbasiert (4 Phasen: 5–12 / 12–25 / 25–45 / Greedy Fine-Tune).
+Observation (Env v11, seit 06.07.2026): **229 Features** = Grid 15×15 (225) + HP + exitDx/exitDy + step_frac.
+Legacy-Modelle (231-dim, vor 06.07.2026): `StoneforgeWorldEnv(..., include_energy_inventory=True)`.
+RecurrentPPO: `batch_size=64` (validiert, 2.1× schneller als 8), `ent_coef=0.05`, Device **CPU** (MPS ist langsamer!).
 
 ---
 
@@ -158,13 +160,13 @@ Observation: Grid + exitDx/exitDy + ExitPotentialField (9 Features).
 
 ---
 
-## Wrapper-Reihenfolge
+## Environment
 
-```
-StoneforgeWorldEnv → ExitPotentialFieldWrapper → ReducedActionEnv
-```
-
-Aktionsraum (ReducedActionEnv): 0=hoch, 1=runter, 2=links, 3=rechts. Mining ausgeschlossen.
+Kein Wrapper-Stack mehr: `StoneforgeWorldEnv` wird direkt verwendet.
+Aktionsraum: `Discrete(4)` — 0=hoch, 1=runter, 2=links, 3=rechts.
+Mining/Bauen/Kampf sind seit Env v11 **im C++-Binding entfernt** (Aktionen 4–8 → RuntimeError);
+sie existieren nur noch im spielbaren Client. Die früheren Wrapper
+`ExitPotentialFieldWrapper`/`ReducedActionEnv` liegen archiviert in `OLD/`.
 
 ---
 
@@ -206,9 +208,17 @@ Aktionsraum (ReducedActionEnv): 0=hoch, 1=runter, 2=links, 3=rechts. Mining ausg
 
 ## Bekannte Fallstricke
 
-- **Manhattan-Distanz im Reward-Shaping ist irreführend** bei Wänden → BFS-Distanz wäre sauber (C++ nötig).
+- **PBRS läuft auf BFS-Distanz** (`simulation.cpp`, β=2.5, γ=0.999 = RL-γ) — policy-invariant.
+  Luftlinien-/Manhattan-Potential wäre irreführend; NIE darauf zurückbauen.
+- **Biom-Schwellwerte sind hartkodiert** in `World::sampleBaseTile()` (world.cpp) — NICHT über
+  `game_config.json` tunebar (die früheren cold/warm/moss-Keys waren tot und wurden entfernt).
+- **WorldGen-Config ist prozess-global** (C++): `StoneforgeWorldEnv` stempelt sie bei jedem
+  `reset()` neu. Bei direkter Nutzung des C++-Bindings ohne Env-Wrapper daran denken!
+- **Legacy-Obs:** Modelle von vor dem 06.07.2026 (231-dim) brauchen
+  `include_energy_inventory=True` beim Env, sonst Shape-Mismatch.
+- **MPS/GPU bringt nichts:** CPU ist bei diesem Netz immer schneller (gemessen 06.07.2026).
 - **Zeitbasiertes Curriculum** → Reward-Kollaps. Seit v1.1 leistungsbasiert.
-- **Rebuild vergessen** nach `game_config.json`-Änderung → Crash oder falsche Ergebnisse.
+- **Rebuild vergessen** nach Änderungen an C++ oder `game_config.json` → Crash oder falsche Ergebnisse.
 - **Modellpfade**: Alle Modelle liegen jetzt in `models/`, nicht mehr in `best_models_*/`.
 
 ---

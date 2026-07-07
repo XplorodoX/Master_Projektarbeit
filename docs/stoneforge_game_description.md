@@ -1,120 +1,316 @@
 # Stoneforge — Spielbeschreibung
 
-Stand: 13.06.2026
+*Stand: 25.06.2026*
 
 ---
 
 ## Was ist Stoneforge?
 
-Stoneforge ist ein **2D-Sandbox-Spiel** mit prozedural generierten Welten,
-geschrieben in C++ mit einem Python-Binding (pybind11) für RL-Experimente.
-Die Welten werden bei jedem Start aus einem zufälligen Seed neu generiert —
-keine zwei Karten sind identisch.
+Stoneforge ist ein **rundenbasiertes 2D-Survival-Erkundungsspiel** in prozedural generierten Welten.
+Der Spieler startet in einer unbekannten Welt und hat genau ein Ziel: den **Exit finden und erreichen**.
 
-Das Spiel läuft als reine Simulation (kein Grafik-Modus nötig) und kann
-über das Python-Binding als Gym-Environment angesteuert werden.
+Die Welt existiert als reines Tile-Grid — kein Grafik-Engine-Overhead, kein Echtzeit-Loop.
+Jede Spieleraktion entspricht exakt einem Simulationsschritt. Das macht das Spiel ideal
+als RL-Umgebung: vollständig deterministisch, schnell, und beliebig parallelisierbar.
 
----
-
-## Spielwelt
-
-Die Welt ist ein **2D-Gitter** (theoretisch unbegrenzt, prozedural generiert).
-Jede Zelle ist genau ein Tile-Typ:
-
-| Tile | Bedeutung |
-|------|-----------|
-| `Empty` | Begehbarer Boden / Luft |
-| `Wall` | Wand / Fels — blockiert Bewegung |
-| `Tree` | Baum — abbaubar, gibt Holz |
-| `Ore` | Erz — abbaubar, gibt Erz |
-| `Workbench` | Werkbank — für Crafting |
-| `Exit` | Ausgang — Ziel des Agenten |
-| `Water` | Wasser — passierbar, visuell |
-
-Die Weltgenerierung nutzt **Perlin-Noise** (mehrere Schichten: Biom, Dichte,
-Erz, Bäume) mit festen Salt-Werten. Ein Seed erzeugt deterministisch immer
-dieselbe Welt.
-
-### Biome
-
-Drei Biom-Zonen (kalt, warm, Moos) entstehen aus dem Noise-Wert:
-
-| Biom | Noise-Bereich | Charakter |
-|------|--------------|-----------|
-| Kalt | 0.0 – 0.33 | weniger Wände, wenig Bäume |
-| Warm | 0.33 – 0.66 | mittlere Dichte |
-| Moos | 0.66 – 1.0 | dicht, viele Bäume |
+**Kernprinzip:** Erkunde, navigiere, überlebe — finde den Ausgang.
 
 ---
 
-## Spielfigur (Agent / Spieler)
+## Die Spielwelt
 
-Der Spieler startet immer bei Koordinate **(0, 0)** (Spawnpunkt).
-Der **Exit** wird zufällig in 35–45 Tiles Wegdistanz (BFS, nicht Manhattan)
-um den Spawn platziert.
+### Chunks und unendliche Welt
+
+Die Welt ist theoretisch **unendlich** groß. Sie wird in **Chunks** von je 16×16 Tiles unterteilt,
+die lazy generiert werden — ein Chunk existiert erst, wenn der Spieler (oder die BFS-Suche) ihn
+zum ersten Mal betritt. Nicht besuchte Bereiche kosten keinen Speicher.
+
+```
+Weltkoordinaten:   (-∞, +∞) × (-∞, +∞)
+Chunk-Größe:       16 × 16 Tiles
+Spawn:             (0, 0)
+Exit:              zufällig, 35–45 BFS-Tiles vom Spawn
+```
+
+### Tile-Typen
+
+Jede Zelle der Welt ist genau ein Tile-Typ:
+
+| Tile | Passierbar | Abbaubar | Beschreibung |
+|------|-----------|----------|--------------|
+| `Empty` | ✅ | — | Boden / Luft — freier Weg |
+| `Wall` | ❌ | ✅ (langsam) | Fels / Wand — blockiert Bewegung |
+| `Resource` | ❌ | ✅ | Erz im Fels — gibt Rohstoffe |
+| `Tree` | ❌ | ✅ (schnell) | Baum — gibt Holz |
+| `Exit` | ✅ | — | **Ziel** — Spielende bei Betreten |
+| `Water` | ✅ | — | Wasser — passierbar, kein Effekt |
+| `Workbench` | ❌ | — | Werkbank — Crafting-Station |
+| `StructureGrassland` … `StructureHelle` | ❌ | — | Biom-Strukturen (dekorativ + blockierend) |
+
+Mining-Geschwindigkeit hängt vom Tool-Level ab:
+- Kein Tool: 0.1/Schritt (Wand braucht ~10 Schritte)
+- Pickaxe Lv1: 0.22/Schritt (Resource-Stein: ~28 Schritte)
+- Pickaxe Lv2: 0.45/Schritt (Resource-Stein: ~14 Schritte)
+- Axt Lv1+: schnelleres Holzfällen
+
+---
+
+## Biome
+
+Die Welt ist in **7 Biome** unterteilt, die durch Perlin-Noise (mit Domain-Warping) entstehen.
+Das Biom bestimmt: Wand-Dichte, Ressourcen-Häufigkeit, Baumbestand und Strukturtyp.
+
+```
+Biom-Wert (0.0 → 1.0, aus Noise):
+
+  0.000 ──── 0.143  →  Grasland    (offen, wenig Wände)
+  0.143 ──── 0.286  →  Wald        (viele Bäume, mitteldicht)
+  0.286 ──── 0.429  →  Wüste       (wenig Vegetation, viel Stein)
+  0.429 ──── 0.571  →  Bergland    (dichte Wände, viel Erz)
+  0.571 ──── 0.714  →  Steppe      (flach, weitläufig)
+  0.714 ──── 0.857  →  Tundra      (kalt, spärlich)
+  0.857 ──── 1.000  →  Hölle       (extrem dicht, gefährlich)
+```
+
+Jedes Biom hat eigene **Strukturen** — 5×5-Tile-Muster die mit 10% Wahrscheinlichkeit
+pro Chunk platziert werden (nie über Spawn oder Exit):
+
+```
+Grasland:  #...#    Wald:   ..#..    Wüste:  ..#..
+           .#.#.           .###.            .###.
+           #####           ##.##            #####
+           .###.           #...#            .###.
+           #...#           #####            ..#..
+```
+
+---
+
+## Der Spieler
 
 ### Attribute
 
-| Attribut | Startwert | Effekt |
-|----------|-----------|--------|
-| HP | 10 | 0 → Episode beendet |
-| Energy | 100 | Sinkt beim Laufen, regeneriert bei Idle |
-| Inventory | 24 Slots | Items aufnehmen (Holz, Erz, …) |
+| Attribut | Startwert | Verlust | Effekt bei 0 |
+|----------|-----------|---------|--------------|
+| **HP** | 10 | Mob-Kontakt (−1/s), Verhungern | Episode endet (Tod) |
+| **Energie** | 100 | Jede aktive Aktion (−1/18 Schritte) | Verhungern: −1 HP/18 Ticks |
+| **Inventory** | 24 Slots, je 64× | — | Items sammeln, Crafting |
+
+**Energie-Regeneration:** Bei `Wait`-Aktion +1 Energie alle 8 Schritte.
+**Werkzeug-Level:** Axt-Level und Pickaxe-Level erhöhen Mining-Geschwindigkeit.
+
+### Spawn-Bereich
+
+Um (0,0) wird beim Start ein 5×5-Tile-Bereich freigeräumt (`spawnClearRadius=2`),
+sodass der Spieler nie direkt in einer Wand spawnt.
 
 ---
 
 ## Aktionen
 
-Der Spieler (bzw. Agent) kann pro Schritt **eine** Aktion ausführen:
+Pro Schritt führt der Spieler **genau eine Aktion** aus:
 
-| Aktion | Effekt |
-|--------|--------|
-| `MoveUp` | Bewegt 1 Tile nach oben (y−1) |
-| `MoveDown` | Bewegt 1 Tile nach unten (y+1) |
-| `MoveLeft` | Bewegt 1 Tile nach links (x−1) |
-| `MoveRight` | Bewegt 1 Tile nach rechts (x+1) |
-| `Mine` | Baut Tile vor dem Spieler ab (benötigt mehrere Schritte) |
-| `Place` | Platziert Item aus Hotbar |
-| `Use` | Schlägt Mobs in 3×3-Umgebung |
-| `Wait / Noop` | Nichts tun, Energy regeneriert |
+| Aktion | Code | Effekt |
+|--------|------|--------|
+| `MoveUp` | 0 | Bewegt den Spieler um (0, −1) wenn Tile passierbar |
+| `MoveDown` | 1 | Bewegt den Spieler um (0, +1) wenn Tile passierbar |
+| `MoveLeft` | 2 | Bewegt den Spieler um (−1, 0) wenn Tile passierbar |
+| `MoveRight` | 3 | Bewegt den Spieler um (+1, 0) wenn Tile passierbar |
+| `Mine` | 4 | Baut Tile in Blickrichtung ab (mehrere Schritte nötig) |
+| `Place` | 5 | Platziert Item aus aktiver Hotbar-Slot |
+| `Use` | 6 | Angriff: trifft Mobs in 3×3-Umgebung |
+| `Wait` | 7 | Nichts tun — Energie regeneriert |
+| `Noop` | 8 | Identisch mit Wait |
 
-Für RL-Training: Mining, Place, Use und Wait sind **deaktiviert** — der Agent
-hat nur die 4 Bewegungsaktionen (`Discrete(4)`).
-
----
-
-## Spielziel
-
-> **Den Exit finden.**
-
-Der Exit-Tile ist irgendwo in der Welt, 35–45 BFS-Tiles vom Spawn entfernt.
-Der Agent sieht nur ein **lokales 15×15-Grid** um sich herum
-(Sichtradius = 7 Tiles) — er sieht den Exit also nicht direkt,
-solange er nicht nahe genug heran kommt.
-
-Als Hilfe bekommt er den **Kompass** (exitDx, exitDy) — die Richtung zum Exit
-in Welt-Koordinaten. Das ist ein Luftlinien-Vektor, kein Pfad.
+**Für RL-Training:** Nur die 4 Bewegungsaktionen sind aktiv (`Discrete(4)`, seit Env v11
+direkt im C++-Binding erzwungen — Aktionen 4–8 werfen einen Fehler).
+Mining, Bauen und Angreifen existieren nur im spielbaren Client — der Agent muss rein navigieren.
 
 ---
 
-## Was macht das Spiel für RL schwierig?
+## Mobs
 
-### 1. Partielle Beobachtbarkeit (POMDP)
-Der Agent sieht nur 15×15 Tiles. Wände, Sackgassen und der Pfad dahinter
-sind unsichtbar. Das macht Stoneforge zu einem **Partially Observable Markov
-Decision Process** — der Agent muss sich merken, was er schon erkundet hat.
+Das Spiel hat 4 Mob-Typen mit unterschiedlichem KI-Verhalten.
+**Für RL-Training sind Mobs vollständig deaktiviert** — sie existieren nur im vollen Spielmodus.
 
-### 2. Maze-Navigation ohne Karte
-Der kürzeste Pfad führt oft durch Korridore, die vom Kompass weg zeigen.
-Eine reine „geh Richtung Exit"-Strategie scheitert an Wänden.
+### Mob-Verhaltenssysteme
 
-### 3. Prozedurale Generierung
-Jede Episode ist eine neue, unbekannte Welt. Der Agent kann sich keine
-Karte memorieren — er muss **generell** navigieren lernen.
+**Zombie** (Standard-Gegner):
+```
+Erkennt Spieler auf 10 Tiles  →  jagt direkt (stepToward)
+Verliert Spieler auf 14 Tiles →  wandert zufällig (45% Chance/Schritt, 15% idle)
+Schaden: 1 HP/Sekunde bei Kontakt
+Immer aggressiv: defaultAggro=true
+```
 
-### 4. Langer Horizont
-Bis zu 4.000 Schritte pro Episode. Der relevante Reward (+100) kommt erst
-am Ende — extrem sparse ohne Reward-Shaping.
+**Animal** (flüchtet):
+```
+Hält bevorzugt ≥4 Tiles Abstand zum Spieler
+Wenn zu nah: flüchtet (stepAway)
+Schaden: 1 HP/s (Verteidigung wenn eingeklemmt)
+Wandert aktiv: 75% Chance/Schritt
+```
+
+**Boss** (Elite-Gegner):
+```
+Erkennt Spieler auf 16 Tiles — große Aggroreichweite
+Verliert Spieler auf 20 Tiles
+Immer aggressiv (kein idle, nur 25% Wandern)
+Schaden: 2 HP/s — doppelt so stark wie Normal
+```
+
+**Default** (Fallback):
+```
+Wie Zombie, aber etwas passiver (55% Wandern, 25% idle)
+Erkennt Spieler auf 8 Tiles
+```
+
+### Mob-Spawning
+
+Mobs spawnen in der Nähe des Spielers (Offset 10 Tiles, Jitter ±8), passierbare Position wird
+bis zu 20× neu gewürfelt. Spawn-Tabelle ist im aktuellen Training leer — keine Mobs.
+
+---
+
+## Weltgenerierung im Detail
+
+### Wie ein Chunk entsteht (lazy, on-demand)
+
+```
+ensureChunk(cx, cy) wird aufgerufen
+        ↓
+Existiert Chunk? → sofort zurückgeben
+        ↓ nein
+biomeTagForChunk(cx, cy) berechnen (Perlin-Noise + Domain-Warping)
+        ↓
+Für jedes der 16×16 Tiles:
+  wallThreshold aus Biom auslesen
+  noise01(x, y, densitySalt) > threshold?  → Wall
+  noise01(x, y, oreSalt) > oreThreshold?   → Resource (Erz)
+  noise01(x, y, treeSalt) > treeThreshold? → Tree (Baum)
+  sonst                                    → Empty
+        ↓
+placeBiomeStructure? (10% Wahrscheinlichkeit, 5×5-Pattern)
+        ↓
+Chunk fertig, gecacht in HashMap
+```
+
+### Noise-Funktion
+
+Kein klassisches Simplex/Perlin — stattdessen eine **hash-basierte Punkt-Noise**:
+```
+noise01(x, y, salt):
+  value = x * 0x9e3779b185ebca87
+  value ^= y * 0xc2b2ae3d27d4eb4f
+  value ^= seed * 0x165667b19e3779f9
+  value ^= salt
+  value = mix(value)   ← bijektive Bit-Mixing-Funktion
+  return (value & 0xFFFFFFFFFFFF) / 0xFFFFFFFFFFFF
+```
+
+Das ergibt einen deterministischen float in [0,1] für jede (x,y,seed,salt)-Kombination.
+Für Biome werden 3 Noise-Schichten mit Domain-Warping kombiniert (verhindert quadratische Biom-Grenzen).
+
+### Exit-Platzierung
+
+```
+1. Flood-Fill vom Spawn über begehbare Tiles; Kandidaten mit
+   BFS-Tiefe in [exitMinDistance, exitMaxDistance]  (seit v11 echter Laufweg,
+   vorher Luftlinie — realer Weg streute damals auf 42–75 bei "35–45")
+2. Kandidaten-Check mit virtueller Freiräumung: Räumung darf den Laufweg
+   nicht unter exitMinDistance verkürzen (bis 24 Versuche)
+3. 3×3-Bereich um Exit wird freigeräumt (exitClearRadius=1), Exit-Tile gesetzt
+4. BFS vom Exit über die gesamte Welt berechnet (einmal pro reset())
+   → O(1)-Distanz-Lookup während der Episode
+```
+
+---
+
+## BFS-Distanzfeld
+
+**Das wichtigste technische Feature für RL:**
+
+Bei jedem `reset()` wird vom Exit-Tile aus eine **Breitensuche** über die gesamte erreichbare
+Welt durchgeführt. Das Ergebnis ist ein Dictionary `{(x,y) → BFS-Distanz zum Exit}`.
+
+```
+BFS-Box: Bounding-Box(Spawn, Exit) + Buffer von 80 Tiles
+  → deckt >95% aller möglichen Spieler-Positionen ab (sqrt(4000 maxSteps) ≈ 63 Tiles)
+```
+
+**Nutzen:**
+- Reward-Shaping: Agent wird für jeden BFS-Schritt näher zum Exit belohnt
+- `stepsWithoutProgress`: wie lange der Agent kein neues BFS-Minimum erreicht hat
+- `bfsDistanceAtOffset(dx, dy)`: zeigt dem Agenten welche Richtung wirklich hilft
+
+---
+
+## Crafting-System
+
+Das Spiel hat ein vollständiges Crafting-System (für den menschlichen Spieler, im RL deaktiviert):
+
+- Items werden gesammelt durch Mining (Holz, Erz, Stein)
+- Werkbank (`Workbench`-Tile) ermöglicht Rezepte
+- Werkzeuge (Axt, Pickaxe) erhöhen Mining-Geschwindigkeit
+- Rezepte sind in JSON-Dateien definiert und werden per `nlohmann/json` geladen
+
+---
+
+## Spielziel & Episode-Ende
+
+Eine Episode endet wenn eine der folgenden Bedingungen eintritt:
+
+| Bedingung | Ergebnis | Reward |
+|-----------|----------|--------|
+| Spieler betritt Exit-Tile | **Sieg** | +100 |
+| HP ≤ 0 (Tod durch Mob/Hunger) | Niederlage | −10 |
+| Schritte ≥ 4.000 (Timeout) | Niederlage | −10 |
+| 256 Schritte ohne positiven Reward (RL-Only) | Truncation | (kein Extra-Penalty) |
+
+---
+
+## Das Spiel aus Sicht des RL-Agenten
+
+So sieht die Welt aus Agenten-Perspektive aus (schematisch):
+
+```
+Weltausschnitt (viel größer als der Agent sieht):
+
+  ██████████████████████████████████
+  ██    ██      ██   ██    ██      ██
+  ██    ██  ██  ██   ██    ██  ██  ██
+  ██        ██       ██        ██  ██
+  ██████████████  ████████████████  ██
+  ██       ██  ██    ██              ██
+  ██   @   ██        ██   (Exit?)    ██   ← Spieler bei @
+  ██        ██  ████ ██              ██      sieht nur 15×15
+  ██    ██████  ██   ██████████████████
+  ██    ██      ██   ██   E            ██  ← Exit irgendwo hier
+  ████████████████████████████████████
+
+Was der Agent wirklich sieht (15×15 um @):
+
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░██░░░░░░██░░░
+  ░░██░░░░░░░░░░░
+  ░░░░░░@░░░░██░░   @ = Spieler (Mitte)
+  ░░░░░░░░██░░░░░   ██ = Wand
+  ░░░░░░░░██░░░░░   ░ = Boden/Luft
+  ░░░░░░░░░░░░░░░
+  ░░████░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░░░░
+
+  + exitDx = +28  (Exit liegt 28 Tiles rechts)
+  + exitDy = −12  (Exit liegt 12 Tiles über dem Spieler)
+```
+
+**Das Problem:** exitDx/exitDy zeigt die Luftlinie — nicht den Pfad durch Wände.
+Der Agent muss lernen, Wänden auszuweichen ohne die globale Karte zu kennen.
 
 ---
 
@@ -122,11 +318,29 @@ am Ende — extrem sparse ohne Reward-Shaping.
 
 | Parameter | Wert |
 |-----------|------|
-| Sichtradius | 7 Tiles → 15×15 Grid |
-| Observation-Größe | 231 Features |
+| Weltstruktur | Chunks à 16×16 Tiles, lazy generiert |
+| Biome | 7 (Grasland, Wald, Wüste, Bergland, Steppe, Tundra, Hölle) |
+| Noise-Typ | Hash-basierte Punktnoise + Domain-Warping |
+| Sichtradius (RL) | 7 Tiles → 15×15 Gitter (225 Tiles) |
+| Observation-Größe | 229 Features (float32) — seit Env v11; Legacy-Modelle: 231 |
+| Aktionsraum (RL) | Discrete(4) — nur Bewegung |
 | Max. Schritte/Episode | 4.000 |
 | Exit-Distanz (Eval) | 35–45 Tiles (BFS) |
-| Aktionsraum | Discrete(4) |
-| Weltgenerierung | Perlin-Noise + Seed |
-| Simulation | C++ (pybind11 → Python) |
-| FPS (Training) | ~330 Steps/s (8 Envs parallel) |
+| BFS-Buffer | 80 Tiles um Spawn/Exit-Box |
+| Mob-Typen | 4 (Zombie, Animal, Boss, Default) |
+| Simulation | C++ mit pybind11 → Python |
+| Steps/Sekunde (Training) | ~330 Steps/s bei 8 parallelen Envs |
+| Determinismus | Vollständig: seed → identische Welt |
+
+---
+
+## Relevante Dateien
+
+| Datei | Inhalt |
+|-------|--------|
+| [src/core/simulation.cpp](../src/core/simulation.cpp) | Hauptschleife, Reward, BFS, Observation |
+| [src/core/world.cpp](../src/core/world.cpp) | Weltgenerierung, Chunks, Noise, Biome |
+| [src/core/object.cpp](../src/core/object.cpp) | Tile-Objekte, Mining-Eigenschaften |
+| [src/core/recipe.cpp](../src/core/recipe.cpp) | Crafting-Rezepte |
+| [assets/base/game_config.json](../assets/base/game_config.json) | Alle Spielparameter |
+| [python/stoneforge_env.py](../python/stoneforge_env.py) | Gym-Wrapper, Observation, Curriculum |

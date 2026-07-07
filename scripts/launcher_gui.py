@@ -924,7 +924,7 @@ class App(tk.Tk):
 
     def _build_section_training(self, f: ttk.Frame) -> None:
         self._section_header(f, "Training",
-                             "DQN oder PPO trainieren. Curriculum steigert Schwierigkeit automatisch.")
+                             "LSTM-Curriculum ist die beste Methode (86% SR). PPO/DQN/A2C als Baselines.")
 
         card = self._card(f)
 
@@ -932,10 +932,11 @@ class App(tk.Tk):
         self._sec_label(card, "Algorithmus")
         row = tk.Frame(card, bg=BG3)
         row.pack(fill="x", padx=14, pady=(0, 8))
-        self._algo_var = tk.StringVar(value="ppo")
-        for text, val in [("PPO  (empfohlen)", "ppo"), ("DQN", "dqn"), ("A2C", "a2c")]:
+        self._algo_var = tk.StringVar(value="curriculum")
+        for text, val in [("LSTM-Curriculum  (empfohlen)", "curriculum"),
+                          ("PPO", "ppo"), ("DQN", "dqn"), ("A2C", "a2c")]:
             ttk.Radiobutton(row, text=text, variable=self._algo_var,
-                            value=val).pack(side="left", padx=(0, 24))
+                            value=val).pack(side="left", padx=(0, 20))
 
         self._sep(card)
 
@@ -961,17 +962,13 @@ class App(tk.Tk):
 
         self._sep(card)
 
-        # Options
-        self._sec_label(card, "Optionen")
-        self._curriculum_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(card,
-                        text="Curriculum Learning  (5–12 → 35–45 Tiles in 4 Stufen)",
-                        variable=self._curriculum_var).pack(anchor="w", padx=14, pady=(0, 4))
-
-        self._monsters_train_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(card,
-                        text="Monster aktivieren  (Standard: aus — sauberes Navigationstraining)",
-                        variable=self._monsters_train_var).pack(anchor="w", padx=14, pady=(0, 10))
+        # Hinweis statt toter Optionen (frühere Checkboxen "Curriculum"/"Monster"
+        # waren nicht verdrahtet und wurden entfernt)
+        tk.Label(card,
+                 text="Hinweis: LSTM-Curriculum trainiert 4 Phasen (5–12 → 35–45 Tiles) mit\n"
+                      "festem Ablauf — der Timesteps-Regler gilt nur für PPO/DQN/A2C.",
+                 bg=BG3, fg=DIM, justify="left",
+                 font=("Helvetica", 10)).pack(anchor="w", padx=14, pady=(0, 10))
 
         self._sep(card)
         ttk.Button(card, text="▶  Training starten", style="Action.TButton",
@@ -1282,9 +1279,19 @@ class App(tk.Tk):
         algo = self._algo_var.get()
         ts = self._ts_var.get()
         self._total_ts = ts
-        parts = [_quote(PY), "scripts/train.py",
-                 "--algo", algo, "--timesteps", str(ts),
-                 "--exit-min", "5", "--exit-max", "45"]
+        if algo == "curriculum":
+            # LSTM-Curriculum: 4 Phasen mit festem Ablauf (train_curriculum.py)
+            from datetime import datetime
+            save_dir = f"models/ppo_lstm_curriculum_{datetime.now().strftime('%Y%m%d_%H%M')}"
+            self._total_ts = 2_200_000   # grobe Gesamtsumme für den Fortschrittsbalken
+            self._log(f"LSTM-Curriculum → {save_dir} (Timesteps-Regler wird ignoriert)\n")
+            parts = [_quote(PY), "scripts/train_curriculum.py",
+                     "--save-dir", _quote(save_dir),
+                     "--n-envs", "16", "--no-live-map"]
+        else:
+            parts = [_quote(PY), "scripts/train.py",
+                     "--algo", algo, "--timesteps", str(ts),
+                     "--exit-min", "5", "--exit-max", "45"]
         self._run(" ".join(parts), mode="train")
 
     def _do_play(self) -> None:
@@ -1314,31 +1321,45 @@ class App(tk.Tk):
         script = f"""\
 import numpy as np
 from stable_baselines3 import A2C, DQN, PPO
-from stoneforge_env import StoneforgeWorldEnv
+from sb3_contrib import RecurrentPPO
+from stoneforge_env import StoneforgeWorldEnv, env_kwargs_for_model
 
 seeds = list(range(7000, 7050))
 path = {repr(model)}
-env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
 
 model = None
 name = None
-for _Cls, _name in [(PPO, 'PPO'), (A2C, 'A2C'), (DQN, 'DQN')]:
+is_rec = False
+for _Cls, _name in [(RecurrentPPO, 'RecurrentPPO'), (PPO, 'PPO'), (A2C, 'A2C'), (DQN, 'DQN')]:
     try:
-        model = _Cls.load(path)
+        model = _Cls.load(path, device='cpu')
         name = _name
+        is_rec = _Cls is RecurrentPPO
         break
     except Exception:
         pass
 if model is None:
     raise RuntimeError(f'Konnte Modell nicht laden: {{path}}')
 
+# Env-Format automatisch aus dem Modell ableiten (alte 231-dim vs. neue 229-dim Obs)
+env = StoneforgeWorldEnv(exit_min=35, exit_max=45, **env_kwargs_for_model(model))
+
 succ, lens, rets = 0, [], []
 for i, seed in enumerate(seeds):
     obs, _ = env.reset(seed=seed)
     done = False; ep = 0.0; n = 0; ok = False
+    states = None
+    ep_start = np.ones((1,), dtype=bool)
     while not done and n < 4000:
-        a, _ = model.predict(obs, deterministic=False)
-        obs, r, t, tr, info = env.step(int(a))
+        if is_rec:
+            a, states = model.predict(obs.reshape(1, -1), state=states,
+                                      episode_start=ep_start, deterministic=False)
+            a = int(a[0])
+            ep_start = np.zeros((1,), dtype=bool)
+        else:
+            a, _ = model.predict(obs, deterministic=False)
+            a = int(a)
+        obs, r, t, tr, info = env.step(a)
         ep += r; n += 1
         if info.get('reached_exit'):
             ok = True

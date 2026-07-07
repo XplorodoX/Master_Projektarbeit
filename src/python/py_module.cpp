@@ -52,9 +52,16 @@ public:
         return flattenObservation(sim_.getObservation());
     }
 
+    // RL nutzt ausschließlich Navigation: MoveUp/Down/Left/Right (0–3).
+    // Mining, Bauen (Place), Angriff (Use) und Wait sind im RL-Binding entfernt —
+    // sie existieren nur noch im spielbaren Client.
+    static constexpr int kMovementActionCount = 4;
+
     py::tuple step(int action) {
-        if(action < 0 || action >= stoneforge::Simulation::kActionCount) {
-            throw std::runtime_error("action out of range");
+        if(action < 0 || action >= kMovementActionCount) {
+            throw std::runtime_error(
+                "action out of range (RL-Binding: nur Bewegung 0-3; "
+                "Mining/Place/Use/Wait sind entfernt)");
         }
 
         const auto result = sim_.step(static_cast<stoneforge::Action>(action));
@@ -72,7 +79,7 @@ public:
     }
 
     int actionSpaceN() const {
-        return stoneforge::Simulation::kActionCount;
+        return kMovementActionCount;
     }
 
     int observationSize() const {

@@ -22,19 +22,9 @@ struct WorldGenConfig {
     bool forceGuaranteedPath = false;
     bool guaranteedPathFallback = false;
 
-    double coldBiomeMax = 0.33;
-    double warmBiomeMax = 0.66;
-
-    double coldWallThreshold = 0.11;
-    double warmWallThreshold = 0.16;
-    double mossWallThreshold = 0.08;
-
-    double coldOreThreshold = 0.03;
-    double warmOreThreshold = 0.05;
-    double mossOreThreshold = 0.02;
-
-    double warmTreeThreshold = 0.11;
-    double mossTreeThreshold = 0.15;
+    // Hinweis: Die Biom-Schwellwerte (Wand-/Erz-/Baum-Dichte) sind NICHT konfigurierbar —
+    // sie sind pro Biom fest in World::sampleBaseTile() (world.cpp) hinterlegt.
+    // Frühere cold/warm/moss-Threshold-Felder waren tote Konfiguration und wurden entfernt.
 
     int spawnClearRadius = 2;
     int exitClearRadius = 1;

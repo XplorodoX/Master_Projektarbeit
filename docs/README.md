@@ -7,6 +7,7 @@
 | `Expose.pdf` | Projekthexposé (Aufgabenstellung, Ziele) |
 | `Expose.tex` | LaTeX-Quellcode des Exposés |
 | `Projektarbeit_RL_Dokumentation.md` | Vollständige Projektdokumentation (Markdown) |
+| `gpu_and_cloud_training.md` | Anleitung zur Beschleunigung des Trainings auf GPU und Cloud (Kaggle) |
 | `report.html` | HTML-Report mit Experimentergebnissen |
 | `references.bib` | BibTeX-Literaturreferenzen |
 

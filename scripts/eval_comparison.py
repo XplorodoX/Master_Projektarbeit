@@ -18,14 +18,20 @@ Verwendung:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 import numpy as np
 from stable_baselines3 import PPO
 from sb3_contrib import RecurrentPPO
 
+_PYTHON_DIR = os.path.join(os.path.dirname(__file__), "..", "python")
+if _PYTHON_DIR not in sys.path:
+    sys.path.insert(0, _PYTHON_DIR)
+
 from stoneforge_env import StoneforgeWorldEnv
 from cnn_extractor import StoneforgeGridCNN  # noqa: F401 — wird beim Laden von Condition D benötigt
+from doc_logger import save_eval_results
 
 # ──────────────────────────────────────────────────────────────────────────────
 EXPERIMENTS = {
@@ -42,6 +48,7 @@ EXPERIMENTS = {
         "label": "B — MLP, kein BFS",
         "note":  "230-Feature-Env, forceGuaranteedPath=false",
         "skip":  False,
+        "use_step_frac": False,
     },
     "C_ppo_lstm": {
         "path":  "models/ppo_lstm_curriculum/best_model.zip",
@@ -84,9 +91,9 @@ MAX_STEPS = 4000
 
 def eval_ppo(model, seeds: list[int], exit_min: int, exit_max: int,
              deterministic: bool = True,
-             use_last_action_reward: bool = False) -> dict:
+             env_kwargs: dict | None = None) -> dict:
     env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max,
-                              use_last_action_reward=use_last_action_reward)
+                              **(env_kwargs or {}))
     successes, lengths, returns = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -106,11 +113,9 @@ def eval_ppo(model, seeds: list[int], exit_min: int, exit_max: int,
 
 def eval_rppo(model, seeds: list[int], exit_min: int, exit_max: int,
               deterministic: bool = True,
-              use_visited_mask: bool = False,
-              use_last_action_reward: bool = False) -> dict:
+              env_kwargs: dict | None = None) -> dict:
     env = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max,
-                              use_visited_mask=use_visited_mask,
-                              use_last_action_reward=use_last_action_reward)
+                              **(env_kwargs or {}))
     successes, lengths, returns = 0, [], []
     for seed in seeds:
         obs, _ = env.reset(seed=seed)
@@ -141,17 +146,19 @@ def run_eval(key: str, cfg: dict, seeds: list[int], exit_min: int, exit_max: int
     if cfg["skip"]:
         return None
     try:
+        # Env-Format automatisch aus der Obs-Dimension des Modells ableiten
+        # (alte 231/236/…-dim Modelle vs. neue 229-dim, siehe stoneforge_env._OBS_DIM_KWARGS)
+        from stoneforge_env import env_kwargs_for_model
         if cfg["algo"] == "rppo":
             model = RecurrentPPO.load(cfg["path"])
             res = eval_rppo(model, seeds, exit_min, exit_max,
                             deterministic=deterministic,
-                            use_visited_mask=cfg.get("visited_mask", False),
-                            use_last_action_reward=cfg.get("use_last_action_reward", False))
+                            env_kwargs=env_kwargs_for_model(model))
         else:
             model = PPO.load(cfg["path"])
             res = eval_ppo(model, seeds, exit_min, exit_max,
                             deterministic=deterministic,
-                            use_last_action_reward=cfg.get("use_last_action_reward", False))
+                            env_kwargs=env_kwargs_for_model(model))
         return res
     except Exception as e:
         print(f"  ⚠️  Fehler bei {key}: {e}", file=sys.stderr)
@@ -199,13 +206,54 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def _results_to_conditions(results: dict, deterministic: bool) -> list[dict]:
+    """Wandelt run_eval-Ergebnisse in eine speicherbare Liste um."""
+    from datetime import datetime
+    conditions = []
+    # Historische Baseline A (hartcodiert)
+    conditions.append({
+        "label":     "A — MLP + BFS (Baseline)",
+        "model_path":"models/ppo_phase4/best_model.zip",
+        "sr":        1.0,
+        "successes": 50,
+        "n":         50,
+        "mean_len":  49.0,
+        "mean_ret":  100.5,
+        "note":      "historisch, andere Env-Bedingungen (236 Features, guaranteed path)",
+        "deterministic": deterministic,
+    })
+    for key, cfg in EXPERIMENTS.items():
+        if cfg["skip"]:
+            continue
+        res = results.get(key)
+        if res is None:
+            continue
+        sr = res["successes"] / res["n"]
+        conditions.append({
+            "label":      cfg["label"],
+            "model_path": cfg["path"],
+            "sr":         round(sr, 4),
+            "successes":  res["successes"],
+            "n":          res["n"],
+            "mean_len":   round(float(res["mean_len"]), 1),
+            "mean_ret":   round(float(res["mean_ret"]), 2),
+            "note":       cfg.get("note", ""),
+            "deterministic": deterministic,
+        })
+    return conditions
+
+
 def main() -> None:
     args = parse_args()
     seeds_a = list(range(args.seeds_a[0], args.seeds_a[1]))
     exit_min, exit_max = args.exit_min, args.exit_max
     deterministic = not args.stochastic
 
+    from datetime import datetime
     det_label = "deterministisch" if deterministic else "stochastisch"
+    det_slug  = "det" if deterministic else "stoch"
+    date_str  = datetime.now().strftime("%Y%m%d")
+
     print(f"\nEvaluiere auf Seeds {seeds_a[0]}–{seeds_a[-1]}, exit={exit_min}–{exit_max}, {det_label} ...")
     results_a: dict = {}
     for key, cfg in EXPERIMENTS.items():
@@ -216,6 +264,18 @@ def main() -> None:
         results_a[key] = res
 
     print_table(results_a, f"{seeds_a[0]}–{seeds_a[-1]}", deterministic=deterministic)
+
+    # Testset A automatisch speichern
+    save_eval_results(
+        name=f"ablation_{date_str}_{det_slug}_testsetA",
+        metadata={
+            "seeds_label": f"{seeds_a[0]}–{seeds_a[-1]}",
+            "exit_range":  f"{exit_min}–{exit_max}",
+            "deterministic": deterministic,
+            "date":        datetime.now().strftime("%d.%m.%Y"),
+        },
+        conditions=_results_to_conditions(results_a, deterministic),
+    )
 
     if args.seeds_b:
         seeds_b = list(range(args.seeds_b[0], args.seeds_b[1]))
@@ -228,6 +288,18 @@ def main() -> None:
             res = run_eval(key, cfg, seeds_b, exit_min, exit_max, deterministic=deterministic)
             results_b[key] = res
         print_table(results_b, f"{seeds_b[0]}–{seeds_b[-1]} (Holdout)", deterministic=deterministic)
+
+        # Holdout B automatisch speichern
+        save_eval_results(
+            name=f"ablation_{date_str}_{det_slug}_holdoutB",
+            metadata={
+                "seeds_label": f"{seeds_b[0]}–{seeds_b[-1]} (Holdout)",
+                "exit_range":  f"{exit_min}–{exit_max}",
+                "deterministic": deterministic,
+                "date":        datetime.now().strftime("%d.%m.%Y"),
+            },
+            conditions=_results_to_conditions(results_b, deterministic),
+        )
 
 
 if __name__ == "__main__":
