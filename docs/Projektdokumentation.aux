@@ -52,38 +52,44 @@
 \citation{jiang2021plr}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand --- der Lauf ist zum Redaktionszeitpunkt in Phase 3). Seit v11 misst jeder Eval-Checkpoint beide Betriebsarten; der Det/Stoch-Gap ist damit erstmals über den gesamten Verlauf sichtbar. Vertikale Linien: Phasenwechsel (dort wird jeweils das Bestmodell der Vorphase geladen; die x-Achse ist über die Phasen kumuliert). Erzeugt mit \texttt  {scripts/plot\_run\_curve.py}.}}{7}{figure.3}\protected@file@percent }
 \newlabel{fig:v11kurve}{{3}{7}{Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand --- der Lauf ist zum Redaktionszeitpunkt in Phase 3). Seit v11 misst jeder Eval-Checkpoint beide Betriebsarten; der Det/Stoch-Gap ist damit erstmals über den gesamten Verlauf sichtbar. Vertikale Linien: Phasenwechsel (dort wird jeweils das Bestmodell der Vorphase geladen; die x-Achse ist über die Phasen kumuliert). Erzeugt mit \texttt {scripts/plot\_run\_curve.py}}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Zeitleiste und Lessons Learned}{7}{subsection.5.6}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile, Weltkarten-Minimaps (grau = Wand, blaugrau = erkundeter Boden, grün = Startpunkt) und uPlot-Charts. Im Training zusätzlich: goldene Raute = gesichteter Exit, grüner Blitz bei Exit-Erfolg, Viridis-Heatmap.}}{8}{figure.4}\protected@file@percent }
 \newlabel{fig:livemap}{{4}{8}{Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile, Weltkarten-Minimaps (grau = Wand, blaugrau = erkundeter Boden, grün = Startpunkt) und uPlot-Charts. Im Training zusätzlich: goldene Raute = gesichteter Exit, grüner Blitz bei Exit-Erfolg, Viridis-Heatmap}{figure.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Umgebungsrevision v11 (06.07.2026)}{8}{section.6}\protected@file@percent }
-\newlabel{sec:v11}{{6}{8}{Umgebungsrevision v11 (06.07.2026)}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche --- vom Eval-Artefakt zur Batch-Größen-Korrektur}{8}{subsection.5.6}\protected@file@percent }
+\newlabel{sec:etappe6}{{5.6}{8}{Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche --- vom Eval-Artefakt zur Batch-Größen-Korrektur}{subsection.5.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Eval-Cap-Artefakt: Success Rate \emph  {desselben Modells} (bester Phase-1-Checkpoint, Seed 0) als Funktion des Episoden-Caps der Evaluation (50 Val-Seeds; aus einem einzigen Cap-4000-Lauf mit protokollierten Schritten-bis-Erfolg abgeleitet). Die stochastische SR saturiert erst bei Cap 4000; die deterministische ist Cap-unabhängig (Argmax-Läufe scheitern nicht an Zeit, sondern an Schleifen). Erzeugt mit \texttt  {scripts/plot\_etappe6\_figures.py}.}}{9}{figure.5}\protected@file@percent }
+\newlabel{fig:capartefakt}{{5}{9}{Eval-Cap-Artefakt: Success Rate \emph {desselben Modells} (bester Phase-1-Checkpoint, Seed 0) als Funktion des Episoden-Caps der Evaluation (50 Val-Seeds; aus einem einzigen Cap-4000-Lauf mit protokollierten Schritten-bis-Erfolg abgeleitet). Die stochastische SR saturiert erst bei Cap 4000; die deterministische ist Cap-unabhängig (Argmax-Läufe scheitern nicht an Zeit, sondern an Schleifen). Erzeugt mit \texttt {scripts/plot\_etappe6\_figures.py}}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, Evals auf 50 Val-Seeds mit Cap 4000). Oben: stochastische SR --- batch=8 steigt stetig auf 84--88\,\%, während batch=64 sowohl nackt (A1-Reproduktion) als auch im Curriculum-Stack chaotisch oszilliert bzw.\ stagniert. Unten: \texttt  {explained\_variance} des Critics (EMA-geglättet, Rohkurven blass) --- nur mit batch=8 entstehen ab $\approx $\,100k anhaltende Hochphasen. Erzeugt mit \texttt  {scripts/plot\_etappe6\_figures.py}.}}{10}{figure.6}\protected@file@percent }
+\newlabel{fig:batchvgl}{{6}{10}{Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, Evals auf 50 Val-Seeds mit Cap 4000). Oben: stochastische SR --- batch=8 steigt stetig auf 84--88\,\%, während batch=64 sowohl nackt (A1-Reproduktion) als auch im Curriculum-Stack chaotisch oszilliert bzw.\ stagniert. Unten: \texttt {explained\_variance} des Critics (EMA-geglättet, Rohkurven blass) --- nur mit batch=8 entstehen ab $\approx $\,100k anhaltende Hochphasen. Erzeugt mit \texttt {scripts/plot\_etappe6\_figures.py}}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}Zeitleiste und Lessons Learned}{10}{subsection.5.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt  {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\ ohne strikte Val/Test-Trennung.}}{11}{table.6}\protected@file@percent }
+\newlabel{tab:timeline}{{6}{11}{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\^^Mohne strikte Val/Test-Trennung}{table.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Umgebungsrevision v11 (06.07.2026)}{11}{section.6}\protected@file@percent }
+\newlabel{sec:v11}{{6}{11}{Umgebungsrevision v11 (06.07.2026)}{section.6}{}}
 \citation{raffin2021stable}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt  {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\ ohne strikte Val/Test-Trennung.}}{9}{table.6}\protected@file@percent }
-\newlabel{tab:timeline}{{6}{9}{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\^^Mohne strikte Val/Test-Trennung}{table.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Performance-Analyse: Training beschleunigen}{9}{section.7}\protected@file@percent }
-\newlabel{sec:performance}{{7}{9}{Performance-Analyse: Training beschleunigen}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}CPU schlägt Apple-GPU (MPS)}{9}{subsection.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix.}}{12}{figure.7}\protected@file@percent }
+\newlabel{fig:exitdist}{{7}{12}{Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix}{figure.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Performance-Analyse: Training beschleunigen}{12}{section.7}\protected@file@percent }
+\newlabel{sec:performance}{{7}{12}{Performance-Analyse: Training beschleunigen}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}CPU schlägt Apple-GPU (MPS)}{12}{subsection.7.1}\protected@file@percent }
 \citation{chevalier2023minigrid}
 \citation{hafner2021crafter}
 \citation{cobbe2020procgen}
 \citation{jiang2021plr}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix.}}{10}{figure.5}\protected@file@percent }
-\newlabel{fig:exitdist}{{5}{10}{Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen.}}{10}{figure.6}\protected@file@percent }
-\newlabel{fig:fps}{{6}{10}{Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen}{figure.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Batch-Größe: 2,1-fache Beschleunigung, validiert}{10}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Einordnung in verwandte Arbeiten}{10}{section.8}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen.}}{13}{figure.8}\protected@file@percent }
+\newlabel{fig:fps}{{8}{13}{Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen}{figure.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Batch-Größe: vermeintliche Validierung (06.07.) --- am Folgetag widerlegt}{13}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Einordnung in verwandte Arbeiten}{13}{section.8}\protected@file@percent }
 \citation{oh2018sil}
 \citation{jiang2021plr}
 \citation{jiang2021plr}
 \bibstyle{unsrt}
 \bibdata{references}
 \bibcite{cobbe2020procgen}{1}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Validierungslauf \texttt  {batch\_size}=64 (Phase-1-Setup, Env v11): \texttt  {approx\_kl} deutlich über der Lernschwelle, \texttt  {explained\_variance} mit wiederkehrenden Hochphasen --- die Politik lernt aktiv.}}{11}{figure.7}\protected@file@percent }
-\newlabel{fig:batchval}{{7}{11}{Validierungslauf \texttt {batch\_size}=64 (Phase-1-Setup, Env v11): \texttt {approx\_kl} deutlich über der Lernschwelle, \texttt {explained\_variance} mit wiederkehrenden Hochphasen --- die Politik lernt aktiv}{figure.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Fazit und Ausblick}{11}{section.9}\protected@file@percent }
-\newlabel{sec:ausblick}{{9}{11}{Fazit und Ausblick}{section.9}{}}
 \bibcite{risi2020increasing}{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Validierungslauf \texttt  {batch\_size}=64 (Phase-1-Setup, Env v11), Stand 06.07.: \texttt  {approx\_kl} über der Lernschwelle, \texttt  {explained\_variance} mit wiederkehrenden Hochphasen. Die daraus gezogene Freigabe von batch=64 wurde am 07.07.\ widerlegt (Abschnitt~\ref {sec:etappe6}): Die Hochphasen sind transient, die Dynamik konvergiert nicht.}}{14}{figure.9}\protected@file@percent }
+\newlabel{fig:batchval}{{9}{14}{Validierungslauf \texttt {batch\_size}=64 (Phase-1-Setup, Env v11), Stand 06.07.: \texttt {approx\_kl} über der Lernschwelle, \texttt {explained\_variance} mit wiederkehrenden Hochphasen. Die daraus gezogene Freigabe von batch=64 wurde am 07.07.\ widerlegt (Abschnitt~\ref {sec:etappe6}): Die Hochphasen sind transient, die Dynamik konvergiert nicht}{figure.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Fazit und Ausblick}{14}{section.9}\protected@file@percent }
+\newlabel{sec:ausblick}{{9}{14}{Fazit und Ausblick}{section.9}{}}
 \bibcite{ng1999policy}{3}
 \bibcite{schulman2017ppo}{4}
 \bibcite{hochreiter1997lstm}{5}
@@ -92,4 +98,4 @@
 \bibcite{chevalier2023minigrid}{8}
 \bibcite{hafner2021crafter}{9}
 \bibcite{oh2018sil}{10}
-\gdef \@abspage@last{12}
+\gdef \@abspage@last{15}

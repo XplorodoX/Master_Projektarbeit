@@ -135,7 +135,7 @@ PY
 | `maxSteps` | 4.000 |
 | `exitMinDistance` | 35 (Eval-Env) |
 | `exitMaxDistance` | 45 (Eval-Env) |
-| `forceGuaranteedPath` | `true` |
+| `forceGuaranteedPath` | `false` (redundant seit v11: BFS-Exit-Platzierung garantiert Lösbarkeit) |
 | DQN `buffer_size` | 200.000 |
 | DQN `exploration_fraction` | 0.50 |
 | `n_eval_episodes` | 50 |
@@ -144,7 +144,9 @@ PY
 Curriculum: leistungsbasiert (4 Phasen: 5–12 / 12–25 / 25–45 / Greedy Fine-Tune).
 Observation (Env v11, seit 06.07.2026): **229 Features** = Grid 15×15 (225) + HP + exitDx/exitDy + step_frac.
 Legacy-Modelle (231-dim, vor 06.07.2026): `StoneforgeWorldEnv(..., include_energy_inventory=True)`.
-RecurrentPPO: `batch_size=64` (validiert, 2.1× schneller als 8), `ent_coef=0.05`, Device **CPU** (MPS ist langsamer!).
+RecurrentPPO: `batch_size=8` (**NICHT 64!** — 64 destabilisiert den Critic: EV bleibt ≈ 0,1,
+SR oszilliert chaotisch; nachgewiesen 07.07.2026 mit 4 Läufen + A/B, siehe CHANGELOG v2026-07-07.4),
+`ent_coef=0.05`, Device **CPU** (MPS ist langsamer!).
 
 ---
 
@@ -217,6 +219,13 @@ sie existieren nur noch im spielbaren Client. Die früheren Wrapper
 - **Legacy-Obs:** Modelle von vor dem 06.07.2026 (231-dim) brauchen
   `include_energy_inventory=True` beim Env, sonst Shape-Mismatch.
 - **MPS/GPU bringt nichts:** CPU ist bei diesem Netz immer schneller (gemessen 06.07.2026).
+- **`batch_size=64` destabilisiert den LSTM-Critic** (EV ≈ 0,1, SR oszilliert 10–74 % ohne
+  Konvergenz). batch=8 → ~8× mehr Gradientenschritte pro Rollout, EV > 0,85, stabiler Anstieg.
+  Die frühere 64er-„Validierung" beruhte auf einem Einzel-Snapshot (07.07.2026 widerlegt).
+- **Eval-Episoden-Cap < 4000 verfälscht die SR massiv** (gleiches Modell: 48 % @Cap 600 vs.
+  86 % @Cap 4000). Evals IMMER mit Cap 4000 (= Env-maxSteps) fahren; kostet nur ~21 s/Eval.
+- **Einzelne Eval-Snapshots sind keine Validierung:** Die Lerndynamik kann chaotisch sein
+  (transiente Hochphasen). Hyperparameter-Entscheidungen nur auf Basis ganzer Eval-KURVEN treffen.
 - **Zeitbasiertes Curriculum** → Reward-Kollaps. Seit v1.1 leistungsbasiert.
 - **Rebuild vergessen** nach Änderungen an C++ oder `game_config.json` → Crash oder falsche Ergebnisse.
 - **Modellpfade**: Alle Modelle liegen jetzt in `models/`, nicht mehr in `best_models_*/`.

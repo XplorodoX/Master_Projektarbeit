@@ -3,6 +3,115 @@
 
 ---
 
+## v2026-07-07.4 — Forensik: Stack/Swarm/Wrapper entlastet — v11-Lerndynamik ist instabil, Hauptverdacht batch_size=64
+
+#### Befunde (4 parallele Diagnose-Läufe + deterministische Vergleiche, alle Seed 1)
+| Arm | Setup | SR stoch (Verlauf) |
+|-----|-------|--------------------|
+| Kontrolle | Curriculum, Swarm an | 16→20→28→34→**14→8**→24→38→34 % (25k–475k, volatil, kein Trend) |
+| B8-Arm | Curriculum, `--no-swarm` | 18→14→12→20→26→**40**→26 % (25k–300k, deckungsgleich volatil) |
+| Bisect-Arm | Curriculum, ohne StreamWrapper/LiveMap | 18→14→12 % (25k–75k, ebenso) |
+| A1-Repro | **nackter** RecurrentPPO, kein Stack | **74**→44→66→**24**→50 % (25k–125k, ebenso volatil!) |
+
+1. **Swarm entlastet** (B8): No-Swarm-Arm verläuft deckungsgleich mit Kontrolle.
+2. **StreamWrapper entlastet**: Code ist rein lesend (`currentBfsDistanceToExit()` ist const);
+   Bisect-Arm ohne Wrapper stagniert identisch. (Nebenbei gefixt: Wrapper wurde bisher auch
+   bei `--no-live-map` angelegt — jetzt nur noch bei aktiver Live Map.)
+3. **Stack komplett entlastet**: Gewichts-Checksummen, Welt-Seeds und die ersten 8192
+   Trainings-Steps (Rewards/Aktionen/Values) sind zwischen Curriculum-Pfad und nacktem
+   Pfad **bit-identisch** (`compare_setups.py`, `compare_rollout.py`).
+4. **Kernbefund:** Die v11-Lerndynamik mit batch=64 ist chaotisch-instabil — SR oszilliert
+   10–74 % ohne Konvergenz, `explained_variance` bleibt ≈ 0,1 (Critic lernt nie).
+   Auch die A1-„Validierung" (52 % @150k, EV 0,72) war nur ein Schnappschuss dieses
+   Prozesses — **die batch=64-Freigabe vom 06.07. beruhte auf einem einzelnen Snapshot
+   und ist damit hinfällig.**
+5. **Kontrast v10-Reproduktion (15.06., batch=8):** EV bis **0,939** @65k — gesunder Critic.
+   Einziger HP-Unterschied zum v2-Erfolgsrezept war damals batch=8.
+
+#### Konsequenz — laufender Test
+Alle Diagnose-Arme gestoppt (Artefakte in `models/ppo_lstm_curriculum_v11_s1{,_noswarm,_nostream}`,
+Logs `logs/train_v11_seed1*.log`, `logs/train_a1_repro_seed1.log`).
+**H1-Test — BESTÄTIGT** (nackter v11-Lauf, Seed 1, batch_size=8, 150k Steps,
+`logs/train_bare_batch8_seed1.log`):
+
+| Step | 25k | 50k | 75k | 100k | 125k | 150k |
+|------|-----|-----|-----|------|------|------|
+| SR stoch | 54 % | 66 % | 64 % | 74 % | **88 %** | 84 % |
+| SR det | 20 % | 26 % | 40 % | 38 % | **52 %** | 38 % |
+
+EV springt ab ~50k auf **0,86** (batch=64: nie > ~0,15). Stetiger Anstieg statt Oszillation;
+beste Phase-1-Werte des Projekts, erstmals det-SR > 50 %. Direkter @150k-Vergleich:
+batch=8 → 84 % stoch vs. batch=64-Repro → 48 % (Curriculum-Arme ~20–26 %).
+**Umgesetzt:** `RPPO_KWARGS["batch_size"]` 64 → **8** (train_curriculum.py), CLAUDE.md
+aktualisiert (batch-Zeile, forceGuaranteedPath=false, 3 neue Fallstricke: batch=64,
+Eval-Cap < 4000, Snapshot-Validierung). Kosten: ~88–150 statt ~187 fps (~5,5 h/Gesamtlauf).
+**Nächster Schritt:** ≥3 volle Curriculum-Läufe (batch=8, Seeds 1–3) parallel für
+Mittelwert ± Std; besonderes Augenmerk auf Phase 3 (det-Annealing) mit gesundem Critic.
+
+---
+
+## v2026-07-07.3 — Seed 1 stagniert auch bei Cap 4000 → B8-A/B-Test (Swarm) gestartet
+
+#### Befund — Stagnation ist real, Hauptverdacht wandert von B7 (Penalties) zu B8 (Swarm)
+**Lauf:** Seed-1-Neustart mit Cap-Fix (v2026-07-07.2), Kontrollarm mit Swarm (Status quo).
+Eval-Verlauf P1 (stoch, Cap 4000): 16/16/10/20/16/20/24 % @ 25k–175k — **weit unter der
+A1-Validierung (52 % @150k, gleiches Cap)**. `explained_variance` ≈ 0,01–0,15 (A1: 0,72)
+— exakt die Seed-0-Signatur (Critic lernt nicht).
+**Schlussfolgerung zur Verdachtslage:** Die A1-Validierung lief bereits auf dem v11-Env
+(= ohne Wand-Penalty) und lernte normal → die Penalty-Entfernung (B7) kann die Stagnation
+nicht erklären. Größter verbliebener Unterschied zwischen A1 (lernt) und den
+Curriculum-Läufen (stagnieren): **Swarm-Erfolgs-Replay (30 % der Resets)** — deckt sich
+mit der PLR-Literatur (Replay gelöster Level ist lernineffizient, Jiang et al. 2021).
+
+#### Änderung — B8-A/B-Test gestartet (paired, ein Faktor)
+Kontrollarm läuft weiter: `--save-dir models/ppo_lstm_curriculum_v11_s1 --seed 1` (Swarm an).
+Testarm parallel gestartet (16:5x Uhr): `--save-dir models/ppo_lstm_curriculum_v11_s1_noswarm
+--seed 1 --no-swarm --live-map-port 8767` (Log `logs/train_v11_seed1_noswarm.log`).
+Gleicher Seed, gleiche Config, einziger Unterschied: Swarm. Beide Läufe parallel auf dem
+Mac (je ~1,5 Kerne, 10 vorhanden — keine gegenseitige Bremsung gemessen).
+**Entscheidungsregel:** Lernt der No-Swarm-Arm deutlich schneller (Richtung ~50 % @150k)
+→ Swarm-Erfolgs-Replay ist die Ursache → Swarm-Default abschalten bzw. auf PLR umstellen.
+Stagniert er ebenso → Swarm entlastet; nächste Verdächtige: Stream-Wrapper (Live Map,
+seit 07.07. in den Trainings-Envs) oder Unterschiede im A1-Setup.
+
+---
+
+## v2026-07-07.2 — Eval-Cap-Fix (600/1200 → 4000) + Seed-1-Neustart
+
+#### Änderung 1 — Eval-Caps in Phase 1/2 zurück auf 4000
+**Datei:** `scripts/train_curriculum.py` (PHASES)
+**Problem:** Die am 06.07. eingeführten Kurz-Caps (A3: P1=600, P2=1200) unterschätzen die
+echte Kompetenz massiv (siehe Korrektur in v2026-07-07): Das 85-%-Gate war unter Cap 600
+praktisch unerreichbar, Phasen liefen immer ans Step-Limit, und die Modellselektion
+bevorzugte schnelle statt kompetente Policies. Nachmessung der SR(Cap)-Kurve von
+Seed-0-`phase1_best` (VAL 6000–6049, ein Lauf @4000, Steps-bis-Erfolg pro Seed geloggt):
+
+| Cap | 600 | 1000 | 1500 | 2000 | 3000 | 4000 |
+|-----|-----|------|------|------|------|------|
+| SR stoch | 48 % | 62 % | 72 % | 82 % | 82 % | **86 %** |
+
+Steps-bis-Erfolg (stoch): med=477, p95=1880, max=3239 — die SR saturiert erst bei 4000.
+Zudem war die Cap-Begründung („Eval-Verschwendung") hinfällig: kompletter det+stoch-Eval
+über 50 Seeds mit Cap 4000 dauert gemessen nur **~21 s** (≈15 % Overhead bei eval_freq 25k).
+**Lösung:**
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| P1 `eval_max_steps` | 600 | **4000** | SR saturiert erst bei 4000; = Env-maxSteps = finaler Eval |
+| P2 `eval_max_steps` | 1200 | **4000** | dito; Vergleichbarkeit mit 86-%-Referenzlauf |
+
+#### Änderung 2 — Seed-1-Lauf neu gestartet (alte Artefakte archiviert)
+**Problem:** Der erste Seed-1-Lauf (bis ~278k, Prozess endete still ~11:28) lief mit den
+verfälschenden Caps — Gate, Modellselektion und eval_history sind nicht verwertbar.
+**Lösung:** Artefakte archiviert nach `models/ppo_lstm_curriculum_v11_s1_cap600/` bzw.
+`logs/train_v11_seed1_cap600.log`; Neustart mit identischer Konfiguration + Cap-Fix:
+`train_curriculum.py --save-dir models/ppo_lstm_curriculum_v11_s1 --seed 1`
+(Log `logs/train_v11_seed1.log`). Erwartung laut Cap-4000-Nachmessung: P1 sollte jetzt
+~85 % stoch erreichen können; die Entscheidungsregel „Seed 1 stagniert → systematisch →
+B7-A/B" gilt weiter, aber erst auf Basis unverzerrter Messwerte.
+
+---
+
 ## v2026-07-07 — Live-Map-Redesign (uPlot, Viridis, det/stoch-SR) + v11-Trainingsstart
 
 #### Änderung 1 — Live Map komplett überarbeitet

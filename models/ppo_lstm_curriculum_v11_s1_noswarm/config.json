@@ -4,7 +4,7 @@
   "n_envs": 16,
   "eval_freq": 25000,
   "seed": 1,
-  "swarm": true,
+  "swarm": false,
   "swarm_prob": 0.3,
   "plr": false,
   "start_phase": 1,
@@ -57,5 +57,5 @@
       "enable_critic_lstm": true
     }
   },
-  "_saved_at": "2026-07-07 16:34:15"
+  "_saved_at": "2026-07-07 16:50:30"
 }

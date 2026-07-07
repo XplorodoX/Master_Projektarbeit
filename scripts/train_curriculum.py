@@ -44,15 +44,18 @@ _LIVE_EVALS: list = []
 #   Phase 1/2: "stoch" — mit ent_coef=0.05 ist die Policy absichtlich stochastisch,
 #   deterministische SR ist dort ~0% (Argmax einer fast-uniformen Verteilung) und
 #   trägt kein Signal. Phase 3/4: "det" — Zielmetrik nach Entropie-Annealing.
-# eval_max_steps: Episoden-Cap pro Eval, skaliert mit der Exit-Distanz der Phase
-#   (Phase 1: Exit 5–12 Tiles → 4000er-Cap war reine Eval-Verschwendung).
+# eval_max_steps: Episoden-Cap pro Eval. Einheitlich 4000 (= Env-maxSteps, = finaler
+#   50-Seed-Eval). Die am 06.07. eingeführten Kurz-Caps (P1=600/P2=1200) haben die SR
+#   massiv unterschätzt (Seed-0 phase1_best: 46% @600 vs. 86% @4000 — Steps-bis-Erfolg
+#   p95≈1900, max≈3240) und Gate/Modellselektion verzerrt; gemessene Eval-Dauer bei
+#   Cap 4000 ist nur ~21 s (det+stoch, 50 Seeds) → Cap-Ersparnis war unnötig.
 PHASES = [
     {"exit_min":  5, "exit_max": 12, "max_steps":   500_000, "target_sr": 0.85,
      "eval_min":  5, "eval_max": 12,  "label": "Phase 1 (exit=5–12)",
-     "gate_metric": "stoch", "eval_max_steps": 600},
+     "gate_metric": "stoch", "eval_max_steps": 4000},
     {"exit_min": 12, "exit_max": 25, "max_steps":   500_000, "target_sr": 0.70,
      "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12–25)",
-     "gate_metric": "stoch", "eval_max_steps": 1200},
+     "gate_metric": "stoch", "eval_max_steps": 4000},
     {"exit_min": 25, "exit_max": 45, "max_steps": 1_000_000, "target_sr": 0.70,
      "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25–45, eval 35–45)",
      "gate_metric": "det", "eval_max_steps": 4000},
@@ -66,8 +69,9 @@ PHASES = [
 RPPO_KWARGS = dict(
     policy="MlpLstmPolicy",
     n_steps=256,          # v10: exakt wie v2 (das funktionierende Modell)
-    batch_size=64,        # v11: validiert 06.07.2026 — lernt wie batch=8 (52% stoch SR @150k P1),
-                          # aber 2.1x schneller (187 vs 88 FPS). CPU! MPS ist hier immer langsamer.
+    batch_size=8,         # ZURÜCK auf 8 (07.07.2026): batch=64 destabilisiert den Critic
+                          # (EV≈0.1, SR oszilliert chaotisch; 4 Läufe + A/B, CHANGELOG v2026-07-07.4).
+                          # Die 64er-"Validierung" vom 06.07. war ein Einzel-Snapshot. CPU!
     n_epochs=10,          # v10: wie v2 (default)
     learning_rate=3e-4,
     gamma=0.999,
@@ -375,6 +379,11 @@ def main() -> None:
                 exit_min=exit_min, exit_max=exit_max, swarm_pool=_pool,
                 # v11: 229-dim obs (Energie/Inventar entfernt — tote Features)
             )
+            # StreamWrapper nur bei aktiver Live Map — er lief bisher auch bei
+            # --no-live-map mit (voller Stream-Codepfad ohne Server) und steht
+            # unter Verdacht, das Training zu stören (Bisect 07.07.2026).
+            if not live_map_active:
+                return base
             return StreamWrapper(base, agent_id=agent_id)
 
         env_fns = [
