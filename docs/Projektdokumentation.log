@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  8 JUL 2026 08:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  8 JUL 2026 13:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -383,7 +383,7 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 )
 (./Projektdokumentation.aux
 Package babel Info: 'ngerman' activates 'german' shorthands.
-(babel)             Reported on input line 10.
+(babel)             Reported on input line 13.
 )
 \openout1 = `Projektdokumentation.aux'.
 
@@ -533,141 +533,152 @@ File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10.95> on input line 50.
-<figures/fig_game_real.png, id=119, 2041.6275pt x 1332.98pt>
-File: figures/fig_game_real.png Graphic file (type png)
-<use figures/fig_game_real.png>
-Package pdftex.def Info: figures/fig_game_real.png  used on input line 65.
-(pdftex.def)             Requested size: 327.7763pt x 213.99304pt.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-File: figures/fig_game_real.png Graphic file (type png)
-<use figures/fig_game_real.png>
-Package pdftex.def Info: figures/fig_game_real.png  used on input line 81.
-(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
-<figures/fig_ki_sicht.png, id=121, 2041.6275pt x 1332.98pt>
-File: figures/fig_ki_sicht.png Graphic file (type png)
-<use figures/fig_ki_sicht.png>
-Package pdftex.def Info: figures/fig_ki_sicht.png  used on input line 83.
-(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-11.
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [1
+ [1
 
 {/usr/local/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
 al/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/202
 6/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local/texlive/2026/texmf-di
 st/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2026/texmf-dist/fonts/enc/
 dvips/lm/lm-rm.enc}{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ma
-thit.enc}]
-Underfull \hbox (badness 4492) in paragraph at lines 152--152
+thit.enc}{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
+<figures/fig_game_world.png, id=222, 433.62pt x 433.62pt>
+File: figures/fig_game_world.png Graphic file (type png)
+<use figures/fig_game_world.png>
+Package pdftex.def Info: figures/fig_game_world.png  used on input line 91.
+(pdftex.def)             Requested size: 213.96529pt x 213.96437pt.
+<figures/fig_ai_observation.png, id=224, 433.62pt x 433.62pt>
+File: figures/fig_ai_observation.png Graphic file (type png)
+<use figures/fig_ai_observation.png>
+Package pdftex.def Info: figures/fig_ai_observation.png  used on input line 93.
+
+(pdftex.def)             Requested size: 213.96529pt x 213.96437pt.
+ [2 <./figures/fig_game_world.png> <./figures/fig_ai_observation.png>]
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+42.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+) [3]
+<figures/fig_game_real.png, id=261, 2041.6275pt x 1332.98pt>
+File: figures/fig_game_real.png Graphic file (type png)
+<use figures/fig_game_real.png>
+Package pdftex.def Info: figures/fig_game_real.png  used on input line 209.
+(pdftex.def)             Requested size: 327.7763pt x 213.99304pt.
+File: figures/fig_game_real.png Graphic file (type png)
+<use figures/fig_game_real.png>
+Package pdftex.def Info: figures/fig_game_real.png  used on input line 226.
+(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
+<figures/fig_ki_sicht.png, id=264, 2041.6275pt x 1332.98pt>
+File: figures/fig_ki_sicht.png Graphic file (type png)
+<use figures/fig_ki_sicht.png>
+Package pdftex.def Info: figures/fig_ki_sicht.png  used on input line 228.
+(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
+ [4 <./figures/fig_game_real.png> <./figures/fig_ki_sicht.png (PNG copy)>]
+Underfull \hbox (badness 4492) in paragraph at lines 297--297
 []\T1/lmr/m/n/10.95 Tabelle 2: []Reward-Komponenten (Env v11). Der frü-he-re es
 -ka-lie-ren-de Wand-Penalty
+ []
+
+[5]
+Overfull \hbox (7.00603pt too wide) in paragraph at lines 383--398
+ [][] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[2 <./figures/fig_game_real.png>]
+[6] [7]
+<figures/fig_det_gap_distanz.pdf, id=304, 520.34402pt x 303.534pt>
+File: figures/fig_det_gap_distanz.pdf Graphic file (type pdf)
+<use figures/fig_det_gap_distanz.pdf>
+Package pdftex.def Info: figures/fig_det_gap_distanz.pdf  used on input line 52
+8.
+(pdftex.def)             Requested size: 364.19667pt x 212.45845pt.
+
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[3 <./figures/fig_ki_sicht.png (PNG copy)>]
-<figures/fig_lernkurve.pdf, id=165, 375.804pt x 216.81pt>
+[8]
+<figures/fig_lernkurve.pdf, id=312, 375.804pt x 216.81pt>
 File: figures/fig_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 256.
+Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 564.
 (pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[4] [5 <./figures/fig_lernkurve.pdf>]
-<figures/fig_entwicklung.pdf, id=222, 426.07181pt x 221.31136pt>
-File: figures/fig_entwicklung.pdf Graphic file (type pdf)
-<use figures/fig_entwicklung.pdf>
-Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 363.
-(pdftex.def)             Requested size: 386.96027pt x 200.99854pt.
- [6 <./figures/fig_entwicklung.pdf>]
-<figures/fig_v11_lernkurve.pdf, id=289, 512.7205pt x 251.56421pt>
-File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
-<use figures/fig_v11_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 426.
-
-(pdftex.def)             Requested size: 386.96027pt x 189.8588pt.
-
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
+[9 <./figures/fig_det_gap_distanz.pdf>] [10 <./figures/fig_lernkurve.pdf>]
+<figures/fig_entwicklung.pdf, id=422, 426.07181pt x 221.31136pt>
+File: figures/fig_entwicklung.pdf Graphic file (type pdf)
+<use figures/fig_entwicklung.pdf>
+Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 671.
+(pdftex.def)             Requested size: 386.96027pt x 200.99854pt.
 
-Overfull \hbox (16.29742pt too wide) in paragraph at lines 436--450
+[11 <./figures/fig_entwicklung.pdf>]
+<figures/fig_v11_lernkurve.pdf, id=488, 512.7205pt x 251.56421pt>
+File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
+<use figures/fig_v11_lernkurve.pdf>
+Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 734.
+
+(pdftex.def)             Requested size: 386.96027pt x 189.8588pt.
+
+Overfull \hbox (16.29742pt too wide) in paragraph at lines 744--758
 []\T1/lmr/bx/n/10.95 Live-Monitoring-Redesign. \T1/lmr/m/n/10.95 Das WebSocket-
 Dashboard aus Etap-pe 2 wur-de nach Dashboard-
  []
 
-<figures/fig_livemap.png, id=291, 1405.25pt x 702.625pt>
+[12 <./figures/fig_v11_lernkurve.pdf>]
+<figures/fig_livemap.png, id=544, 1405.25pt x 702.625pt>
 File: figures/fig_livemap.png Graphic file (type png)
 <use figures/fig_livemap.png>
-Package pdftex.def Info: figures/fig_livemap.png  used on input line 453.
+Package pdftex.def Info: figures/fig_livemap.png  used on input line 761.
 (pdftex.def)             Requested size: 409.71692pt x 204.8603pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[7]
-<figures/fig_cap_artefakt.pdf, id=303, 462.52798pt x 245.718pt>
+ [13 <./figures/fig_livemap.png (PNG copy)>]
+<figures/fig_cap_artefakt.pdf, id=554, 462.52798pt x 245.718pt>
 File: figures/fig_cap_artefakt.pdf Graphic file (type pdf)
 <use figures/fig_cap_artefakt.pdf>
-Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 512.
+Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 821.
 (pdftex.def)             Requested size: 364.19667pt x 193.48894pt.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[8 <./figures/fig_v11_lernkurve.pdf>]
-Overfull \hbox (2.33298pt too wide) in paragraph at lines 533--536
+Overfull \hbox (2.33298pt too wide) in paragraph at lines 842--845
 []\T1/lmr/m/it/10.95 Wand-/Loop-Penalties (Maÿ-nah-me B7)? \T1/lmr/m/n/10.95 En
 t-las-tet oh-ne neu-en Lauf: Die Batch-Validierung
  []
 
-[9 <./figures/fig_livemap.png (PNG copy)>]
-<figures/fig_batch_vergleich.pdf, id=364, 476.98201pt x 404.712pt>
+[14 <./figures/fig_cap_artefakt.pdf>]
+<figures/fig_batch_vergleich.pdf, id=609, 476.98201pt x 404.712pt>
 File: figures/fig_batch_vergleich.pdf Graphic file (type pdf)
 <use figures/fig_batch_vergleich.pdf>
-Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 58
-2.
+Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 89
+1.
 (pdftex.def)             Requested size: 386.96027pt x 328.33366pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Underfull \hbox (badness 1565) in paragraph at lines 613--613
+Underfull \hbox (badness 1565) in paragraph at lines 922--922
 []\T1/lmr/m/n/10 Curriculum P1; nai-ver Trans-fer kol-la-biert $\OMS/lmsy/m/n/1
 0 !$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 619--619
+Underfull \hbox (badness 10000) in paragraph at lines 928--928
 []\T1/lmr/m/n/10 v6--v9 schei-tern $\OMS/lmsy/m/n/10 !$ \T1/lmr/m/n/10 Root-Cau
 se
  []
 
 
-Underfull \hbox (badness 6252) in paragraph at lines 620--620
+Underfull \hbox (badness 6252) in paragraph at lines 929--929
 []\T1/lmr/m/n/10 v10-Reproduktion ab-ge-schlos-sen (Re-fe-renz-mo-
  []
 
 
-Underfull \hbox (badness 5711) in paragraph at lines 622--622
+Underfull \hbox (badness 5711) in paragraph at lines 931--931
 []\T1/lmr/m/n/10 v11-Läufe Seed 0/1 sta-gnie-ren; Monitoring-
  []
 
@@ -675,71 +686,75 @@ Underfull \hbox (badness 5711) in paragraph at lines 622--622
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (5.08095pt too wide) in paragraph at lines 645--649
+Overfull \hbox (5.08095pt too wide) in paragraph at lines 954--958
 []\T1/lmr/m/it/10.95 Hyperparameter do-mi-nie-ren Fea-tu-res: \T1/lmr/m/n/10.95
  Al-le v7-Feature-Ideen schei-ter-ten an ver-stell-ten Basis-
  []
 
-[10 <./figures/fig_cap_artefakt.pdf>] [11 <./figures/fig_batch_vergleich.pdf>]
-Overfull \hbox (5.8401pt too wide) in paragraph at lines 692--694
+[15] [16 <./figures/fig_batch_vergleich.pdf>]
+Overfull \hbox (5.8401pt too wide) in paragraph at lines 1001--1003
 []\T1/lmr/bx/n/10.95 Eval-Callback: \T1/lmr/m/n/10.95 pha-sen-ge-rech-tes Ga-ti
 ng (Ta-bel-le [][]3[][]), Episoden-Caps pro Pha-se, Det+Stoch-
  []
 
-<figures/fig_exit_distanz.pdf, id=473, 410.79002pt x 226.33928pt>
+<figures/fig_exit_distanz.pdf, id=675, 410.79002pt x 226.33928pt>
 File: figures/fig_exit_distanz.pdf Graphic file (type pdf)
 <use figures/fig_exit_distanz.pdf>
-Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 698.
+Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 1007.
+
 (pdftex.def)             Requested size: 364.19667pt x 200.6677pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[12]
-<figures/fig_fps_benchmark.pdf, id=489, 375.804pt x 216.81pt>
+[17]
+<figures/fig_fps_benchmark.pdf, id=689, 375.804pt x 216.81pt>
 File: figures/fig_fps_benchmark.pdf Graphic file (type pdf)
 <use figures/fig_fps_benchmark.pdf>
-Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 723.
-
+Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 1032
+.
 (pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
- [13 <./figures/fig_exit_distanz.pdf> <./figures/fig_fps_benchmark.pdf>]
-<figures/fig_batch64_validation.pdf, id=598, 375.804pt x 274.626pt>
+ [18 <./figures/fig_exit_distanz.pdf> <./figures/fig_fps_benchmark.pdf>]
+<figures/fig_batch64_validation.pdf, id=797, 375.804pt x 274.626pt>
 File: figures/fig_batch64_validation.pdf Graphic file (type pdf)
 <use figures/fig_batch64_validation.pdf>
 Package pdftex.def Info: figures/fig_batch64_validation.pdf  used on input line
- 756.
+ 1065.
 (pdftex.def)             Requested size: 327.7763pt x 239.53868pt.
 
-[14 <./figures/fig_batch64_validation.pdf>] (./Projektdokumentation.bbl
-[15]) [16] (./Projektdokumentation.aux)
+[19 <./figures/fig_batch64_validation.pdf>] (./Projektdokumentation.bbl
+[20]) [21] (./Projektdokumentation.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `Projektdokumentation.out' has not changed.
-(rerunfilecheck)             Checksum: 864D1338F4136713848213936DDC0293;7113.
+(rerunfilecheck)             Checksum: F2932FA5EF6378959CA2F9CB04FDC853;10885.
  ) 
 Here is how much of TeX's memory you used:
- 12218 strings out of 467525
- 191435 string characters out of 5418982
- 624437 words of memory out of 5000000
- 40853 multiletter control sequences out of 15000+600000
+ 12314 strings out of 467525
+ 193305 string characters out of 5418982
+ 626864 words of memory out of 5000000
+ 40913 multiletter control sequences out of 15000+600000
  702580 words of font info for 95 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,11n,79p,738b,591s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
-e/2026/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2026/tex
-mf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2026/texmf-dist/fon
-ts/type1/public/lm/lmr12.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/pu
-blic/lm/lmr8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmri
-10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></u
-sr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/te
-xlive/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026
-/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Projektdokumentation.pdf (16 pages, 975413 bytes).
+e/2026/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2026/tex
+mf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2026/texmf-dist/fo
+nts/type1/public/lm/lmmi8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/p
+ublic/lm/lmr10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lm
+r12.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr6.pfb></us
+r/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/local/texl
+ive/2026/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/local/texlive/2026/t
+exmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2026/texmf-dist/
+fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1
+/public/lm/lmtt10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/am
+sfonts/symbols/msbm10.pfb>
+Output written on Projektdokumentation.pdf (21 pages, 1163093 bytes).
 PDF statistics:
- 757 PDF objects out of 1000 (max. 8388607)
- 369 compressed objects within 4 object streams
- 85 named destinations out of 1000 (max. 500000)
- 280 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 984 PDF objects out of 1000 (max. 8388607)
+ 529 compressed objects within 6 object streams
+ 120 named destinations out of 1000 (max. 500000)
+ 447 words of extra memory for PDF output out of 10000 (max. 10000000)
 

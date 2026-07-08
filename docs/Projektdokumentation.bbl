@@ -14,12 +14,47 @@ Sebastian Risi and Julian Togelius.
 \newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
 \newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
 
-\bibitem{ng1999policy}
-Andrew~Y Ng, Daishi Harada, and Stuart Russell.
-\newblock Policy invariance under reward transformations: Theory and
-  application to reward shaping.
-\newblock In {\em Proceedings of the Sixteenth International Conference on
-  Machine Learning (ICML)}, pages 278--287, 1999.
+\bibitem{sutton2018rl}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock {\em Reinforcement Learning: An Introduction}.
+\newblock MIT Press, Cambridge, MA, 2 edition, 2018.
+\newblock \url{http://incompleteideas.net/book/the-book-2nd.html}.
+
+\bibitem{kaelbling1998pomdp}
+Leslie~Pack Kaelbling, Michael~L Littman, and Anthony~R Cassandra.
+\newblock Planning and acting in partially observable stochastic domains.
+\newblock {\em Artificial Intelligence}, 101(1--2):99--134, 1998.
+
+\bibitem{hausknecht2015drqn}
+Matthew Hausknecht and Peter Stone.
+\newblock Deep recurrent q-learning for partially observable mdps.
+\newblock {\em arXiv preprint arXiv:1507.06527}, 2015.
+\newblock \url{https://arxiv.org/abs/1507.06527}.
+
+\bibitem{mnih2015dqn}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
+  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
+  Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock {\em Nature}, 518(7540):529--533, 2015.
+\newblock \url{https://www.nature.com/articles/nature14236}.
+
+\bibitem{schulman2016gae}
+John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter
+  Abbeel.
+\newblock High-dimensional continuous control using generalized advantage
+  estimation.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2016.
+\newblock \url{https://arxiv.org/abs/1506.02438}.
+
+\bibitem{mnih2016a3c}
+Volodymyr Mnih, Adri{\`a}~Puigdom{\`e}nech Badia, Mehdi Mirza, Alex Graves,
+  Timothy Lillicrap, Tim Harley, David Silver, and Koray Kavukcuoglu.
+\newblock Asynchronous methods for deep reinforcement learning.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  1928--1937. PMLR, 2016.
+\newblock \url{https://arxiv.org/abs/1602.01783}.
 
 \bibitem{schulman2017ppo}
 John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
@@ -27,17 +62,31 @@ John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
 \newblock {\em arXiv preprint arXiv:1707.06347}, 2017.
 \newblock \url{https://arxiv.org/abs/1707.06347}.
 
-\bibitem{hochreiter1997lstm}
-Sepp Hochreiter and J{\"u}rgen Schmidhuber.
-\newblock Long short-term memory.
-\newblock {\em Neural Computation}, 9(8):1735--1780, 1997.
-
 \bibitem{raffin2021stable}
 Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Maximilian
   Ernestus, and Noah Dormann.
 \newblock Stable-baselines3: Reliable reinforcement learning implementations.
 \newblock {\em Journal of Machine Learning Research}, 22(268):1--8, 2021.
 \newblock \url{http://jmlr.org/papers/v22/20-1364.html}.
+
+\bibitem{hochreiter1997lstm}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock {\em Neural Computation}, 9(8):1735--1780, 1997.
+
+\bibitem{ng1999policy}
+Andrew~Y Ng, Daishi Harada, and Stuart Russell.
+\newblock Policy invariance under reward transformations: Theory and
+  application to reward shaping.
+\newblock In {\em Proceedings of the Sixteenth International Conference on
+  Machine Learning (ICML)}, pages 278--287, 1999.
+
+\bibitem{bengio2009curriculum}
+Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
+\newblock Curriculum learning.
+\newblock In {\em Proceedings of the 26th Annual International Conference on
+  Machine Learning (ICML)}, pages 41--48, 2009.
+\newblock \url{https://dl.acm.org/doi/10.1145/1553374.1553380}.
 
 \bibitem{jiang2021plr}
 Minqi Jiang, Edward Grefenstette, and Tim Rockt{\"a}schel.

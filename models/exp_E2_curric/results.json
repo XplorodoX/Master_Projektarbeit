@@ -1,0 +1,15 @@
+{
+  "phase3": {
+    "phase": 3,
+    "label": "Phase 3 (exit=25–45, eval 35–45)",
+    "best_sr": 0.38,
+    "target_sr": 0.7,
+    "exit_range": "25-35",
+    "swarm_pool": {
+      "pool_size": 78,
+      "total_added": 78,
+      "total_sampled": 39
+    }
+  },
+  "_saved_at": "2026-07-08 10:50:31"
+}

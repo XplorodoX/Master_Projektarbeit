@@ -52,7 +52,151 @@ definiert:
   \item pro Konfiguration mindestens 3 Trainingsläufe (Mittelwert $\pm$ Standardabweichung).
 \end{itemize}
 
+\section{Grundlagen}
+\label{sec:grundlagen}
+
+Dieses Kapitel fasst die im Projekt verwendeten Konzepte und Verfahren zusammen.
+Es beschränkt sich auf das, was für die Methodik und die Ergebnisse benötigt wird.
+
+\subsection{Reinforcement Learning und der Markov-Entscheidungsprozess}
+
+Reinforcement Learning (RL) beschreibt das Lernen durch Interaktion: Ein Agent
+wählt in einem Zustand eine Aktion, erhält eine Belohnung (Reward) und geht in
+einen Folgezustand über \cite{sutton2018rl}. Formal wird dies als
+Markov-Entscheidungsprozess (MDP) modelliert, ein Tupel $(S, A, P, R, \gamma)$
+mit Zustandsmenge $S$, Aktionsmenge $A$, Übergangswahrscheinlichkeit
+$P(s'\mid s,a)$, Rewardfunktion $R(s,a)$ und Diskontfaktor $\gamma \in [0,1)$.
+Ziel ist eine Politik $\pi(a\mid s)$, die den erwarteten diskontierten Return
+$G_t = \sum_{k\geq 0} \gamma^k r_{t+k}$ maximiert. Die Zustandswertfunktion
+$V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t=s]$ gibt den erwarteten Return ab einem
+Zustand an. Der Diskontfaktor $\gamma$ gewichtet spätere Rewards geringer; im
+Projekt wird $\gamma = 0{,}999$ verwendet.
+
+\subsection{Partielle Beobachtbarkeit (POMDP)}
+\label{sec:pomdp}
+
+Sieht der Agent nicht den vollständigen Zustand, sondern nur eine Beobachtung,
+liegt ein \emph{Partially Observable} MDP (POMDP) vor \cite{kaelbling1998pomdp}.
+Die Markov-Eigenschaft gilt dann für die Beobachtung nicht mehr: Dieselbe lokale
+Beobachtung kann zu verschiedenen globalen Zuständen gehören. Eine reaktive
+Politik, die nur die aktuelle Beobachtung nutzt, ist deshalb im Allgemeinen
+nicht optimal. Abhilfe schafft ein internes Gedächtnis, das vergangene
+Beobachtungen zu einem \emph{Belief-State} zusammenfasst
+\cite{hausknecht2015drqn}. Stoneforge ist ein POMDP, da der Agent nur einen
+lokalen $15{\times}15$-Ausschnitt sieht (siehe Abschnitt~\ref{sec:umgebung}).
+Abbildung~\ref{fig:pomdp_schema} stellt den Unterschied schematisch dar.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.47\textwidth]{figures/fig_game_world.png}
+  \hfill
+  \includegraphics[width=0.47\textwidth]{figures/fig_ai_observation.png}
+  \caption{Schematische Darstellung der partiellen Beobachtbarkeit am Beispiel
+  Stoneforge: Links der vollständige Weltzustand (hier ein
+  $31{\times}31$-Ausschnitt), rechts die Beobachtung des Agenten --- nur das
+  $15{\times}15$-Sichtfeld ist bekannt (rot umrandet), der Rest ist unbekannt;
+  der Pfeil zeigt die Kompassrichtung zum Exit, nicht den Weg.}
+  \label{fig:pomdp_schema}
+\end{figure}
+
+\subsection{Wertbasierte Verfahren: Q-Learning und DQN}
+
+Wertbasierte Verfahren lernen die Aktionswertfunktion
+$Q^\pi(s,a) = \mathbb{E}_\pi[G_t \mid s_t=s, a_t=a]$ und leiten daraus die
+Politik ab (Aktion mit dem höchsten $Q$-Wert). Q-Learning aktualisiert $Q$ über
+die Bellman-Gleichung. Deep Q-Networks (DQN) approximieren $Q$ mit einem
+neuronalen Netz und stabilisieren das Training über einen Replay-Buffer und ein
+Target-Netz \cite{mnih2015dqn}. DQN arbeitet nur mit diskreten Aktionsräumen und
+wird im Projekt als Baseline geführt.
+
+\subsection{Policy-Gradient- und Actor-Critic-Verfahren}
+
+Policy-Gradient-Verfahren optimieren die Politik $\pi_\theta$ direkt über den
+Gradienten des erwarteten Returns. Actor-Critic-Verfahren kombinieren dies mit
+einer gelernten Wertfunktion (Critic), die als Baseline die Varianz der
+Gradientenschätzung senkt. Der Vorteil (Advantage)
+$A(s,a) = Q(s,a) - V(s)$ misst, wie viel besser eine Aktion gegenüber dem
+Durchschnitt ist; die Generalized Advantage Estimation (GAE) schätzt ihn über
+mehrere Zeitschritte mit einem Parameter $\lambda$ \cite{schulman2016gae}
+(im Projekt $\lambda = 0{,}95$). Advantage Actor-Critic (A2C) ist die synchrone
+Variante von A3C \cite{mnih2016a3c} und wird ebenfalls als Baseline geführt.
+Wie gut der Critic gelernt hat, misst die \emph{explained variance} (EV): der
+Anteil der Varianz der tatsächlichen Returns, den die Wertschätzung erklärt.
+EV~$\approx$~1 bedeutet eine verlässliche Wertfunktion, EV~$\approx$~0, dass
+der Critic praktisch nichts gelernt hat. Diese Größe dient in der Arbeit als
+zentrale Diagnosemetrik des Trainings.
+
+\subsection{Proximal Policy Optimization (PPO)}
+
+PPO ist das im Projekt eingesetzte Hauptverfahren \cite{schulman2017ppo}. Es ist
+ein Actor-Critic-Verfahren, das die Politik pro Update nur begrenzt verändert, um
+Instabilität durch zu große Schritte zu vermeiden. Dazu wird das
+Wahrscheinlichkeitsverhältnis
+$r_t(\theta) = \pi_\theta(a_t\mid s_t)/\pi_{\theta_\text{alt}}(a_t\mid s_t)$
+in der Zielfunktion abgeschnitten (\emph{clipping}):
+\[
+L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\big(r_t(\theta)\,A_t,\;
+\operatorname{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\,A_t\big)\right].
+\]
+Zusätzlich wird ein Entropie-Term addiert, der Exploration fördert; sein Gewicht
+(\texttt{ent\_coef}) steuert, wie stochastisch die Politik bleibt. Trainiert
+wird in Zyklen: Erst sammeln die parallelen Umgebungen einen Rollout von
+$n_\text{steps}$ Schritten, dann wird dieser in Minibatches der Größe
+\texttt{batch\_size} über $n_\text{epochs}$ Durchläufe optimiert. Verwendet wird
+die Implementierung aus Stable-Baselines3 \cite{raffin2021stable}.
+
+Eine gelernte stochastische Politik lässt sich auf zwei Arten ausführen:
+\emph{stochastisch} (die Aktion wird aus der Verteilung $\pi(a\mid s)$ gezogen,
+Sampling) oder \emph{deterministisch} (stets die wahrscheinlichste Aktion,
+Argmax). Beide Betriebsarten können unterschiedlich gut abschneiden; ihr
+Vergleich ist ein zentraler Untersuchungsgegenstand dieser Arbeit.
+
+\subsection{Rekurrente Politiken (LSTM)}
+
+Um in einem POMDP ein Gedächtnis bereitzustellen, wird die Politik um ein
+rekurrentes Netz erweitert. Long Short-Term Memory (LSTM) ist eine
+rekurrente Architektur, die Information über viele Zeitschritte hinweg speichern
+kann \cite{hochreiter1997lstm}. Der LSTM-Zustand approximiert den Belief-State
+und fasst die bisher gesehenen Beobachtungen zusammen. Die Kombination aus
+rekurrentem Netz und wertbasiertem RL wurde als DRQN eingeführt
+\cite{hausknecht2015drqn}; im Projekt wird die policy-gradient-Variante
+RecurrentPPO (PPO mit LSTM-Politik) aus \emph{sb3-contrib} verwendet, mit einer
+LSTM-Größe von 256.
+
+\subsection{Reward Shaping (PBRS)}
+
+Zusätzliche Belohnungen können das Lernen beschleunigen, dürfen die optimale
+Politik aber nicht verändern. Potential-Based Reward Shaping (PBRS) erfüllt dies:
+Der Zusatzreward hat die Form $F(s,s') = \gamma\,\Phi(s') - \Phi(s)$ mit einer
+Potentialfunktion $\Phi$. Ng et al.\ zeigen, dass eine solche Form
+policy-invariant ist, die optimale Politik also erhalten bleibt
+\cite{ng1999policy}. Im Projekt ist $\Phi$ an die BFS-Distanz zum Exit
+gekoppelt: Die Breitensuche (BFS) liefert die Länge des kürzesten begehbaren
+Wegs vom Agenten zum Exit in Schritten --- im Gegensatz zur Luftlinie
+berücksichtigt sie Wände und Umwege.
+
+\subsection{Curriculum Learning}
+
+Curriculum Learning bezeichnet das Training mit ansteigender
+Aufgabenschwierigkeit statt einer zufälligen Reihenfolge \cite{bengio2009curriculum}.
+Im Projekt wird die Exit-Distanz stufenweise erhöht; der Übergang zwischen den
+Stufen erfolgt leistungsbasiert (eine Stufe gilt ab einer Ziel-Erfolgsrate als
+bestanden).
+
+\subsection{Prozedurale Generierung und Generalisierung}
+
+Wird für jedes Level eine neue, zufällig erzeugte Welt verwendet, kann der Agent
+einzelne Karten nicht auswendig lernen und muss allgemeine Strategien bilden.
+Die Erzeugung ist über einen \emph{Seed} steuerbar --- den Startwert des
+Zufallszahlengenerators: Derselbe Seed erzeugt reproduzierbar dieselbe Welt,
+verschiedene Seeds verschiedene Welten.
+Prozedurale Generierung ist daher ein etabliertes Mittel, um Generalisierung in
+RL zu prüfen und Overfitting auf einzelne Level zu vermeiden
+\cite{cobbe2020procgen, risi2020increasing}. Die Evaluation auf
+trainingsfremden Seeds (Testset~A und Holdout~B) folgt diesem Prinzip.
+
 \section{Die Umgebung Stoneforge}
+\label{sec:umgebung}
 
 Stoneforge ist ein selbst entwickeltes, rundenbasiertes 2D-Spiel (C++-Kern,
 Python-Anbindung über pybind11). Die Welt wird pro Seed deterministisch aus
@@ -72,7 +216,8 @@ Abbildung~\ref{fig:player_client} zeigt die Benutzeroberfläche und die Spielwel
 Der Agent sieht nur einen lokalen $15{\times}15$-Ausschnitt der Welt sowie einen
 \emph{Luftlinien}-Kompass zum Exit --- nicht den Weg. Wände, Sackgassen und
 Umwege außerhalb des Sichtfensters sind unbekannt: Die Aufgabe ist ein
-\emph{Partially Observable Markov Decision Process} (POMDP). Ohne Gedächtnis ist
+\emph{Partially Observable Markov Decision Process} (POMDP,
+Abschnitt~\ref{sec:pomdp}). Ohne Gedächtnis ist
 sie nicht deterministisch lösbar (siehe Ablation in
 Abschnitt~\ref{sec:ablation}).
 
@@ -168,8 +313,8 @@ gesamte Kette aus Weltgenerierung, Bewegungsmechanik und Reward-Signal.
 \subsection{Algorithmus}
 
 Trainiert wird RecurrentPPO (PPO \cite{schulman2017ppo} mit LSTM-Politik
-\cite{hochreiter1997lstm}) aus \emph{Stable-Baselines3 / sb3-contrib}
-\cite{raffin2021stable}. Zentrale Hyperparameter: $n_\text{steps}=256$,
+\cite{hochreiter1997lstm}; beide Verfahren in Abschnitt~\ref{sec:grundlagen})
+aus \emph{Stable-Baselines3 / sb3-contrib} \cite{raffin2021stable}. Zentrale Hyperparameter: $n_\text{steps}=256$,
 $n_\text{epochs}=10$, Lernrate $3\cdot10^{-4}$, $\gamma=0.999$,
 \texttt{ent\_coef}=0.05, LSTM mit 256 Hidden Units (separater Critic-LSTM),
 16 parallele Umgebungen.
@@ -222,7 +367,170 @@ Modellauswahl; Testset A (7000--7049) und Holdout B (8000--8049) werden
 ausschließlich final evaluiert. Ein früherer Data-Leakage-Fehler (Modellauswahl
 auf den Test-Seeds) wurde identifiziert und behoben. Jede Evaluation misst
 seit v11 \emph{beide} Betriebsarten: stochastisch (Sampling aus der Politik) und
-deterministisch (Argmax).
+deterministisch (Argmax). Details und Endergebnisse in
+Abschnitt~\ref{sec:evaluation}.
+
+\section{Technische Umsetzung}
+\label{sec:technik}
+
+Das System besteht aus drei Schichten: einem C++-Kern für Simulation und
+Weltgenerierung, einem Python-Binding und dem Python-Trainingsstack.
+Tabelle~\ref{tab:stack} listet die verwendeten Komponenten.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Komponente} & \textbf{Technologie} & \textbf{Zweck} \\
+\midrule
+Simulationskern & C++20 (ca.\ 8\,000 LOC) & Weltgenerierung, Spiellogik, Reward, BFS \\
+Binding & pybind11 2.13 & C++-Kern als Python-Modul (\texttt{stoneforge\_sim}) \\
+Build & CMake & Kern, Binding, Clients \\
+RL-Umgebung & Python 3.12, Gymnasium 1.2 & \texttt{StoneforgeWorldEnv} (Gym-API) \\
+RL-Algorithmen & Stable-Baselines3 / sb3-contrib 2.8 & PPO, DQN, A2C, RecurrentPPO \\
+Deep Learning & PyTorch 2.12 (CPU) & Netz- und LSTM-Training \\
+Spiel-Client & raylib 5.5 (C++) & spielbarer Client, KI-Zuschaumodus \\
+Monitoring & TensorBoard, WebSockets & Trainingsmetriken, Live-Visualisierung \\
+Auswertung & NumPy, Matplotlib & Evaluation, Abbildungen \\
+\bottomrule
+\end{tabular}
+\caption{Technologie-Stack.}
+\label{tab:stack}
+\end{table}
+
+Die Simulation ist deterministisch pro Seed; Training und Evaluation laufen
+vollständig auf der CPU (Apple M1 Pro). Ein Vergleich mit der Apple-GPU (MPS)
+ergab keine Beschleunigung (Abschnitt~\ref{sec:performance}); der Durchsatz
+liegt je nach Konfiguration bei ca.\ 90--190 Umgebungsschritten pro Sekunde.
+
+\section{Implementierung}
+\label{sec:implementierung}
+
+\subsection{Umgebung und Binding}
+
+\texttt{StoneforgeWorldEnv} (Python) kapselt den C++-Kern hinter der
+Gymnasium-API. Die Beobachtung umfasst 229 Merkmale (Grid $15{\times}15$ als
+Tile-Typen, HP, Exit-Kompass $dx/dy$, Schrittanteil); der Aktionsraum ist
+\texttt{Discrete(4)} (vier Bewegungsrichtungen). Die im Spiel vorhandenen
+Aktionen Mining, Bauen und Kampf sind im RL-Binding deaktiviert und werfen bei
+Aufruf einen Fehler; sie existieren nur im spielbaren Client. Eine Episode endet
+bei Erreichen des Exits oder nach 4\,000 Schritten.
+
+Zwei Implementierungsdetails waren fehlerkritisch: (1)~Die
+Weltgenerierungs-Konfiguration ist im C++-Kern prozessglobal; jede Env-Instanz
+stempelt sie deshalb bei jedem \texttt{reset()} neu, da sonst parallel erzeugte
+Evaluations-Umgebungen die Trainingsverteilung verändern (Abschnitt~\ref{sec:v11}).
+(2)~Der Exit wird seit v11 nach realer BFS-Laufwegdistanz platziert statt nach
+Luftlinie; alle erzeugten Welten sind nachweislich lösbar (150/150 im Test).
+
+Der Reward setzt sich zusammen aus Schritt-Malus ($-0{,}01$), Explorations-Bonus
+($+0{,}02$ pro neuem Tile), Loop-Malus ($-0{,}05$), Schadens-Malus, dem
+PBRS-Term auf der BFS-Distanz (Abschnitt~\ref{sec:grundlagen}) und dem
+Terminal-Reward.
+
+\subsection{Trainings-Pipeline}
+
+Das Curriculum-Training (\texttt{train\_curriculum.py}) orchestriert die vier
+Phasen aus Tabelle~\ref{tab:curriculum}. Je Lauf arbeiten 16 parallele
+Umgebungen (\texttt{DummyVecEnv}). Alle 25\,000 Schritte evaluiert ein Callback
+das aktuelle Modell auf den 50 Validierungs-Seeds in beiden Betriebsarten;
+die Phasen-Metrik steuert Gating (Ziel-SR in zwei aufeinanderfolgenden
+Evaluationen) und die Auswahl des besten Modells der Phase. Beim Phasenwechsel
+wird das beste Modell der Vorphase geladen. In Phase~3 senkt ein Callback den
+Entropie-Koeffizienten linear von 0{,}05 auf 0{,}001 über 500\,000 Schritte;
+Phase~4 trainiert mit 0{,}0001 (Greedy Fine-Tune). Optional ergänzt ein
+Seed-Pool (\glqq Swarm\grqq) 30\,\% der Episodenstarts durch Wiederholung
+bereits gelöster Seeds; der Pool wird bei jedem Phasenwechsel geleert. Jeder
+Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json} und
+\texttt{config.json} ab; alle Experimente sind zusätzlich im
+\texttt{CHANGELOG.md} des Repositories dokumentiert.
+
+\subsection{Monitoring und Werkzeuge}
+
+Trainingsmetriken (u.\,a.\ \texttt{explained\_variance}, Entropie,
+\texttt{approx\_kl}) werden nach TensorBoard geschrieben. Zusätzlich streamt
+ein WebSocket-Server den Trainingszustand in eine Browser-Ansicht:
+Erfolgsraten-Kurven (deterministisch und stochastisch), Minimaps der 16
+parallelen Agenten und eine Explorations-Heatmap. Eine Launcher-GUI (Tkinter)
+bündelt Training, Evaluation und Abspielen. Zum Vorführen steuert
+\texttt{demo\_agent.py} den grafischen Client: Der Client läuft im
+KI-Modus und erhält die Aktionen des geladenen Modells über die
+Standardeingabe; Client und Trainings-Umgebung erzeugen dieselbe Welt aus
+demselben Seed.
+
+\section{Evaluation}
+\label{sec:evaluation}
+
+\subsection{Protokoll und Metriken}
+
+Zentrale Metrik ist die \emph{Success Rate} (SR): der Anteil von 50 festen,
+trainingsfremden Welten, in denen der Agent den Exit innerhalb von 4\,000
+Schritten erreicht. Gemessen wird stets in beiden Betriebsarten (stochastisch
+und deterministisch) und mit dem vollen Episodenlimit von 4\,000 Schritten ---
+ein zu kurzes Evaluationslimit verfälscht die SR erheblich (dasselbe Modell:
+48\,\% bei Limit 600 gegenüber 86\,\% bei 4\,000;
+Abschnitt~\ref{sec:cap}). Als Diagnosemetrik des Trainings dient die
+\texttt{explained\_variance} des Critics. Für das Endergebnis werden drei
+unabhängige Läufe (Seeds 1--3) gemittelt und mit Standardabweichung angegeben.
+
+\subsection{Endergebnis (v12)}
+
+Die drei finalen Curriculum-Läufe (Laufzeit je 7{,}7--8{,}5\,h, alle vier
+Phasen durchlaufen) ergeben auf den finalen Modellen:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Lauf} & \textbf{A stoch.} & \textbf{A det.} & \textbf{B stoch.} & \textbf{B det.} \\
+\midrule
+Seed 1 & 64\,\% & 38\,\% & 72\,\% & 46\,\% \\
+Seed 2 & 76\,\% & 26\,\% & 80\,\% & 44\,\% \\
+Seed 3 & 80\,\% & 32\,\% & 88\,\% & 36\,\% \\
+\midrule
+\textbf{Mittel $\pm$ Std} & \textbf{73{,}3 $\pm$ 6{,}8} & 32{,}0 $\pm$ 4{,}9 & \textbf{80{,}0 $\pm$ 6{,}5} & 42{,}0 $\pm$ 4{,}3 \\
+\bottomrule
+\end{tabular}
+\caption{Endergebnis der v12-Läufe (finales Modell je Lauf; Testset A und
+Holdout B, je 50 Seeds, Limit 4\,000).}
+\label{tab:v12}
+\end{table}
+
+Beide Zielkriterien sind damit im Mittel erfüllt (A: $73{,}3\,\% \geq 70\,\%$;
+B: $80{,}0\,\% \geq 60\,\%$), erstmals in der geforderten Form mit drei Läufen
+und Standardabweichung. Dass B leicht über A liegt, ist eine Eigenschaft der
+konkreten Seed-Stichproben (A enthält zufällig mehr Welten mit langem Laufweg:
+38\,\% gegenüber 32\,\% mit $\geq 42$ Feldern); beide Sets stammen aus demselben
+Generator und derselben Distanzverteilung. Ein Gegentest mit den
+Phase-2-Zwischenmodellen ergab keine Verbesserung (A stoch.\
+$71{,}3 \pm 8{,}1$; B stoch.\ $74{,}0 \pm 15{,}0$); das finale Modell bleibt
+das Ausgabemodell.
+
+\subsection{Analyse des Det/Stoch-Gaps nach Weglänge}
+
+Der Abstand zwischen stochastischer und deterministischer SR ist kein
+Schwelleneffekt, sondern wächst kontinuierlich mit der Weglänge
+(Abbildung~\ref{fig:detgap}; 120 Validierungs-Welten, nach Startdistanz
+gruppiert): Bei 5--15 Feldern erreicht die deterministische Betriebsart 79\,\%,
+bei 35--45 Feldern noch 31\,\%, während die stochastische zwischen 100\,\% und
+82\,\% bleibt. Die Interpretation ist kumulativ: Je länger der Weg ohne direkte
+Zielsicht (Sichtradius 7), desto mehr Kreuzungsentscheidungen unter unsicherem
+Belief-State; an jeder liegen die Aktionswahrscheinlichkeiten nahe beieinander,
+und jede einzelne kann die Argmax-Politik in eine Oszillationsschleife führen,
+aus der Sampling entkommt. Der Gap ist damit teils eine Gedächtnis-Limitation,
+teils dem POMDP-Charakter geschuldet (unter Unsicherheit ist eine stochastische
+Politik nicht per se suboptimal, Abschnitt~\ref{sec:grundlagen}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/fig_det_gap_distanz.pdf}
+\caption{Erfolgsrate nach Startdistanz zum Exit (120 Validierungs-Welten,
+finales v12-Modell, Limit 4\,000): Die deterministische SR fällt kontinuierlich
+mit der Weglänge, die stochastische bleibt hoch.}
+\label{fig:detgap}
+\end{figure}
 
 \section{Entwicklung und Ergebnisse}
 \label{sec:ablation}
@@ -490,6 +798,7 @@ bestimmten und zwei der Befunde methodische Tragweite über das konkrete
 Problem hinaus haben.
 
 \textbf{Schritt 1 --- Messartefakt entdeckt: Eval-Episoden-Caps.}
+\label{sec:cap}
 Ausgangspunkt war ein Widerspruch: Der Vergleichslauf Seed~1 stagnierte in
 Phase~1 bei 12--16\,\% (wie Seed~0), obwohl die Batch-Validierung derselben
 Konfiguration 52\,\% erreicht hatte. Eine Nachmessung des besten
