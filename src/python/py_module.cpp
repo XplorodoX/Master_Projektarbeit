@@ -108,6 +108,15 @@ public:
         return py::make_tuple(p.x, p.y);
     }
 
+    int tileAt(int x, int y) const {
+        return static_cast<int>(sim_.tileAt(x, y));
+    }
+
+    py::tuple exitPos() const {
+        const auto p = sim_.exitPos();
+        return py::make_tuple(p.x, p.y);
+    }
+
     int stepsWithoutProgress() const {
         return sim_.stepsWithoutProgress();
     }
@@ -147,5 +156,7 @@ PYBIND11_MODULE(stoneforge_sim, m) {
                py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false,
                py::arg("disable_energy") = false)
         .def("player_pos", &StoneforgeCoreEnv::playerPos)
+        .def("tile_at", &StoneforgeCoreEnv::tileAt, py::arg("x"), py::arg("y"))
+        .def("exit_pos", &StoneforgeCoreEnv::exitPos)
         .def("steps_without_progress", &StoneforgeCoreEnv::stepsWithoutProgress);
 }

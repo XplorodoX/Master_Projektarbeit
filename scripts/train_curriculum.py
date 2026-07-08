@@ -288,12 +288,40 @@ def parse_args() -> argparse.Namespace:
                    help="Invertiert Swarm-Pool zu PLR-Semantik (auf knapp gescheiterte Seeds fokussieren)")
     p.add_argument("--subproc", action="store_true",
                    help="Verwende SubprocVecEnv statt DummyVecEnv")
+    # --- Ablations-Schalter (Det/Stoch-Gap-Experimente, 08.07.2026) ---
+    p.add_argument("--vf-coef", type=float, default=None,
+                   help="E1: Critic-Gewicht überschreiben (default 0.5). Wirkt auch bei --start-phase.")
+    p.add_argument("--no-p3-anneal", action="store_true",
+                   help="E1: Entropie-Annealing in Phase 3 abschalten (ent_coef konstant).")
+    p.add_argument("--lstm-size", type=int, default=None,
+                   help="E3: LSTM-Hidden-Size (default 256). NUR bei --start-phase 1 wirksam (Architektur).")
+    p.add_argument("--p3-exit-max", type=int, default=None,
+                   help="E2: obere Exit-Distanz in Phase 3 (default 45). Eval bleibt 35–45.")
+    p.add_argument("--p3-max-steps", type=int, default=None,
+                   help="Phase-3-Steps überschreiben (Schnelltest, z.B. 400000 statt 1000000).")
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     os.makedirs(args.save_dir, exist_ok=True)
+
+    # --- Ablations-Overrides anwenden (08.07.2026) ---
+    if args.vf_coef is not None:
+        RPPO_KWARGS["vf_coef"] = args.vf_coef
+        print(f"  [Ablation] vf_coef → {args.vf_coef}")
+    if args.lstm_size is not None:
+        RPPO_KWARGS["policy_kwargs"]["lstm_hidden_size"] = args.lstm_size
+        print(f"  [Ablation] lstm_hidden_size → {args.lstm_size} "
+              f"(nur wirksam bei --start-phase 1)")
+    if args.p3_exit_max is not None:
+        PHASES[2]["exit_max"] = args.p3_exit_max
+        print(f"  [Ablation] Phase-3 exit_max → {args.p3_exit_max} (Eval bleibt 35–45)")
+    if args.p3_max_steps is not None:
+        PHASES[2]["max_steps"] = args.p3_max_steps
+        print(f"  [Ablation] Phase-3 max_steps → {args.p3_max_steps:,}")
+    if args.no_p3_anneal:
+        print("  [Ablation] Phase-3 Entropie-Annealing: AUS")
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -422,7 +450,7 @@ def main() -> None:
             )
             eval_cb._meta_cb = meta_cb
             callbacks.append(meta_cb)
-        if i == 3:
+        if i == 3 and not args.no_p3_anneal:
             # Entropie in Phase 3 linear 0.05 → 0.001.
             # Start MUSS dem Trainings-ent_coef aus Phase 1/2 entsprechen (RPPO_KWARGS:
             # 0.05), sonst springt die Entropie beim Phasenwechsel abrupt 0.05 → 0.01.

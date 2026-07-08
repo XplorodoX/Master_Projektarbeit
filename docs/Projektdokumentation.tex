@@ -58,6 +58,14 @@ Stoneforge ist ein selbst entwickeltes, rundenbasiertes 2D-Spiel (C++-Kern,
 Python-Anbindung über pybind11). Die Welt wird pro Seed deterministisch aus
 Hash-Noise generiert (7 Biome, Chunks à $16{\times}16$ Tiles, theoretisch
 unendlich); der Agent startet bei $(0,0)$ und muss den Exit erreichen.
+Abbildung~\ref{fig:player_client} zeigt die Benutzeroberfläche und die Spielwelt aus Sicht eines menschlichen Spielers.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\textwidth]{figures/fig_game_real.png}
+  \caption{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}
+  \label{fig:player_client}
+\end{figure}
 
 \subsection{POMDP-Charakter}
 
@@ -67,6 +75,15 @@ Umwege außerhalb des Sichtfensters sind unbekannt: Die Aufgabe ist ein
 \emph{Partially Observable Markov Decision Process} (POMDP). Ohne Gedächtnis ist
 sie nicht deterministisch lösbar (siehe Ablation in
 Abschnitt~\ref{sec:ablation}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.47\textwidth]{figures/fig_game_real.png}
+  \hfill
+  \includegraphics[width=0.47\textwidth]{figures/fig_ki_sicht.png}
+  \caption{Vergleich der Spielumgebung (echte Screenshots): Links die tatsächliche Umgebung (voller Sichtbereich), rechts die Sichtweise der KI --- die lokale $15\times15$-Observation, bei der außerhalb liegende Bereiche ungesehen/abgedunkelt sind, mit dem gelben Exit-Kompass. Das Sichtfeld ist zur Verdeutlichung rot markiert.}
+  \label{fig:game_vs_ai}
+\end{figure}
 
 \subsection{Beobachtung, Aktionen, Episodenende}
 

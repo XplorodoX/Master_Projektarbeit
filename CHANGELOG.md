@@ -3,6 +3,95 @@
 
 ---
 
+## v2026-07-08.2 — Det/Stoch-Gap analysiert: skaliert mit der Weglänge (Kernbefund für die Diskussion)
+
+**Frage:** Warum lernt der Agent die deterministische ("sture", argmax) Spielweise so schlecht,
+obwohl er stochastisch beide Ziele erreicht? Fehlt ihm etwas?
+
+**Messung** (`scripts/plot_det_gap_distanz.py`, finales Modell Seed 3, 120 Val-Seeds 6000–6119,
+Distanz 5–45, det + stoch je frischer Reset, Cap 4000): Erfolgsrate nach Startdistanz (BFS-Felder):
+
+| Weglänge | n | det-SR | stoch-SR | Gap |
+|----------|---|--------|----------|-----|
+| 5–15  | 14 | **79 %** | 100 % | 21 |
+| 15–25 | 22 | 50 % | 95 % | 45 |
+| 25–35 | 33 | 39 % | 85 % | 46 |
+| 35–45 | 51 | **31 %** | 82 % | 51 |
+
+**Befund:** Der Gap ist **keine generelle Unfähigkeit**, sondern skaliert mit der Weglänge. Auf kurzen
+Wegen ist der Agent zielstrebig (79 % det, kleiner Gap); erst mit der Distanz bricht det ein, während
+stoch hoch bleibt. Abbildung: `docs/figures/fig_det_gap_distanz.pdf` (+ .png/.json).
+
+**Interpretation (POMDP) — KORRIGIERT 08.07. nach Nachmessung mit feinen Distanz-Bins:** Der Gap ist
+**kein Schwelleneffekt bei einer bestimmten Schrittzahl**, sondern wächst **kontinuierlich mit der
+Weglänge** — det-SR fällt bereits ab ~14–17 Feldern spürbar (feine Bins: 5–8: 100 %, 14–17: 64 %,
+20–25: 44 %, 25–30: 30 %). Ursache ist **kumulativ**: Je länger der Weg ohne direkte Zielsicht (Sichtradius
+nur 7 Felder), desto mehr Kreuzungs-Entscheidungen unter unsicherem Belief; an jeder sind die
+Aktionswahrscheinlichkeiten fast-uniform, und jede einzelne kann argmax in eine Oszillations-Schleife
+schicken — die Fehlerwahrscheinlichkeit summiert sich über die Weglänge. Sampling entkommt, argmax nicht.
+In einem POMDP ist Determinismus zudem nicht immer optimal (Variieren unter Unsicherheit ist teils die
+richtige Antwort). Nebenbefund: Ziel bei Start sichtbar (Chebyshev ≤7) → det 67 % vs. nicht sichtbar 41 %
+(n=9 vs. 151 — Richtung plausibel, Stichprobe zu klein für starke Aussage). → Der Gap ist teils
+fundamental (POMDP), teils Gedächtnis-Limitation, kein Bug. **Die frühere „ab 200+ Schritten"-Formulierung
+war ungenau** (der Einbruch beginnt viel früher).
+
+**Was helfen würde (Ausblick/Diskussion):** (1) mehr/strukturiertes Gedächtnis — größerer LSTM oder
+räumlicher Speicher (Neural Map / Attention über die Historie), Stand der Technik für Memory-Maze-Aufgaben;
+(2) stabilerer Critic in Phase 3 (EV war ≈ 0 — praktisch angreifbarster Punkt); (3) sanfterer
+Curriculum-Übergang auf die langen Distanzen + mehr Training dort.
+
+#### Nebenbefund — Gegentest phase2_best vs. finales best_model (n=3, beide Testsets)
+Hypothese: Da best_model in Phase 3/4 auf **det** selektiert wurde, könnte das Phase-2-Zwischenmodell
+stochastisch stärker sein. **Widerlegt:**
+
+| Modell | A stoch | B stoch | A det | B det |
+|--------|---------|---------|-------|-------|
+| **best_model (final)** | **73,3 % ± 6,8** | **80,0 % ± 6,5** | 32,0 % | 42,0 % |
+| phase2_best | 71,3 % ± 8,1 | 74,0 % ± 15,0 | 34,0 % | 25,3 % |
+
+Final ist im Mittel gleichwertig bis besser und deutlich stabiler (B-Streuung ±6,5 statt ±15,0). Pro Seed
+gemischt (Seed 1 phase2 A=78 > 64; Seed 3 phase2 A=60 < 80), aber Auswahl pro Seed nach Testergebnis wäre
+Selektion auf den Testdaten. **Konsequenz:** best_model bleibt das Ausgabemodell; 73/80 stehen.
+
+---
+
+## v2026-07-08 — Finale v12-Curriculum-Läufe abgeschlossen (batch=8, Seeds 1–3): beide Zielkriterien im Mittel erfüllt
+
+**Setup:** 3 volle Curriculum-Läufe (RecurrentPPO, batch=8, Swarm an, Env v11/229-Obs),
+`models/ppo_lstm_curriculum_v12_s{1,2,3}`, Laufzeit je 7,7–8,5 h, alle 4 Phasen sauber durchlaufen
+(kein Absturz). Standardisierter Eval auf den finalen `best_model.zip`: Testset A (7000–7049) und
+Holdout B (8000–8049), je 50 Seeds, Cap 4000, deterministisch **und** stochastisch.
+
+#### Ergebnis (finale best_model.zip je Seed)
+
+| Lauf | A stoch | A det | B stoch | B det |
+|------|---------|-------|---------|-------|
+| Seed 1 | 64 % | 38 % | 72 % | 46 % |
+| Seed 2 | 76 % | 26 % | 80 % | 44 % |
+| Seed 3 | 80 % | 32 % | 88 % | 36 % |
+| **Mittelwert ± Std** | **73,3 % ± 6,8** | **32,0 % ± 4,9** | **80,0 % ± 6,5** | **42,0 % ± 4,3** |
+
+**Zielkriterien:** Testset A ≥ 70 %: **73,3 % ✓** (stochastisch). Holdout B ≥ 60 %: **80,0 % ✓**
+(stochastisch). Damit erstmals mit **3 Läufen + Mittelwert ± Std** (Projektvorgabe) erfüllt, nicht mehr
+nur als Einzelwert. Anmerkung: B > A ist Seed-Rauschen (beide gleiche Verteilung, n=3); Seed 1 liegt
+auf A einzeln bei 64 % — der Mittelwert trägt.
+
+#### Det/Stoch-Gap besteht weiter — Phase-3-Annealing hat ihn NICHT geschlossen
+Deterministisch bleibt es bei 32 % (A) / 42 % (B) — der bekannte POMDP-Gap. Phase-3-Verläufe (Gate=det)
+waren über alle Seeds stark volatil (det-MAX je Lauf nur 54/26/36 %, oszilliert bis auf 0 % herunter);
+`explained_variance` fiel nach jedem Phasenwechsel wieder auf ~0 und erholte sich nur teils
+(Seed 3 zuletzt 0,88; Seed 1/2 ~0,05). D.h.: batch=8 hat Phase 1/2 klar stabilisiert (Projekt-Bestwerte:
+88–92 % stoch, 60–74 % det in Stufe 1), aber der lange Phase-3-Horizont (Distanz 35–45) bleibt für den
+Critic zu schwer für stabiles det-Lernen. **Interpretation:** stochastische Ziele solide erreicht;
+det-Gap bleibt die dokumentierte LSTM/POMDP-Limitation (nicht als Fehler, siehe POMDP-Einordnung).
+
+#### Offene nächste Schritte
+1. Prüfen, ob `phase2_best_model.zip` stochastisch besser abschneidet als das finale (auf det selektierte)
+   `best_model.zip` — falls ja, ist das je Seed das bessere Ausgabemodell für die stochastische Aussage.
+2. Ergebnis- + Diskussionskapitel mit diesen n=3-Zahlen füllen.
+
+---
+
 ## v2026-07-07.4 — Forensik: Stack/Swarm/Wrapper entlastet — v11-Lerndynamik ist instabil, Hauptverdacht batch_size=64
 
 #### Befunde (4 parallele Diagnose-Läufe + deterministische Vergleiche, alle Seed 1)

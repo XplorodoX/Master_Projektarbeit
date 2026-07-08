@@ -1,0 +1,114 @@
+[
+  {
+    "step": 549824,
+    "sr": 0.54,
+    "successes": 27,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=54%|stoch=86%]",
+    "timestamp": "2026-07-08 08:25:53"
+  },
+  {
+    "step": 574816,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=14%]",
+    "timestamp": "2026-07-08 08:32:59"
+  },
+  {
+    "step": 599808,
+    "sr": 0.36,
+    "successes": 18,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=36%|stoch=66%]",
+    "timestamp": "2026-07-08 08:39:51"
+  },
+  {
+    "step": 624800,
+    "sr": 0.56,
+    "successes": 28,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=56%|stoch=82%]",
+    "timestamp": "2026-07-08 08:46:40"
+  },
+  {
+    "step": 649792,
+    "sr": 0.56,
+    "successes": 28,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=56%|stoch=78%]",
+    "timestamp": "2026-07-08 08:53:20"
+  },
+  {
+    "step": 674784,
+    "sr": 0.44,
+    "successes": 22,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=44%|stoch=86%]",
+    "timestamp": "2026-07-08 08:59:57"
+  },
+  {
+    "step": 699776,
+    "sr": 0.38,
+    "successes": 19,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=38%|stoch=72%]",
+    "timestamp": "2026-07-08 09:06:44"
+  },
+  {
+    "step": 724768,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=8%|stoch=8%]",
+    "timestamp": "2026-07-08 09:13:43"
+  },
+  {
+    "step": 749760,
+    "sr": 0.32,
+    "successes": 16,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=32%|stoch=54%]",
+    "timestamp": "2026-07-08 09:35:54"
+  },
+  {
+    "step": 774752,
+    "sr": 0.38,
+    "successes": 19,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=38%|stoch=60%]",
+    "timestamp": "2026-07-08 09:43:34"
+  },
+  {
+    "step": 799744,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=10%]",
+    "timestamp": "2026-07-08 10:06:07"
+  },
+  {
+    "step": 824736,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=34%]",
+    "timestamp": "2026-07-08 10:13:37"
+  },
+  {
+    "step": 849728,
+    "sr": 0.54,
+    "successes": 27,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=54%|stoch=82%]",
+    "timestamp": "2026-07-08 10:21:02"
+  },
+  {
+    "step": 874720,
+    "sr": 0.44,
+    "successes": 22,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=44%|stoch=64%]",
+    "timestamp": "2026-07-08 10:28:33"
+  }
+]

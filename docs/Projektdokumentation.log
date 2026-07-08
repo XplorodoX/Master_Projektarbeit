@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  7 JUL 2026 18:04
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  8 JUL 2026 08:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -533,12 +533,32 @@ File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10.95> on input line 50.
+<figures/fig_game_real.png, id=119, 2041.6275pt x 1332.98pt>
+File: figures/fig_game_real.png Graphic file (type png)
+<use figures/fig_game_real.png>
+Package pdftex.def Info: figures/fig_game_real.png  used on input line 65.
+(pdftex.def)             Requested size: 327.7763pt x 213.99304pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 9
-4.
+File: figures/fig_game_real.png Graphic file (type png)
+<use figures/fig_game_real.png>
+Package pdftex.def Info: figures/fig_game_real.png  used on input line 81.
+(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
+<figures/fig_ki_sicht.png, id=121, 2041.6275pt x 1332.98pt>
+File: figures/fig_ki_sicht.png Graphic file (type png)
+<use figures/fig_ki_sicht.png>
+Package pdftex.def Info: figures/fig_ki_sicht.png  used on input line 83.
+(pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
+11.
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [1
@@ -549,100 +569,105 @@ al/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/202
 st/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2026/texmf-dist/fonts/enc/
 dvips/lm/lm-rm.enc}{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ma
 thit.enc}]
-Underfull \hbox (badness 4492) in paragraph at lines 135--135
+Underfull \hbox (badness 4492) in paragraph at lines 152--152
 []\T1/lmr/m/n/10.95 Tabelle 2: []Reward-Komponenten (Env v11). Der frü-he-re es
 -ka-lie-ren-de Wand-Penalty
  []
 
-[2]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/fig_lernkurve.pdf, id=152, 375.804pt x 216.81pt>
+[2 <./figures/fig_game_real.png>]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[3 <./figures/fig_ki_sicht.png (PNG copy)>]
+<figures/fig_lernkurve.pdf, id=165, 375.804pt x 216.81pt>
 File: figures/fig_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 239.
+Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 256.
 (pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
 
+
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[3] [4 <./figures/fig_lernkurve.pdf>]
-<figures/fig_entwicklung.pdf, id=213, 426.07181pt x 221.31136pt>
+[4] [5 <./figures/fig_lernkurve.pdf>]
+<figures/fig_entwicklung.pdf, id=222, 426.07181pt x 221.31136pt>
 File: figures/fig_entwicklung.pdf Graphic file (type pdf)
 <use figures/fig_entwicklung.pdf>
-Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 346.
+Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 363.
 (pdftex.def)             Requested size: 386.96027pt x 200.99854pt.
+ [6 <./figures/fig_entwicklung.pdf>]
+<figures/fig_v11_lernkurve.pdf, id=289, 512.7205pt x 251.56421pt>
+File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
+<use figures/fig_v11_lernkurve.pdf>
+Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 426.
+
+(pdftex.def)             Requested size: 386.96027pt x 189.8588pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[5]
-<figures/fig_v11_lernkurve.pdf, id=226, 512.7205pt x 251.56421pt>
-File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
-<use figures/fig_v11_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 409.
 
-(pdftex.def)             Requested size: 386.96027pt x 189.8588pt.
- [6 <./figures/fig_entwicklung.pdf>]
-Overfull \hbox (16.29742pt too wide) in paragraph at lines 419--433
+Overfull \hbox (16.29742pt too wide) in paragraph at lines 436--450
 []\T1/lmr/bx/n/10.95 Live-Monitoring-Redesign. \T1/lmr/m/n/10.95 Das WebSocket-
 Dashboard aus Etap-pe 2 wur-de nach Dashboard-
  []
 
-<figures/fig_livemap.png, id=287, 1405.25pt x 702.625pt>
+<figures/fig_livemap.png, id=291, 1405.25pt x 702.625pt>
 File: figures/fig_livemap.png Graphic file (type png)
 <use figures/fig_livemap.png>
-Package pdftex.def Info: figures/fig_livemap.png  used on input line 436.
+Package pdftex.def Info: figures/fig_livemap.png  used on input line 453.
 (pdftex.def)             Requested size: 409.71692pt x 204.8603pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[7 <./figures/fig_v11_lernkurve.pdf>]
-<figures/fig_cap_artefakt.pdf, id=346, 462.52798pt x 245.718pt>
+[7]
+<figures/fig_cap_artefakt.pdf, id=303, 462.52798pt x 245.718pt>
 File: figures/fig_cap_artefakt.pdf Graphic file (type pdf)
 <use figures/fig_cap_artefakt.pdf>
-Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 495.
+Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 512.
 (pdftex.def)             Requested size: 364.19667pt x 193.48894pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-Overfull \hbox (2.33298pt too wide) in paragraph at lines 516--519
+[8 <./figures/fig_v11_lernkurve.pdf>]
+Overfull \hbox (2.33298pt too wide) in paragraph at lines 533--536
 []\T1/lmr/m/it/10.95 Wand-/Loop-Penalties (Maÿ-nah-me B7)? \T1/lmr/m/n/10.95 En
 t-las-tet oh-ne neu-en Lauf: Die Batch-Validierung
  []
 
-[8 <./figures/fig_livemap.png (PNG copy)>]
-<figures/fig_batch_vergleich.pdf, id=354, 476.98201pt x 404.712pt>
+[9 <./figures/fig_livemap.png (PNG copy)>]
+<figures/fig_batch_vergleich.pdf, id=364, 476.98201pt x 404.712pt>
 File: figures/fig_batch_vergleich.pdf Graphic file (type pdf)
 <use figures/fig_batch_vergleich.pdf>
-Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 56
-5.
+Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 58
+2.
 (pdftex.def)             Requested size: 386.96027pt x 328.33366pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[9 <./figures/fig_cap_artefakt.pdf>]
-Underfull \hbox (badness 1565) in paragraph at lines 596--596
+
+Underfull \hbox (badness 1565) in paragraph at lines 613--613
 []\T1/lmr/m/n/10 Curriculum P1; nai-ver Trans-fer kol-la-biert $\OMS/lmsy/m/n/1
 0 !$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 602--602
+Underfull \hbox (badness 10000) in paragraph at lines 619--619
 []\T1/lmr/m/n/10 v6--v9 schei-tern $\OMS/lmsy/m/n/10 !$ \T1/lmr/m/n/10 Root-Cau
 se
  []
 
 
-Underfull \hbox (badness 6252) in paragraph at lines 603--603
+Underfull \hbox (badness 6252) in paragraph at lines 620--620
 []\T1/lmr/m/n/10 v10-Reproduktion ab-ge-schlos-sen (Re-fe-renz-mo-
  []
 
 
-Underfull \hbox (badness 5711) in paragraph at lines 605--605
+Underfull \hbox (badness 5711) in paragraph at lines 622--622
 []\T1/lmr/m/n/10 v11-Läufe Seed 0/1 sta-gnie-ren; Monitoring-
  []
 
@@ -650,46 +675,42 @@ Underfull \hbox (badness 5711) in paragraph at lines 605--605
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (5.08095pt too wide) in paragraph at lines 628--632
+Overfull \hbox (5.08095pt too wide) in paragraph at lines 645--649
 []\T1/lmr/m/it/10.95 Hyperparameter do-mi-nie-ren Fea-tu-res: \T1/lmr/m/n/10.95
  Al-le v7-Feature-Ideen schei-ter-ten an ver-stell-ten Basis-
  []
 
-[10 <./figures/fig_batch_vergleich.pdf>] [11]
-Overfull \hbox (5.8401pt too wide) in paragraph at lines 675--677
+[10 <./figures/fig_cap_artefakt.pdf>] [11 <./figures/fig_batch_vergleich.pdf>]
+Overfull \hbox (5.8401pt too wide) in paragraph at lines 692--694
 []\T1/lmr/bx/n/10.95 Eval-Callback: \T1/lmr/m/n/10.95 pha-sen-ge-rech-tes Ga-ti
 ng (Ta-bel-le [][]3[][]), Episoden-Caps pro Pha-se, Det+Stoch-
  []
 
-<figures/fig_exit_distanz.pdf, id=469, 410.79002pt x 226.33928pt>
+<figures/fig_exit_distanz.pdf, id=473, 410.79002pt x 226.33928pt>
 File: figures/fig_exit_distanz.pdf Graphic file (type pdf)
 <use figures/fig_exit_distanz.pdf>
-Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 681.
+Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 698.
 (pdftex.def)             Requested size: 364.19667pt x 200.6677pt.
-[12 <./figures/fig_exit_distanz.pdf>]
-<figures/fig_fps_benchmark.pdf, id=538, 375.804pt x 216.81pt>
-File: figures/fig_fps_benchmark.pdf Graphic file (type pdf)
-<use figures/fig_fps_benchmark.pdf>
-Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 706.
-
-(pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
-<figures/fig_batch64_validation.pdf, id=543, 375.804pt x 274.626pt>
-File: figures/fig_batch64_validation.pdf Graphic file (type pdf)
-<use figures/fig_batch64_validation.pdf>
-Package pdftex.def Info: figures/fig_batch64_validation.pdf  used on input line
- 739.
-(pdftex.def)             Requested size: 327.7763pt x 239.53868pt.
-
-Underfull \hbox (badness 1348) in paragraph at lines 745--745
-[]\T1/lmr/m/n/10.95 Abbildung 9: []Validierungslauf \T1/lmtt/m/n/10.95 batch_si
-ze\T1/lmr/m/n/10.95 =64 (Phase-1-Setup, Env v11), Stand 06.07.:
- []
-
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[13 <./figures/fig_fps_benchmark.pdf>] (./Projektdokumentation.bbl [14 <./figur
-es/fig_batch64_validation.pdf>]) [15] (./Projektdokumentation.aux)
+[12]
+<figures/fig_fps_benchmark.pdf, id=489, 375.804pt x 216.81pt>
+File: figures/fig_fps_benchmark.pdf Graphic file (type pdf)
+<use figures/fig_fps_benchmark.pdf>
+Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 723.
+
+(pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
+ [13 <./figures/fig_exit_distanz.pdf> <./figures/fig_fps_benchmark.pdf>]
+<figures/fig_batch64_validation.pdf, id=598, 375.804pt x 274.626pt>
+File: figures/fig_batch64_validation.pdf Graphic file (type pdf)
+<use figures/fig_batch64_validation.pdf>
+Package pdftex.def Info: figures/fig_batch64_validation.pdf  used on input line
+ 756.
+(pdftex.def)             Requested size: 327.7763pt x 239.53868pt.
+
+[14 <./figures/fig_batch64_validation.pdf>] (./Projektdokumentation.bbl
+[15]) [16] (./Projektdokumentation.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -698,13 +719,13 @@ Package rerunfilecheck Info: File `Projektdokumentation.out' has not changed.
 (rerunfilecheck)             Checksum: 864D1338F4136713848213936DDC0293;7113.
  ) 
 Here is how much of TeX's memory you used:
- 12199 strings out of 467525
- 190936 string characters out of 5418982
- 621813 words of memory out of 5000000
- 40837 multiletter control sequences out of 15000+600000
+ 12218 strings out of 467525
+ 191435 string characters out of 5418982
+ 624437 words of memory out of 5000000
+ 40853 multiletter control sequences out of 15000+600000
  702580 words of font info for 95 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,11n,79p,738b,589s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,79p,738b,591s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2026/tex
@@ -715,10 +736,10 @@ blic/lm/lmr8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmri
 sr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/te
 xlive/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026
 /texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Projektdokumentation.pdf (15 pages, 458863 bytes).
+Output written on Projektdokumentation.pdf (16 pages, 975413 bytes).
 PDF statistics:
- 747 PDF objects out of 1000 (max. 8388607)
- 362 compressed objects within 4 object streams
- 82 named destinations out of 1000 (max. 500000)
- 270 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 757 PDF objects out of 1000 (max. 8388607)
+ 369 compressed objects within 4 object streams
+ 85 named destinations out of 1000 (max. 500000)
+ 280 words of extra memory for PDF output out of 10000 (max. 10000000)
 
