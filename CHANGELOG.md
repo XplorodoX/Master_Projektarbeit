@@ -2,6 +2,16 @@
 
 ---
 
+## v2026-07-08 — Tile-Viewport bis über den Fensterrand
+
+### v2026-07-08.A — Sicht-Radius erweitert
+**Datei:** `src/client/render_engine.cpp`
+
+**Problem:** Zwischen Fensterrand und den gerenderten Tiles blieb ein sichtbarer Hintergrundstreifen.
+**Lösung:** Die Haupt-Viewport-Radien wurden so erhöht, dass Tiles jetzt bis zum Rand und leicht darüber hinaus gezeichnet werden.
+
+---
+
 ## v2026-07-08 — Debug-Panel per D togglebar
 
 ### v2026-07-08.A — Untere Debug-Steuerung ausgeblendet

@@ -2190,8 +2190,8 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         const stoneforge::Vec2i player = sim.playerPos();
         const stoneforge::Vec2i exit = sim.exitPos();
 
-        const int viewRadiusX = std::max(8, screenW / (2 * tileSize) - 1);
-        const int viewRadiusY = std::max(6, screenH / (2 * tileSize) - 2);
+        const int viewRadiusX = std::max(8, (screenW / 2 + tileSize - 1) / tileSize + 1);
+        const int viewRadiusY = std::max(6, (screenH / 2 + tileSize - 1) / tileSize + 1);
 
         const int centerX = screenW / 2;
         const int centerY = screenH / 2;
