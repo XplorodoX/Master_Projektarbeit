@@ -1,5 +1,16 @@
 # Changelog
 
+---
+
+## v2026-07-08 — HUD-Textbox entfernt
+
+### v2026-07-08.A — Oberen HUD-Textblock deaktiviert
+**Datei:** `src/client/render_ui.cpp`
+
+**Problem:** Der obere Overlay-Block zeigte dauerhaft Status- und Hilfetext wie Tile-Größe, Werkzeugstufe, Reichweite, Werkbankstatus, Inventarstatus, Slot und Steuerhinweise an.
+**Lösung:** `drawHud(...)` rendert diesen Textblock nicht mehr; die Funktion ist jetzt ein No-Op und lässt den restlichen UI-Flow unverändert.
+
+**Validierung:** Syntax-/Fehlerprüfung der geänderten Datei ohne Befund. Ein vollständiger Build konnte in dieser Sitzung nicht über die Build-Tools ausgeführt werden.
 
 ---
 
@@ -12,7 +23,6 @@
 
 #### Änderung 1 — Validierungs-Seeds & Beseitigung des Data-Leakages
 **Dateien:** [train_curriculum.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_curriculum.py), [train_cnn.py](file:///Users/merluee/Master_Projektarbeit/scripts/train_cnn.py)
-**Problem:** Der Curriculum-Callback nutzte die Seeds 7000–7049, welche dem Testset A entsprechen. Dies führte zu Data Leakage bei der Modellselektion.
 **Lösung:** Einführung von `VAL_SEEDS = list(range(6000, 6050))` für die Phasensteuerung und Modellselektion im Callback. Die Test-Seeds werden nur noch in der finalen Evaluation genutzt.
 
 #### Änderung 2 — Lösbarkeitsprüfung

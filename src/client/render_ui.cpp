@@ -206,29 +206,12 @@ bool drawButton(Rectangle rect, const char* text, bool enabled) {
 }
 
 void drawHud(const stoneforge::Simulation& sim, int screenW, int screenH, int tileSize, bool inventoryOpen, bool nearWorkbench) {
-    const int hotbarY = screenH - 108;
-    const Rectangle panel = {
-        static_cast<float>(screenW / 2 - 430),
-        static_cast<float>(hotbarY - 94),
-        860.0F,
-        56.0F
-    };
-
-    DrawRectangleRounded(panel, 0.28F, 10, Fade(Color{13, 18, 24, 255}, 0.88F));
-    DrawRectangleRoundedLinesEx(panel, 0.28F, 10, 2.0F, Color{90, 108, 132, 255});
-
-    DrawText(TextFormat("Tile %dpx", tileSize), static_cast<int>(panel.x) + 16, static_cast<int>(panel.y) + 11, 18, Color{170, 190, 216, 255});
-    DrawText(TextFormat("Axe %d", sim.axeLevel()), static_cast<int>(panel.x) + 112, static_cast<int>(panel.y) + 11, 18, Color{201, 156, 94, 255});
-    DrawText(TextFormat("Pick %d", sim.pickaxeLevel()), static_cast<int>(panel.x) + 186, static_cast<int>(panel.y) + 11, 18, Color{236, 198, 102, 255});
-    DrawText(TextFormat("Range %.2f", sim.miningRangeTiles()), static_cast<int>(panel.x) + 271, static_cast<int>(panel.y) + 11, 18, Color{178, 209, 245, 255});
-
-    DrawText(nearWorkbench ? "Workbench: in range" : "Workbench: none", static_cast<int>(panel.x) + 398, static_cast<int>(panel.y) + 11, 18, nearWorkbench ? Color{149, 232, 166, 255} : Color{233, 145, 136, 255});
-    DrawText(inventoryOpen ? "Inventory open" : "Inventory closed", static_cast<int>(panel.x) + 578, static_cast<int>(panel.y) + 11, 18, Color{186, 206, 235, 255});
-    DrawText(TextFormat("Slot %d", sim.hotbarSelection() + 1), static_cast<int>(panel.x) + 736, static_cast<int>(panel.y) + 11, 18, Color{244, 223, 156, 255});
-
-    const std::string info = "Wheel hotbar | 1-9 direct select | RMB context | TAB inventory/crafting | Ctrl+Wheel zoom";
-    const int infoW = MeasureText(info.c_str(), 16);
-    DrawText(info.c_str(), screenW / 2 - infoW / 2, static_cast<int>(panel.y) + 34, 16, Color{184, 197, 214, 255});
+    (void)sim;
+    (void)screenW;
+    (void)screenH;
+    (void)tileSize;
+    (void)inventoryOpen;
+    (void)nearWorkbench;
 }
 
 void drawBottomVitals(const stoneforge::Simulation& sim, int screenW, int screenH) {
