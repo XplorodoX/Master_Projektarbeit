@@ -2,6 +2,18 @@
 
 ---
 
+## v2026-07-08 — Debug-Panel per D togglebar
+
+### v2026-07-08.A — Untere Debug-Steuerung ausgeblendet
+**Datei:** `src/client/render_engine.cpp`
+
+**Problem:** Auto-Walk, Forcefield, Goal Area, Chunk Borders, Monsters, Threshold sowie die Hinweise zu Goal Distance und aktuellem Biom waren dauerhaft sichtbar.
+**Lösung:** Ein neuer Button `D` unten rechts schaltet den kompletten Debug-Block um. Standardzustand ist aus; erst nach Aktivierung werden die Controls und Textinfos eingeblendet.
+
+**Hinweis:** Der vorhandene Threshold-Input bleibt Teil des Debug-Panels und wird beim Ausblenden deaktiviert.
+
+---
+
 ## v2026-07-08 — HUD-Textbox entfernt
 
 ### v2026-07-08.A — Oberen HUD-Textblock deaktiviert

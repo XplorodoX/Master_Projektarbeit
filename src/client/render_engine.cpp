@@ -1714,6 +1714,7 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
     bool forcefieldEnabled = false;
     bool showPotentialGoalSpawnArea = false;
     bool showChunkBorders = false;
+    bool showDebugControls = false;
     // Monster-Toggle: Startzustand spiegelt den CLI-Flag wider.
     bool monstersEnabled = !noMonsters;
     bool thresholdInputActive = false;
@@ -2421,93 +2422,101 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
         const stoneforge::Vec2i goalNow = sim.exitPos();
         const std::string biomeNow = sim.biomeNameAt(posNow.x, posNow.y);
         const int goalDistance = std::abs(goalNow.x - posNow.x) + std::abs(goalNow.y - posNow.y);
-        const float controlsX = 24.0F;
-        const float controlsY = 24.0F;
-        const float buttonH = 40.0F;
-        const float gapX = 10.0F;
-        const float gapY = 8.0F;
-        const int buttonCount = 5;
-        const int buttonCols = (screenW >= 1360) ? 5 : ((screenW >= 1100) ? 3 : 2);
-        const int buttonRows = (buttonCount + buttonCols - 1) / buttonCols;
-        const float controlsW = static_cast<float>(screenW) - controlsX * 2.0F;
-        const float buttonW = (controlsW - gapX * static_cast<float>(buttonCols - 1)) / static_cast<float>(buttonCols);
+        const Rectangle debugToggleBtn{static_cast<float>(screenW - 74), static_cast<float>(screenH - 74), 50.0F, 50.0F};
+        if(drawButton(debugToggleBtn, showDebugControls ? "D" : "D", true)) {
+            showDebugControls = !showDebugControls;
+            thresholdInputActive = false;
+        }
 
-        auto controlRect = [&](int idx) {
-            const int row = idx / buttonCols;
-            const int col = idx % buttonCols;
-            return Rectangle{
-                controlsX + static_cast<float>(col) * (buttonW + gapX),
-                controlsY + static_cast<float>(row) * (buttonH + gapY),
-                buttonW,
-                buttonH
+        if(showDebugControls) {
+            const float controlsX = 24.0F;
+            const float controlsY = 24.0F;
+            const float buttonH = 40.0F;
+            const float gapX = 10.0F;
+            const float gapY = 8.0F;
+            const int buttonCount = 5;
+            const int buttonCols = (screenW >= 1360) ? 5 : ((screenW >= 1100) ? 3 : 2);
+            const int buttonRows = (buttonCount + buttonCols - 1) / buttonCols;
+            const float controlsW = static_cast<float>(screenW) - controlsX * 2.0F;
+            const float buttonW = (controlsW - gapX * static_cast<float>(buttonCols - 1)) / static_cast<float>(buttonCols);
+
+            auto controlRect = [&](int idx) {
+                const int row = idx / buttonCols;
+                const int col = idx % buttonCols;
+                return Rectangle{
+                    controlsX + static_cast<float>(col) * (buttonW + gapX),
+                    controlsY + static_cast<float>(row) * (buttonH + gapY),
+                    buttonW,
+                    buttonH
+                };
             };
-        };
 
-        const Rectangle autoWalkBtn = controlRect(0);
-        const Rectangle forcefieldBtn = controlRect(1);
-        const Rectangle potentialGoalBtn = controlRect(2);
-        const Rectangle chunkBordersBtn = controlRect(3);
-        const Rectangle monstersBtn = controlRect(4);
+            const Rectangle autoWalkBtn = controlRect(0);
+            const Rectangle forcefieldBtn = controlRect(1);
+            const Rectangle potentialGoalBtn = controlRect(2);
+            const Rectangle chunkBordersBtn = controlRect(3);
+            const Rectangle monstersBtn = controlRect(4);
 
-        const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
-        const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
-        const bool potentialGoalClicked = drawButton(
-            potentialGoalBtn,
-            showPotentialGoalSpawnArea ? "Goal Area: ON" : "Goal Area: OFF",
-            !sim.done()
-        );
-        const bool chunkBordersClicked = drawButton(
-            chunkBordersBtn,
-            showChunkBorders ? "Chunk Borders: ON" : "Chunk Borders: OFF",
-            !sim.done()
-        );
-        const bool monstersClicked = drawButton(
-            monstersBtn,
-            monstersEnabled ? "Monsters: ON" : "Monsters: OFF",
-            true
-        );
-        if(autoWalkClicked) {
-            autoWalkEnabled = !autoWalkEnabled;
-        }
-        if(forcefieldClicked) {
-            forcefieldEnabled = !forcefieldEnabled;
-        }
-        if(potentialGoalClicked) {
-            showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
-        }
-        if(chunkBordersClicked) {
-            showChunkBorders = !showChunkBorders;
-        }
-        if(monstersClicked) {
-            monstersEnabled = !monstersEnabled;
-            stoneforge::mutableGameConfig().gameplay.disableMobs = !monstersEnabled;
-            sim.reset(currentSeed);
-            if(aiDualMode) { sim2.reset(currentSeed); }
-            particles.clear();
-        }
+            const bool autoWalkClicked = drawButton(autoWalkBtn, autoWalkEnabled ? "Auto-Walk: ON" : "Auto-Walk: OFF", !sim.done());
+            const bool forcefieldClicked = drawButton(forcefieldBtn, forcefieldEnabled ? "Forcefield: ON" : "Forcefield: OFF", !sim.done());
+            const bool potentialGoalClicked = drawButton(
+                potentialGoalBtn,
+                showPotentialGoalSpawnArea ? "Goal Area: ON" : "Goal Area: OFF",
+                !sim.done()
+            );
+            const bool chunkBordersClicked = drawButton(
+                chunkBordersBtn,
+                showChunkBorders ? "Chunk Borders: ON" : "Chunk Borders: OFF",
+                !sim.done()
+            );
+            const bool monstersClicked = drawButton(
+                monstersBtn,
+                monstersEnabled ? "Monsters: ON" : "Monsters: OFF",
+                true
+            );
+            if(autoWalkClicked) {
+                autoWalkEnabled = !autoWalkEnabled;
+            }
+            if(forcefieldClicked) {
+                forcefieldEnabled = !forcefieldEnabled;
+            }
+            if(potentialGoalClicked) {
+                showPotentialGoalSpawnArea = !showPotentialGoalSpawnArea;
+            }
+            if(chunkBordersClicked) {
+                showChunkBorders = !showChunkBorders;
+            }
+            if(monstersClicked) {
+                monstersEnabled = !monstersEnabled;
+                stoneforge::mutableGameConfig().gameplay.disableMobs = !monstersEnabled;
+                sim.reset(currentSeed);
+                if(aiDualMode) { sim2.reset(currentSeed); }
+                particles.clear();
+            }
 
-        const float controlsBottomY = controlsY + static_cast<float>(buttonRows) * buttonH +
-                                      static_cast<float>(buttonRows - 1) * gapY;
-        const Rectangle thresholdBox = {24.0F, controlsBottomY + 8.0F, 140.0F, 34.0F};
-        if(!sim.done() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), thresholdBox)) {
-            thresholdInputActive = true;
-        }
+            const float controlsBottomY = controlsY + static_cast<float>(buttonRows) * buttonH +
+                                          static_cast<float>(buttonRows - 1) * gapY;
+            const Rectangle thresholdBox = {24.0F, controlsBottomY + 8.0F, 140.0F, 34.0F};
+            if(!sim.done() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(), thresholdBox)) {
+                thresholdInputActive = true;
+            }
 
-        const int thresholdY = static_cast<int>(thresholdBox.y);
-        const int infoY = thresholdY + static_cast<int>(thresholdBox.height) + 8;
-        DrawText("Threshold", static_cast<int>(thresholdBox.x) + static_cast<int>(thresholdBox.width) + 12,
-                 thresholdY + 8, 16, Color{208, 224, 243, 255});
-        DrawText("G Auto-Walk | F Forcefield | P Goal Area | B Chunk Borders | M Monsters", 24, infoY, 16,
-                 Color{175, 193, 215, 255});
-        DrawText(TextFormat("Goal distance: %d", goalDistance), 24, infoY + 20, 18, Color{208, 224, 243, 255});
-        DrawText(TextFormat("Current biome: %s", biomeNow.c_str()), 24, infoY + 42, 18, Color{212, 230, 248, 255});
-        DrawRectangleRounded(thresholdBox, 0.2F, 6, thresholdInputActive ? Color{34, 45, 62, 255} : Color{24, 31, 43, 255});
-        DrawRectangleRoundedLinesEx(thresholdBox, 0.2F, 6, 2.0F, thresholdInputActive ? Color{132, 176, 229, 255} : Color{84, 104, 132, 255});
-        const std::string thresholdShown = thresholdInput.empty() ? "0.1" : thresholdInput;
-        DrawText(thresholdShown.c_str(), static_cast<int>(thresholdBox.x) + 12, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
-        if(thresholdInputActive && ((static_cast<int>(t * 2.0F) % 2) == 0)) {
-            const int tw = MeasureText(thresholdShown.c_str(), 18);
-            DrawText("_", static_cast<int>(thresholdBox.x) + 12 + tw + 2, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
+            const int thresholdY = static_cast<int>(thresholdBox.y);
+            const int infoY = thresholdY + static_cast<int>(thresholdBox.height) + 8;
+            DrawText("Threshold", static_cast<int>(thresholdBox.x) + static_cast<int>(thresholdBox.width) + 12,
+                     thresholdY + 8, 16, Color{208, 224, 243, 255});
+            DrawText("G Auto-Walk | F Forcefield | P Goal Area | B Chunk Borders | M Monsters", 24, infoY, 16,
+                     Color{175, 193, 215, 255});
+            DrawText(TextFormat("Goal distance: %d", goalDistance), 24, infoY + 20, 18, Color{208, 224, 243, 255});
+            DrawText(TextFormat("Current biome: %s", biomeNow.c_str()), 24, infoY + 42, 18, Color{212, 230, 248, 255});
+            DrawRectangleRounded(thresholdBox, 0.2F, 6, thresholdInputActive ? Color{34, 45, 62, 255} : Color{24, 31, 43, 255});
+            DrawRectangleRoundedLinesEx(thresholdBox, 0.2F, 6, 2.0F, thresholdInputActive ? Color{132, 176, 229, 255} : Color{84, 104, 132, 255});
+            const std::string thresholdShown = thresholdInput.empty() ? "0.1" : thresholdInput;
+            DrawText(thresholdShown.c_str(), static_cast<int>(thresholdBox.x) + 12, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
+            if(thresholdInputActive && ((static_cast<int>(t * 2.0F) % 2) == 0)) {
+                const int tw = MeasureText(thresholdShown.c_str(), 18);
+                DrawText("_", static_cast<int>(thresholdBox.x) + 12 + tw + 2, static_cast<int>(thresholdBox.y) + 7, 18, Color{233, 242, 255, 255});
+            }
         }
 
         craftingPanel.craftRequested = false;
