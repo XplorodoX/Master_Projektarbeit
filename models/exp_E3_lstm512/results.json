@@ -1,0 +1,106 @@
+{
+  "phase1": {
+    "phase": 1,
+    "label": "Phase 1 (exit=5–12)",
+    "best_sr": 0.92,
+    "target_sr": 0.85,
+    "exit_range": "5-12",
+    "swarm_pool": {
+      "pool_size": 194,
+      "total_added": 194,
+      "total_sampled": 90
+    }
+  },
+  "_saved_at": "2026-07-09 07:13:48",
+  "phase2": {
+    "phase": 2,
+    "label": "Phase 2 (exit=12–25)",
+    "best_sr": 0.66,
+    "target_sr": 0.7,
+    "exit_range": "12-25",
+    "swarm_pool": {
+      "pool_size": 125,
+      "total_added": 319,
+      "total_sampled": 158
+    }
+  },
+  "phase3": {
+    "phase": 3,
+    "label": "Phase 3 (exit=25–45, eval 35–45)",
+    "best_sr": 0.3,
+    "target_sr": 0.7,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 126,
+      "total_added": 445,
+      "total_sampled": 261
+    }
+  },
+  "phase4": {
+    "phase": 4,
+    "label": "Phase 4 (Greedy Fine-Tune)",
+    "best_sr": 0.2,
+    "target_sr": 0.6,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 48,
+      "total_added": 493,
+      "total_sampled": 278
+    }
+  },
+  "algo": "rppo",
+  "training_duration": "22h 54m 41s",
+  "phases": [
+    {
+      "phase": 1,
+      "label": "Phase 1 (exit=5–12)",
+      "best_sr": 0.92,
+      "target_sr": 0.85,
+      "exit_range": "5-12",
+      "swarm_pool": {
+        "pool_size": 194,
+        "total_added": 194,
+        "total_sampled": 90
+      }
+    },
+    {
+      "phase": 2,
+      "label": "Phase 2 (exit=12–25)",
+      "best_sr": 0.66,
+      "target_sr": 0.7,
+      "exit_range": "12-25",
+      "swarm_pool": {
+        "pool_size": 125,
+        "total_added": 319,
+        "total_sampled": 158
+      }
+    },
+    {
+      "phase": 3,
+      "label": "Phase 3 (exit=25–45, eval 35–45)",
+      "best_sr": 0.3,
+      "target_sr": 0.7,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 126,
+        "total_added": 445,
+        "total_sampled": 261
+      }
+    },
+    {
+      "phase": 4,
+      "label": "Phase 4 (Greedy Fine-Tune)",
+      "best_sr": 0.2,
+      "target_sr": 0.6,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 48,
+        "total_added": 493,
+        "total_sampled": 278
+      }
+    }
+  ],
+  "best_sr_testset_a": 0.92,
+  "exit_range": "5-45 (curriculum)",
+  "final_model": "models/exp_E3_lstm512/best_model.zip"
+}

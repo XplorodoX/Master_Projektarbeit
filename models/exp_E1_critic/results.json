@@ -11,5 +11,48 @@
       "total_sampled": 52
     }
   },
-  "_saved_at": "2026-07-08 10:47:51"
+  "_saved_at": "2026-07-08 14:17:22",
+  "phase4": {
+    "phase": 4,
+    "label": "Phase 4 (Greedy Fine-Tune)",
+    "best_sr": 0.44,
+    "target_sr": 0.6,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 55,
+      "total_added": 184,
+      "total_sampled": 82
+    }
+  },
+  "algo": "rppo",
+  "training_duration": "5h 58m 15s",
+  "phases": [
+    {
+      "phase": 3,
+      "label": "Phase 3 (exit=25–45, eval 35–45)",
+      "best_sr": 0.56,
+      "target_sr": 0.7,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 129,
+        "total_added": 129,
+        "total_sampled": 52
+      }
+    },
+    {
+      "phase": 4,
+      "label": "Phase 4 (Greedy Fine-Tune)",
+      "best_sr": 0.44,
+      "target_sr": 0.6,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 55,
+        "total_added": 184,
+        "total_sampled": 82
+      }
+    }
+  ],
+  "best_sr_testset_a": 0.56,
+  "exit_range": "5-45 (curriculum)",
+  "final_model": "models/exp_E1_critic/best_model.zip"
 }

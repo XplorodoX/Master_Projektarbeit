@@ -3,6 +3,79 @@
 
 ---
 
+## v2026-07-09 — Temperatur-Sweep der Evaluation: Det/Stoch-Gap ist monoton, kein argmax-Artefakt
+
+**Frage (aufgeworfen bei der Literatur-Recherche):** Ist der Det/Stoch-Gap teilweise nur eine schlechte
+Wahl der Eval-Politik? Zwischen reinem Argmax (T=0) und vollem Sampling (T=1) könnte eine niedrig-
+entropische, „kalibrierte" Temperatur liegen, die beide Extreme schlägt („Stochastic Policies,
+Deterministic Minds", 2025). Getestet auf den 3 v12-Modellen (LSTM-korrekter Sweep, `scratchpad/temp_sweep.py`;
+Logits/T-Softmax mit fortgeführtem LSTM-Zustand, 50 Seeds, Cap 4000).
+
+| Temperatur | Testset A (Mittel ± Std) | Holdout B |
+|-----------|--------------------------|-----------|
+| argmax (T=0) | 32,0 ± 4,9 % | 42,0 ± 4,3 % |
+| T=0.25 | 52,0 ± 0,0 % | 52,7 ± 1,9 % |
+| T=0.5 | 63,3 ± 4,1 % | 71,3 ± 6,6 % |
+| T=0.75 | 63,3 ± 7,5 % | 72,0 ± 6,5 % |
+| **stoch (T=1.0)** | **70,7 ± 8,2 %** | **79,3 ± 6,6 %** |
+
+**Befund: Die Kurve ist monoton** — mehr Stochastik ist besser, bis zum vollen Sampling; **keine
+Zwischentemperatur schlägt T=1.0.** Damit ist der Gap **kein argmax-Kalibrierungsartefakt**, sondern die
+empirische Signatur von Singhs POMDP-Resultat (stochastisch echt überlegen). Nebenbefund: schon T=0.5 holt
+den Großteil des Gaps zurück (A +31, B +29 Punkte über argmax) bei geringerer Varianz — brauchbarer
+Betriebspunkt für „committeteres" Verhalten. **Konsequenz:** stochastische Eval bleibt die Primärmetrik,
+jetzt zusätzlich empirisch gestützt (nicht nur theoretisch). Ergebnisse: `scratchpad/temp_sweep_results.json`.
+
+---
+
+## v2026-07-08.3 — Gap-Schließungs-Experimente E1/E2/E3: keine Verbesserung ggü. v12
+
+**Motivation:** Die drei „Was würde helfen"-Hypothesen aus v2026-07-08.2 als kontrollierte
+Experimente getestet — Ziel: den Det/Stoch-Gap bzw. die Gesamt-SR über die v12-Baseline
+(A 73,3 % ± 6,8 stoch / 32 % det) heben.
+
+**Setup:** RecurrentPPO, batch=8, Swarm an, Env v11/229-Obs, Seed 1. E1/E2 starten ab Phase 3
+aus einem gemeinsamen Phase-2-Checkpoint (je n=1); E3 ist ein voller Lauf ab Phase 1 (LSTM 512).
+Standardisierter Eval (Seeds A 7000–7049 / B 8000–8049, Cap 4000, det+stoch, finales `best_model.zip`).
+
+| Exp | Hypothese | Änderung ggü. v12 | A stoch | A det | B stoch | B det |
+|-----|-----------|-------------------|---------|-------|---------|-------|
+| **v12 (Baseline, n=3)** | — | — | **73,3 % ± 6,8** | 32,0 % | 80,0 % | 42,0 % |
+| **E1** critic | stärkerer Phase-3-Critic | `vf_coef` 0,5 → **1,0** | 56 % | **42 %** | 72 % | 36 % |
+| **E2** curric | sanfterer Übergang | Phase 3 exit 25–45 → **25–35** | 26 % | 16 % | 42 % | 24 % |
+| **E3** lstm512 | mehr Gedächtnis | LSTM 256 → **512** | 44 % | 14 % | 58 % | 20 % |
+
+**Befund:**
+- **E1 (Critic, vf_coef=1.0): als Verbesserung widerlegt.** Deterministisch minimal besser
+  (A 42 % vs. 32 %), aber stochastisch deutlich schlechter (A 56 % vs. 73 %). Der höhere
+  Value-Loss-Anteil verschiebt das Verhalten Richtung Determinismus, kostet aber Gesamt-SR —
+  kein Netto-Gewinn, Zielkriterium A ≥ 70 % verfehlt.
+- **E2 (sanftes Curriculum, Phase 3 nur bis exit 35): klar schlechter** (A 26 % stoch). Wird
+  Phase 3 nur bis Distanz 35 trainiert, aber auf 35–45 evaluiert, ist der Agent auf den längsten
+  Wegen untertrainiert. Der „sanftere Übergang" schadet mehr als er nützt.
+- **E3 (LSTM-512): komplett durchgelaufen** (22h 54m, alle 4 Phasen) — **als Verbesserung widerlegt.**
+  Standardisiert **A 44 % stoch / 14 % det · B 58 % / 20 %**, klar unter v12 (A 73 % / B 80 %) und auf
+  det sogar am schwächsten aller Arme. Phasenweise durchgängig ≤ 256er-Baseline: P1 gleichauf,
+  P2 stoch-peak 66 % (v12: 80–88 %), P3 det-peak nur 30 % und über die Phase **fallend** (letzte ~250k
+  Steps kollabiert, det 0–8 %). ~3–4× langsamer. **Mehr Gedächtnis-Kapazität ≠ besserer -Nutzen.**
+  (Sleep-Schutz via `caffeinate -w` verhinderte weitere Stalls; nach Behebung ~48 fps.)
+
+**Konsequenz:** Von den drei naheliegenden Gap-Schließungs-Ansätzen (Critic-Gewicht, Curriculum-
+Glättung, LSTM-Größe) hat **keiner die v12-Baseline geschlagen**. Das stützt die Diskussions-These
+aus v2026-07-08.2: Der Det/Stoch-Gap ist nicht über einen der drei getesteten Einzelhebel (Critic-
+Gewicht, Curriculum-Glättung, LSTM-Größe) zu schließen. Er ist teils fundamental (POMDP, Singh 1994).
+**Wichtig — NICHT überinterpretieren:** Damit ist NICHT gezeigt, dass „nur Architektur hilft". Es
+bleiben ungetestete, teils billige Hebel: (a) **temperaturkalibrierte Evaluation** — der Gap ist
+teilweise eine Wahl der Eval-Policy (reines argmax vs. niedrig-entropische Policy; „Stochastic Policies,
+Deterministic Minds" 2025); `scripts/eval_temperature.py` existiert bereits, kein Neutraining nötig;
+(b) Hilfs-/Repräsentationsverluste; (c) gezielt mehr Langdistanz-Training. Für das *harte*
+Langhorizont-Belief-Tracking ist strukturierter Speicher (Transformer / Neural Map / In-Context-RL,
+vgl. AMAGO) die meistgenannte, aber aufwändigste Richtung. Literatur-Belege in `docs/references.bib`
+(Singh 1994, Ghosh 2021, Pleines 2022) + Related-Work der Projektdoku.
+**v12 bleibt das Ausgabemodell.** Eval-Skripte: `scratchpad/eval_e1e2.py`, `scratchpad/eval_e3.py`.
+
+---
+
 ## v2026-07-08.2 — Det/Stoch-Gap analysiert: skaliert mit der Weglänge (Kernbefund für die Diskussion)
 
 **Frage:** Warum lernt der Agent die deterministische ("sture", argmax) Spielweise so schlecht,

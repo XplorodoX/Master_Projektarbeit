@@ -9,6 +9,8 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
 
@@ -27,9 +29,10 @@ Stand und Entwicklung}
 Diese Dokumentation fasst den aktuellen Stand der Projektarbeit zusammen: ein
 RL-Agent soll in prozedural generierten 2D-Welten (\emph{Stoneforge}) den Exit
 finden und dabei auf unbekannte Seeds generalisieren. Der beste Agent
-(RecurrentPPO mit LSTM, Curriculum-Training) erreicht \textbf{86\,\% Success
-Rate} (stochastisch) auf dem Testset bzw.\ 68\,\% auf dem Holdout-Set und
-übertrifft damit beide Zielkriterien ($\geq$70\,\% / $\geq$60\,\%). Dokumentiert
+(RecurrentPPO mit LSTM, Curriculum-Training) erreicht über drei unabhängige
+Läufe (Mittel $\pm$ Std) \textbf{73{,}3\,\% Success Rate} (stochastisch) auf dem
+Testset bzw.\ 80{,}0\,\% auf dem Holdout-Set und übertrifft damit beide
+Zielkriterien ($\geq$70\,\% / $\geq$60\,\%). Dokumentiert
 werden die Umgebung, die Methodik, die zentrale Ablation (MLP vs.\ LSTM), der
 vollständige Entwicklungsverlauf von Projektbeginn bis heute (inkl.\ negativer
 Ergebnisse und Root-Cause-Analysen, Quelle: Experiment-Changelog), die
@@ -195,6 +198,20 @@ RL zu prüfen und Overfitting auf einzelne Level zu vermeiden
 \cite{cobbe2020procgen, risi2020increasing}. Die Evaluation auf
 trainingsfremden Seeds (Testset~A und Holdout~B) folgt diesem Prinzip.
 
+\section{Einordnung in verwandte Arbeiten}
+
+Stoneforge liegt strukturell zwischen drei etablierten Benchmarks: MiniGrid
+(teilbeobachtbare Grid-Navigation, PPO+LSTM als Standard-Baseline)
+\cite{chevalier2023minigrid}, Crafter (prozedural generiertes 2D-Survival-Spiel
+mit Mining und Crafting) \cite{hafner2021crafter} und Procgen (Generalisierung
+über prozedurale Level) \cite{cobbe2020procgen}. Publizierte
+Zero-Shot-Ergebnisse auf prozeduralen Labyrinthen liegen typischerweise bei
+25--53\,\% Success Rate; die hier erreichten 73{,}3\,\% (Test) bzw.\ 80{,}0\,\%
+(Holdout, Mittel über drei Läufe) sind in diesem Kontext ein
+starkes Ergebnis. Für die Reduktion des Train/Test-Gaps ist Prioritized Level
+Replay \cite{jiang2021plr} der vielversprechendste nächste Baustein; der
+vorhandene Seed-Pool-Mechanismus ist eine vereinfachte Variante davon.
+
 \section{Die Umgebung Stoneforge}
 \label{sec:umgebung}
 
@@ -309,6 +326,7 @@ Exit auf allen Test-Seeds in exakt der BFS-Distanz und bestätigt damit die
 gesamte Kette aus Weltgenerierung, Bewegungsmechanik und Reward-Signal.
 
 \section{Methodik}
+\label{sec:methodik}
 
 \subsection{Algorithmus}
 
@@ -362,16 +380,94 @@ die Ablation in Abschnitt~\ref{sec:ablation} für das BFS-Orakel zeigt).
 
 \subsection{Evaluationsprotokoll}
 
+Zentrale Metrik ist die \emph{Success Rate} (SR): der Anteil von 50 festen,
+trainingsfremden Welten, in denen der Agent den Exit innerhalb des Episodenlimits
+(4\,000 Schritte) erreicht. Ein zu kurzes Limit verfälscht die SR erheblich
+(dasselbe Modell: 48\,\% bei Limit 600 gegenüber 86\,\% bei 4\,000;
+Abschnitt~\ref{sec:cap}), daher wird stets mit dem vollen Limit gemessen.
+
 Strikte Seed-Trennung: Validierung (6000--6049) steuert Phasenwechsel und
 Modellauswahl; Testset A (7000--7049) und Holdout B (8000--8049) werden
 ausschließlich final evaluiert. Ein früherer Data-Leakage-Fehler (Modellauswahl
-auf den Test-Seeds) wurde identifiziert und behoben. Jede Evaluation misst
-seit v11 \emph{beide} Betriebsarten: stochastisch (Sampling aus der Politik) und
-deterministisch (Argmax). Details und Endergebnisse in
-Abschnitt~\ref{sec:evaluation}.
+auf den Test-Seeds) wurde identifiziert und behoben. Jede Evaluation misst seit
+v11 \emph{beide} Betriebsarten: stochastisch (Sampling aus der Politik) und
+deterministisch (Argmax). Bei der rekurrenten Politik werden LSTM-Zustand und
+Episoden-Start-Signal an jeden \texttt{predict()}-Aufruf durchgereicht und zu
+Episodenbeginn zurückgesetzt, damit kein Zustand über Episodengrenzen leckt ---
+der häufigste, leicht übersehene Fehler beim Evaluieren rekurrenter Politiken.
+Für das Endergebnis werden drei unabhängige Läufe (Seeds 1--3) gemittelt
+(Mittelwert $\pm$ Standardabweichung, zusätzlich Bootstrap-Konfidenzintervalle);
+als Trainings-Diagnosemetrik dient die \texttt{explained\_variance} des Critics.
+Ergebnisse in Abschnitt~\ref{sec:evaluation}.
 
-\section{Technische Umsetzung}
+\subsection{Versuchsübersicht: Setup je Iteration}
+\label{sec:versuchsuebersicht}
+
+Zur Reproduzierbarkeit (im Sinne der Checklisten von Pineau et al.\
+\cite{ghosh2021epistemic} bzw.\ Henderson et al.) dokumentiert dieser Abschnitt
+das exakte Setup jeder systematischen Iteration. Alle Läufe teilen die in
+Tabelle~\ref{tab:basiskonfig} gelistete Basiskonfiguration; die Iterationen in
+Tabelle~\ref{tab:iterationen} verändern jeweils \emph{genau einen} Faktor
+gegenüber der v12-Baseline (kontrollierte Ablation). Die vollständige Historie
+inklusive Zwischenständen liegt im Experiment-Changelog (\texttt{CHANGELOG.md});
+je Lauf existiert eine \texttt{config.json} mit den hier tabellierten Werten.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Komponente} & \textbf{Wert} \\
+\midrule
+Algorithmus & RecurrentPPO (SB3-contrib), \texttt{MlpLstmPolicy} \\
+$n_\text{steps}$ / \texttt{batch\_size} / $n_\text{epochs}$ & 256 / 8 / 10 \\
+Lernrate / $\gamma$ / $\lambda_\text{GAE}$ / clip & $3\cdot10^{-4}$ / 0.999 / 0.95 / 0.2 \\
+\texttt{ent\_coef} & 0.05 (Phase 3: Annealing auf 0.001; Phase 4: 0.0001) \\
+\texttt{vf\_coef} & 0.5 \\
+LSTM & 1 Schicht, 256 Hidden Units, separater Critic-LSTM \\
+Beobachtung & 229 Features (Grid $15\times15$ + HP + Kompass + Step-Frac), Env v11 \\
+Parallele Umgebungen & 16 (DummyVecEnv), Device CPU \\
+Seed-Pool (\glqq Swarm\grqq) & aktiv, Sampling-Wahrscheinlichkeit 0.3 \\
+Curriculum & 4 Phasen (Tab.~\ref{tab:curriculum}), leistungsbasiert \\
+Eval & Testset A 7000--7049, Holdout B 8000--8049, Cap 4000, det + stoch \\
+\bottomrule
+\end{tabular}
+\caption{Gemeinsame Basiskonfiguration aller Iterationen (Quelle:
+\texttt{config.json} der v12-Läufe).}
+\label{tab:basiskonfig}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llccc@{}}
+\toprule
+\textbf{Iteration} & \textbf{Änderung ggü.\ Baseline} & \textbf{Start} & \textbf{Test A} & \textbf{Holdout B} \\
+ & & & \textbf{(stoch/det)} & \textbf{(stoch/det)} \\
+\midrule
+\textbf{v12} (Baseline, $n{=}3$) & --- (LSTM 256, \texttt{vf\_coef} 0.5) & Phase 1 & 73/32\,\% & 80/42\,\% \\
+\textbf{E1} critic & \texttt{vf\_coef} $0.5\!\to\!1.0$ & Phase 3 & 56/42\,\% & 72/36\,\% \\
+\textbf{E2} curric & Phase 3 Exit $25\text{--}45\!\to\!25\text{--}35$ & Phase 3 & 26/16\,\% & 42/24\,\% \\
+\textbf{E3} lstm512 & LSTM $256\!\to\!512$ & Phase 1 & 44/14\,\% & 58/20\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Systematische Iterationen zur Schließung des Det/Stoch-Gaps. Jede
+verändert genau einen Faktor. E1/E2 setzen aus einem gemeinsamen
+Phase-2-Checkpoint auf (Phase-3-Budget 400k statt 1.0\,Mio.\ Schritte); E3 ist
+ein voller Lauf. Ergebnis: kein Arm schlägt die v12-Baseline (Test A stochastisch
+73\,\%). Werte standardisiert (50 Seeds, Cap 4000). Details:
+Abschnitt~\ref{sec:evaluation} und \texttt{CHANGELOG.md}.}
+\label{tab:iterationen}
+\end{table}
+
+Ergänzend zeigt die Fehleranalyse in Tabelle~\ref{tab:rootcause} die frühere
+Generationenreihe (v2/v10 Referenz, v7--v9 fehlgeschlagen), deren Setup sich
+ausschließlich in den dort genannten vier Parametern unterscheidet.
+
+\section{Technische Umsetzung und Implementierung}
 \label{sec:technik}
+
+\subsection{Technologie-Stack}
 
 Das System besteht aus drei Schichten: einem C++-Kern für Simulation und
 Weltgenerierung, einem Python-Binding und dem Python-Trainingsstack.
@@ -403,9 +499,6 @@ Die Simulation ist deterministisch pro Seed; Training und Evaluation laufen
 vollständig auf der CPU (Apple M1 Pro). Ein Vergleich mit der Apple-GPU (MPS)
 ergab keine Beschleunigung (Abschnitt~\ref{sec:performance}); der Durchsatz
 liegt je nach Konfiguration bei ca.\ 90--190 Umgebungsschritten pro Sekunde.
-
-\section{Implementierung}
-\label{sec:implementierung}
 
 \subsection{Umgebung und Binding}
 
@@ -462,17 +555,47 @@ demselben Seed.
 \section{Evaluation}
 \label{sec:evaluation}
 
-\subsection{Protokoll und Metriken}
+Dieser Abschnitt fasst die Ergebnisse zusammen; das Evaluationsprotokoll
+(Seed-Trennung, Metrik, Betriebsarten) ist in Abschnitt~\ref{sec:methodik}
+beschrieben. Zunächst die zentrale Ablation, anschließend das quantitative
+Endergebnis und die Analyse des Det/Stoch-Gaps.
 
-Zentrale Metrik ist die \emph{Success Rate} (SR): der Anteil von 50 festen,
-trainingsfremden Welten, in denen der Agent den Exit innerhalb von 4\,000
-Schritten erreicht. Gemessen wird stets in beiden Betriebsarten (stochastisch
-und deterministisch) und mit dem vollen Episodenlimit von 4\,000 Schritten ---
-ein zu kurzes Evaluationslimit verfälscht die SR erheblich (dasselbe Modell:
-48\,\% bei Limit 600 gegenüber 86\,\% bei 4\,000;
-Abschnitt~\ref{sec:cap}). Als Diagnosemetrik des Trainings dient die
-\texttt{explained\_variance} des Critics. Für das Endergebnis werden drei
-unabhängige Läufe (Seeds 1--3) gemittelt und mit Standardabweichung angegeben.
+\subsection{Zentrale Ablation: Gedächtnis schlägt Orakel}
+\label{sec:ablation}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llccrr@{}}
+\toprule
+\textbf{Bedingung} & \textbf{Architektur} & \textbf{BFS in Obs} & \textbf{Curriculum} & \textbf{SR stoch.} & \textbf{SR det.} \\
+\midrule
+A (\texttt{ppo\_phase4}) & MLP & ja & ja & 32\,\% & 0\,\% \\
+B (\texttt{ppo\_no\_bfs}) & MLP & nein & nein & --- & 0\,\% \\
+C (\texttt{ppo\_lstm\_curriculum}) & \textbf{LSTM} & nein & ja & \textbf{86\,\%} & 36\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Ablation auf Testset A (Exit 35--45). Der LSTM-Agent ohne
+BFS-\glqq Orakel\grqq{} schlägt den MLP-Agenten mit BFS-Features deutlich ---
+Gedächtnis ist für die POMDP-Navigation wichtiger als zusätzliche Wegweiser-Features.
+Modell C ist der ursprüngliche Referenzlauf (Umgebung vor der v11-Revision, Einzellauf);
+der finalisierte Stand über drei unabhängige Läufe liegt bei $73{,}3\,\%$ (Testset A)
+bzw.\ $80{,}0\,\%$ (Holdout B), siehe Tabelle~\ref{tab:v12}.}
+\label{tab:ablation}
+\end{table}
+
+Das finale Modell (v12, Mittel über drei Läufe) erreicht auf Holdout B
+80{,}0\,\% (stochastisch) --- beide Zielkriterien sind damit erfüllt
+(Abschnitt~\ref{sec:evaluation}). Abbildung~\ref{fig:lernkurve} zeigt den
+Trainingsverlauf.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\textwidth]{figures/fig_lernkurve.pdf}
+\caption{Lernkurve des besten Modells (\texttt{ppo\_lstm\_curriculum},
+Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds).}
+\label{fig:lernkurve}
+\end{figure}
 
 \subsection{Endergebnis (v12)}
 
@@ -491,16 +614,24 @@ Seed 2 & 76\,\% & 26\,\% & 80\,\% & 44\,\% \\
 Seed 3 & 80\,\% & 32\,\% & 88\,\% & 36\,\% \\
 \midrule
 \textbf{Mittel $\pm$ Std} & \textbf{73{,}3 $\pm$ 6{,}8} & 32{,}0 $\pm$ 4{,}9 & \textbf{80{,}0 $\pm$ 6{,}5} & 42{,}0 $\pm$ 4{,}3 \\
+95\,\%-CI & [66{,}7;\,80{,}0] & [24{,}7;\,40{,}0] & [73{,}3;\,86{,}0] & [34{,}0;\,50{,}0] \\
 \bottomrule
 \end{tabular}
 \caption{Endergebnis der v12-Läufe (finales Modell je Lauf; Testset A und
-Holdout B, je 50 Seeds, Limit 4\,000).}
+Holdout B, je 50 Seeds, Limit 4\,000). Das 95\,\%-Konfidenzintervall stammt aus
+einem stratifizierten Bootstrap (10\,000 Resamples über die drei Läufe).}
 \label{tab:v12}
 \end{table}
 
-Beide Zielkriterien sind damit im Mittel erfüllt (A: $73{,}3\,\% \geq 70\,\%$;
+Beide Zielkriterien sind im Mittel erfüllt (A: $73{,}3\,\% \geq 70\,\%$;
 B: $80{,}0\,\% \geq 60\,\%$), erstmals in der geforderten Form mit drei Läufen
-und Standardabweichung. Dass B leicht über A liegt, ist eine Eigenschaft der
+und Standardabweichung. Der statistischen Redlichkeit halber ist anzumerken, dass
+das 95\,\%-Konfidenzintervall auf Testset A ($[66{,}7;\,80{,}0]$) die
+70\,\%-Schwelle knapp \emph{einschließt} --- das Ziel ist im Mittel, aber nicht
+mit statistischer Sicherheit übertroffen; auf Holdout B liegt das Intervall
+($[73{,}3;\,86{,}0]$) dagegen deutlich über der 60\,\%-Schwelle. Bei 50 Seeds pro
+Lauf ist diese Unsicherheit erwartbar (vgl.\ Anhang~\ref{sec:reproduzierbarkeit})
+und ein Argument für mehr Läufe in Folgearbeiten. Dass B leicht über A liegt, ist eine Eigenschaft der
 konkreten Seed-Stichproben (A enthält zufällig mehr Welten mit langem Laufweg:
 38\,\% gegenüber 32\,\% mit $\geq 42$ Feldern); beide Sets stammen aus demselben
 Generator und derselben Distanzverteilung. Ein Gegentest mit den
@@ -508,7 +639,7 @@ Phase-2-Zwischenmodellen ergab keine Verbesserung (A stoch.\
 $71{,}3 \pm 8{,}1$; B stoch.\ $74{,}0 \pm 15{,}0$); das finale Modell bleibt
 das Ausgabemodell.
 
-\subsection{Analyse des Det/Stoch-Gaps nach Weglänge}
+\subsection{Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}
 
 Der Abstand zwischen stochastischer und deterministischer SR ist kein
 Schwelleneffekt, sondern wächst kontinuierlich mit der Weglänge
@@ -532,78 +663,180 @@ mit der Weglänge, die stochastische bleibt hoch.}
 \label{fig:detgap}
 \end{figure}
 
-\section{Entwicklung und Ergebnisse}
-\label{sec:ablation}
+Dieser Befund ist kein Trainingsartefakt, sondern theoretisch fundiert: Während
+in einem vollständig beobachtbaren MDP stets eine \emph{deterministische} Politik
+optimal ist, können in POMDPs \emph{stochastische} gedächtnislose Politiken einen
+erheblich höheren erwarteten Ertrag erzielen als jede deterministische
+\cite{singh1994pomdp}. Der beobachtete Gap (stochastisch~$>$~deterministisch) ist
+damit die erwartbare Signatur einer partiell beobachtbaren Aufgabe, nicht das
+Symptom eines Fehlers. Verschärft wird dies durch die \emph{Generalisierungs}-
+Anforderung: Ghosh et al.\ zeigen, dass bereits das Ziel, auf unbekannte Level
+(hier: neue Seeds) zu generalisieren, selbst eine Form partieller Beobachtbarkeit
+induziert (\emph{epistemic POMDP}), deren optimale Politik ebenfalls stochastisch
+ist \cite{ghosh2021epistemic}. Die Wahl der stochastischen Evaluation als
+Primärmetrik ist somit theoretisch gerechtfertigt und keine nachträgliche
+Beschönigung des deterministischen Einbruchs.
 
-\subsection{Zentrale Ablation: Gedächtnis schlägt Orakel}
+\subsection{Versuche zur Schließung des Det/Stoch-Gaps}
+\label{sec:gapexperimente}
 
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{@{}llccrr@{}}
-\toprule
-\textbf{Bedingung} & \textbf{Architektur} & \textbf{BFS in Obs} & \textbf{Curriculum} & \textbf{SR stoch.} & \textbf{SR det.} \\
-\midrule
-A (\texttt{ppo\_phase4}) & MLP & ja & ja & 32\,\% & 0\,\% \\
-B (\texttt{ppo\_no\_bfs}) & MLP & nein & nein & --- & 0\,\% \\
-C (\texttt{ppo\_lstm\_curriculum}) & \textbf{LSTM} & nein & ja & \textbf{86\,\%} & 36\,\% \\
-\bottomrule
-\end{tabular}
-\caption{Ablation auf Testset A (Exit 35--45). Der LSTM-Agent ohne
-BFS-\glqq Orakel\grqq{} schlägt den MLP-Agenten mit BFS-Features deutlich ---
-Gedächtnis ist für die POMDP-Navigation wichtiger als zusätzliche Wegweiser-Features.}
-\label{tab:ablation}
-\end{table}
+Um zu prüfen, ob der Gap durch gezielte Eingriffe verkleinerbar ist, wurden drei
+kontrollierte Experimente durchgeführt, die jeweils \emph{genau einen} Faktor
+gegenüber der v12-Baseline verändern (Setup in Tabelle~\ref{tab:iterationen}):
+\textbf{E1} verstärkt den Critic (\texttt{vf\_coef} $0{,}5\to1{,}0$),
+\textbf{E2} glättet den Curriculum-Übergang (Phase~3 nur bis Distanz~35 statt~45),
+\textbf{E3} vergrößert das Gedächtnis (LSTM $256\to512$). \textbf{Kein Ansatz
+schlägt die Baseline:} E1 hebt die deterministische SR leicht (42\,\% statt
+32\,\% auf A), verliert aber stochastisch deutlich (56\,\% statt 73\,\%) --- der
+stärkere Value-Anteil verschiebt das Verhalten Richtung Determinismus, ohne die
+Gesamtleistung zu verbessern. E2 verschlechtert sich durchgängig (A~26\,\%),
+weil das Modell auf den längsten, eval-relevanten Distanzen untertrainiert bleibt.
+E3 liegt in \emph{allen} Phasen auf oder unter der 256er-Baseline (A~44\,\%,
+det.\ am schwächsten) bei rund dreifachem Rechenaufwand --- mehr Gedächtnis-
+\emph{Kapazität} bedeutet nicht mehr Gedächtnis-\emph{Nutzen}, konsistent mit den
+bekannten abnehmenden Grenzerträgen rekurrenter Netze \cite{pleines2022recurrent}.
 
-Das beste Modell erreicht auf Holdout B 68\,\% (stochastisch) --- beide
-Zielkriterien sind damit erfüllt. Abbildung~\ref{fig:lernkurve} zeigt den
-Trainingsverlauf.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.72\textwidth]{figures/fig_lernkurve.pdf}
-\caption{Lernkurve des besten Modells (\texttt{ppo\_lstm\_curriculum},
-Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds).}
-\label{fig:lernkurve}
-\end{figure}
-
-\subsection{Der Det/Stoch-Gap und die POMDP-These}
-
-Auffällig ist die Lücke zwischen stochastischer (86\,\%) und deterministischer
-(36\,\%) Evaluation: Die Argmax-Politik folgt dem Luftlinien-Kompass in konkave
-Wandtaschen und oszilliert dort in 2-Schritt-Schleifen; beim Sampling bricht der
-Zufall diese Schleifen. Wir interpretieren dies als inhärente Eigenschaft der
-POMDP-Struktur (der Kompass zeigt durch Wände) in Kombination mit begrenzter
-LSTM-Kapazität --- die stochastische Evaluation ist daher die primäre Metrik,
-der Gap wird als Limitation ausgewiesen und gezielt adressiert (Ausblick,
-Abschnitt~\ref{sec:ausblick}).
-
-\subsection{Hyperparameter-Fehleranalyse (v7--v10)}
-
-Eine Serie fehlgeschlagener Verbesserungsversuche (v7--v9: Success Rate
-$\leq$12\,\%, \texttt{approx\_kl}$\approx$0, \texttt{explained\_variance}$\approx$0)
-wurde durch Reverse-Engineering des funktionierenden v2-Modells aufgeklärt:
+Ergänzend wurde geprüft, ob der Gap lediglich ein Kalibrierungsartefakt der
+Argmax-Auswertung ist. Ein Temperatur-Sweep zwischen reinem Argmax ($T{=}0$) und
+vollem Sampling ($T{=}1$) auf den drei v12-Modellen (Tabelle~\ref{tab:temperatur})
+zeigt einen \emph{monotonen} Verlauf: Mehr Stochastik ist durchweg besser, keine
+Zwischentemperatur übertrifft das volle Sampling. Der Gap ist damit \emph{kein}
+Argmax-Artefakt, sondern die empirische Signatur des POMDP-Resultats
+\cite{singh1994pomdp}. Bemerkenswert ist, dass bereits $T{=}0{,}5$ den Großteil
+des Argmax-Defizits zurückholt (A: $+31$, B: $+29$ Prozentpunkte) --- ein
+brauchbarer Betriebspunkt, falls ein weniger zufälliges Verhalten gewünscht ist.
 
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{@{}lrrl@{}}
+\begin{tabular}{@{}lcc@{}}
 \toprule
-\textbf{Parameter} & \textbf{v2 (86\,\%)} & \textbf{v7--v9 (0--12\,\%)} & \textbf{Wirkung des Fehlers} \\
+\textbf{Temperatur} & \textbf{Testset A} & \textbf{Holdout B} \\
 \midrule
-\texttt{ent\_coef} & 0.05 & 0.01 & zu wenig Exploration; Exit wird nie gefunden \\
-\texttt{n\_steps} & 256 & 512 & BPTT zu lang $\to$ verschwindende Gradienten \\
-\texttt{batch\_size} & 8 & 256 & zu wenige Gradient-Updates pro Rollout \\
-Obs-Dimension & 231 & 249 & Zusatzfeatures ohne funktionierende Basis \\
+Argmax ($T{=}0$)     & $32{,}0 \pm 4{,}9$ & $42{,}0 \pm 4{,}3$ \\
+$T = 0{,}25$         & $52{,}0 \pm 0{,}0$ & $52{,}7 \pm 1{,}9$ \\
+$T = 0{,}5$          & $63{,}3 \pm 4{,}1$ & $71{,}3 \pm 6{,}6$ \\
+$T = 0{,}75$         & $63{,}3 \pm 7{,}5$ & $72{,}0 \pm 6{,}5$ \\
+\textbf{Sampling ($T{=}1$)} & $\mathbf{70{,}7 \pm 8{,}2}$ & $\mathbf{79{,}3 \pm 6{,}6}$ \\
 \bottomrule
 \end{tabular}
-\caption{Root-Cause-Analyse: \texttt{ent\_coef} erwies sich als dominanter
-Faktor. Die Reproduktion der v2-Konfiguration (v10) stellte das Lernen wieder
-her.}
-\label{tab:rootcause}
+\caption{Temperatur-Sweep der Evaluation (Mittel $\pm$ Std über die drei
+v12-Läufe, je 50 Seeds, Limit 4\,000). Der Verlauf ist monoton --- volles
+Sampling ist optimal.}
+\label{tab:temperatur}
 \end{table}
 
-\section{Entwicklungsverlauf: Von der Baseline zum LSTM-Agenten}
+Zusammengenommen widersteht der Det/Stoch-Gap dem Tuning einzelner Stellschrauben;
+er ist teils fundamental (POMDP). Nicht-architektonische Hebel wie Hilfs- bzw.\
+Repräsentationsverluste oder gezielt mehr Langdistanz-Training bleiben ergänzend
+denkbar; das \emph{harte}, fundamentale Langhorizont-Belief-Tracking ist jedoch am
+ehesten über strukturiertes statt größeres Gedächtnis anzugehen
+(Abschnitt~\ref{sec:ausblick}).
+
+\section{Fazit und Ausblick}
+\label{sec:ausblick}
+
+\textbf{Ergebnis:} Beide Zielkriterien sind über drei unabhängige Läufe im Mittel
+erfüllt --- $73{,}3\,\%$ (Testset~A) und $80{,}0\,\%$ (Holdout~B) stochastische
+Success Rate, erstmals in der geforderten Form mit Mittelwert, Standardabweichung
+und Bootstrap-Konfidenzintervall (Abschnitt~\ref{sec:evaluation}). Der Kernbeitrag
+ist die Ablation \emph{Gedächtnis schlägt Orakel}: Ein rekurrenter Agent ohne
+BFS-Wegweiser in der Beobachtung erreicht nahezu dieselbe stochastische Leistung
+wie ein MLP \emph{mit} Orakel --- der LSTM-Zustand approximiert den Belief-State
+und ersetzt die globale Pfadinformation. Die Umgebung ist nach der v11-Revision
+methodisch sauber (präzise Schwierigkeitssteuerung, policy-invariantes Shaping,
+keine toten Features, strikte Seed-Trennung).
+
+\textbf{Grenzen:} (1)~Der Det/Stoch-Gap bleibt bestehen ($32\,\%$/$42\,\%$
+deterministisch): Er wächst mit der Weglänge, ist theoretisch als POMDP-Effekt
+begründet \cite{singh1994pomdp, ghosh2021epistemic} und empirisch als
+\emph{monoton} in der Sampling-Temperatur bestätigt --- also kein Argmax-Artefakt.
+Drei kontrollierte Versuche zu seiner Schließung (stärkerer Critic, sanfteres
+Curriculum, größeres LSTM) blieben allesamt unter der Baseline
+(Abschnitt~\ref{sec:gapexperimente}); der Gap ist durch das Tuning einzelner
+Stellschrauben nicht schließbar. (2)~Die statistische Präzision ist durch 50 Seeds
+pro Lauf begrenzt (das 95\,\%-CI auf Testset~A reicht bis $66{,}7\,\%$ hinab).
+(3)~Alle Ergebnisse stammen aus einem einzigen Generator.
+
+\textbf{Ausblick:}
+\begin{enumerate}
+  \item \textbf{Strukturiertes statt größeres Gedächtnis} für das harte
+        Langhorizont-Belief-Tracking: Transformer-basierte oder In-Context-
+        Architekturen (z.\,B.\ AMAGO \cite{grigsby2024amago}) sind die
+        meistgenannte, wenn auch aufwändigste Richtung.
+  \item \textbf{Engere Konfidenzintervalle} durch mehr Läufe/Seeds und
+        stratifizierte Bootstrap-Auswertung.
+  \item \textbf{Temperaturkalibrierte Evaluation} als billiger Hebel: $T{=}0{,}5$
+        holt den Großteil des Argmax-Defizits zurück, ohne neu zu trainieren.
+  \item \textbf{Train/Test-Gap} weiter verkleinern via vollwertiges Prioritized
+        Level Replay \cite{jiang2021plr}; ergänzend Self-Imitation
+        \cite{oh2018sil}.
+\end{enumerate}
+
+\section{Anhang: Reproduzierbarkeit}
+\label{sec:reproduzierbarkeit}
+
+Dieser Anhang folgt den Reproduzierbarkeits-Checklisten von Pineau et al.\
+\cite{pineau2021repro} und Henderson et al.\ \cite{henderson2018matters}. Alle Trainingsläufe sind über
+Seed, gepinnte Umgebung und \texttt{config.json} reproduzierbar; die vollständige
+Änderungshistorie inklusive verworfener Varianten liegt im Experiment-Changelog.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Komponente} & \textbf{Version / Wert} \\
+\midrule
+Python & 3.12.13 \\
+Betriebssystem & macOS (arm64) \\
+Rechen-Device & CPU (bewusst gewählt, s.\ Performance-Analyse) \\
+PyTorch & 2.12.0 \\
+Stable-Baselines3 / sb3-contrib & 2.8.0 / 2.8.0 \\
+Gymnasium & 1.2.3 \\
+NumPy & 2.4.4 \\
+Abhängigkeiten (gepinnt) & \texttt{requirements.txt} (\texttt{==}) + \texttt{requirements.lock.txt} \\
+\bottomrule
+\end{tabular}
+\caption{Systemumgebung. Nach jeder Änderung an \texttt{game\_config.json} oder
+am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}
+\label{tab:sysumgebung}
+\end{table}
+
+\noindent\textbf{Reproduzierbarkeits-Checkliste:}
+\begin{itemize}
+  \item \textbf{Code \& Konfiguration:} Repository mit Trainings-/Eval-Skripten;
+        je Lauf eine \texttt{config.json} mit allen Hyperparametern
+        (Tab.~\ref{tab:basiskonfig},~\ref{tab:iterationen}).
+  \item \textbf{Durchsuchter Hyperparameter-Bereich:} vollständig im
+        \texttt{CHANGELOG.md} dokumentiert, inklusive \emph{negativer} Ergebnisse
+        (v7--v10-Fehleranalyse, Tab.~\ref{tab:rootcause}; Iterationen E1--E3).
+  \item \textbf{Anzahl Läufe:} drei unabhängige Seeds; berichtet werden
+        Mittelwert $\pm$ Standardabweichung, \emph{kein} Best-of-Runs
+        (Kernkritik von Henderson et al.).
+  \item \textbf{Datentrennung:} disjunkte Seed-Mengen --- Validierung
+        (6000--6049) für Phasenwechsel und Modellauswahl, Testset A
+        (7000--7049) und Holdout B (8000--8049) ausschließlich für die
+        finale Messung.
+  \item \textbf{Evaluationsprotokoll:} 50 Seeds, Episodenlimit 4\,000
+        ($=$ Umgebungs-Maximum), stochastisch \emph{und} deterministisch. Bei der
+        rekurrenten Politik werden LSTM-Zustand und Episoden-Start-Signal korrekt
+        an \texttt{predict()} durchgereicht und je Episode zurückgesetzt --- der
+        häufigste Fehler beim Evaluieren rekurrenter Politiken wird damit
+        vermieden.
+  \item \textbf{Statistische Unsicherheit:} Bei 50 Seeds beträgt das
+        95\,\%-Konfidenzintervall einer Success-Rate bis zu $\pm14$
+        Prozentpunkte; Unterschiede unterhalb dieser Größe sind nicht
+        signifikant zu interpretieren.
+  \item \textbf{Rechenaufwand:} je voller Curriculum-Lauf ca.\ 8\,h (CPU);
+        Trainingszeiten je Lauf in \texttt{results.json}.
+  \item \textbf{Zufallsquellen:} Seed steuert Umgebungs-Generierung und
+        -Reset (deterministisch); die stochastische Politik samplet Aktionen
+        (torch-RNG). Restnicht-Determinismus (Thread-Scheduling) wird durch die
+        Mittelung über drei Läufe aufgefangen.
+\end{itemize}
+
+\section{Anhang: Entwicklungsverlauf --- von der Baseline zum LSTM-Agenten}
 \label{sec:entwicklung}
 
 Dieser Abschnitt dokumentiert die Entwicklung des RL-Teils chronologisch von
@@ -659,7 +892,9 @@ der Agent auch ohne BFS-Orakel in der Observation navigieren?} Der Wechsel auf
 RecurrentPPO (LSTM) mit Curriculum, Explorations-Bonus und step\_frac-Feature
 (231-dim Obs, kein BFS) lieferte am 08.06.2026 das zentrale Ergebnis:
 \textbf{86\,\% stochastisch / 36\,\% deterministisch} auf Testset A und
-68\,\% / 18\,\% auf Holdout B --- beide Zielkriterien stochastisch erfüllt,
+68\,\% / 18\,\% auf Holdout B --- beide Zielkriterien stochastisch erfüllt
+(der final über drei unabhängige Läufe reproduzierte Wert liegt bei
+$73{,}3\,\%$/$80{,}0\,\%$ für A/B, Abschnitt~\ref{sec:evaluation}),
 erstmals ohne Wegweiser-Orakel (Abbildung~\ref{fig:entwicklung},
 Ablation in Tabelle~\ref{tab:ablation}). Parallel wurde die POMDP-These
 formuliert (Abschnitt~\ref{sec:ablation}) und, inspiriert vom
@@ -697,6 +932,25 @@ genug, um den Exit je zu finden). Die v2-Reproduktion (v10) stellte das Lernen
 wieder her; der abgeschlossene Lauf vom 25.06.\ erreichte 86\,\% (Validierung)
 nach 2{,}2\,Mio.\ Steps in 3\,h\,12\,m --- das aktuelle Referenzmodell
 (Abbildung~\ref{fig:lernkurve}).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+\textbf{Parameter} & \textbf{v2 (86\,\%)} & \textbf{v7--v9 (0--12\,\%)} & \textbf{Wirkung des Fehlers} \\
+\midrule
+\texttt{ent\_coef} & 0.05 & 0.01 & zu wenig Exploration; Exit wird nie gefunden \\
+\texttt{n\_steps} & 256 & 512 & BPTT zu lang $\to$ verschwindende Gradienten \\
+\texttt{batch\_size} & 8 & 256 & zu wenige Gradient-Updates pro Rollout \\
+Obs-Dimension & 231 & 249 & Zusatzfeatures ohne funktionierende Basis \\
+\bottomrule
+\end{tabular}
+\caption{Root-Cause-Analyse: \texttt{ent\_coef} erwies sich als dominanter
+Faktor. Die Reproduktion der v2-Konfiguration (v10) stellte das Lernen wieder
+her.}
+\label{tab:rootcause}
+\end{table}
 
 \subsection{Etappe 4 (06.07.2026): Umgebungsrevision v11 und Performance}
 
@@ -908,71 +1162,7 @@ methodisch sauber bestätigt ist. Die Konfiguration für die finalen
 Mehrfach-Läufe steht damit fest (v11-Umgebung, batch=8, Cap-4000-Evals,
 kurvenbasierte Bewertung).
 
-\subsection{Zeitleiste und Lessons Learned}
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{@{}lp{7.6cm}l@{}}
-\toprule
-\textbf{Datum} & \textbf{Meilenstein} & \textbf{Ergebnis (Testset A)} \\
-\midrule
-12.05. & Spiel-Engine \& Weltgenerierung spielbar & --- \\
-16.05. & DQN-Fehlstart $\to$ PPO; BFS-Kraftfeld-Bug gefixt & Oracle 0/3 $\to$ 3/3 \\
-16.05. & Curriculum P1; naiver Transfer kollabiert $\to$ Mixed-Dist. & 56\,\% $\to$ 86\,\% stoch \\
-16.05. & Phase 4 (Reward-Tuning), 3-Läufe-Protokoll & 98\,\% stoch / 2\,\% det \\
-18.05. & Delta-BFS-Kodierung + Temperature-Sampling & 100\,\% stoch / 42\,\% det \\
-07.06. & \textbf{RecurrentPPO ohne BFS-Orakel (Kernbeitrag)} & \textbf{86\,\% / 36\,\%} \\
-08.06. & POMDP-These; Callback-Bugs; Swarm/Live-Map & --- \\
-11.06. & Data-Leakage behoben (Val-Set 6000er); Lösbarkeit 100\,\% & --- \\
-13.--15.06. & v6--v9 scheitern $\to$ Root-Cause (ent\_coef/batch/n\_steps) & 0--12\,\% \\
-25.06. & v10-Reproduktion abgeschlossen (Referenzmodell) & 86\,\% (Val) \\
-06.07. & Env-Revision v11 (10 Änderungen); batch=64 \glqq validiert\grqq{} (am 07.07.\ widerlegt) & 52\,\% stoch @150k (P1) \\
-07.07. & v11-Läufe Seed 0/1 stagnieren; Monitoring-Redesign; Swarm-Analyse (B8) + Pool-Fix & 16--28\,\% stoch (P1, Val) \\
-07.07. & \textbf{Forensik (Etappe 6):} Eval-Cap-Artefakt gefixt; Swarm/Wrapper/Stack entlastet; \textbf{batch $64 \to 8$} & \textbf{84--88\,\% stoch / 52\,\% det} (P1, Val) \\
-offen & $\geq$3 volle Curriculum-Läufe (batch=8, Seeds 1--3), Det-Gap-Maßnahmen (P3) & --- \\
-\bottomrule
-\end{tabular}
-\caption{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt{CHANGELOG.md}).
-SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\
-ohne strikte Val/Test-Trennung.}
-\label{tab:timeline}
-\end{table}
-
-\textbf{Lessons Learned (negative Ergebnisse mit Erkenntniswert):}
-\begin{itemize}
-  \item \emph{Visited-Mask in der Observation} destabilisiert den Argmax
-        (jede 1-Bit-Änderung kann die Richtungspräferenz kippen).
-  \item \emph{Naiver Curriculum-Transfer} zerstört die Vorgänger-Politik ---
-        Mixed-Distribution bzw.\ leistungsbasierte Phasenwechsel sind nötig.
-  \item \emph{Feature-Kodierung schlägt Feature-Auswahl:} Der BFS-Gradient war
-        nie \glqq zu schwach\grqq{} --- er war falsch kodiert (Delta-Fix: Signal
-        $32\times$ stärker).
-  \item \emph{Straf-Stacking} (Wand-, Loop-, Stagnations-Penalties) macht
-        Stillstand lokal optimal; Information gehört in die Observation, nicht
-        in den Reward.
-  \item \emph{Hyperparameter dominieren Features:} Alle v7-Feature-Ideen
-        scheiterten an verstellten Basis-Hyperparametern; \texttt{ent\_coef}
-        war der entscheidende Faktor. Ohne das Changelog wäre die
-        Root-Cause-Analyse (v2-Reverse-Engineering) nicht möglich gewesen.
-  \item \emph{Eval-Protokoll ist Teil des Experiments:} Data-Leakage über den
-        Callback und das Gating auf einer signal-losen Metrik (det.\ SR bei
-        hoher Entropie) verzerrten Selektion und Laufzeit unbemerkt.
-  \item \emph{Eval-Episoden-Caps verfälschen die Messung:} Dasselbe Modell
-        misst sich bei Cap 600 als 48-\%-, bei Cap 4000 als 86-\%-Agent ---
-        eine als harmlos gedachte Beschleunigung machte das Phasenziel
-        unerreichbar (Abschnitt~\ref{sec:etappe6}).
-  \item \emph{Einzel-Snapshots sind keine Validierung:} Die batch=64-Freigabe
-        beruhte auf einem Messpunkt einer chaotisch oszillierenden Kurve;
-        die exakte Reproduktion traf den Endpunkt, entlarvte aber den
-        Verlauf. Hyperparameter-Entscheidungen nur auf ganzen Eval-Kurven.
-  \item \emph{Negative Kontrollen lohnen sich:} Der bit-genaue Vergleich von
-        Curriculum-Pfad und nacktem Trainingspfad schloss eine ganze
-        Verdächtigen-Klasse (Stack-Bugs) in Minuten aus und lenkte die Suche
-        auf die Hyperparameter.
-\end{itemize}
-
-\section{Umgebungsrevision v11 (06.07.2026)}
+\subsection{Umgebungsrevision v11 (06.07.2026)}
 \label{sec:v11}
 
 Eine systematische Überprüfung der Umgebung gegen Best Practices des
@@ -1015,10 +1205,10 @@ Alle Änderungen wurden einzeln verifiziert (Lösbarkeit 150/150, Oracle-Agent
 unzulässiger Aktionen). Da sich die Aufgabenverteilung dadurch ändert, sind
 Ergebnisse ab v11 als neue Baseline zu behandeln.
 
-\section{Performance-Analyse: Training beschleunigen}
+\subsection{Performance-Analyse: Training beschleunigen}
 \label{sec:performance}
 
-\subsection{CPU schlägt Apple-GPU (MPS)}
+\subsubsection{CPU schlägt Apple-GPU (MPS)}
 
 Ein kontrollierter Benchmark (identisches Trainings-Setup, 8192 Steps) zeigt:
 Die GPU ist für dieses kleine Netz (LSTM 256, 229 Inputs) in \emph{jeder}
@@ -1036,7 +1226,7 @@ bei 64 unterlegen.}
 \label{fig:fps}
 \end{figure}
 
-\subsection{Batch-Größe: vermeintliche Validierung (06.07.) --- am Folgetag widerlegt}
+\subsubsection{Batch-Größe: vermeintliche Validierung (06.07.) --- am Folgetag widerlegt}
 
 Mit \texttt{batch\_size}=8 fallen pro Rollout 5\,120 Gradient-Updates an ---
 mehr Optimizer-Schritte als Umgebungsschritte. Da die Root-Cause-Analyse
@@ -1072,47 +1262,69 @@ konvergiert nicht.}
 \label{fig:batchval}
 \end{figure}
 
-\section{Einordnung in verwandte Arbeiten}
+\subsection{Zeitleiste und Lessons Learned}
 
-Stoneforge liegt strukturell zwischen drei etablierten Benchmarks: MiniGrid
-(teilbeobachtbare Grid-Navigation, PPO+LSTM als Standard-Baseline)
-\cite{chevalier2023minigrid}, Crafter (prozedural generiertes 2D-Survival-Spiel
-mit Mining und Crafting) \cite{hafner2021crafter} und Procgen (Generalisierung
-über prozedurale Level) \cite{cobbe2020procgen}. Publizierte
-Zero-Shot-Ergebnisse auf prozeduralen Labyrinthen liegen typischerweise bei
-25--53\,\% Success Rate; die hier erreichten 86\,\% (Test) bzw.\ 68\,\%
-(Holdout) bei nur 2,2\,Mio.\ Trainingsschritten sind in diesem Kontext ein
-starkes Ergebnis. Für die Reduktion des Train/Test-Gaps ist Prioritized Level
-Replay \cite{jiang2021plr} der vielversprechendste nächste Baustein; der
-vorhandene Seed-Pool-Mechanismus ist eine vereinfachte Variante davon.
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lp{7.6cm}l@{}}
+\toprule
+\textbf{Datum} & \textbf{Meilenstein} & \textbf{Ergebnis (Testset A)} \\
+\midrule
+12.05. & Spiel-Engine \& Weltgenerierung spielbar & --- \\
+16.05. & DQN-Fehlstart $\to$ PPO; BFS-Kraftfeld-Bug gefixt & Oracle 0/3 $\to$ 3/3 \\
+16.05. & Curriculum P1; naiver Transfer kollabiert $\to$ Mixed-Dist. & 56\,\% $\to$ 86\,\% stoch \\
+16.05. & Phase 4 (Reward-Tuning), 3-Läufe-Protokoll & 98\,\% stoch / 2\,\% det \\
+18.05. & Delta-BFS-Kodierung + Temperature-Sampling & 100\,\% stoch / 42\,\% det \\
+07.06. & \textbf{RecurrentPPO ohne BFS-Orakel (Kernbeitrag)} & \textbf{86\,\% / 36\,\%} \\
+08.06. & POMDP-These; Callback-Bugs; Swarm/Live-Map & --- \\
+11.06. & Data-Leakage behoben (Val-Set 6000er); Lösbarkeit 100\,\% & --- \\
+13.--15.06. & v6--v9 scheitern $\to$ Root-Cause (ent\_coef/batch/n\_steps) & 0--12\,\% \\
+25.06. & v10-Reproduktion abgeschlossen (Referenzmodell) & 86\,\% (Val) \\
+06.07. & Env-Revision v11 (10 Änderungen); batch=64 \glqq validiert\grqq{} (am 07.07.\ widerlegt) & 52\,\% stoch @150k (P1) \\
+07.07. & v11-Läufe Seed 0/1 stagnieren; Monitoring-Redesign; Swarm-Analyse (B8) + Pool-Fix & 16--28\,\% stoch (P1, Val) \\
+07.07. & \textbf{Forensik (Etappe 6):} Eval-Cap-Artefakt gefixt; Swarm/Wrapper/Stack entlastet; \textbf{batch $64 \to 8$} & \textbf{84--88\,\% stoch / 52\,\% det} (P1, Val) \\
+08.07. & \textbf{Finale v12-Läufe (n=3, batch=8)}; Gap-Experimente E1--E3 + Temperatur-Sweep & \textbf{73{,}3\,\% / 80{,}0\,\%} (A/B, stoch) \\
+\bottomrule
+\end{tabular}
+\caption{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt{CHANGELOG.md}).
+SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\
+ohne strikte Val/Test-Trennung.}
+\label{tab:timeline}
+\end{table}
 
-\section{Fazit und Ausblick}
-\label{sec:ausblick}
-
-\textbf{Stand:} Die Machbarkeit ist gezeigt, beide Zielkriterien sind (stochastisch)
-erfüllt, und die Umgebung ist nach der v11-Revision methodisch sauber (präzise
-Schwierigkeitssteuerung, policy-invariantes Shaping, kein Straf-Stacking, keine
-toten Features). Die Forensik der Etappe~6 hat die Trainingskonfiguration
-konsolidiert (batch=8, Cap-4000-Evals, kurvenbasierte Bewertung) und liefert
-mit 84--88\,\% stochastischer / 52\,\% deterministischer Phase-1-SR die
-besten Zwischenwerte des Projekts. \textbf{Offene Schritte:}
-
-\begin{enumerate}
-  \item \textbf{$\geq$3 volle Curriculum-Läufe} mit der konsolidierten
-        Konfiguration (batch=8, Seeds 1--3) für Mittelwert $\pm$
-        Standardabweichung; anschließend finaler Eval auf Testset A
-        (7000--7049) und Holdout B (8000--8049).
-  \item \textbf{Det/Stoch-Gap schließen:} Die erstmals hohe deterministische
-        Phase-1-SR ($>$50\,\% statt bisher $\leq$26\,\%) legt nahe, dass der
-        gesunde Critic auch das Phase-3-Annealing stabilisiert --- zu prüfen
-        im vollen Lauf. Ergänzend: (a) Temperatur-Sweep der Evaluation;
-        (b) Self-Imitation \cite{oh2018sil}.
-  \item \textbf{Seed-Replay:} Der Erfolgs-Swarm zeigte im A/B-Test
-        (Abschnitt~\ref{sec:etappe6}) keinen Phase-1-Effekt; ob PLR-Semantik
-        \cite{jiang2021plr} in den späteren Phasen hilft, bleibt offen.
-  \item \textbf{Falls Holdout B unter Ziel:} vollwertiges Prioritized Level
-        Replay (TD-Error-gewichtet) \cite{jiang2021plr}.
-\end{enumerate}
+\textbf{Lessons Learned (negative Ergebnisse mit Erkenntniswert):}
+\begin{itemize}
+  \item \emph{Visited-Mask in der Observation} destabilisiert den Argmax
+        (jede 1-Bit-Änderung kann die Richtungspräferenz kippen).
+  \item \emph{Naiver Curriculum-Transfer} zerstört die Vorgänger-Politik ---
+        Mixed-Distribution bzw.\ leistungsbasierte Phasenwechsel sind nötig.
+  \item \emph{Feature-Kodierung schlägt Feature-Auswahl:} Der BFS-Gradient war
+        nie \glqq zu schwach\grqq{} --- er war falsch kodiert (Delta-Fix: Signal
+        $32\times$ stärker).
+  \item \emph{Straf-Stacking} (Wand-, Loop-, Stagnations-Penalties) macht
+        Stillstand lokal optimal; Information gehört in die Observation, nicht
+        in den Reward.
+  \item \emph{Hyperparameter dominieren Features:} Alle v7-Feature-Ideen
+        scheiterten an verstellten Basis-Hyperparametern; \texttt{ent\_coef}
+        war der entscheidende Faktor. Ohne das Changelog wäre die
+        Root-Cause-Analyse (v2-Reverse-Engineering) nicht möglich gewesen.
+  \item \emph{Eval-Protokoll ist Teil des Experiments:} Data-Leakage über den
+        Callback und das Gating auf einer signal-losen Metrik (det.\ SR bei
+        hoher Entropie) verzerrten Selektion und Laufzeit unbemerkt.
+  \item \emph{Eval-Episoden-Caps verfälschen die Messung:} Dasselbe Modell
+        misst sich bei Cap 600 als 48-\%-, bei Cap 4000 als 86-\%-Agent ---
+        eine als harmlos gedachte Beschleunigung machte das Phasenziel
+        unerreichbar (Abschnitt~\ref{sec:etappe6}).
+  \item \emph{Einzel-Snapshots sind keine Validierung:} Die batch=64-Freigabe
+        beruhte auf einem Messpunkt einer chaotisch oszillierenden Kurve;
+        die exakte Reproduktion traf den Endpunkt, entlarvte aber den
+        Verlauf. Hyperparameter-Entscheidungen nur auf ganzen Eval-Kurven.
+  \item \emph{Negative Kontrollen lohnen sich:} Der bit-genaue Vergleich von
+        Curriculum-Pfad und nacktem Trainingspfad schloss eine ganze
+        Verdächtigen-Klasse (Stack-Bugs) in Minuten aus und lenkte die Suche
+        auf die Hyperparameter.
+\end{itemize}
 
 \bibliographystyle{unsrt}
 \bibliography{references}

@@ -16,6 +16,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import subprocess
 from datetime import datetime
 from typing import Any
 
@@ -33,12 +34,33 @@ def _today() -> str:
     return datetime.now().strftime("%d.%m.%Y")
 
 
+def _git_commit() -> str:
+    """Kurzer Commit-Hash des Repos (+ '-dirty' bei uncommitteten Änderungen).
+
+    Für die Reproduzierbarkeit: jede config.json wird an den Code-Stand gebunden,
+    der sie erzeugt hat. Gibt 'unknown' zurück, falls kein git verfügbar ist.
+    """
+    try:
+        h = subprocess.check_output(
+            ["git", "-C", _ROOT, "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+        dirty = subprocess.call(
+            ["git", "-C", _ROOT, "diff", "--quiet", "--ignore-submodules"],
+            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+        )
+        return f"{h}-dirty" if dirty else h
+    except Exception:
+        return "unknown"
+
+
 # ── Trainings-Konfiguration ───────────────────────────────────────────────────
 
 def save_run_config(save_dir: str, config: dict[str, Any]) -> str:
     """Speichert Hyperparameter + Setup als config.json neben das Modell."""
     os.makedirs(save_dir, exist_ok=True)
     config["_saved_at"] = _now()
+    config["_git_commit"] = _git_commit()
     path = os.path.join(save_dir, "config.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
