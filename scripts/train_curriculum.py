@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 
 import numpy as np
 
@@ -30,32 +31,56 @@ for _d in (_PYTHON_DIR, _SCRIPTS_DIR):
 
 from stoneforge_env import StoneforgeWorldEnv, SwarmSeedPool
 from stream_wrapper import StreamWrapper
+from doc_logger import append_eval_history, save_run_config, save_run_results, generate_results_md
 
 # ──────────────────────────────────────────────────────────────────────────────
 VAL_SEEDS = list(range(6000, 6050))
 MAX_EVAL_STEPS = 4000
 
+# Eval-Historie für die Live Map — modulglobal, damit sie Phasenwechsel überlebt
+_LIVE_EVALS: list = []
+
+# gate_metric: Metrik für Phasen-Stopp + best_model-Auswahl.
+#   Phase 1/2: "stoch" — mit ent_coef=0.05 ist die Policy absichtlich stochastisch,
+#   deterministische SR ist dort ~0% (Argmax einer fast-uniformen Verteilung) und
+#   trägt kein Signal. Phase 3/4: "det" — Zielmetrik nach Entropie-Annealing.
+# eval_max_steps: Episoden-Cap pro Eval. Einheitlich 4000 (= Env-maxSteps, = finaler
+#   50-Seed-Eval). Die am 06.07. eingeführten Kurz-Caps (P1=600/P2=1200) haben die SR
+#   massiv unterschätzt (Seed-0 phase1_best: 46% @600 vs. 86% @4000 — Steps-bis-Erfolg
+#   p95≈1900, max≈3240) und Gate/Modellselektion verzerrt; gemessene Eval-Dauer bei
+#   Cap 4000 ist nur ~21 s (det+stoch, 50 Seeds) → Cap-Ersparnis war unnötig.
 PHASES = [
     {"exit_min":  5, "exit_max": 12, "max_steps":   500_000, "target_sr": 0.85,
-     "eval_min":  5, "eval_max": 12,  "label": "Phase 1 (exit=5–12)"},
+     "eval_min":  5, "eval_max": 12,  "label": "Phase 1 (exit=5–12)",
+     "gate_metric": "stoch", "eval_max_steps": 4000},
     {"exit_min": 12, "exit_max": 25, "max_steps":   500_000, "target_sr": 0.70,
-     "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12–25)"},
+     "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12–25)",
+     "gate_metric": "stoch", "eval_max_steps": 4000},
     {"exit_min": 25, "exit_max": 45, "max_steps": 1_000_000, "target_sr": 0.70,
-     "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25–45, eval 35–45)"},
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25–45, eval 35–45)",
+     "gate_metric": "det", "eval_max_steps": 4000},
+    # Fix 2: Greedy Fine-Tune — ent_coef→0.0001, Modellselektion auf deterministischer SR
+    {"exit_min": 25, "exit_max": 45, "max_steps":   200_000, "target_sr": 0.60,
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 4 (Greedy Fine-Tune)",
+     "gate_metric": "det", "eval_max_steps": 4000,
+     "ent_coef_override": 0.0001},
 ]
 
 RPPO_KWARGS = dict(
     policy="MlpLstmPolicy",
-    n_steps=512,
-    batch_size=256,
-    n_epochs=4,
+    n_steps=256,          # v10: exakt wie v2 (das funktionierende Modell)
+    batch_size=8,         # ZURÜCK auf 8 (07.07.2026): batch=64 destabilisiert den Critic
+                          # (EV≈0.1, SR oszilliert chaotisch; 4 Läufe + A/B, CHANGELOG v2026-07-07.4).
+                          # Die 64er-"Validierung" vom 06.07. war ein Einzel-Snapshot. CPU!
+    n_epochs=10,          # v10: wie v2 (default)
     learning_rate=3e-4,
     gamma=0.999,
     gae_lambda=0.95,
     clip_range=0.2,
-    ent_coef=0.01,
+    ent_coef=0.05,        # v10: wie v2 — 5× höher für Exploration (war 0.01)
     vf_coef=0.5,
-    policy_kwargs=dict(n_lstm_layers=1, lstm_hidden_size=512, shared_lstm=False),
+    policy_kwargs=dict(n_lstm_layers=1, lstm_hidden_size=256, shared_lstm=False,
+                       enable_critic_lstm=True),
     verbose=1,
     tensorboard_log="logs/tensorboard/",
 )
@@ -73,7 +98,8 @@ class CurriculumEvalCallback(BaseCallback):
     """
 
     def __init__(self, eval_freq, save_path, target_sr,
-                 eval_exit_min, eval_exit_max, phase_label, verbose=1):
+                 eval_exit_min, eval_exit_max, phase_label, verbose=1,
+                 gate_metric="det", eval_max_steps=MAX_EVAL_STEPS):
         super().__init__(verbose)
         self.eval_freq = eval_freq
         self.save_path = save_path
@@ -83,6 +109,8 @@ class CurriculumEvalCallback(BaseCallback):
         self.eval_exit_min = eval_exit_min
         self.eval_exit_max = eval_exit_max
         self.phase_label = phase_label
+        self.gate_metric = gate_metric          # "stoch" (Phase 1/2) oder "det" (Phase 3/4)
+        self.eval_max_steps = eval_max_steps
         self._best_sr = -1.0
         self.consecutive_successes = 0
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -100,44 +128,75 @@ class CurriculumEvalCallback(BaseCallback):
                 self.consecutive_successes = 0
         return True
 
-    def _run_eval(self) -> float:
-        env = StoneforgeWorldEnv(exit_min=self.eval_exit_min, exit_max=self.eval_exit_max, use_last_action_reward=True)
+    def _eval_once(self, env, deterministic: bool) -> int:
+        """Ein Eval-Durchlauf über alle VAL_SEEDS, gibt Anzahl Erfolge zurück."""
         successes = 0
-
         for seed in VAL_SEEDS:
             obs, _ = env.reset(seed=seed)
             done, steps = False, 0
             lstm_states = None
             ep_start = np.ones((1,), dtype=bool)
 
-            while not done and steps < MAX_EVAL_STEPS:
+            while not done and steps < self.eval_max_steps:
                 action, lstm_states = self.model.predict(
                     obs.reshape(1, -1), state=lstm_states,
-                    episode_start=ep_start, deterministic=True,  # deterministisch für konsistente Messung
+                    episode_start=ep_start, deterministic=deterministic,
                 )
                 obs, _, term, trunc, info = env.step(int(action[0]))
                 ep_start = np.zeros((1,), dtype=bool)
                 done = term or trunc; steps += 1
                 if info.get("reached_exit"):
                     successes += 1; break
+        return successes
 
-        sr = successes / len(VAL_SEEDS)
+    def _run_eval(self) -> float:
+        env = StoneforgeWorldEnv(
+            exit_min=self.eval_exit_min, exit_max=self.eval_exit_max,
+            # v11: 229-dim (Energie/Inventar entfernt — tote Features)
+        )
+        # Immer BEIDE Metriken messen (Det/Stoch-Gap-Kurve fürs Paper);
+        # Gating + best_model-Auswahl laufen auf gate_metric der Phase.
+        succ_det = self._eval_once(env, deterministic=True)
+        succ_stoch = self._eval_once(env, deterministic=False)
+        n = len(VAL_SEEDS)
+        sr_det, sr_stoch = succ_det / n, succ_stoch / n
+        sr = sr_stoch if self.gate_metric == "stoch" else sr_det
 
         if self.verbose:
             print(f"  [Eval @ {self.num_timesteps:,}] {self.phase_label}: "
-                  f"SR={successes}/{len(VAL_SEEDS)} ({sr:.1%})", flush=True)
+                  f"det={succ_det}/{n} ({sr_det:.1%}), stoch={succ_stoch}/{n} ({sr_stoch:.1%}) "
+                  f"— Gate: {self.gate_metric}", flush=True)
 
-        self.logger.record("eval/success_rate", sr)
-        self.logger.record("eval/successes", successes)
+        self.logger.record("eval/sr_det", sr_det)
+        self.logger.record("eval/sr_stoch", sr_stoch)
+        self.logger.record("eval/success_rate", sr)   # Gating-Metrik (rückwärtskompatibel)
         self.logger.dump(self.num_timesteps)
+
+        # Live Map: vollständige det/stoch-Historie (ws_map.html zeichnet daraus
+        # beide SR-Kurven + Phasen-Marker; Fallback ohne "evals" ist best_sr)
+        try:
+            import ws_map_server as _ws
+            _LIVE_EVALS.append({"ts": int(self.num_timesteps), "det": sr_det,
+                                "stoch": sr_stoch, "phase": self.phase_label})
+            _ws.update_meta({"evals": _LIVE_EVALS})
+        except Exception:
+            pass
 
         if sr > self._best_sr:
             self._best_sr = sr
             self.model.save(self.best_save_path)
             if self.verbose:
-                print(f"  → Bestes Modell gespeichert ({sr:.1%}): {self.best_save_path}.zip")
+                print(f"  → Bestes Modell gespeichert ({sr:.1%} {self.gate_metric}): {self.best_save_path}.zip")
             if hasattr(self, '_meta_cb'):
                 self._meta_cb._best_sr = sr
+
+        # Eval-Eintrag dauerhaft speichern (beide Metriken im Label sichtbar)
+        save_dir = os.path.dirname(self.save_path)
+        append_eval_history(
+            save_dir, self.num_timesteps, sr,
+            succ_stoch if self.gate_metric == "stoch" else succ_det,
+            n, label=f"{self.phase_label} [det={sr_det:.0%}|stoch={sr_stoch:.0%}]",
+        )
 
         return sr
 
@@ -229,12 +288,40 @@ def parse_args() -> argparse.Namespace:
                    help="Invertiert Swarm-Pool zu PLR-Semantik (auf knapp gescheiterte Seeds fokussieren)")
     p.add_argument("--subproc", action="store_true",
                    help="Verwende SubprocVecEnv statt DummyVecEnv")
+    # --- Ablations-Schalter (Det/Stoch-Gap-Experimente, 08.07.2026) ---
+    p.add_argument("--vf-coef", type=float, default=None,
+                   help="E1: Critic-Gewicht überschreiben (default 0.5). Wirkt auch bei --start-phase.")
+    p.add_argument("--no-p3-anneal", action="store_true",
+                   help="E1: Entropie-Annealing in Phase 3 abschalten (ent_coef konstant).")
+    p.add_argument("--lstm-size", type=int, default=None,
+                   help="E3: LSTM-Hidden-Size (default 256). NUR bei --start-phase 1 wirksam (Architektur).")
+    p.add_argument("--p3-exit-max", type=int, default=None,
+                   help="E2: obere Exit-Distanz in Phase 3 (default 45). Eval bleibt 35–45.")
+    p.add_argument("--p3-max-steps", type=int, default=None,
+                   help="Phase-3-Steps überschreiben (Schnelltest, z.B. 400000 statt 1000000).")
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     os.makedirs(args.save_dir, exist_ok=True)
+
+    # --- Ablations-Overrides anwenden (08.07.2026) ---
+    if args.vf_coef is not None:
+        RPPO_KWARGS["vf_coef"] = args.vf_coef
+        print(f"  [Ablation] vf_coef → {args.vf_coef}")
+    if args.lstm_size is not None:
+        RPPO_KWARGS["policy_kwargs"]["lstm_hidden_size"] = args.lstm_size
+        print(f"  [Ablation] lstm_hidden_size → {args.lstm_size} "
+              f"(nur wirksam bei --start-phase 1)")
+    if args.p3_exit_max is not None:
+        PHASES[2]["exit_max"] = args.p3_exit_max
+        print(f"  [Ablation] Phase-3 exit_max → {args.p3_exit_max} (Eval bleibt 35–45)")
+    if args.p3_max_steps is not None:
+        PHASES[2]["max_steps"] = args.p3_max_steps
+        print(f"  [Ablation] Phase-3 max_steps → {args.p3_max_steps:,}")
+    if args.no_p3_anneal:
+        print("  [Ablation] Phase-3 Entropie-Annealing: AUS")
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -252,7 +339,7 @@ def main() -> None:
 
     print("\n" + "═"*60)
     print("  Curriculum-Training: RecurrentPPO (LSTM), kein BFS")
-    print("  Obs: 236 Features (Grid + Kompass + Step-Counter + Last Action/Reward)")
+    print("  Obs: 229 Features (Grid 225 + HP + Kompass 2 + StepFrac) — v11: ohne tote Features")
     print("  Phasen: 5-12 → 12-25 → 25-45")
     if swarm_pool:
         if swarm_pool.plr_mode:
@@ -269,6 +356,30 @@ def main() -> None:
         print("  VecEnv: DummyVecEnv (Sequenziell)")
     print("═"*60 + "\n")
 
+    from datetime import datetime
+    save_run_config(args.save_dir, {
+        "algo":       "rppo",
+        "script":     "train_curriculum.py",
+        "n_envs":     args.n_envs,
+        "eval_freq":  args.eval_freq,
+        "seed":       args.seed,
+        "swarm":      not args.no_swarm,
+        "swarm_prob": args.swarm_prob,
+        "plr":        args.plr,
+        "start_phase":args.start_phase,
+        "date":       datetime.now().strftime("%d.%m.%Y"),
+        "phases":     [{
+            "label":      p["label"],
+            "exit_min":   p["exit_min"],
+            "exit_max":   p["exit_max"],
+            "max_steps":  p["max_steps"],
+            "target_sr":  p["target_sr"],
+        } for p in PHASES],
+        "hyperparams": {k: v for k, v in RPPO_KWARGS.items()
+                        if k not in ("verbose", "tensorboard_log")},
+    })
+    _train_start = time.time()
+    _phase_results: list[dict] = []
     model = None
 
     for i, phase in enumerate(PHASES, 1):
@@ -281,11 +392,26 @@ def main() -> None:
         print(f"  Ziel-SR: {phase['target_sr']:.0%}, max {phase['max_steps']:,} Steps")
         print(f"{'─'*60}")
 
+        # Pool bei Phasenstart leeren: ein "gelöster"/"gescheiterter" Seed aus der
+        # vorherigen Phase ist mit neuer Exit-Distanz eine andere Aufgabe —
+        # die Pool-Aussage gilt über Phasengrenzen hinweg nicht.
+        if swarm_pool is not None and swarm_pool.stats()["pool_size"] > 0:
+            swarm_pool.clear()
+            print("  Swarm-Pool geleert (Phasenwechsel)")
+
         # StreamWrapper um jede Env — sendet pro Step Position an WS-Server
         # (analog zu PokéRL's StreamWrapper, aber in-process statt externer WS)
         def make_env_i(agent_id, exit_min=phase["exit_min"],
                        exit_max=phase["exit_max"], _pool=swarm_pool):
-            base = StoneforgeWorldEnv(exit_min=exit_min, exit_max=exit_max, swarm_pool=_pool, use_last_action_reward=True)
+            base = StoneforgeWorldEnv(
+                exit_min=exit_min, exit_max=exit_max, swarm_pool=_pool,
+                # v11: 229-dim obs (Energie/Inventar entfernt — tote Features)
+            )
+            # StreamWrapper nur bei aktiver Live Map — er lief bisher auch bei
+            # --no-live-map mit (voller Stream-Codepfad ohne Server) und steht
+            # unter Verdacht, das Training zu stören (Bisect 07.07.2026).
+            if not live_map_active:
+                return base
             return StreamWrapper(base, agent_id=agent_id)
 
         env_fns = [
@@ -311,6 +437,8 @@ def main() -> None:
             eval_exit_max=phase["eval_max"],
             phase_label=phase["label"],
             verbose=1,
+            gate_metric=phase.get("gate_metric", "det"),
+            eval_max_steps=phase.get("eval_max_steps", MAX_EVAL_STEPS),
         )
 
         callbacks = [eval_cb]
@@ -320,10 +448,19 @@ def main() -> None:
                 swarm_pool=swarm_pool,
                 update_freq=200,
             )
-            eval_cb._meta_cb = meta_cb   # SR-Weitergabe
+            eval_cb._meta_cb = meta_cb
             callbacks.append(meta_cb)
-        if i == 3:
-            callbacks.append(EntropyAnnealingCallback(duration_steps=500_000, start_ent=0.01, end_ent=0.001))
+        if i == 3 and not args.no_p3_anneal:
+            # Entropie in Phase 3 linear 0.05 → 0.001.
+            # Start MUSS dem Trainings-ent_coef aus Phase 1/2 entsprechen (RPPO_KWARGS:
+            # 0.05), sonst springt die Entropie beim Phasenwechsel abrupt 0.05 → 0.01.
+            callbacks.append(EntropyAnnealingCallback(duration_steps=500_000, start_ent=RPPO_KWARGS["ent_coef"], end_ent=0.001))
+        if i == 4:
+            # Fix 2: Phase 4 Greedy Fine-Tune — Entropie sofort auf 0.0001 setzen
+            ent_override = phase.get("ent_coef_override", 0.0001)
+            if model is not None:
+                model.ent_coef = ent_override
+            print(f"  ent_coef → {ent_override} (Greedy Fine-Tune)")
         callback = CallbackList(callbacks)
 
         if model is None and i == 1:
@@ -349,30 +486,60 @@ def main() -> None:
 
         # Letzten Trainingsstand sichern (separat vom besten Checkpoint)
         model.save(phase_model_path)
-        print(f"  Phase {i} abgeschlossen. Bestes SR (det): {eval_cb._best_sr:.1%}")
+        _phase_dur = int(time.time() - _train_start)
+        print(f"  Phase {i} abgeschlossen. Bestes SR ({eval_cb.gate_metric}): {eval_cb._best_sr:.1%}")
+        swarm_stats: dict = {}
         if swarm_pool:
-            stats = swarm_pool.stats()
-            print(f"  Swarm-Pool: {stats['pool_size']} Seeds, "
-                  f"{stats['total_added']} hinzugefügt, "
-                  f"{stats['total_sampled']} gesampled")
+            swarm_stats = swarm_pool.stats()
+            print(f"  Swarm-Pool: {swarm_stats['pool_size']} Seeds, "
+                  f"{swarm_stats['total_added']} hinzugefügt, "
+                  f"{swarm_stats['total_sampled']} gesampled")
 
-    # Finales Modell = bestes Phase-3-Checkpoint (nicht letzter Stand) → als best_model.zip kopieren
+        _phase_result = {
+            "phase":       i,
+            "label":       phase["label"],
+            "best_sr":     round(eval_cb._best_sr, 4),
+            "target_sr":   phase["target_sr"],
+            "exit_range":  f"{phase['exit_min']}-{phase['exit_max']}",
+            "swarm_pool":  swarm_stats,
+        }
+        _phase_results.append(_phase_result)
+        # Phasenergebnis sofort sichern (crash-sicher)
+        save_run_results(args.save_dir, {f"phase{i}": _phase_result})
+
+    # Finales Modell: Phase 4 > Phase 3 > Fallback letzter Stand
     import shutil
-    src = os.path.join(args.save_dir, "phase3_best_model.zip")
     dst = os.path.join(args.save_dir, "best_model.zip")
-    if os.path.exists(src):
-        shutil.copy2(src, dst)
-    else:
-        # Fallback: letzter Phase-3-Stand
-        src_fallback = os.path.join(args.save_dir, "phase3_model.zip")
-        if os.path.exists(src_fallback):
-            shutil.copy2(src_fallback, dst)
+    for candidate in ["phase4_best_model.zip", "phase3_best_model.zip",
+                      "phase4_model.zip", "phase3_model.zip"]:
+        src = os.path.join(args.save_dir, candidate)
+        if os.path.exists(src):
+            shutil.copy2(src, dst)
+            print(f"  Finales Modell aus: {candidate}")
+            break
+
+    _total_dur_s = int(time.time() - _train_start)
+    _h, _r = divmod(_total_dur_s, 3600)
+    _m, _s = divmod(_r, 60)
+    _dur_str = f"{_h}h {_m}m {_s}s"
+    best_phase_sr = max((p["best_sr"] for p in _phase_results), default=0.0)
 
     print(f"\n{'═'*60}")
-    print(f"  Curriculum abgeschlossen!")
+    print(f"  Curriculum abgeschlossen! Dauer: {_dur_str}")
     print(f"  Bestes Modell: {dst}")
     print(f"  Vergleich: python scripts/eval_comparison.py")
     print(f"{'═'*60}\n")
+
+    # Gesamt-Ergebnis dauerhaft speichern
+    save_run_results(args.save_dir, {
+        "algo":               "rppo",
+        "training_duration":  _dur_str,
+        "phases":             _phase_results,
+        "best_sr_testset_a":  best_phase_sr,
+        "exit_range":         "5-45 (curriculum)",
+        "final_model":        dst,
+    })
+    generate_results_md()
 
     # Automatische Heatmap nach Abschluss
     if not args.no_heatmap and os.path.exists(dst):

@@ -106,7 +106,14 @@ def main() -> None:
         sys.exit(1)
     print(f"Algorithmus: {model_name}")
 
-    env = StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
+    # Env-Format automatisch aus dem Modell ableiten (alte 231-dim vs. neue 229-dim Obs)
+    from stoneforge_env import env_kwargs_for_model
+    env_kwargs = env_kwargs_for_model(model)
+    if env_kwargs:
+        print(f"Legacy-Obs erkannt → Env-Kwargs: {env_kwargs}")
+    env = StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max, **env_kwargs)
+    # Index von exitDx in der Obs hängt vom Layout ab (Grid 225 + HP, dann ggf. Energie+Inventar)
+    _dx_i = 228 if env.include_energy_inventory else 226
 
     client_cmd = [
         args.client,
@@ -147,7 +154,7 @@ def main() -> None:
                     "x": 0, "y": 0, "bfs": env.core.current_bfs_distance_to_exit(),
                     "success": None, "successes": successes,
                     "total_eps": ep, "sr": successes / max(ep, 1),
-                    "exit_dx": float(obs[228]), "exit_dy": float(obs[229]),
+                    "exit_dx": float(obs[_dx_i]), "exit_dy": float(obs[_dx_i + 1]),
                     "running": True,
                 })
 
@@ -200,8 +207,8 @@ def main() -> None:
                         "successes": successes + int(reached),
                         "total_eps": ep + 1,
                         "sr": (successes + int(reached)) / (ep + 1),
-                        "exit_dx": float(obs[228]),
-                        "exit_dy": float(obs[229]),
+                        "exit_dx": float(obs[_dx_i]),
+                        "exit_dy": float(obs[_dx_i + 1]),
                         "running": True,
                     })
 

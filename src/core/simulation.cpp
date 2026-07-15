@@ -1476,27 +1476,26 @@ float Simulation::computeReward(bool reachedExit, int hpBefore, int previousDist
     const int damage = std::max(0, hpBefore - hp_);
     reward -= static_cast<float>(damage) * 0.5F;
 
-    // Eskalierender Wand-Penalty: erst block -0.05, ab 2. konsek. Block -0.25.
-    // Verhindert dauerhaftes Laufen gegen Wände (z.B. exitDy-Bias gegen Nordwand).
-    if(moveBlocked) {
-        reward -= consecutiveBlocked >= 2 ? 0.25F : 0.05F;
-    }
+    // Kein Wand-Penalty: Step-Penalty (-0.01) + ausbleibender PBRS-Fortschritt reichen als
+    // Signal. Eskalierende Strafen machten Erkunden in engen Korridoren unwirtschaftlicher
+    // als Stehenbleiben (Straf-Stacking, siehe docs/BEWERTUNG_UND_PLAN.md Abschnitt 6.2).
+    (void)moveBlocked;
+    (void)consecutiveBlocked;
 
-    // 2-Schritt-Loop-Penalty: A→B→A→B erkennen und direkt bestrafen.
+    // 2-Schritt-Loop-Penalty reduziert (-0.15 → -0.05): Erkennung bleibt, Strafe moderat,
+    // damit legitime Umgehungsmanöver nicht dominant bestraft werden.
     if(positionLoop) {
-        reward -= 0.15F;
+        reward -= 0.05F;
     }
 
     // Stagnation-Penalty entfernt: bestraft legitime Umgehungsmanöver ohne BFS in der Obs.
 
-    if(mobsKilledThisStep > 0) {
-        reward += static_cast<float>(mobsKilledThisStep) * 2.0F;
-    }
-
-    if(exitJustUnlocked) {
-        reward += 5.0F;
-    }
-
+    // Mining/Bauen/Kampf sind im RL entfernt (Binding erlaubt nur Bewegung 0-3,
+    // Mobs deaktiviert) — die zugehörigen Reward-Terme (+2/Mob-Kill, +5 Exit-Unlock)
+    // sind daher gestrichen. Reward besteht nur noch aus: Step-Penalty, Explorations-
+    // Bonus, Loop-Penalty, Schadens-Penalty, PBRS, Terminal-Rewards.
+    (void)mobsKilledThisStep;
+    (void)exitJustUnlocked;
     (void)isExitUnlocked;
     // Potential-Based Reward Shaping (PBRS) using BFS distance as potential.
     // Φ(s) = -BFS(s) / MAX_DIST  -> in [-1, 0]

@@ -1,0 +1,706 @@
+[
+  {
+    "step": 24992,
+    "sr": 0.62,
+    "successes": 31,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=4%|stoch=62%]",
+    "timestamp": "2026-07-08 08:29:47"
+  },
+  {
+    "step": 49984,
+    "sr": 0.82,
+    "successes": 41,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=24%|stoch=82%]",
+    "timestamp": "2026-07-08 08:39:52"
+  },
+  {
+    "step": 74976,
+    "sr": 0.92,
+    "successes": 46,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=42%|stoch=92%]",
+    "timestamp": "2026-07-08 08:50:15"
+  },
+  {
+    "step": 99968,
+    "sr": 0.58,
+    "successes": 29,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=22%|stoch=58%]",
+    "timestamp": "2026-07-08 09:00:46"
+  },
+  {
+    "step": 124960,
+    "sr": 0.74,
+    "successes": 37,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=54%|stoch=74%]",
+    "timestamp": "2026-07-08 09:10:56"
+  },
+  {
+    "step": 149952,
+    "sr": 0.7,
+    "successes": 35,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=40%|stoch=70%]",
+    "timestamp": "2026-07-08 09:36:36"
+  },
+  {
+    "step": 174944,
+    "sr": 0.42,
+    "successes": 21,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=34%|stoch=42%]",
+    "timestamp": "2026-07-08 10:02:43"
+  },
+  {
+    "step": 199936,
+    "sr": 0.6,
+    "successes": 30,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=44%|stoch=60%]",
+    "timestamp": "2026-07-08 10:14:01"
+  },
+  {
+    "step": 224928,
+    "sr": 0.8,
+    "successes": 40,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=64%|stoch=80%]",
+    "timestamp": "2026-07-08 10:25:25"
+  },
+  {
+    "step": 249920,
+    "sr": 0.46,
+    "successes": 23,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=30%|stoch=46%]",
+    "timestamp": "2026-07-08 10:41:53"
+  },
+  {
+    "step": 274912,
+    "sr": 0.78,
+    "successes": 39,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=60%|stoch=78%]",
+    "timestamp": "2026-07-08 12:08:15"
+  },
+  {
+    "step": 299904,
+    "sr": 0.44,
+    "successes": 22,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=26%|stoch=44%]",
+    "timestamp": "2026-07-08 13:36:08"
+  },
+  {
+    "step": 324896,
+    "sr": 0.48,
+    "successes": 24,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=28%|stoch=48%]",
+    "timestamp": "2026-07-08 13:46:50"
+  },
+  {
+    "step": 349888,
+    "sr": 0.58,
+    "successes": 29,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=24%|stoch=58%]",
+    "timestamp": "2026-07-08 13:57:18"
+  },
+  {
+    "step": 374880,
+    "sr": 0.7,
+    "successes": 35,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=28%|stoch=70%]",
+    "timestamp": "2026-07-08 14:07:43"
+  },
+  {
+    "step": 399872,
+    "sr": 0.7,
+    "successes": 35,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=38%|stoch=70%]",
+    "timestamp": "2026-07-08 14:17:53"
+  },
+  {
+    "step": 424864,
+    "sr": 0.44,
+    "successes": 22,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=30%|stoch=44%]",
+    "timestamp": "2026-07-08 14:26:44"
+  },
+  {
+    "step": 449856,
+    "sr": 0.54,
+    "successes": 27,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=30%|stoch=54%]",
+    "timestamp": "2026-07-08 14:35:04"
+  },
+  {
+    "step": 474848,
+    "sr": 0.44,
+    "successes": 22,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=36%|stoch=44%]",
+    "timestamp": "2026-07-08 14:43:37"
+  },
+  {
+    "step": 499840,
+    "sr": 0.82,
+    "successes": 41,
+    "n": 50,
+    "label": "Phase 1 (exit=5–12) [det=56%|stoch=82%]",
+    "timestamp": "2026-07-08 14:53:16"
+  },
+  {
+    "step": 99968,
+    "sr": 0.42,
+    "successes": 21,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=6%|stoch=42%]",
+    "timestamp": "2026-07-08 15:02:59"
+  },
+  {
+    "step": 124960,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=0%|stoch=6%]",
+    "timestamp": "2026-07-08 15:11:46"
+  },
+  {
+    "step": 149952,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=10%|stoch=8%]",
+    "timestamp": "2026-07-08 15:20:35"
+  },
+  {
+    "step": 174944,
+    "sr": 0.66,
+    "successes": 33,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=38%|stoch=66%]",
+    "timestamp": "2026-07-08 15:28:51"
+  },
+  {
+    "step": 199936,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=2%|stoch=8%]",
+    "timestamp": "2026-07-08 16:08:21"
+  },
+  {
+    "step": 224928,
+    "sr": 0.2,
+    "successes": 10,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=0%|stoch=20%]",
+    "timestamp": "2026-07-08 16:16:54"
+  },
+  {
+    "step": 249920,
+    "sr": 0.26,
+    "successes": 13,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=4%|stoch=26%]",
+    "timestamp": "2026-07-08 16:28:34"
+  },
+  {
+    "step": 274912,
+    "sr": 0.6,
+    "successes": 30,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=34%|stoch=60%]",
+    "timestamp": "2026-07-08 16:37:04"
+  },
+  {
+    "step": 299904,
+    "sr": 0.6,
+    "successes": 30,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=26%|stoch=60%]",
+    "timestamp": "2026-07-08 16:45:24"
+  },
+  {
+    "step": 324896,
+    "sr": 0.54,
+    "successes": 27,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=14%|stoch=54%]",
+    "timestamp": "2026-07-08 16:55:13"
+  },
+  {
+    "step": 349888,
+    "sr": 0.48,
+    "successes": 24,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=42%|stoch=48%]",
+    "timestamp": "2026-07-08 17:03:39"
+  },
+  {
+    "step": 374880,
+    "sr": 0.6,
+    "successes": 30,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=18%|stoch=60%]",
+    "timestamp": "2026-07-08 17:12:09"
+  },
+  {
+    "step": 399872,
+    "sr": 0.6,
+    "successes": 30,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=26%|stoch=60%]",
+    "timestamp": "2026-07-08 17:20:27"
+  },
+  {
+    "step": 424864,
+    "sr": 0.42,
+    "successes": 21,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=20%|stoch=42%]",
+    "timestamp": "2026-07-08 17:28:59"
+  },
+  {
+    "step": 449856,
+    "sr": 0.18,
+    "successes": 9,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=12%|stoch=18%]",
+    "timestamp": "2026-07-08 23:24:09"
+  },
+  {
+    "step": 474848,
+    "sr": 0.46,
+    "successes": 23,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=6%|stoch=46%]",
+    "timestamp": "2026-07-08 23:32:38"
+  },
+  {
+    "step": 499840,
+    "sr": 0.52,
+    "successes": 26,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=34%|stoch=52%]",
+    "timestamp": "2026-07-08 23:40:46"
+  },
+  {
+    "step": 524832,
+    "sr": 0.58,
+    "successes": 29,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=16%|stoch=58%]",
+    "timestamp": "2026-07-08 23:49:02"
+  },
+  {
+    "step": 549824,
+    "sr": 0.46,
+    "successes": 23,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=20%|stoch=46%]",
+    "timestamp": "2026-07-08 23:57:26"
+  },
+  {
+    "step": 574816,
+    "sr": 0.18,
+    "successes": 9,
+    "n": 50,
+    "label": "Phase 2 (exit=12–25) [det=6%|stoch=18%]",
+    "timestamp": "2026-07-09 00:07:14"
+  },
+  {
+    "step": 199936,
+    "sr": 0.3,
+    "successes": 15,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=30%|stoch=52%]",
+    "timestamp": "2026-07-09 00:17:15"
+  },
+  {
+    "step": 224928,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=72%]",
+    "timestamp": "2026-07-09 00:25:35"
+  },
+  {
+    "step": 249920,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=36%]",
+    "timestamp": "2026-07-09 00:34:07"
+  },
+  {
+    "step": 274912,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=18%]",
+    "timestamp": "2026-07-09 00:42:54"
+  },
+  {
+    "step": 299904,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=2%]",
+    "timestamp": "2026-07-09 00:51:36"
+  },
+  {
+    "step": 324896,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=8%|stoch=48%]",
+    "timestamp": "2026-07-09 01:00:15"
+  },
+  {
+    "step": 349888,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=8%]",
+    "timestamp": "2026-07-09 01:09:16"
+  },
+  {
+    "step": 374880,
+    "sr": 0.1,
+    "successes": 5,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=10%|stoch=36%]",
+    "timestamp": "2026-07-09 01:17:58"
+  },
+  {
+    "step": 399872,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=10%]",
+    "timestamp": "2026-07-09 01:26:49"
+  },
+  {
+    "step": 424864,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=10%]",
+    "timestamp": "2026-07-09 01:36:55"
+  },
+  {
+    "step": 449856,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=38%]",
+    "timestamp": "2026-07-09 01:45:33"
+  },
+  {
+    "step": 474848,
+    "sr": 0.1,
+    "successes": 5,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=10%|stoch=44%]",
+    "timestamp": "2026-07-09 01:54:15"
+  },
+  {
+    "step": 499840,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=22%]",
+    "timestamp": "2026-07-09 02:03:04"
+  },
+  {
+    "step": 524832,
+    "sr": 0.06,
+    "successes": 3,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=36%]",
+    "timestamp": "2026-07-09 02:11:44"
+  },
+  {
+    "step": 549824,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=30%]",
+    "timestamp": "2026-07-09 02:20:42"
+  },
+  {
+    "step": 574816,
+    "sr": 0.14,
+    "successes": 7,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=28%]",
+    "timestamp": "2026-07-09 02:29:31"
+  },
+  {
+    "step": 599808,
+    "sr": 0.12,
+    "successes": 6,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=12%|stoch=24%]",
+    "timestamp": "2026-07-09 02:38:21"
+  },
+  {
+    "step": 624800,
+    "sr": 0.3,
+    "successes": 15,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=30%|stoch=70%]",
+    "timestamp": "2026-07-09 02:46:54"
+  },
+  {
+    "step": 649792,
+    "sr": 0.2,
+    "successes": 10,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=20%|stoch=34%]",
+    "timestamp": "2026-07-09 02:55:44"
+  },
+  {
+    "step": 674784,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=8%]",
+    "timestamp": "2026-07-09 03:05:58"
+  },
+  {
+    "step": 699776,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=2%]",
+    "timestamp": "2026-07-09 03:14:48"
+  },
+  {
+    "step": 724768,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=0%]",
+    "timestamp": "2026-07-09 03:23:35"
+  },
+  {
+    "step": 749760,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=4%]",
+    "timestamp": "2026-07-09 03:32:23"
+  },
+  {
+    "step": 774752,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=10%]",
+    "timestamp": "2026-07-09 03:41:06"
+  },
+  {
+    "step": 799744,
+    "sr": 0.16,
+    "successes": 8,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=16%|stoch=62%]",
+    "timestamp": "2026-07-09 03:49:32"
+  },
+  {
+    "step": 824736,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=4%]",
+    "timestamp": "2026-07-09 03:58:15"
+  },
+  {
+    "step": 849728,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=0%]",
+    "timestamp": "2026-07-09 04:06:40"
+  },
+  {
+    "step": 874720,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=2%]",
+    "timestamp": "2026-07-09 04:15:17"
+  },
+  {
+    "step": 899712,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=8%|stoch=24%]",
+    "timestamp": "2026-07-09 04:23:53"
+  },
+  {
+    "step": 924704,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=26%]",
+    "timestamp": "2026-07-09 04:33:54"
+  },
+  {
+    "step": 949696,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=8%]",
+    "timestamp": "2026-07-09 04:42:45"
+  },
+  {
+    "step": 974688,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=38%]",
+    "timestamp": "2026-07-09 04:51:22"
+  },
+  {
+    "step": 999680,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=6%]",
+    "timestamp": "2026-07-09 04:59:59"
+  },
+  {
+    "step": 1024672,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=16%]",
+    "timestamp": "2026-07-09 05:08:33"
+  },
+  {
+    "step": 1049664,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=8%]",
+    "timestamp": "2026-07-09 05:17:09"
+  },
+  {
+    "step": 1074656,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=6%]",
+    "timestamp": "2026-07-09 05:25:47"
+  },
+  {
+    "step": 1099648,
+    "sr": 0.0,
+    "successes": 0,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=16%]",
+    "timestamp": "2026-07-09 05:34:05"
+  },
+  {
+    "step": 1124640,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=4%]",
+    "timestamp": "2026-07-09 05:42:44"
+  },
+  {
+    "step": 1149632,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=4%]",
+    "timestamp": "2026-07-09 05:51:35"
+  },
+  {
+    "step": 1174624,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 3 (exit=25–45, eval 35–45) [det=2%|stoch=4%]",
+    "timestamp": "2026-07-09 06:01:40"
+  },
+  {
+    "step": 224928,
+    "sr": 0.14,
+    "successes": 7,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=14%|stoch=42%]",
+    "timestamp": "2026-07-09 06:11:25"
+  },
+  {
+    "step": 249920,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=4%|stoch=16%]",
+    "timestamp": "2026-07-09 06:20:07"
+  },
+  {
+    "step": 274912,
+    "sr": 0.08,
+    "successes": 4,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=8%|stoch=16%]",
+    "timestamp": "2026-07-09 06:28:57"
+  },
+  {
+    "step": 299904,
+    "sr": 0.12,
+    "successes": 6,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=12%|stoch=18%]",
+    "timestamp": "2026-07-09 06:37:44"
+  },
+  {
+    "step": 324896,
+    "sr": 0.02,
+    "successes": 1,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=2%|stoch=70%]",
+    "timestamp": "2026-07-09 06:46:11"
+  },
+  {
+    "step": 349888,
+    "sr": 0.18,
+    "successes": 9,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=18%|stoch=56%]",
+    "timestamp": "2026-07-09 06:54:46"
+  },
+  {
+    "step": 374880,
+    "sr": 0.2,
+    "successes": 10,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=20%|stoch=44%]",
+    "timestamp": "2026-07-09 07:03:37"
+  },
+  {
+    "step": 399872,
+    "sr": 0.04,
+    "successes": 2,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=4%|stoch=12%]",
+    "timestamp": "2026-07-09 07:12:31"
+  }
+]

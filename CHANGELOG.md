@@ -36,6 +36,784 @@
 
 ---
 
+## v2026-07-09 — Temperatur-Sweep der Evaluation: Det/Stoch-Gap ist monoton, kein argmax-Artefakt
+
+**Frage (aufgeworfen bei der Literatur-Recherche):** Ist der Det/Stoch-Gap teilweise nur eine schlechte
+Wahl der Eval-Politik? Zwischen reinem Argmax (T=0) und vollem Sampling (T=1) könnte eine niedrig-
+entropische, „kalibrierte" Temperatur liegen, die beide Extreme schlägt („Stochastic Policies,
+Deterministic Minds", 2025). Getestet auf den 3 v12-Modellen (LSTM-korrekter Sweep, `scratchpad/temp_sweep.py`;
+Logits/T-Softmax mit fortgeführtem LSTM-Zustand, 50 Seeds, Cap 4000).
+
+| Temperatur | Testset A (Mittel ± Std) | Holdout B |
+|-----------|--------------------------|-----------|
+| argmax (T=0) | 32,0 ± 4,9 % | 42,0 ± 4,3 % |
+| T=0.25 | 52,0 ± 0,0 % | 52,7 ± 1,9 % |
+| T=0.5 | 63,3 ± 4,1 % | 71,3 ± 6,6 % |
+| T=0.75 | 63,3 ± 7,5 % | 72,0 ± 6,5 % |
+| **stoch (T=1.0)** | **70,7 ± 8,2 %** | **79,3 ± 6,6 %** |
+
+**Befund: Die Kurve ist monoton** — mehr Stochastik ist besser, bis zum vollen Sampling; **keine
+Zwischentemperatur schlägt T=1.0.** Damit ist der Gap **kein argmax-Kalibrierungsartefakt**, sondern die
+empirische Signatur von Singhs POMDP-Resultat (stochastisch echt überlegen). Nebenbefund: schon T=0.5 holt
+den Großteil des Gaps zurück (A +31, B +29 Punkte über argmax) bei geringerer Varianz — brauchbarer
+Betriebspunkt für „committeteres" Verhalten. **Konsequenz:** stochastische Eval bleibt die Primärmetrik,
+jetzt zusätzlich empirisch gestützt (nicht nur theoretisch). Ergebnisse: `scratchpad/temp_sweep_results.json`.
+
+---
+
+## v2026-07-08.3 — Gap-Schließungs-Experimente E1/E2/E3: keine Verbesserung ggü. v12
+
+**Motivation:** Die drei „Was würde helfen"-Hypothesen aus v2026-07-08.2 als kontrollierte
+Experimente getestet — Ziel: den Det/Stoch-Gap bzw. die Gesamt-SR über die v12-Baseline
+(A 73,3 % ± 6,8 stoch / 32 % det) heben.
+
+**Setup:** RecurrentPPO, batch=8, Swarm an, Env v11/229-Obs, Seed 1. E1/E2 starten ab Phase 3
+aus einem gemeinsamen Phase-2-Checkpoint (je n=1); E3 ist ein voller Lauf ab Phase 1 (LSTM 512).
+Standardisierter Eval (Seeds A 7000–7049 / B 8000–8049, Cap 4000, det+stoch, finales `best_model.zip`).
+
+| Exp | Hypothese | Änderung ggü. v12 | A stoch | A det | B stoch | B det |
+|-----|-----------|-------------------|---------|-------|---------|-------|
+| **v12 (Baseline, n=3)** | — | — | **73,3 % ± 6,8** | 32,0 % | 80,0 % | 42,0 % |
+| **E1** critic | stärkerer Phase-3-Critic | `vf_coef` 0,5 → **1,0** | 56 % | **42 %** | 72 % | 36 % |
+| **E2** curric | sanfterer Übergang | Phase 3 exit 25–45 → **25–35** | 26 % | 16 % | 42 % | 24 % |
+| **E3** lstm512 | mehr Gedächtnis | LSTM 256 → **512** | 44 % | 14 % | 58 % | 20 % |
+
+**Befund:**
+- **E1 (Critic, vf_coef=1.0): als Verbesserung widerlegt.** Deterministisch minimal besser
+  (A 42 % vs. 32 %), aber stochastisch deutlich schlechter (A 56 % vs. 73 %). Der höhere
+  Value-Loss-Anteil verschiebt das Verhalten Richtung Determinismus, kostet aber Gesamt-SR —
+  kein Netto-Gewinn, Zielkriterium A ≥ 70 % verfehlt.
+- **E2 (sanftes Curriculum, Phase 3 nur bis exit 35): klar schlechter** (A 26 % stoch). Wird
+  Phase 3 nur bis Distanz 35 trainiert, aber auf 35–45 evaluiert, ist der Agent auf den längsten
+  Wegen untertrainiert. Der „sanftere Übergang" schadet mehr als er nützt.
+- **E3 (LSTM-512): komplett durchgelaufen** (22h 54m, alle 4 Phasen) — **als Verbesserung widerlegt.**
+  Standardisiert **A 44 % stoch / 14 % det · B 58 % / 20 %**, klar unter v12 (A 73 % / B 80 %) und auf
+  det sogar am schwächsten aller Arme. Phasenweise durchgängig ≤ 256er-Baseline: P1 gleichauf,
+  P2 stoch-peak 66 % (v12: 80–88 %), P3 det-peak nur 30 % und über die Phase **fallend** (letzte ~250k
+  Steps kollabiert, det 0–8 %). ~3–4× langsamer. **Mehr Gedächtnis-Kapazität ≠ besserer -Nutzen.**
+  (Sleep-Schutz via `caffeinate -w` verhinderte weitere Stalls; nach Behebung ~48 fps.)
+
+**Konsequenz:** Von den drei naheliegenden Gap-Schließungs-Ansätzen (Critic-Gewicht, Curriculum-
+Glättung, LSTM-Größe) hat **keiner die v12-Baseline geschlagen**. Das stützt die Diskussions-These
+aus v2026-07-08.2: Der Det/Stoch-Gap ist nicht über einen der drei getesteten Einzelhebel (Critic-
+Gewicht, Curriculum-Glättung, LSTM-Größe) zu schließen. Er ist teils fundamental (POMDP, Singh 1994).
+**Wichtig — NICHT überinterpretieren:** Damit ist NICHT gezeigt, dass „nur Architektur hilft". Es
+bleiben ungetestete, teils billige Hebel: (a) **temperaturkalibrierte Evaluation** — der Gap ist
+teilweise eine Wahl der Eval-Policy (reines argmax vs. niedrig-entropische Policy; „Stochastic Policies,
+Deterministic Minds" 2025); `scripts/eval_temperature.py` existiert bereits, kein Neutraining nötig;
+(b) Hilfs-/Repräsentationsverluste; (c) gezielt mehr Langdistanz-Training. Für das *harte*
+Langhorizont-Belief-Tracking ist strukturierter Speicher (Transformer / Neural Map / In-Context-RL,
+vgl. AMAGO) die meistgenannte, aber aufwändigste Richtung. Literatur-Belege in `docs/references.bib`
+(Singh 1994, Ghosh 2021, Pleines 2022) + Related-Work der Projektdoku.
+**v12 bleibt das Ausgabemodell.** Eval-Skripte: `scratchpad/eval_e1e2.py`, `scratchpad/eval_e3.py`.
+
+---
+
+## v2026-07-08.2 — Det/Stoch-Gap analysiert: skaliert mit der Weglänge (Kernbefund für die Diskussion)
+
+**Frage:** Warum lernt der Agent die deterministische ("sture", argmax) Spielweise so schlecht,
+obwohl er stochastisch beide Ziele erreicht? Fehlt ihm etwas?
+
+**Messung** (`scripts/plot_det_gap_distanz.py`, finales Modell Seed 3, 120 Val-Seeds 6000–6119,
+Distanz 5–45, det + stoch je frischer Reset, Cap 4000): Erfolgsrate nach Startdistanz (BFS-Felder):
+
+| Weglänge | n | det-SR | stoch-SR | Gap |
+|----------|---|--------|----------|-----|
+| 5–15  | 14 | **79 %** | 100 % | 21 |
+| 15–25 | 22 | 50 % | 95 % | 45 |
+| 25–35 | 33 | 39 % | 85 % | 46 |
+| 35–45 | 51 | **31 %** | 82 % | 51 |
+
+**Befund:** Der Gap ist **keine generelle Unfähigkeit**, sondern skaliert mit der Weglänge. Auf kurzen
+Wegen ist der Agent zielstrebig (79 % det, kleiner Gap); erst mit der Distanz bricht det ein, während
+stoch hoch bleibt. Abbildung: `docs/figures/fig_det_gap_distanz.pdf` (+ .png/.json).
+
+**Interpretation (POMDP) — KORRIGIERT 08.07. nach Nachmessung mit feinen Distanz-Bins:** Der Gap ist
+**kein Schwelleneffekt bei einer bestimmten Schrittzahl**, sondern wächst **kontinuierlich mit der
+Weglänge** — det-SR fällt bereits ab ~14–17 Feldern spürbar (feine Bins: 5–8: 100 %, 14–17: 64 %,
+20–25: 44 %, 25–30: 30 %). Ursache ist **kumulativ**: Je länger der Weg ohne direkte Zielsicht (Sichtradius
+nur 7 Felder), desto mehr Kreuzungs-Entscheidungen unter unsicherem Belief; an jeder sind die
+Aktionswahrscheinlichkeiten fast-uniform, und jede einzelne kann argmax in eine Oszillations-Schleife
+schicken — die Fehlerwahrscheinlichkeit summiert sich über die Weglänge. Sampling entkommt, argmax nicht.
+In einem POMDP ist Determinismus zudem nicht immer optimal (Variieren unter Unsicherheit ist teils die
+richtige Antwort). Nebenbefund: Ziel bei Start sichtbar (Chebyshev ≤7) → det 67 % vs. nicht sichtbar 41 %
+(n=9 vs. 151 — Richtung plausibel, Stichprobe zu klein für starke Aussage). → Der Gap ist teils
+fundamental (POMDP), teils Gedächtnis-Limitation, kein Bug. **Die frühere „ab 200+ Schritten"-Formulierung
+war ungenau** (der Einbruch beginnt viel früher).
+
+**Was helfen würde (Ausblick/Diskussion):** (1) mehr/strukturiertes Gedächtnis — größerer LSTM oder
+räumlicher Speicher (Neural Map / Attention über die Historie), Stand der Technik für Memory-Maze-Aufgaben;
+(2) stabilerer Critic in Phase 3 (EV war ≈ 0 — praktisch angreifbarster Punkt); (3) sanfterer
+Curriculum-Übergang auf die langen Distanzen + mehr Training dort.
+
+#### Nebenbefund — Gegentest phase2_best vs. finales best_model (n=3, beide Testsets)
+Hypothese: Da best_model in Phase 3/4 auf **det** selektiert wurde, könnte das Phase-2-Zwischenmodell
+stochastisch stärker sein. **Widerlegt:**
+
+| Modell | A stoch | B stoch | A det | B det |
+|--------|---------|---------|-------|-------|
+| **best_model (final)** | **73,3 % ± 6,8** | **80,0 % ± 6,5** | 32,0 % | 42,0 % |
+| phase2_best | 71,3 % ± 8,1 | 74,0 % ± 15,0 | 34,0 % | 25,3 % |
+
+Final ist im Mittel gleichwertig bis besser und deutlich stabiler (B-Streuung ±6,5 statt ±15,0). Pro Seed
+gemischt (Seed 1 phase2 A=78 > 64; Seed 3 phase2 A=60 < 80), aber Auswahl pro Seed nach Testergebnis wäre
+Selektion auf den Testdaten. **Konsequenz:** best_model bleibt das Ausgabemodell; 73/80 stehen.
+
+---
+
+## v2026-07-08 — Finale v12-Curriculum-Läufe abgeschlossen (batch=8, Seeds 1–3): beide Zielkriterien im Mittel erfüllt
+
+**Setup:** 3 volle Curriculum-Läufe (RecurrentPPO, batch=8, Swarm an, Env v11/229-Obs),
+`models/ppo_lstm_curriculum_v12_s{1,2,3}`, Laufzeit je 7,7–8,5 h, alle 4 Phasen sauber durchlaufen
+(kein Absturz). Standardisierter Eval auf den finalen `best_model.zip`: Testset A (7000–7049) und
+Holdout B (8000–8049), je 50 Seeds, Cap 4000, deterministisch **und** stochastisch.
+
+#### Ergebnis (finale best_model.zip je Seed)
+
+| Lauf | A stoch | A det | B stoch | B det |
+|------|---------|-------|---------|-------|
+| Seed 1 | 64 % | 38 % | 72 % | 46 % |
+| Seed 2 | 76 % | 26 % | 80 % | 44 % |
+| Seed 3 | 80 % | 32 % | 88 % | 36 % |
+| **Mittelwert ± Std** | **73,3 % ± 6,8** | **32,0 % ± 4,9** | **80,0 % ± 6,5** | **42,0 % ± 4,3** |
+
+**Zielkriterien:** Testset A ≥ 70 %: **73,3 % ✓** (stochastisch). Holdout B ≥ 60 %: **80,0 % ✓**
+(stochastisch). Damit erstmals mit **3 Läufen + Mittelwert ± Std** (Projektvorgabe) erfüllt, nicht mehr
+nur als Einzelwert. Anmerkung: B > A ist Seed-Rauschen (beide gleiche Verteilung, n=3); Seed 1 liegt
+auf A einzeln bei 64 % — der Mittelwert trägt.
+
+#### Det/Stoch-Gap besteht weiter — Phase-3-Annealing hat ihn NICHT geschlossen
+Deterministisch bleibt es bei 32 % (A) / 42 % (B) — der bekannte POMDP-Gap. Phase-3-Verläufe (Gate=det)
+waren über alle Seeds stark volatil (det-MAX je Lauf nur 54/26/36 %, oszilliert bis auf 0 % herunter);
+`explained_variance` fiel nach jedem Phasenwechsel wieder auf ~0 und erholte sich nur teils
+(Seed 3 zuletzt 0,88; Seed 1/2 ~0,05). D.h.: batch=8 hat Phase 1/2 klar stabilisiert (Projekt-Bestwerte:
+88–92 % stoch, 60–74 % det in Stufe 1), aber der lange Phase-3-Horizont (Distanz 35–45) bleibt für den
+Critic zu schwer für stabiles det-Lernen. **Interpretation:** stochastische Ziele solide erreicht;
+det-Gap bleibt die dokumentierte LSTM/POMDP-Limitation (nicht als Fehler, siehe POMDP-Einordnung).
+
+#### Offene nächste Schritte
+1. Prüfen, ob `phase2_best_model.zip` stochastisch besser abschneidet als das finale (auf det selektierte)
+   `best_model.zip` — falls ja, ist das je Seed das bessere Ausgabemodell für die stochastische Aussage.
+2. Ergebnis- + Diskussionskapitel mit diesen n=3-Zahlen füllen.
+
+---
+
+## v2026-07-07.4 — Forensik: Stack/Swarm/Wrapper entlastet — v11-Lerndynamik ist instabil, Hauptverdacht batch_size=64
+
+#### Befunde (4 parallele Diagnose-Läufe + deterministische Vergleiche, alle Seed 1)
+| Arm | Setup | SR stoch (Verlauf) |
+|-----|-------|--------------------|
+| Kontrolle | Curriculum, Swarm an | 16→20→28→34→**14→8**→24→38→34 % (25k–475k, volatil, kein Trend) |
+| B8-Arm | Curriculum, `--no-swarm` | 18→14→12→20→26→**40**→26 % (25k–300k, deckungsgleich volatil) |
+| Bisect-Arm | Curriculum, ohne StreamWrapper/LiveMap | 18→14→12 % (25k–75k, ebenso) |
+| A1-Repro | **nackter** RecurrentPPO, kein Stack | **74**→44→66→**24**→50 % (25k–125k, ebenso volatil!) |
+
+1. **Swarm entlastet** (B8): No-Swarm-Arm verläuft deckungsgleich mit Kontrolle.
+2. **StreamWrapper entlastet**: Code ist rein lesend (`currentBfsDistanceToExit()` ist const);
+   Bisect-Arm ohne Wrapper stagniert identisch. (Nebenbei gefixt: Wrapper wurde bisher auch
+   bei `--no-live-map` angelegt — jetzt nur noch bei aktiver Live Map.)
+3. **Stack komplett entlastet**: Gewichts-Checksummen, Welt-Seeds und die ersten 8192
+   Trainings-Steps (Rewards/Aktionen/Values) sind zwischen Curriculum-Pfad und nacktem
+   Pfad **bit-identisch** (`compare_setups.py`, `compare_rollout.py`).
+4. **Kernbefund:** Die v11-Lerndynamik mit batch=64 ist chaotisch-instabil — SR oszilliert
+   10–74 % ohne Konvergenz, `explained_variance` bleibt ≈ 0,1 (Critic lernt nie).
+   Auch die A1-„Validierung" (52 % @150k, EV 0,72) war nur ein Schnappschuss dieses
+   Prozesses — **die batch=64-Freigabe vom 06.07. beruhte auf einem einzelnen Snapshot
+   und ist damit hinfällig.**
+5. **Kontrast v10-Reproduktion (15.06., batch=8):** EV bis **0,939** @65k — gesunder Critic.
+   Einziger HP-Unterschied zum v2-Erfolgsrezept war damals batch=8.
+
+#### Konsequenz — laufender Test
+Alle Diagnose-Arme gestoppt (Artefakte in `models/ppo_lstm_curriculum_v11_s1{,_noswarm,_nostream}`,
+Logs `logs/train_v11_seed1*.log`, `logs/train_a1_repro_seed1.log`).
+**H1-Test — BESTÄTIGT** (nackter v11-Lauf, Seed 1, batch_size=8, 150k Steps,
+`logs/train_bare_batch8_seed1.log`):
+
+| Step | 25k | 50k | 75k | 100k | 125k | 150k |
+|------|-----|-----|-----|------|------|------|
+| SR stoch | 54 % | 66 % | 64 % | 74 % | **88 %** | 84 % |
+| SR det | 20 % | 26 % | 40 % | 38 % | **52 %** | 38 % |
+
+EV springt ab ~50k auf **0,86** (batch=64: nie > ~0,15). Stetiger Anstieg statt Oszillation;
+beste Phase-1-Werte des Projekts, erstmals det-SR > 50 %. Direkter @150k-Vergleich:
+batch=8 → 84 % stoch vs. batch=64-Repro → 48 % (Curriculum-Arme ~20–26 %).
+**Umgesetzt:** `RPPO_KWARGS["batch_size"]` 64 → **8** (train_curriculum.py), CLAUDE.md
+aktualisiert (batch-Zeile, forceGuaranteedPath=false, 3 neue Fallstricke: batch=64,
+Eval-Cap < 4000, Snapshot-Validierung). Kosten: ~88–150 statt ~187 fps (~5,5 h/Gesamtlauf).
+**Nächster Schritt:** ≥3 volle Curriculum-Läufe (batch=8, Seeds 1–3) parallel für
+Mittelwert ± Std; besonderes Augenmerk auf Phase 3 (det-Annealing) mit gesundem Critic.
+
+---
+
+## v2026-07-07.3 — Seed 1 stagniert auch bei Cap 4000 → B8-A/B-Test (Swarm) gestartet
+
+#### Befund — Stagnation ist real, Hauptverdacht wandert von B7 (Penalties) zu B8 (Swarm)
+**Lauf:** Seed-1-Neustart mit Cap-Fix (v2026-07-07.2), Kontrollarm mit Swarm (Status quo).
+Eval-Verlauf P1 (stoch, Cap 4000): 16/16/10/20/16/20/24 % @ 25k–175k — **weit unter der
+A1-Validierung (52 % @150k, gleiches Cap)**. `explained_variance` ≈ 0,01–0,15 (A1: 0,72)
+— exakt die Seed-0-Signatur (Critic lernt nicht).
+**Schlussfolgerung zur Verdachtslage:** Die A1-Validierung lief bereits auf dem v11-Env
+(= ohne Wand-Penalty) und lernte normal → die Penalty-Entfernung (B7) kann die Stagnation
+nicht erklären. Größter verbliebener Unterschied zwischen A1 (lernt) und den
+Curriculum-Läufen (stagnieren): **Swarm-Erfolgs-Replay (30 % der Resets)** — deckt sich
+mit der PLR-Literatur (Replay gelöster Level ist lernineffizient, Jiang et al. 2021).
+
+#### Änderung — B8-A/B-Test gestartet (paired, ein Faktor)
+Kontrollarm läuft weiter: `--save-dir models/ppo_lstm_curriculum_v11_s1 --seed 1` (Swarm an).
+Testarm parallel gestartet (16:5x Uhr): `--save-dir models/ppo_lstm_curriculum_v11_s1_noswarm
+--seed 1 --no-swarm --live-map-port 8767` (Log `logs/train_v11_seed1_noswarm.log`).
+Gleicher Seed, gleiche Config, einziger Unterschied: Swarm. Beide Läufe parallel auf dem
+Mac (je ~1,5 Kerne, 10 vorhanden — keine gegenseitige Bremsung gemessen).
+**Entscheidungsregel:** Lernt der No-Swarm-Arm deutlich schneller (Richtung ~50 % @150k)
+→ Swarm-Erfolgs-Replay ist die Ursache → Swarm-Default abschalten bzw. auf PLR umstellen.
+Stagniert er ebenso → Swarm entlastet; nächste Verdächtige: Stream-Wrapper (Live Map,
+seit 07.07. in den Trainings-Envs) oder Unterschiede im A1-Setup.
+
+---
+
+## v2026-07-07.2 — Eval-Cap-Fix (600/1200 → 4000) + Seed-1-Neustart
+
+#### Änderung 1 — Eval-Caps in Phase 1/2 zurück auf 4000
+**Datei:** `scripts/train_curriculum.py` (PHASES)
+**Problem:** Die am 06.07. eingeführten Kurz-Caps (A3: P1=600, P2=1200) unterschätzen die
+echte Kompetenz massiv (siehe Korrektur in v2026-07-07): Das 85-%-Gate war unter Cap 600
+praktisch unerreichbar, Phasen liefen immer ans Step-Limit, und die Modellselektion
+bevorzugte schnelle statt kompetente Policies. Nachmessung der SR(Cap)-Kurve von
+Seed-0-`phase1_best` (VAL 6000–6049, ein Lauf @4000, Steps-bis-Erfolg pro Seed geloggt):
+
+| Cap | 600 | 1000 | 1500 | 2000 | 3000 | 4000 |
+|-----|-----|------|------|------|------|------|
+| SR stoch | 48 % | 62 % | 72 % | 82 % | 82 % | **86 %** |
+
+Steps-bis-Erfolg (stoch): med=477, p95=1880, max=3239 — die SR saturiert erst bei 4000.
+Zudem war die Cap-Begründung („Eval-Verschwendung") hinfällig: kompletter det+stoch-Eval
+über 50 Seeds mit Cap 4000 dauert gemessen nur **~21 s** (≈15 % Overhead bei eval_freq 25k).
+**Lösung:**
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| P1 `eval_max_steps` | 600 | **4000** | SR saturiert erst bei 4000; = Env-maxSteps = finaler Eval |
+| P2 `eval_max_steps` | 1200 | **4000** | dito; Vergleichbarkeit mit 86-%-Referenzlauf |
+
+#### Änderung 2 — Seed-1-Lauf neu gestartet (alte Artefakte archiviert)
+**Problem:** Der erste Seed-1-Lauf (bis ~278k, Prozess endete still ~11:28) lief mit den
+verfälschenden Caps — Gate, Modellselektion und eval_history sind nicht verwertbar.
+**Lösung:** Artefakte archiviert nach `models/ppo_lstm_curriculum_v11_s1_cap600/` bzw.
+`logs/train_v11_seed1_cap600.log`; Neustart mit identischer Konfiguration + Cap-Fix:
+`train_curriculum.py --save-dir models/ppo_lstm_curriculum_v11_s1 --seed 1`
+(Log `logs/train_v11_seed1.log`). Erwartung laut Cap-4000-Nachmessung: P1 sollte jetzt
+~85 % stoch erreichen können; die Entscheidungsregel „Seed 1 stagniert → systematisch →
+B7-A/B" gilt weiter, aber erst auf Basis unverzerrter Messwerte.
+
+---
+
+## v2026-07-07 — Live-Map-Redesign (uPlot, Viridis, det/stoch-SR) + v11-Trainingsstart
+
+#### Änderung 1 — Live Map komplett überarbeitet
+**Datei:** `scripts/ws_map.html` (komplett neu), Recherche-Basis: DataCamp-Dashboard-Prinzipien,
+PokéRL-Metrics, uPlot-Benchmarks, Viridis-Literatur.
+**Problem:** Handgezeichnete Canvas-Charts ohne Tooltips/Glättung, Jet-Farbskala der Heatmap
+(erzeugt künstliche Kontraste, nicht CVD-tauglich), keine visuelle Hierarchie, Det/Stoch-Gap
+(zentraler Untersuchungsgegenstand!) nicht sichtbar, 16-Linien-Spaghetti-Chart.
+**Lösung:**
+
+| Aspekt | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| Charts | Eigenbau-Canvas | **uPlot v1.6.32 (inline, 51 kB)** | Crosshair + Live-Legende, ~4× weniger CPU als Chart.js |
+| SR-Chart | nur Gate-Best-SR | **det- UND stoch-Kurve + Phasen-Marker** | Det/Stoch-Gap live sichtbar; Fallback auf Best-SR für alte Läufe |
+| Heatmap-Farbskala | Jet (Rainbow) | **Viridis, log-Skala, Floor 0.18** | perzeptuell uniform, CVD-tauglich; Floor weil dunkelstes Ende ≈ Hintergrund |
+| BFS/Episodenlänge | Rohwerte, zappelig | **EMA-geglättet, Rohkurve blass** | TensorBoard/W&B-Muster |
+| Pro-Agent-BFS-Chart | 16 Linien | **entfernt** | redundant zu Agent-Karten, >8 Farbklassen unlesbar |
+| KPI-Zeile | Textzeile | Kacheln: Phase, Timesteps, Steps/s, SR stoch/det, Pool | Inverted-Pyramid-Layout |
+| Agent-Karten | statisch | grüner Flash + ✓-Zähler bei Exit-Erfolg | Erfolge waren vorher unsichtbar |
+| Schrift | Courier New | system-ui, tabular-nums für Live-Zähler | ruhigeres Zahlenbild |
+
+Serienfarben (#3987e5/#199e70/#c98500) auf #0d1117 validiert (Kontrast ≥3:1, CVD-ΔE 41).
+Eval-Historie zusätzlich als aufklappbare Tabelle (Barrierefreiheit/Ablesbarkeit).
+
+#### Änderung 2 — det/stoch-Eval-Historie an Live Map senden
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** `MetaCallback` sendete nur `best_sr` (Gate) — die HTML konnte det/stoch nicht plotten.
+**Lösung:** `_run_eval()` pflegt modulglobale Liste `_LIVE_EVALS` (`{ts, det, stoch, phase}`) und
+sendet sie via `update_meta({"evals": ...})`. Überlebt Phasenwechsel; Browser, die später
+verbinden, sehen die volle Kurve. Greift ab dem nächsten Trainingsstart (laufender v11-Prozess
+nutzt noch den alten Code → HTML-Fallback auf Best-SR).
+
+#### Änderung 3 — Exit-Richtungspfeil für v11-Obs gefixt
+**Datei:** `python/stream_wrapper.py`
+**Problem:** `_stream()` kannte nur 231/456-dim Obs — bei v11 (229) blieb `exit_dx/dy = 0`,
+der Gold-Pfeil in den Agent-Karten fehlte.
+**Lösung:** Fall `n == 229` ergänzt (exitDx=Index 226, exitDy=227). Greift ab nächstem Lauf.
+
+#### Änderung 4 — Agent-Minimaps zeigen jetzt die echte Welt (Sichtfeld-Streaming)
+**Dateien:** `python/stream_wrapper.py`, `scripts/ws_map.html`
+**Problem:** Die Minimaps zeigten nur einen wandernden Punkt auf Schwarz — kein Weltkontext
+(Wände, Exit), feste Skalierung schnitt weite Wege ab. „Man erkennt nichts."
+**Lösung:** Wrapper streamt das Sichtfeld (`obs[:gs]` × 30 = Tile-IDs, Grid-Größe dynamisch
+aus `env._gs`); die Map akkumuliert daraus pro Episode eine Weltkarte: Boden blaugrau,
+Wände hellgrau, Bäume grün, Exit als goldene Raute (sobald gesehen), Agent mit weißem Ring.
+Auto-Zoom passt die Ansicht ans erkundete Gebiet an (1–6 px/Tile). Fallback für Läufe ohne
+Grid-Daten: besuchte Tiles + Trail wie bisher, aber mit Auto-Zoom und besserem Kontrast.
+E2E-verifiziert mit Test-Env auf Port 8767. Grid-Streaming greift ab dem nächsten Lauf.
+
+#### Änderung 5 — Swarm-Pool: Phasenwechsel-Bug gefixt + A/B-Test geplant (B8)
+**Dateien:** `python/stoneforge_env.py`, `scripts/train_curriculum.py`, `docs/BEWERTUNG_UND_PLAN.md`
+**Problem:** (1) Der Swarm-Pool überlebte Phasenwechsel — ein „gelöster" Seed aus Phase 1
+(Exit 5–12) ist in Phase 2 (Exit 12–25) aber eine andere Aufgabe; die Pool-Aussage galt
+über Phasengrenzen nicht. (2) Recherche (PLR, Jiang et al. ICML 2021): Replay bereits
+gemeisterter Levels ist lernineffizient und riskiert Layout-Memorierung — Literatur
+empfiehlt Replay von Levels mit hohem Lernpotenzial (≈ unser `--plr`-Modus).
+**Lösung:** `SwarmSeedPool.clear()` ergänzt; `train_curriculum.py` leert den Pool bei jedem
+Phasenstart. Semantik-Frage als A/B-Test B8 in `BEWERTUNG_UND_PLAN.md` dokumentiert
+(Erfolgs-Swarm vs. `--plr` vs. `--no-swarm`) — Entscheidung mit Daten, da der
+86%-Referenzlauf MIT Erfolgs-Swarm lief. Greift ab dem nächsten Lauf.
+
+#### Änderung 6 — Projektdokumentation: Etappe 5 + 2 neue Abbildungen; Stepzähler-Fix
+**Dateien:** `docs/Projektdokumentation.tex`, `docs/figures/fig_v11_lernkurve.pdf` (neu),
+`docs/figures/fig_livemap.png` (neu), `scripts/plot_run_curve.py` (neu), `scripts/ws_map.html`
+**Inhalt:** Neue Subsection „Etappe 5 (07.07.2026)" — erster v11-Gesamtlauf (Zwischenstand,
+Lernkurve det+stoch mit Phasen-Markern), Monitoring-Redesign, Swarm/PLR-Analyse (B8).
+Zeitleiste + Ausblick aktualisiert. PDF baut sauber (12 Seiten, keine offenen Referenzen).
+**Nebenbefund/Fix:** Beim Phasenwechsel lädt `train_curriculum.py` das Bestmodell der
+Vorphase — der SB3-Stepzähler springt dabei zurück (z. B. P3-Start bei „525k" statt 1M).
+Alle stepbasierten Zeitachsen wären damit nicht-monoton. Gefixt in `plot_run_curve.py`
+(kumulierte Achse) und `ws_map.html` (`displayTs()`-Rebase). `eval_history.json`
+enthält weiterhin die rohen SB3-Steps.
+
+#### Änderung 7 — Live Map: Chart-Historie überlebt jetzt Browser-Reloads
+**Datei:** `scripts/ws_map.html`
+**Problem:** Die gesamte Chart-Historie (SR, BFS, Episodenlängen, ✓-Zähler) lebte nur im
+Tab-JavaScript — jeder Refresh löschte alles (nur die Heatmap kam zurück, die hält der Server).
+**Lösung:** Zustand wird alle 5 s in `localStorage` gesichert und beim Laden wiederhergestellt
+(inkl. Stepzähler-Rebase-Zustand, damit die kumulierte x-Achse nahtlos weiterläuft).
+Neuer-Lauf-Erkennung: Springt der Stepzähler auf < 25 % des letzten Stands, wird die alte
+Historie automatisch verworfen; zusätzlich „↺ Reset"-Button im Header. Verifiziert per
+CDP-Reload-Test (identischer Datenpunkt und `_tsDisp` nach Reload). Wirkt sofort per Reload,
+auch für den laufenden Run.
+
+#### v11-Curriculum-Run Seed 0 — GESCHEITERT (abgebrochen @ 1,0M von 2,2M Steps)
+`python scripts/train_curriculum.py --save-dir models/ppo_lstm_curriculum_v11 --seed 0`
+Env v11 (229 Obs), batch=64/CPU, B1-Fix aktiv. Log: `logs/train_v11_seed0.log`,
+41 Eval-Checkpoints in `models/ppo_lstm_curriculum_v11/eval_history.json`.
+
+| Phase | Bestes SR (Gate) | Verlauf |
+|-------|------------------|---------|
+| 1 (exit 5–12, stoch) | 42 % @ 500k (Limit) | langsam; Validierung hatte 52 % @ 150k |
+| 2 (exit 12–25, stoch) | 48 % @ +25k | danach Seitwärtsband 16–36 % |
+| 3 (exit 25–45, det) | 2 % det | stoch konvergiert 30 % → 0–6 % nach unten |
+
+**Diagnose:** Critic hat nie gelernt (`explained_variance` ≈ 0,1 über den gesamten Lauf;
+Validierungslauf 06.07.: 0,72). Policy-Updates durchgehend gesund (approx_kl ≈ 0,03) — kein
+Kollaps, sondern schwache Value-Funktion (Initialisierungs-/Seed-Verdacht). Das Phase-3-
+Entropie-Annealing (0,05 → 0,001) legte die Schwäche offen: stoch-SR konvergierte auf die
+det-SR (~0 %) **nach unten** statt wie beim 86-%-Referenzlauf nach oben. Abbruch bei 975k
+(Phase 3), da Ausgang determiniert; Rechenzeit → Seed-1-Vergleichslauf.
+**Nächster Schritt:** Seed 1 (identische Konfiguration, `models/ppo_lstm_curriculum_v11_s1`,
+Auto-Start via Watcher). Lernt er normal → Seed-Pech; stagniert er ebenso → systematisch
+(Hauptverdacht: v11-Penalty-Entfernung → B7-A/B vorziehen).
+
+**KORREKTUR (gleicher Tag, nach Seed-1 @150k = 12 %):** Nachmessung der Seed-0-Bestmodelle
+mit vollem Episoden-Cap deckt ein **Messartefakt** auf — die am 06.07. eingeführten
+Eval-Caps (A3: P1=600, P2=1200 statt 4000) unterschätzen die echte Kompetenz massiv:
+
+| Modell | Cap (Gate) | SR stoch | Cap 4000 | SR stoch | det (4000) |
+|--------|-----------|----------|----------|----------|------------|
+| phase1_best (Seed 0) | 600 | 46 % | 4000 | **84 %** | 18 % |
+| phase2_best (Seed 0) | 1200 | 50 % | 4000 | **80 %** | 6 % |
+
+Seed 0 hat in P1/P2 also auf Referenzniveau gelernt (stochastisch) — nur **langsam**
+(Episoden > Cap). Konsequenzen: (1) Das 85-%-Gate unter Cap 600 ist praktisch unerreichbar
+→ Phasen enden immer am Limit; Modellselektion bevorzugt schnelle statt kompetente Policies;
+„Stagnation" in den Eval-Logs von Seed 0/1 ist großteils Artefakt. (2) Der P3-Kollaps
+(dort galt bereits Cap 4000) war real: det durchgehend 6–18 %, Annealing zog stoch auf det
+herunter — der bekannte Det/Stoch-Gap, nicht mangelnde Aufgabenkompetenz. (3) Die 52 % der
+A1-Validierung sind mit den 12 % der Curriculum-Evals nicht vergleichbar (anderes Cap).
+
+---
+
+## v2026-07-06 — Umgebungsversion v11: tote Features raus, Straf-Stacking entschärft, BFS-Exit-Platzierung, Config-Leck-Fix
+
+> ⚠️ **Breaking Change:** Neue Obs-Shape (231 → 229) und neue Exit-Platzierung.
+> Alte Modelle (z. B. `ppo_lstm_curriculum`) brauchen beim Eval jetzt
+> `StoneforgeWorldEnv(..., include_energy_inventory=True)` — und ihre alten Ergebnisse
+> sind mit neuen Läufen nicht mehr 1:1 vergleichbar (Exit-Distanzen waren real 42–75, jetzt echt 35–45).
+
+#### Änderung 1 — Tote Features entfernt: Energie + Inventar raus, HP bleibt
+**Datei:** `python/stoneforge_env.py`
+**Problem:** Energie (disable_energy=True → konstant 100) und Inventar (kein Mining → konstant 0)
+trugen null Information — 2 von 231 Obs-Dims waren tot.
+**Lösung:** Standardmäßig entfernt; Obs 231 → **229** (Grid 225 + HP + exitDx/Dy + step_frac).
+Rückwärtskompatibilität über neuen Parameter `include_energy_inventory=True` (alte 231-dim-Modelle).
+
+#### Änderung 2 — Straf-Stacking entschärft (Wand-Penalty raus, Loop-Penalty reduziert)
+**Datei:** `src/core/simulation.cpp` → `computeReward()`
+**Problem:** Eskalierender Wand-Penalty (−0.05/−0.25) + Loop-Penalty (−0.15) machten Erkunden in
+engen Korridoren teurer als Stillstand (Literatur: „Straf-Stacking"; eigene v6-Diagnose).
+**Hinweis zur Historie:** v2026-06-13 hatte das schon einmal entfernt; Commit `16dc8dd` hat es
+undokumentiert wieder eingebaut — dieser Eintrag holt die Doku nach und setzt den Stand erneut um.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `moveBlocked` (1×) | −0.05 | **0** | Step-Penalty + ausbleibender PBRS-Fortschritt reichen |
+| `moveBlocked` (≥2×) | −0.25 | **0** | Eskalation machte Erkunden unwirtschaftlich |
+| `positionLoop` | −0.15 | **−0.05** | Erkennung bleibt, Strafe moderat |
+
+#### Änderung 3 — Exit-Platzierung nach BFS-Laufweg statt Luftlinie
+**Datei:** `src/core/world.cpp` → `chooseExitPoint()`
+**Problem:** Kandidaten wurden nach euklidischer Distanz (dist² ∈ [min², max²]) gewählt. Realer
+Laufweg bei „35–45": **42–75 Tiles (Ø 55)** — Curriculum-Phasen und Eval-Angaben waren unscharf.
+Zusätzlich konnte die 5×5-Exit-Freiräumung den Laufweg nachträglich verkürzen (Ausreißer bis 13).
+**Lösung:** (a) Kandidaten nach **BFS-Tiefe** ∈ [exitMin, exitMax] sammeln; (b) Kandidat nur
+akzeptieren, wenn der Laufweg auch mit *virtueller* 5×5-Freiräumung ≥ exitMin bleibt (bis 24 Versuche).
+**Messung nach Fix (je 50 Seeds):** Val/Test A/Holdout B: min/Ø/max = 35/39.7–40.1/45, **150/150 in [35,45]**, 150/150 lösbar. Phase-1-Range (5–12): min/Ø/max = 5/8.9/12. ✓
+
+#### Änderung 4 — Prozess-globales Config-Leck gefixt
+**Dateien:** `python/stoneforge_env.py` (Fix), `src/python/py_module.cpp` (Ursache, unverändert)
+**Problem:** `configure_world_generation()` schreibt in `stoneforge::mutableGameConfig()` —
+**prozess-global**. Jede neu erstellte Env-Instanz überschreibt die Config aller anderen.
+Konsequenz fürs bisherige Training: Der Eval-Callback (erzeugt pro Eval ein Env mit eval_min/max)
+hat in **Phase 3 die Trainingsverteilung nach dem ersten Eval still von 25–45 auf 35–45 verschoben**.
+**Lösung:** Env stempelt seine eigene Config bei **jedem** `reset()` neu.
+**Verifikation:** Oracle auf Test-Seeds nach Erstellung eines zweiten Envs (5–12): weiterhin Ø 40.2 Schritte (vorher fälschlich 8.3). ✓
+
+**Gesamtverifikation (Skript `verify_v11.py`):** Obs 229/231 (legacy) inkl. Layout-Konsistenz ✓,
+150/150 lösbar ✓, Distanzen exakt in Range ✓, Wand-Penalty weg (3× Block → je ≈ −0.01, keine Eskalation) ✓,
+BFS-Oracle 10/10 mit Ø 40.2 Schritten ✓.
+
+#### Änderung 5 — Mining, Bauen & Kampf aus dem RL-Pfad entfernt
+**Dateien:** `src/python/py_module.cpp`, `src/core/simulation.cpp`
+**Problem:** Das RL-Binding akzeptierte weiterhin alle 9 Spielaktionen (Mine/Place/Use/Wait/Noop),
+obwohl nur Bewegung trainiert wird; im Reward standen tote Terme (+2/Mob-Kill, +5 Exit-Unlock).
+**Lösung:**
+- `StoneforgeCoreEnv.step()` erlaubt nur noch Aktionen 0–3 (Bewegung), Rest → RuntimeError;
+  `action_space_n()` liefert 4.
+- Reward-Terme für Mob-Kills und Exit-Unlock gestrichen. Reward besteht nur noch aus:
+  Step-Penalty −0.01, Explorations-Bonus +0.02, Loop-Penalty −0.05, Schadens-Penalty, PBRS, ±Terminal.
+- Das **spielbare Client-Spiel** (`stoneforge_client`) behält Mining/Crafting unverändert —
+  entfernt wurde nur der RL-Pfad.
+**Verifikation:** `action_space_n()==4` ✓, Aktionen 4–8 werfen RuntimeError ✓,
+Oracle-Regression 10/10, Ø 40.2 Schritte, Ø Return +101.20 ✓.
+
+#### Änderung 6 — Entropie-Annealing-Startwert gefixt
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** `EntropyAnnealingCallback` in Phase 3 startete bei `start_ent=0.01`, trainiert wird
+aber mit `ent_coef=0.05` (RPPO_KWARGS) → abrupter Entropie-Sprung 0.05 → 0.01 beim Phasenwechsel.
+**Lösung:** `start_ent=RPPO_KWARGS["ent_coef"]` (0.05) — Annealing jetzt stetig 0.05 → 0.001 über 500k Steps.
+
+#### Änderung 7 — Eval-Callback: phasengerechtes Gating + Det/Stoch-Doppelmessung
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** (a) Phase 1/2 gateten auf **deterministischer** SR — mit ent_coef=0.05 konstruktionsbedingt
+~0% (Argmax fast-uniformer Policy) → Phasen endeten nie vorzeitig, best_model-Auswahl lief auf Rauschen.
+(b) `MAX_EVAL_STEPS=4000` für alle Phasen — bei Exit 5–12 reine Eval-Verschwendung.
+(c) Nur eine Metrik gemessen — keine Det/Stoch-Gap-Kurve über das Annealing.
+**Lösung:**
+- Neue Phasen-Parameter `gate_metric` ("stoch" für P1/P2, "det" für P3/P4) und
+  `eval_max_steps` (600 / 1200 / 4000 / 4000).
+- Jedes Eval misst jetzt **beide** SRs (det + stoch); TensorBoard: `eval/sr_det`, `eval/sr_stoch`;
+  Gating + best_model-Auswahl auf der Phasen-Metrik; eval_history-Label enthält beide Werte.
+**Verifikation:** py_compile + Smoke-Test (PHASES-Parameter, Callback-Instanziierung) ✓.
+
+#### Änderung 8 — Device-Benchmark (CPU vs. MPS) + Batch-Ablation → batch_size=64
+**Datei:** `scripts/train_curriculum.py` (`RPPO_KWARGS`)
+**Fragestellung:** Kann MPS (Apple GPU) das Training beschleunigen? Ist batch=8 wirklich nötig?
+**Befund 1 — Bisheriges Training lief auf CPU:** SB3 `device="auto"` wählt nur CUDA, nie MPS.
+Das `"device": "mps"` in alten config.json war Fehlprotokollierung.
+**Befund 2 — MPS ist bei diesem Netz IMMER langsamer** (LSTM 256 zu klein, Kernel-Dispatch-Overhead
+dominiert; deckt sich mit SB3-Doku: GPU lohnt erst bei CNN/großen Netzen):
+
+| Konfiguration | FPS | Speedup vs. v10 |
+|---|---|---|
+| batch=8, CPU (v10-Status-quo) | 88 | 1.0× |
+| batch=8, MPS | 26 | **0.29×** |
+| batch=64, CPU | 163–187 | **1.9–2.1×** |
+| batch=64, MPS | 105 | 1.19× |
+| batch=128, CPU | 182 | 2.07× |
+| batch=256, CPU | 184 | Plateau (Env-Sim wird Bottleneck) |
+
+**Befund 3 — Batch-Validierung (A1):** 150k Phase-1-Steps (v11-Env, exit=5–12), batch=64, CPU:
+approx_kl 0.012→0.056 (gesund, v10-Bereich), EV bis 0.72, Entropie −1.38→−0.97 (wie v10),
+**SR @150k: 52% stoch / 22% det** (Val-Seeds 6000–6049). → batch=8 war NICHT der kritische
+v2-Erfolgsfaktor (das war ent_coef=0.05); batch=64 lernt gleichwertig bei doppelter Geschwindigkeit.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `batch_size` | 8 | **64** | validiert gleichwertig, 2.1× schneller; 64 statt 128, weil 64 lern-validiert ist |
+| Device | auto (=CPU) | CPU (explizit dokumentiert) | MPS 0.29–1.19× — nie schneller |
+
+**ETA v11-Gesamtlauf:** ~2.5–3h statt ~5.5h.
+
+#### Änderung 9 — Konsistenz-Bereinigung (Projekt-Analyse 06.07.2026)
+**Dateien:** `scripts/train.py`, `assets/base/game_config.json`, `src/core/game_config.cpp`,
+`src/include/stoneforge/game_config.hpp`, `python/README.md`, `.claude/CLAUDE.md`,
+`docs/stoneforge_game_description.md`
+
+1. **`train.py` synchronisiert:** RPPO `batch_size` 8 → 64 und `enable_critic_lstm=True`
+   (war mit `train_curriculum.py` auseinandergelaufen — `--algo rppo` trainierte halb so schnell).
+2. **Tote Konfiguration entfernt:** Die cold/warm/moss-Threshold-Keys in `game_config.json`
+   (+ Parser + Struct-Felder) wurden **nie gelesen** — die Biom-Schwellwerte sind fest in
+   `World::sampleBaseTile()` hinterlegt. Entfernt, um wirkungsloses Tuning über die JSON zu
+   verhindern; Hinweis-Kommentare in Header/Parser ergänzt.
+   **Regression verifiziert:** Weltgenerierung byte-identisch (Seeds 7000–7002: BFS 43/38/35 wie vorher).
+3. **Doku-Sync:** `python/README.md` (Wrapper `ExitPotentialFieldWrapper`/`ReducedActionEnv`
+   existieren nicht mehr; 229-dim Obs; Legacy-Flag; Config-Global-Hinweis), CLAUDE.md
+   (Environment-Abschnitt, Fallstricke aktualisiert: PBRS=BFS erledigt, Biom-Schwellwerte
+   hartkodiert, MPS langsamer, Legacy-Obs), `stoneforge_game_description.md`
+   (Exit-Räumung ist 3×3 nicht 5×5, BFS-Platzierung seit v11, Obs 229).
+
+#### Änderung 10 — Usability-Audit: Legacy-Modell-Regression, setup_env.sh, GUI-Training
+**Dateien:** `python/stoneforge_env.py`, `scripts/watch_agent.py`, `scripts/eval_comparison.py`,
+`scripts/launcher_gui.py`, `scripts/setup_env.sh`
+
+1. **Obs-Auto-Erkennung (`env_kwargs_for_model()`):** Nach der v11-Obs-Änderung (229-dim)
+   crashten ALLE Bestandsmodelle (231/236/…-dim) in `watch_agent.py`, `eval_comparison.py`
+   und im GUI-Quick-Eval mit Shape-Mismatch. Neuer Helper in `stoneforge_env.py` leitet die
+   Env-Kwargs automatisch aus der Obs-Dimension des geladenen Modells ab (Mapping für
+   229/230/231/236/249/456/461); alle drei Verbraucher umgestellt. `watch_agent.py` nutzte
+   zudem hartkodierte Obs-Indizes (obs[228/229] für exitDx/Dy) → layoutabhängig gemacht.
+   **Verifiziert:** Legacy-Modell (231) und v11-Modell (229) laufen beide automatisch.
+2. **`setup_env.sh` war defekt:** suchte venv/build/python unter `scripts/` statt Repo-Wurzel
+   (und meldete trotzdem „✓ activated"). Auf ROOT_DIR umgestellt + klare Fehlermeldung ohne venv.
+   **Verifiziert:** `source scripts/setup_env.sh && python -c "import stoneforge_sim"` ✓.
+3. **GUI-Quick-Eval konnte kein RecurrentPPO laden** (Loader-Liste nur PPO/A2C/DQN — das beste
+   Modell war in der GUI nicht evaluierbar) und lief für LSTM-Modelle zustandslos.
+   RecurrentPPO + LSTM-State-Loop + Obs-Auto-Erkennung ergänzt.
+4. **GUI-Training konnte die beste Methode nicht starten:** Der Trainings-Tab bot nur
+   PPO/DQN/A2C via `train.py`; die Checkboxen „Curriculum Learning" und „Monster aktivieren
+   (Training)" waren **nicht verdrahtet** (tote UI). Neu: Radio-Option „LSTM-Curriculum
+   (empfohlen)" (Default) startet `train_curriculum.py` mit Zeitstempel-`--save-dir`;
+   tote Checkboxen entfernt, Hinweistext ergänzt.
+
+**Nächster Schritt:** v11-Curriculum-Run mit dieser Umgebung (siehe `docs/BEWERTUNG_UND_PLAN.md`).
+
+---
+
+## v2026-06-15 — Det/Stoch-Gap-Fixes (v7: visit_count + action_buffer + Phase 4)
+
+### v2026-06-15.A — Drei strukturelle Fixes gegen Det/Stoch-Gap
+**Dateien:** `python/stoneforge_env.py`, `scripts/train_curriculum.py`
+**Problem:** LSTM-Agent (86% stoch / 36% det) hat Stochastizität als Problemlöser internalisiert. Greedy-Policy steckt in Loops, weil der Agent deterministisch nicht sehen kann, dass er im Kreis läuft.
+
+#### Fix 1 — Besuchszähler in Observation (`use_visit_count=True`)
+**Datei:** `python/stoneforge_env.py`
+Neues Feature: wie oft wurde die aktuelle Tile in dieser Episode betreten? (0..10, normalisiert /10). Der LSTM sieht nun deterministisch "ich bin hier schon oft gewesen → andere Richtung". Obs: 231 → 249 dims (mit Fix 3).
+
+#### Fix 2 — Phase 4 Greedy Fine-Tune (`ent_coef=0.0001`)
+**Datei:** `scripts/train_curriculum.py`
+Neue Phase 4 nach Phase 3: 200k Steps auf exit=25–45, ent_coef=0.0001. Zwingt die Policy, deterministisch konsistent zu sein. Modellselektion in Phase 4 auf deterministischer SR (Phase-4-Best überschreibt Phase-3-Best als best_model.zip).
+
+#### Fix 3 — Aktions-Buffer 4 Schritte (`action_buffer_len=4`)
+**Datei:** `python/stoneforge_env.py`
+Statt nur letzter Aktion (4 dims): letzte 4 Aktionen als One-Hot-Matrix (16 dims). LSTM erkennt deterministisch ↑↓↑↓-Muster in der Observation.
+
+| Parameter | vorher | nachher |
+|-----------|--------|---------|
+| Obs-Dims | 236 (v5) | **249** |
+| visit_count in Obs | nein | **ja** |
+| Aktions-Buffer | 1 Schritt | **4 Schritte** |
+| Phasen | 3 | **4 (+ Greedy Fine-Tune)** |
+| ent_coef Phase 4 | — | **0.0001** |
+
+**Training gestartet:** 15.06.2026, `models/ppo_lstm_curriculum_v7_fixes`.
+**Ergebnis:** Gescheitert — siehe v2026-06-15.B.
+
+---
+
+### v2026-06-15.B — Hyperparameter-Suche n_epochs & lstm_hidden_size
+
+**Problem:** 249-dim Observation (größer als bisherige 236) destabilisiert Value-Funktion.
+`explained_variance ≈ 0` und steigender `value_loss` über alle v7-Varianten.
+Ursache: LSTM mit 512 Hidden Units hat zu viele Gewichte relativ zur neuen Obs-Größe;
+zu wenige Gradient-Steps lassen Critic nicht konvergieren.
+
+#### Versuch v7 — lstm=512, n_epochs=4
+`models/ppo_lstm_curriculum_v7_fixes`
+- explained_variance = 0.000 konstant bis Step 280k
+- value_loss = 138 (steigend)
+- SR Phase 1: max 4% bei 280k Steps → **abgebrochen**
+
+#### Versuch v7b — lstm=512, n_epochs=10
+`models/ppo_lstm_curriculum_v7b_fixes`
+- explained_variance = 0.22 bei Step 16k → kollabiert auf 0.000 bei Step 37k
+- value_loss: 3.75 → 182 (Explosion)
+- Diagnose: zu viele Epochen für LSTM — alte Hidden-States passen nicht mehr zu neuen Gewichten → **abgebrochen**
+
+#### Versuch v7c — lstm=512, n_epochs=6
+`models/ppo_lstm_curriculum_v7c_fixes`
+- explained_variance = 0.000, value_loss = 121 (steigend)
+- SR Phase 1: max 2% bei 75k Steps → **abgebrochen**
+
+#### Versuch v7d — lstm=256, n_epochs=4
+`models/ppo_lstm_curriculum_v7d_fixes`
+- Halbierung des LSTM (512→256): weniger Gewichte, schnellere Konvergenz
+- FPS: 424, value_loss stabil ~59 bis 350k, dann 415 (Divergenz)
+- Peak SR: 12% @ 250k Steps → abgebrochen bei 413k
+
+| Variante | lstm | n_epochs | Peak SR P1 | Abbruch |
+|----------|------|----------|------------|---------|
+| v7 | 512 | 4 | 4% | ja (Value kollabiert) |
+| v7b | 512 | 10 | 2% | ja (Value explodiert) |
+| v7c | 512 | 6 | 2% | ja (Value kollabiert) |
+| v7d | 256 | 4 | 12% | ja (Divergenz @ 405k) |
+
+---
+
+### v2026-06-15.C — Diagnose: Root-Cause-Analyse + Neustart mit v2-Hyperparametern
+
+#### Hintergrund: MLP-Baseline (ppo_phase4) deterministisch evaluiert
+
+Zum Vergleich wurde ppo_phase4 (MLP, 236-dim Obs) auf Seeds 7000–7049 (exit=35–45) gemessen:
+
+| Eval-Modus | Erfolge | SR | Mittl. Schritte |
+|------------|---------|-----|-----------------|
+| Deterministisch | 0 / 50 | **0.0%** | 275 (immer Early-Stop) |
+| Stochastisch | 16 / 50 | **32.0%** | 1401 |
+
+Befund: LSTM-Curriculum (86% stoch / 36% det) ist klar überlegen. MLP-Deterministik=0% bestätigt: POMDP-Navigation ohne Gedächtnis ist nicht deterministisch lösbar.
+
+Random-Agent auf Phase-1-Seeds (6000–6049, exit=5–12): **42% SR** (stochastisch, 2652 Schritte).
+Das zeigt: die Umgebung ist lösbar; das 0%-Problem lag im Training, nicht in der Umgebung.
+
+---
+
+#### Root-Cause-Analyse durch Reverse-Engineering von v2
+
+**Problem:** Alle v7–v9 Runs zeigten `approx_kl ≈ 4.9e-07` (Policy ändert sich nicht), `explained_variance ≈ 0`, SR ≤ 12%. Gleichzeitig existierte v2 mit 86% SR.
+
+**Methode:** `RecurrentPPO.load("models/ppo_lstm_curriculum_v2/phase1_best_model.zip")` + `inspect`.
+
+Das v2-Modell hatte diese Konfiguration (gemessen, nicht geschätzt):
+
+| Parameter | v2 (86% SR) | v7d–v9 (0–12% SR) | Grund für Unterschied |
+|-----------|-------------|--------------------|-----------------------|
+| `n_steps` | **256** | 512 / 128 | Zu lang → BPTT Vanishing Gradient |
+| `batch_size` | **8** | 256 | Zu groß → nur 1 Batch/Epoche statt 2 |
+| `n_epochs` | **10** | 4 / 1 / 2 | Zu wenige Gradient-Updates |
+| `ent_coef` | **0.05** | 0.01 | 5× weniger Exploration |
+| `obs_dim` | **231** | 249 / 232 | Extra-Features störten |
+| `enable_critic_lstm` | True | fehlt / True | critic hat eigenen LSTM |
+
+**Root Causes (priorisiert):**
+1. **`ent_coef=0.01` statt 0.05** — Agent exploriert nicht → findet Exit nie → approx_kl=0
+2. **`batch_size=256` statt 8** — bei 16 Envs × 256 n_steps = 4096 Transitions: nur 1 Batch/Epoche statt 2 → halb so viele Gradient-Steps bei ohnehin falschem ent_coef
+3. **`n_steps=512` (v7d)** — BPTT über 512 LSTM-Steps → Vanishing Gradient → approx_kl≈0
+4. **Obs-Erweiterungen (249-dim)** — waren nutzlos ohne funktionierende Basis-Konfiguration
+
+**Externe Bestätigung (Online-Recherche 15.06.2026):**
+- SB3-Doku: „approx_kl ≈ 0 = PPO does not learn" → direkt in unseren Logs sichtbar
+- RecurrentPPO-Defaults: n_steps=128, batch_size=128, n_epochs=10 (wir hatten n_steps=512, batch_size=256)
+- `truncated_bptt_steps` existiert NICHT in sb3_contrib — BPTT-Länge wird allein durch `n_steps` gesteuert
+
+---
+
+#### Versuch v8 — n_steps=128, n_epochs=1, kein clip_range_vf
+`models/ppo_lstm_curriculum_v8_stable` (abgebrochen @ 150k)
+
+| Metrik | Wert | Bewertung |
+|--------|------|-----------|
+| FPS | 1807 | sehr schnell, aber nutzlos |
+| approx_kl | 6.6e-05 | 100× besser als v7d, aber immer noch fast 0 |
+| SR@25k, @50k, @75k, @100k, @125k, @150k | 0% | kein Fortschritt |
+| Ursache | ent_coef=0.01 | zu wenig Exploration für Exits |
+
+clip_range_vf=0.2 wurde als mögliche Ursache identifiziert (verhindert schnelle Value-Konvergenz bei Random-Init), dann aber als Nebenursache eingestuft.
+
+---
+
+#### Versuch v9 — n_steps=128, n_epochs=2, lr=3e-4, 232-dim
+`models/ppo_lstm_curriculum_v9_stable` (abgebrochen @ 100k)
+
+| Metrik | Wert | Bewertung |
+|--------|------|-----------|
+| FPS | 660 | schnell |
+| approx_kl | bis 3.8e-03 | echter Lernfortschritt |
+| explained_variance | bis 0.024 | minimal positiv |
+| SR@25k bis @100k | 0% | ent_coef=0.01 blockiert Exploration |
+| Debugging | Random-Agent 42% SR | Umgebung ist lösbar! |
+
+Fazit: n_steps=128 hat das BPTT-Problem gelöst (approx_kl steigt), aber ent_coef=0.01 verhindert weiterhin, dass der Agent den Exit findet.
+
+---
+
+#### Versuch v10 — v2-Hyperparameter reproduziert ← läuft
+`models/ppo_lstm_curriculum_v10_reproduction`
+
+Konfiguration:
+```python
+n_steps=256, batch_size=8, n_epochs=10, ent_coef=0.05,
+obs=231-dim, enable_critic_lstm=True, lstm_hidden_size=256
+```
+
+Trainingsmetriken Phase 1 (15.06.2026, @ ~61k Steps):
+
+| Step | approx_kl | clip_frac | explained_var | value_loss | SR (det) |
+|------|-----------|-----------|---------------|------------|----------|
+| 8k | 0.014 | 0.118 | 0.0008 | 54 | — |
+| 12k | 0.021 | 0.188 | 0.006 | 46 | — |
+| 16k | 0.019 | 0.243 | -0.0001 | 31 | — |
+| 20k | **0.027** | **0.312** | **0.231** | **1.47** | — |
+| 25k (Eval) | 0.028 | 0.301 | 0.021 | 58 | **0%** |
+| 45k | 0.037 | — | 0.067 | 102 | — |
+| 50k (Eval) | 0.039 | — | 0.101 | 67 | **0%** |
+| 61k | 0.042 | 0.356 | 0.193 | 66 | — |
+| 65k | 0.048 | — | **0.939** | — | — |
+| 74k (Eval) | 0.045 | 0.356 | 0.296 | 285 | **0%** |
+| 77k | 0.048 | — | 0.568 | — | — |
+| 80k | 0.048 | — | 0.685 | — | — |
+
+_EV=0.939 @ 65k: Value-Funktion versteht diverse Returns (Exits gefunden via Stochastik)._
+_Det SR=0% erwartungsgemäß — Policy ist mit ent=0.05 noch zu stochastisch für Argmax-Navigation._
+
+Vergleich zur Kontrollgruppe:
+
+| Variante | n_steps | batch | n_epochs | ent_coef | Peak EV | approx_kl | SR@50k |
+|----------|---------|-------|----------|----------|---------|-----------|--------|
+| v7d | 512 | 256 | 4 | 0.01 | ~0 | 4.9e-07 | 0% |
+| v8 | 128 | 256 | 1 | 0.01 | 0.003 | 6.6e-05 | 0% |
+| v9 | 128 | 128 | 2 | 0.01 | 0.024 | 3.8e-03 | 0% |
+| **v10** | **256** | **8** | **10** | **0.05** | **0.231** | **0.042** | **0%** |
+
+**Bewertung v10:**
+Trainingsmetriken (approx_kl, EV, clip_frac) sind um Größenordnungen besser als alle Vorgänger.
+EV=0.939 @ ~65k Steps zeigt: Value-Funktion hat gelernt, diverse Returns (Exits gefunden + nicht gefunden) vorherzusagen.
+entropy_loss: -1.39 → -1.04 nats (von fast-uniform zu konzentrierter Verteilung).
+
+**Warum 0% det SR bei 25k/50k/75k mit ent_coef=0.05 erwartet ist:**
+Mit ent_coef=0.05 bleibt die Policy absichtlich stochastisch (H=1.0–1.4 nats ≈ fast-uniform über 4 Aktionen).
+Der Argmax einer fast-uniformen Verteilung ist fast zufällig → deterministische SR=0% ist normal.
+Die stochastische Policy FINDET Exits (EV=0.939 beweist diverse Returns), aber Argmax nutzt das nicht.
+Deterministischer Fortschritt kommt erst mit Entropie-Reduktion:
+- Phase 3: ent_coef 0.05 → 0.01 → 0.001 (Annealing über 500k Steps)
+- Phase 4: ent_coef 0.0001 (Greedy Fine-Tune, 200k Steps)
+
+**Gesamter Trainingsplan v10:**
+- Phase 1 (exit=5–12, 500k Steps, ent=0.05): Grundlegendes Navigationsprinzip lernen
+- Phase 2 (exit=12–25, 500k Steps, ent=0.05): Generalisierung auf mittlere Distanzen
+- Phase 3 (exit=25–45, 1M Steps, Annealing 0.05→0.001): Zielverteilung + Determinisierung
+- Phase 4 (exit=25–45, 200k Steps, ent=0.0001): Greedy Fine-Tune für Det/Stoch-Gap
+
+**ETA:** ~5.5h Gesamt auf CPU @ 110 FPS (500k+500k+1M+200k Steps).
+**Status:** läuft, 15.06.2026, Phase 1 bei ~75k/500k Steps.
+
+---
+
+## v2026-06-13 — Reward-Shaping-Dilemma behoben (No Wall Penalty)
+
+### v2026-06-13.A — Wand-Penalty entfernt, Loop-Penalty reduziert
+**Datei:** `src/core/simulation.cpp` → `computeReward()`
+**Problem:** Der eskalierende Wand-Penalty (−0.05 / −0.25) in Kombination mit dem Loop-Penalty (−0.15) machte den Agenten übervorsichtig. In engen Korridoren überwiegen die Strafen (bis −0.50 für 3 Erkundungsschritte) den PBRS-Bonus (+0.02/Tile). Der Agent lernt: Stehen ist billiger als Erkunden. Erklärt teilweise den Det/Stoch-Gap (86% → 36%).
+**Lösung:** Wand-Penalty komplett entfernt (Step-Penalty −0.01 + kein PBRS-Bonus reicht als Signal). Loop-Penalty von −0.15 auf −0.05 reduziert.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `moveBlocked` (1×) | −0.05 | **0** | Step-Penalty reicht; Wand-Tasten nicht katastrophal |
+| `moveBlocked` (≥2×) | −0.25 | **0** | Eskalation machte Erkunden unwirtschaftlich |
+| `positionLoop` | −0.15 | **−0.05** | Erkennung bleibt, Strafe moderater |
+
+**Training gestartet:** 13.06.2026, `models/ppo_lstm_curriculum_v6_nwp`, 8 Envs parallel.
+**Ergebnis:** ausstehend.
+
+---
+
 ## v2026-06-11 — Verbesserungen Stoneforge RL (LSTM-Curriculum)
 
 ### v2026-06-11.A — Behebung methodischer Fehler & Lernverbesserungen

@@ -345,11 +345,14 @@ Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
         return static_cast<std::int64_t>((hi << 32) | lo);
     };
 
-    std::deque<Vec2i> queue;
+    // Kandidaten nach BFS-Pfadlänge statt Luftlinie wählen: exitMin/MaxDistance
+    // bedeutet damit echten Laufweg vom Spawn. Vorher (dist² in [min², max²])
+    // streute der reale Pfad bei "35–45" auf 42–75 Tiles.
+    std::deque<std::pair<Vec2i, int>> queue;
     std::unordered_map<std::int64_t, bool> visited;
     std::vector<Vec2i> candidates;
 
-    queue.push_back(spawn_);
+    queue.push_back({spawn_, 0});
     visited[toKey(spawn_.x, spawn_.y)] = true;
 
     constexpr std::array<Vec2i, 4> kDirs = {
@@ -360,16 +363,14 @@ Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
     };
 
     while(!queue.empty()) {
-        const Vec2i current = queue.front();
+        const auto [current, depth] = queue.front();
         queue.pop_front();
 
-        const int dx = current.x - spawn_.x;
-        const int dy = current.y - spawn_.y;
-        const int dist2 = dx * dx + dy * dy;
-        const int min2 = minDist * minDist;
-        const int max2 = maxDist * maxDist;
-        if(dist2 >= min2 && dist2 <= max2) {
+        if(depth >= minDist && depth <= maxDist) {
             candidates.push_back(current);
+        }
+        if(depth >= maxDist) {
+            continue;   // tiefer expandieren lohnt nicht — BFS-Tiefe wächst monoton
         }
 
         for(const Vec2i dir : kDirs) {
@@ -384,26 +385,69 @@ Vec2i World::chooseExitPoint(const WorldGenConfig& cfg) const {
                 continue;
             }
 
-            const int ndx = nx - spawn_.x;
-            const int ndy = ny - spawn_.y;
-            const int nd2 = ndx * ndx + ndy * ndy;
-            if(nd2 > max2) {
-                continue;
-            }
-
             if(!isPassable(nx, ny)) {
                 continue;
             }
 
             visited[key] = true;
-            queue.push_back(Vec2i{nx, ny});
+            queue.push_back({Vec2i{nx, ny}, depth + 1});
         }
     }
 
     if(!candidates.empty()) {
         const std::uint64_t mixed = mix(seed_ ^ cfg.biomeSalt ^ cfg.oreSalt ^ cfg.treeSalt);
-        const std::size_t idx = static_cast<std::size_t>(mixed % static_cast<std::uint64_t>(candidates.size()));
-        return candidates[idx];
+        const std::size_t n = candidates.size();
+        const std::size_t start = static_cast<std::size_t>(mixed % static_cast<std::uint64_t>(n));
+
+        // Die 5×5-Exit-Freiräumung (World::reset) kann Wände öffnen und den Laufweg
+        // nachträglich unter exitMinDistance verkürzen. Daher: BFS mit VIRTUELLER
+        // Freiräumung um den Kandidaten — Kandidat nur akzeptieren, wenn der Laufweg
+        // auch nach der Räumung noch >= minDist bleibt.
+        auto clearedDistance = [&](const Vec2i target) -> int {
+            std::unordered_map<std::int64_t, bool> seen;
+            std::deque<std::pair<Vec2i, int>> q;
+            q.push_back({spawn_, 0});
+            seen[toKey(spawn_.x, spawn_.y)] = true;
+            while(!q.empty()) {
+                const auto [cur, d] = q.front();
+                q.pop_front();
+                if(cur.x == target.x && cur.y == target.y) {
+                    return d;
+                }
+                if(d >= maxDist) {
+                    continue;
+                }
+                for(const Vec2i dir : kDirs) {
+                    const int nx = cur.x + dir.x;
+                    const int ny = cur.y + dir.y;
+                    if(nx < minX || nx > maxX || ny < minY || ny > maxY) {
+                        continue;
+                    }
+                    const std::int64_t key = toKey(nx, ny);
+                    if(seen.find(key) != seen.end()) {
+                        continue;
+                    }
+                    const bool virtuallyCleared =
+                        std::abs(nx - target.x) <= cfg.exitClearRadius &&
+                        std::abs(ny - target.y) <= cfg.exitClearRadius;
+                    if(!virtuallyCleared && !isPassable(nx, ny)) {
+                        continue;
+                    }
+                    seen[key] = true;
+                    q.push_back({Vec2i{nx, ny}, d + 1});
+                }
+            }
+            return -1;
+        };
+
+        const std::size_t maxTries = std::min<std::size_t>(n, 24);
+        for(std::size_t k = 0; k < maxTries; ++k) {
+            const Vec2i cand = candidates[(start + k) % n];
+            if(clearedDistance(cand) >= minDist) {
+                return cand;
+            }
+        }
+        return candidates[start];   // Fallback: kein Kandidat besteht den Check
     }
 
     return cfg.exit;

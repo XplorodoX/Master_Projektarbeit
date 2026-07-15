@@ -74,16 +74,28 @@ class StreamWrapper(gym.Wrapper):
             exit_dx = exit_dy = 0
             if obs is not None:
                 n = len(obs)
-                if n == 231:        # Standard-Obs (gs=225, extras ab 225)
+                if n == 229:        # v11-Obs: [grid 225 | hp | exitDx | exitDy | step_frac]
+                    exit_dx = round(float(obs[226]) * 64)
+                    exit_dy = round(float(obs[227]) * 64)
+                elif n == 231:      # Legacy-Obs (gs=225, extras ab 225)
                     exit_dx = round(float(obs[228]) * 64)
                     exit_dy = round(float(obs[229]) * 64)
                 elif n == 456:      # CNN-Obs (extras ab 450)
                     exit_dx = round(float(obs[453]) * 64)
                     exit_dy = round(float(obs[454]) * 64)
 
+            # Sichtfeld als Tile-IDs (obs[:gs] ist das Grid, normiert /30) —
+            # die Live Map baut daraus pro Episode eine Weltkarte (Wände, Exit).
+            # Grid-Größe dynamisch aus dem Env lesen (Radius ist konfigurierbar).
+            grid = None
+            gs = getattr(self.env, "_gs", 0)
+            if obs is not None and gs and len(obs) > gs:
+                grid = np.rint(np.asarray(obs[:gs]) * 30.0).astype(int).tolist()
+
             _ws.update_heatmap(int(pos[0]) - self._start_x,
                                int(pos[1]) - self._start_y)
             _ws.update_agent(self.agent_id, {
+                "grid":    grid,
                 "id":      self.agent_id,
                 "x":       int(pos[0]),
                 "y":       int(pos[1]),

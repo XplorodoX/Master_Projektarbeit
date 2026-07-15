@@ -1,0 +1,15 @@
+{
+  "algo": "rppo",
+  "timesteps": 2200000,
+  "n_envs": 16,
+  "exit_range": "5-45 (curriculum)",
+  "device": "mps",
+  "date": "25.06.2026",
+  "hyperparams": {
+    "n_steps": 256,
+    "batch_size": 8,
+    "lstm_hidden_size": 256,
+    "ent_coef": 0.05
+  },
+  "_saved_at": "2026-06-25 13:26:05"
+}

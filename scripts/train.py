@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 
 import numpy as np
 import torch
@@ -21,6 +22,7 @@ from stable_baselines3.common.utils import set_random_seed
 from sb3_contrib import RecurrentPPO
 
 from stoneforge_env import StoneforgeWorldEnv
+from doc_logger import append_eval_history, save_run_config, save_run_results, generate_results_md
 
 # ──────────────────────────────────────────────────────────────────────────────
 EVAL_SEEDS_A = list(range(7000, 7050))
@@ -53,6 +55,7 @@ class SeedEvalCallback(BaseCallback):
         self.eval_exit_min = eval_exit_min
         self.eval_exit_max = eval_exit_max
         self._best_rate = -1.0
+        self._eval_label = f"eval_{eval_exit_min}-{eval_exit_max}"
         os.makedirs(best_model_path, exist_ok=True)
 
     def _on_step(self) -> bool:
@@ -107,6 +110,12 @@ class SeedEvalCallback(BaseCallback):
         self.logger.record("eval/successes", successes)
         self.logger.dump(self.num_timesteps)
 
+        # Eval-Eintrag dauerhaft in eval_history.json speichern
+        append_eval_history(
+            self.best_model_path, self.num_timesteps, rate,
+            successes, len(seeds), label=self._eval_label,
+        )
+
         if rate > self._best_rate:
             self._best_rate = rate
             save_path = os.path.join(self.best_model_path, "best_model")
@@ -123,7 +132,8 @@ class SeedEvalCallback(BaseCallback):
 RPPO_KWARGS = dict(
     policy="MlpLstmPolicy",
     n_steps=256,           # Sequenzlänge pro Env pro Update (kurz = LSTM lernt schneller)
-    batch_size=8,          # Anzahl Sequenzen pro Minibatch (≤ n_envs)
+    batch_size=64,         # v11: validiert 06.07.2026 — lernt wie batch=8, aber 2.1x schneller.
+                           # Synchron mit train_curriculum.py halten! CPU nutzen (MPS langsamer).
     n_epochs=10,
     learning_rate=3e-4,
     gamma=0.999,
@@ -135,6 +145,7 @@ RPPO_KWARGS = dict(
         n_lstm_layers=1,
         lstm_hidden_size=256,
         shared_lstm=False,
+        enable_critic_lstm=True,   # synchron mit train_curriculum.py
     ),
     verbose=1,
     tensorboard_log="logs/tensorboard/",
@@ -187,6 +198,14 @@ A2C_KWARGS = dict(
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
 
+def auto_device() -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Stoneforge RL Training")
     p.add_argument("--algo", choices=["rppo", "ppo", "dqn", "a2c"], default="rppo")
@@ -198,6 +217,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--exit-max", type=int, default=12)
     p.add_argument("--load-model", type=str, default=None)
     p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--device", type=str, default="auto",
+                   help="Trainingsgerät: auto | cpu | cuda | mps")
     return p.parse_args()
 
 
@@ -209,9 +230,27 @@ def main() -> None:
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    device = auto_device() if args.device == "auto" else args.device
     print(f"Starte Training: algo={algo.upper()}, timesteps={args.timesteps:,}, "
           f"n_envs={args.n_envs}, exit={args.exit_min}-{args.exit_max}, "
-          f"seed={args.seed}, save_dir={save_dir}")
+          f"seed={args.seed}, save_dir={save_dir}, device={device}")
+
+    # Konfiguration dauerhaft speichern
+    from datetime import datetime
+    _kwargs_map = {"rppo": RPPO_KWARGS, "ppo": PPO_KWARGS, "dqn": DQN_KWARGS, "a2c": A2C_KWARGS}
+    save_run_config(save_dir, {
+        "algo":        algo,
+        "timesteps":   args.timesteps,
+        "n_envs":      args.n_envs,
+        "exit_range":  f"{args.exit_min}-{args.exit_max}",
+        "seed":        args.seed,
+        "device":      device,
+        "load_model":  args.load_model,
+        "date":        datetime.now().strftime("%d.%m.%Y"),
+        "hyperparams": {k: v for k, v in _kwargs_map.get(algo, {}).items()
+                        if k not in ("verbose", "tensorboard_log")},
+    })
+    _train_start = time.time()
 
     def make_env():
         return StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
@@ -230,36 +269,36 @@ def main() -> None:
     if algo == "rppo":
         tb_name = f"rppo_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
-            model = RecurrentPPO.load(args.load_model, env=env,
+            model = RecurrentPPO.load(args.load_model, env=env, device=device,
                                       **{k: v for k, v in RPPO_KWARGS.items()
                                          if k not in ("verbose", "policy", "policy_kwargs")})
             print(f"  Lade Modell: {args.load_model}")
         else:
-            model = RecurrentPPO(env=env, **RPPO_KWARGS)
+            model = RecurrentPPO(env=env, device=device, **RPPO_KWARGS)
 
     elif algo == "ppo":
         tb_name = f"ppo_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
-            model = PPO.load(args.load_model, env=env,
+            model = PPO.load(args.load_model, env=env, device=device,
                              **{k: v for k, v in PPO_KWARGS.items() if k != "verbose"})
             print(f"  Lade Modell: {args.load_model}")
         else:
-            model = PPO(env=env, **PPO_KWARGS)
+            model = PPO(env=env, device=device, **PPO_KWARGS)
 
     elif algo == "a2c":
         tb_name = f"a2c_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
-            model = A2C.load(args.load_model, env=env,
+            model = A2C.load(args.load_model, env=env, device=device,
                              **{k: v for k, v in A2C_KWARGS.items() if k != "verbose"})
         else:
-            model = A2C(env=env, **A2C_KWARGS)
+            model = A2C(env=env, device=device, **A2C_KWARGS)
 
     else:  # dqn
         tb_name = f"dqn_exit{args.exit_min}-{args.exit_max}"
         if args.load_model:
-            model = DQN.load(args.load_model, env=env)
+            model = DQN.load(args.load_model, env=env, device=device)
         else:
-            model = DQN(env=env, **DQN_KWARGS)
+            model = DQN(env=env, device=device, **DQN_KWARGS)
 
     model.learn(
         total_timesteps=args.timesteps,
@@ -270,9 +309,26 @@ def main() -> None:
 
     final_path = os.path.join(save_dir, "final_model")
     model.save(final_path)
+    _duration_s = int(time.time() - _train_start)
+    _h, _r = divmod(_duration_s, 3600)
+    _m, _s = divmod(_r, 60)
+    _duration_str = f"{_h}h {_m}m {_s}s"
+
     print(f"\nTraining abgeschlossen. Finales Modell: {final_path}.zip")
     print(f"Bestes Modell: {save_dir}/best_model.zip "
           f"(Success Rate: {eval_cb._best_rate:.1%})")
+    print(f"Dauer: {_duration_str}")
+
+    # Ergebnisse dauerhaft speichern
+    save_run_results(save_dir, {
+        "algo":              algo,
+        "best_sr_testset_a": round(eval_cb._best_rate, 4),
+        "training_duration": _duration_str,
+        "training_steps":    args.timesteps,
+        "device":            device,
+        "exit_range":        f"{args.exit_min}-{args.exit_max}",
+    })
+    generate_results_md()
 
 
 if __name__ == "__main__":

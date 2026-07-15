@@ -1,0 +1,185 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\catcode `"\active 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{cobbe2020procgen}
+\citation{risi2020increasing}
+\citation{sutton2018rl}
+\citation{kaelbling1998pomdp}
+\citation{hausknecht2015drqn}
+\babel@aux{ngerman}{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Zielsetzung}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Grundlagen}{1}{section.2}\protected@file@percent }
+\newlabel{sec:grundlagen}{{2}{1}{Grundlagen}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Reinforcement Learning und der Markov-Entscheidungsprozess}{1}{subsection.2.1}\protected@file@percent }
+\citation{mnih2015dqn}
+\citation{schulman2016gae}
+\citation{mnih2016a3c}
+\citation{schulman2017ppo}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Partielle Beobachtbarkeit (POMDP)}{2}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:pomdp}{{2.2}{2}{Partielle Beobachtbarkeit (POMDP)}{subsection.2.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Schematische Darstellung der partiellen Beobachtbarkeit am Beispiel Stoneforge: Links der vollständige Weltzustand (hier ein $31{\times }31$-Ausschnitt), rechts die Beobachtung des Agenten --- nur das $15{\times }15$-Sichtfeld ist bekannt (rot umrandet), der Rest ist unbekannt; der Pfeil zeigt die Kompassrichtung zum Exit, nicht den Weg.}}{2}{figure.1}\protected@file@percent }
+\newlabel{fig:pomdp_schema}{{1}{2}{Schematische Darstellung der partiellen Beobachtbarkeit am Beispiel Stoneforge: Links der vollständige Weltzustand (hier ein $31{\times }31$-Ausschnitt), rechts die Beobachtung des Agenten --- nur das $15{\times }15$-Sichtfeld ist bekannt (rot umrandet), der Rest ist unbekannt; der Pfeil zeigt die Kompassrichtung zum Exit, nicht den Weg}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Wertbasierte Verfahren: Q-Learning und DQN}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Policy-Gradient- und Actor-Critic-Verfahren}{2}{subsection.2.4}\protected@file@percent }
+\citation{raffin2021stable}
+\citation{hochreiter1997lstm}
+\citation{hausknecht2015drqn}
+\citation{ng1999policy}
+\citation{bengio2009curriculum}
+\citation{cobbe2020procgen}
+\citation{risi2020increasing}
+\citation{chevalier2023minigrid}
+\citation{hafner2021crafter}
+\citation{cobbe2020procgen}
+\citation{jiang2021plr}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Proximal Policy Optimization (PPO)}{3}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Rekurrente Politiken (LSTM)}{3}{subsection.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Reward Shaping (PBRS)}{3}{subsection.2.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Curriculum Learning}{3}{subsection.2.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.9}Prozedurale Generierung und Generalisierung}{3}{subsection.2.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Einordnung in verwandte Arbeiten}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Die Umgebung Stoneforge}{4}{section.4}\protected@file@percent }
+\newlabel{sec:umgebung}{{4}{4}{Die Umgebung Stoneforge}{section.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:player_client}{{2}{4}{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}POMDP-Charakter}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Beobachtung, Aktionen, Episodenende}{4}{subsection.4.2}\protected@file@percent }
+\citation{ng1999policy}
+\citation{schulman2017ppo}
+\citation{hochreiter1997lstm}
+\citation{raffin2021stable}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Vergleich der Spielumgebung (echte Screenshots): Links die tatsächliche Umgebung (voller Sichtbereich), rechts die Sichtweise der KI --- die lokale $15\times 15$-Observation, bei der außerhalb liegende Bereiche ungesehen/abgedunkelt sind, mit dem gelben Exit-Kompass. Das Sichtfeld ist zur Verdeutlichung rot markiert.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:game_vs_ai}{{3}{5}{Vergleich der Spielumgebung (echte Screenshots): Links die tatsächliche Umgebung (voller Sichtbereich), rechts die Sichtweise der KI --- die lokale $15\times 15$-Observation, bei der außerhalb liegende Bereiche ungesehen/abgedunkelt sind, mit dem gelben Exit-Kompass. Das Sichtfeld ist zur Verdeutlichung rot markiert}{figure.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Observation der Umgebungsversion v11. Die früheren Features \emph  {Energie} und \emph  {Inventar} waren im RL-Setup konstant (tote Features) und wurden am 06.07.2026 entfernt (vorher 231 Dimensionen).}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:obs}{{1}{5}{Observation der Umgebungsversion v11. Die früheren Features \emph {Energie} und \emph {Inventar} waren im RL-Setup konstant (tote Features) und wurden am 06.07.2026 entfernt (vorher 231 Dimensionen)}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Reward-Design}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Garantierte Lösbarkeit}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Reward-Komponenten (Env v11). Der frühere eskalierende Wand-Penalty ($-0.05$/$-0.25$) wurde entfernt: Die Summe vieler kleiner Strafen (\glqq Straf-Stacking\grqq ) machte Erkunden in engen Korridoren unwirtschaftlicher als Stillstand.}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:reward}{{2}{6}{Reward-Komponenten (Env v11). Der frühere eskalierende Wand-Penalty ($-0.05$/$-0.25$) wurde entfernt: Die Summe vieler kleiner Strafen (\glqq Straf-Stacking\grqq ) machte Erkunden in engen Korridoren unwirtschaftlicher als Stillstand}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Methodik}{6}{section.5}\protected@file@percent }
+\newlabel{sec:methodik}{{5}{6}{Methodik}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Algorithmus}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Curriculum}{6}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Curriculum (Stand v11). Phase 1/2 gaten auf der stochastischen SR, da die Politik dort mit \texttt  {ent\_coef}=0.05 absichtlich nahe-uniform ist und die deterministische SR konstruktionsbedingt kein Signal trägt.}}{6}{table.3}\protected@file@percent }
+\newlabel{tab:curriculum}{{3}{6}{Curriculum (Stand v11). Phase 1/2 gaten auf der stochastischen SR, da die Politik dort mit \texttt {ent\_coef}=0.05 absichtlich nahe-uniform ist und die deterministische SR konstruktionsbedingt kein Signal trägt}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Evaluationsprotokoll}{6}{subsection.5.3}\protected@file@percent }
+\citation{ghosh2021epistemic}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Versuchsübersicht: Setup je Iteration}{7}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:versuchsuebersicht}{{5.4}{7}{Versuchsübersicht: Setup je Iteration}{subsection.5.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Gemeinsame Basiskonfiguration aller Iterationen (Quelle: \texttt  {config.json} der v12-Läufe).}}{7}{table.4}\protected@file@percent }
+\newlabel{tab:basiskonfig}{{4}{7}{Gemeinsame Basiskonfiguration aller Iterationen (Quelle: \texttt {config.json} der v12-Läufe)}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Systematische Iterationen zur Schließung des Det/Stoch-Gaps. Jede verändert genau einen Faktor. E1/E2 setzen aus einem gemeinsamen Phase-2-Checkpoint auf (Phase-3-Budget 400k statt 1.0\,Mio.\ Schritte); E3 ist ein voller Lauf. Ergebnis: kein Arm schlägt die v12-Baseline (Test A stochastisch 73\,\%). Werte standardisiert (50 Seeds, Cap 4000). Details: Abschnitt~\ref {sec:evaluation} und \texttt  {CHANGELOG.md}.}}{7}{table.5}\protected@file@percent }
+\newlabel{tab:iterationen}{{5}{7}{Systematische Iterationen zur Schließung des Det/Stoch-Gaps. Jede verändert genau einen Faktor. E1/E2 setzen aus einem gemeinsamen Phase-2-Checkpoint auf (Phase-3-Budget 400k statt 1.0\,Mio.\ Schritte); E3 ist ein voller Lauf. Ergebnis: kein Arm schlägt die v12-Baseline (Test A stochastisch 73\,\%). Werte standardisiert (50 Seeds, Cap 4000). Details: Abschnitt~\ref {sec:evaluation} und \texttt {CHANGELOG.md}}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Technische Umsetzung und Implementierung}{8}{section.6}\protected@file@percent }
+\newlabel{sec:technik}{{6}{8}{Technische Umsetzung und Implementierung}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Technologie-Stack}{8}{subsection.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Technologie-Stack.}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:stack}{{6}{8}{Technologie-Stack}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Umgebung und Binding}{8}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Trainings-Pipeline}{8}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Monitoring und Werkzeuge}{9}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Evaluation}{9}{section.7}\protected@file@percent }
+\newlabel{sec:evaluation}{{7}{9}{Evaluation}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Zentrale Ablation: Gedächtnis schlägt Orakel}{9}{subsection.7.1}\protected@file@percent }
+\newlabel{sec:ablation}{{7.1}{9}{Zentrale Ablation: Gedächtnis schlägt Orakel}{subsection.7.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Ablation auf Testset A (Exit 35--45). Der LSTM-Agent ohne BFS-\glqq Orakel\grqq {} schlägt den MLP-Agenten mit BFS-Features deutlich --- Gedächtnis ist für die POMDP-Navigation wichtiger als zusätzliche Wegweiser-Features. Modell C ist der ursprüngliche Referenzlauf (Umgebung vor der v11-Revision, Einzellauf); der finalisierte Stand über drei unabhängige Läufe liegt bei $73{,}3\,\%$ (Testset A) bzw.\ $80{,}0\,\%$ (Holdout B), siehe Tabelle~\ref {tab:v12}.}}{9}{table.7}\protected@file@percent }
+\newlabel{tab:ablation}{{7}{9}{Ablation auf Testset A (Exit 35--45). Der LSTM-Agent ohne BFS-\glqq Orakel\grqq {} schlägt den MLP-Agenten mit BFS-Features deutlich --- Gedächtnis ist für die POMDP-Navigation wichtiger als zusätzliche Wegweiser-Features. Modell C ist der ursprüngliche Referenzlauf (Umgebung vor der v11-Revision, Einzellauf); der finalisierte Stand über drei unabhängige Läufe liegt bei $73{,}3\,\%$ (Testset A) bzw.\ $80{,}0\,\%$ (Holdout B), siehe Tabelle~\ref {tab:v12}}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Endergebnis (v12)}{9}{subsection.7.2}\protected@file@percent }
+\citation{singh1994pomdp}
+\citation{ghosh2021epistemic}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Lernkurve des besten Modells (\texttt  {ppo\_lstm\_curriculum}, Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds).}}{10}{figure.4}\protected@file@percent }
+\newlabel{fig:lernkurve}{{4}{10}{Lernkurve des besten Modells (\texttt {ppo\_lstm\_curriculum}, Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds)}{figure.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Endergebnis der v12-Läufe (finales Modell je Lauf; Testset A und Holdout B, je 50 Seeds, Limit 4\,000). Das 95\,\%-Konfidenzintervall stammt aus einem stratifizierten Bootstrap (10\,000 Resamples über die drei Läufe).}}{10}{table.8}\protected@file@percent }
+\newlabel{tab:v12}{{8}{10}{Endergebnis der v12-Läufe (finales Modell je Lauf; Testset A und Holdout B, je 50 Seeds, Limit 4\,000). Das 95\,\%-Konfidenzintervall stammt aus einem stratifizierten Bootstrap (10\,000 Resamples über die drei Läufe)}{table.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{10}{subsection.7.3}\protected@file@percent }
+\citation{pleines2022recurrent}
+\citation{singh1994pomdp}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Erfolgsrate nach Startdistanz zum Exit (120 Validierungs-Welten, finales v12-Modell, Limit 4\,000): Die deterministische SR fällt kontinuierlich mit der Weglänge, die stochastische bleibt hoch.}}{11}{figure.5}\protected@file@percent }
+\newlabel{fig:detgap}{{5}{11}{Erfolgsrate nach Startdistanz zum Exit (120 Validierungs-Welten, finales v12-Modell, Limit 4\,000): Die deterministische SR fällt kontinuierlich mit der Weglänge, die stochastische bleibt hoch}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Versuche zur Schließung des Det/Stoch-Gaps}{11}{subsection.7.4}\protected@file@percent }
+\newlabel{sec:gapexperimente}{{7.4}{11}{Versuche zur Schließung des Det/Stoch-Gaps}{subsection.7.4}{}}
+\citation{singh1994pomdp}
+\citation{ghosh2021epistemic}
+\citation{grigsby2024amago}
+\citation{jiang2021plr}
+\citation{oh2018sil}
+\citation{pineau2021repro}
+\citation{henderson2018matters}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Temperatur-Sweep der Evaluation (Mittel $\pm $ Std über die drei v12-Läufe, je 50 Seeds, Limit 4\,000). Der Verlauf ist monoton --- volles Sampling ist optimal.}}{12}{table.9}\protected@file@percent }
+\newlabel{tab:temperatur}{{9}{12}{Temperatur-Sweep der Evaluation (Mittel $\pm $ Std über die drei v12-Läufe, je 50 Seeds, Limit 4\,000). Der Verlauf ist monoton --- volles Sampling ist optimal}{table.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Fazit und Ausblick}{12}{section.8}\protected@file@percent }
+\newlabel{sec:ausblick}{{8}{12}{Fazit und Ausblick}{section.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Anhang: Reproduzierbarkeit}{12}{section.9}\protected@file@percent }
+\newlabel{sec:reproduzierbarkeit}{{9}{12}{Anhang: Reproduzierbarkeit}{section.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Systemumgebung. Nach jeder Änderung an \texttt  {game\_config.json} oder am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}}{13}{table.10}\protected@file@percent }
+\newlabel{tab:sysumgebung}{{10}{13}{Systemumgebung. Nach jeder Änderung an \texttt {game\_config.json} oder am C++-Kern ist ein Rebuild des Python-Bindings erforderlich}{table.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Anhang: Entwicklungsverlauf --- von der Baseline zum LSTM-Agenten}{13}{section.10}\protected@file@percent }
+\newlabel{sec:entwicklung}{{10}{13}{Anhang: Entwicklungsverlauf --- von der Baseline zum LSTM-Agenten}{section.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Etappe 1 (Mai 2026): Baselines mit BFS-Orakel}{13}{subsection.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Etappe 2 (Juni 2026): Kernbeitrag --- Navigation ohne Orakel}{14}{subsection.10.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}Etappe 3 (13.--25.06.): Hyperparameter-Krise und Root-Cause-Analyse}{14}{subsection.10.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Etappe 4 (06.07.2026): Umgebungsrevision v11 und Performance}{14}{subsection.10.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Entwicklung über die Modellgenerationen (Testset A, Exit 35--45). Links die MLP-Baselines mit BFS-Orakel in der Observation, rechts der LSTM-Agent ohne Orakel --- der Kernbeitrag: nahezu gleiche stochastische Leistung ohne globale Pfadinformation. Der Det/Stoch-Gap zieht sich als zentrales Thema durch alle Generationen.}}{15}{figure.6}\protected@file@percent }
+\newlabel{fig:entwicklung}{{6}{15}{Entwicklung über die Modellgenerationen (Testset A, Exit 35--45). Links die MLP-Baselines mit BFS-Orakel in der Observation, rechts der LSTM-Agent ohne Orakel --- der Kernbeitrag: nahezu gleiche stochastische Leistung ohne globale Pfadinformation. Der Det/Stoch-Gap zieht sich als zentrales Thema durch alle Generationen}{figure.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Root-Cause-Analyse: \texttt  {ent\_coef} erwies sich als dominanter Faktor. Die Reproduktion der v2-Konfiguration (v10) stellte das Lernen wieder her.}}{15}{table.11}\protected@file@percent }
+\newlabel{tab:rootcause}{{11}{15}{Root-Cause-Analyse: \texttt {ent\_coef} erwies sich als dominanter Faktor. Die Reproduktion der v2-Konfiguration (v10) stellte das Lernen wieder her}{table.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5}Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{15}{subsection.10.5}\protected@file@percent }
+\newlabel{sec:etappe5}{{10.5}{15}{Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{subsection.10.5}{}}
+\citation{jiang2021plr}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand --- der Lauf ist zum Redaktionszeitpunkt in Phase 3). Seit v11 misst jeder Eval-Checkpoint beide Betriebsarten; der Det/Stoch-Gap ist damit erstmals über den gesamten Verlauf sichtbar. Vertikale Linien: Phasenwechsel (dort wird jeweils das Bestmodell der Vorphase geladen; die x-Achse ist über die Phasen kumuliert). Erzeugt mit \texttt  {scripts/plot\_run\_curve.py}.}}{16}{figure.7}\protected@file@percent }
+\newlabel{fig:v11kurve}{{7}{16}{Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand --- der Lauf ist zum Redaktionszeitpunkt in Phase 3). Seit v11 misst jeder Eval-Checkpoint beide Betriebsarten; der Det/Stoch-Gap ist damit erstmals über den gesamten Verlauf sichtbar. Vertikale Linien: Phasenwechsel (dort wird jeweils das Bestmodell der Vorphase geladen; die x-Achse ist über die Phasen kumuliert). Erzeugt mit \texttt {scripts/plot\_run\_curve.py}}{figure.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile, Weltkarten-Minimaps (grau = Wand, blaugrau = erkundeter Boden, grün = Startpunkt) und uPlot-Charts. Im Training zusätzlich: goldene Raute = gesichteter Exit, grüner Blitz bei Exit-Erfolg, Viridis-Heatmap.}}{16}{figure.8}\protected@file@percent }
+\newlabel{fig:livemap}{{8}{16}{Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile, Weltkarten-Minimaps (grau = Wand, blaugrau = erkundeter Boden, grün = Startpunkt) und uPlot-Charts. Im Training zusätzlich: goldene Raute = gesichteter Exit, grüner Blitz bei Exit-Erfolg, Viridis-Heatmap}{figure.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6}Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche --- vom Eval-Artefakt zur Batch-Größen-Korrektur}{17}{subsection.10.6}\protected@file@percent }
+\newlabel{sec:etappe6}{{10.6}{17}{Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche --- vom Eval-Artefakt zur Batch-Größen-Korrektur}{subsection.10.6}{}}
+\newlabel{sec:cap}{{10.6}{17}{Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche --- vom Eval-Artefakt zur Batch-Größen-Korrektur}{subsection.10.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Eval-Cap-Artefakt: Success Rate \emph  {desselben Modells} (bester Phase-1-Checkpoint, Seed 0) als Funktion des Episoden-Caps der Evaluation (50 Val-Seeds; aus einem einzigen Cap-4000-Lauf mit protokollierten Schritten-bis-Erfolg abgeleitet). Die stochastische SR saturiert erst bei Cap 4000; die deterministische ist Cap-unabhängig (Argmax-Läufe scheitern nicht an Zeit, sondern an Schleifen). Erzeugt mit \texttt  {scripts/plot\_etappe6\_figures.py}.}}{17}{figure.9}\protected@file@percent }
+\newlabel{fig:capartefakt}{{9}{17}{Eval-Cap-Artefakt: Success Rate \emph {desselben Modells} (bester Phase-1-Checkpoint, Seed 0) als Funktion des Episoden-Caps der Evaluation (50 Val-Seeds; aus einem einzigen Cap-4000-Lauf mit protokollierten Schritten-bis-Erfolg abgeleitet). Die stochastische SR saturiert erst bei Cap 4000; die deterministische ist Cap-unabhängig (Argmax-Läufe scheitern nicht an Zeit, sondern an Schleifen). Erzeugt mit \texttt {scripts/plot\_etappe6\_figures.py}}{figure.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7}Umgebungsrevision v11 (06.07.2026)}{18}{subsection.10.7}\protected@file@percent }
+\newlabel{sec:v11}{{10.7}{18}{Umgebungsrevision v11 (06.07.2026)}{subsection.10.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, Evals auf 50 Val-Seeds mit Cap 4000). Oben: stochastische SR --- batch=8 steigt stetig auf 84--88\,\%, während batch=64 sowohl nackt (A1-Reproduktion) als auch im Curriculum-Stack chaotisch oszilliert bzw.\ stagniert. Unten: \texttt  {explained\_variance} des Critics (EMA-geglättet, Rohkurven blass) --- nur mit batch=8 entstehen ab $\approx $\,100k anhaltende Hochphasen. Erzeugt mit \texttt  {scripts/plot\_etappe6\_figures.py}.}}{19}{figure.10}\protected@file@percent }
+\newlabel{fig:batchvgl}{{10}{19}{Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, Evals auf 50 Val-Seeds mit Cap 4000). Oben: stochastische SR --- batch=8 steigt stetig auf 84--88\,\%, während batch=64 sowohl nackt (A1-Reproduktion) als auch im Curriculum-Stack chaotisch oszilliert bzw.\ stagniert. Unten: \texttt {explained\_variance} des Critics (EMA-geglättet, Rohkurven blass) --- nur mit batch=8 entstehen ab $\approx $\,100k anhaltende Hochphasen. Erzeugt mit \texttt {scripts/plot\_etappe6\_figures.py}}{figure.10}{}}
+\citation{raffin2021stable}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix.}}{20}{figure.11}\protected@file@percent }
+\newlabel{fig:exitdist}{{11}{20}{Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen (min/$\varnothing $/max über je 50 Seeds) vor und nach dem Fix}{figure.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.8}Performance-Analyse: Training beschleunigen}{20}{subsection.10.8}\protected@file@percent }
+\newlabel{sec:performance}{{10.8}{20}{Performance-Analyse: Training beschleunigen}{subsection.10.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.8.1}CPU schlägt Apple-GPU (MPS)}{20}{subsubsection.10.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.8.2}Batch-Größe: vermeintliche Validierung (06.07.) --- am Folgetag widerlegt}{20}{subsubsection.10.8.2}\protected@file@percent }
+\bibstyle{unsrt}
+\bibdata{references}
+\bibcite{cobbe2020procgen}{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen.}}{21}{figure.12}\protected@file@percent }
+\newlabel{fig:fps}{{12}{21}{Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen, Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits bei 64 unterlegen}{figure.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.9}Zeitleiste und Lessons Learned}{21}{subsection.10.9}\protected@file@percent }
+\bibcite{risi2020increasing}{2}
+\bibcite{sutton2018rl}{3}
+\bibcite{kaelbling1998pomdp}{4}
+\bibcite{hausknecht2015drqn}{5}
+\bibcite{mnih2015dqn}{6}
+\bibcite{schulman2016gae}{7}
+\bibcite{mnih2016a3c}{8}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Validierungslauf \texttt  {batch\_size}=64 (Phase-1-Setup, Env v11), Stand 06.07.: \texttt  {approx\_kl} über der Lernschwelle, \texttt  {explained\_variance} mit wiederkehrenden Hochphasen. Die daraus gezogene Freigabe von batch=64 wurde am 07.07.\ widerlegt (Abschnitt~\ref {sec:etappe6}): Die Hochphasen sind transient, die Dynamik konvergiert nicht.}}{22}{figure.13}\protected@file@percent }
+\newlabel{fig:batchval}{{13}{22}{Validierungslauf \texttt {batch\_size}=64 (Phase-1-Setup, Env v11), Stand 06.07.: \texttt {approx\_kl} über der Lernschwelle, \texttt {explained\_variance} mit wiederkehrenden Hochphasen. Die daraus gezogene Freigabe von batch=64 wurde am 07.07.\ widerlegt (Abschnitt~\ref {sec:etappe6}): Die Hochphasen sind transient, die Dynamik konvergiert nicht}{figure.13}{}}
+\bibcite{schulman2017ppo}{9}
+\bibcite{raffin2021stable}{10}
+\bibcite{hochreiter1997lstm}{11}
+\bibcite{ng1999policy}{12}
+\bibcite{bengio2009curriculum}{13}
+\bibcite{chevalier2023minigrid}{14}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt  {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\ ohne strikte Val/Test-Trennung.}}{23}{table.12}\protected@file@percent }
+\newlabel{tab:timeline}{{12}{23}{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt {CHANGELOG.md}). SR-Angaben je nach Etappe mit unterschiedlichem Protokoll --- Werte vor dem 11.06.\^^Mohne strikte Val/Test-Trennung}{table.12}{}}
+\bibcite{hafner2021crafter}{15}
+\bibcite{jiang2021plr}{16}
+\bibcite{ghosh2021epistemic}{17}
+\bibcite{singh1994pomdp}{18}
+\bibcite{pleines2022recurrent}{19}
+\bibcite{grigsby2024amago}{20}
+\bibcite{oh2018sil}{21}
+\bibcite{pineau2021repro}{22}
+\bibcite{henderson2018matters}{23}
+\gdef \@abspage@last{24}

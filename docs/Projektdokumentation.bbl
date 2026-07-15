@@ -1,0 +1,167 @@
+\begin{thebibliography}{10}
+
+\bibitem{cobbe2020procgen}
+Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
+\newblock Leveraging procedural generation to benchmark reinforcement learning.
+\newblock In {\em International conference on machine learning}, pages
+  2048--2056. PMLR, 2020.
+\newblock \url{https://arxiv.org/abs/1912.01588}.
+
+\bibitem{risi2020increasing}
+Sebastian Risi and Julian Togelius.
+\newblock Increasing generality in machine learning through procedural content
+  generation.
+\newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
+\newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
+
+\bibitem{sutton2018rl}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock {\em Reinforcement Learning: An Introduction}.
+\newblock MIT Press, Cambridge, MA, 2 edition, 2018.
+\newblock \url{http://incompleteideas.net/book/the-book-2nd.html}.
+
+\bibitem{kaelbling1998pomdp}
+Leslie~Pack Kaelbling, Michael~L Littman, and Anthony~R Cassandra.
+\newblock Planning and acting in partially observable stochastic domains.
+\newblock {\em Artificial Intelligence}, 101(1--2):99--134, 1998.
+
+\bibitem{hausknecht2015drqn}
+Matthew Hausknecht and Peter Stone.
+\newblock Deep recurrent q-learning for partially observable mdps.
+\newblock {\em arXiv preprint arXiv:1507.06527}, 2015.
+\newblock \url{https://arxiv.org/abs/1507.06527}.
+
+\bibitem{mnih2015dqn}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
+  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
+  Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock {\em Nature}, 518(7540):529--533, 2015.
+\newblock \url{https://www.nature.com/articles/nature14236}.
+
+\bibitem{schulman2016gae}
+John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter
+  Abbeel.
+\newblock High-dimensional continuous control using generalized advantage
+  estimation.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2016.
+\newblock \url{https://arxiv.org/abs/1506.02438}.
+
+\bibitem{mnih2016a3c}
+Volodymyr Mnih, Adri{\`a}~Puigdom{\`e}nech Badia, Mehdi Mirza, Alex Graves,
+  Timothy Lillicrap, Tim Harley, David Silver, and Koray Kavukcuoglu.
+\newblock Asynchronous methods for deep reinforcement learning.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  1928--1937. PMLR, 2016.
+\newblock \url{https://arxiv.org/abs/1602.01783}.
+
+\bibitem{schulman2017ppo}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock {\em arXiv preprint arXiv:1707.06347}, 2017.
+\newblock \url{https://arxiv.org/abs/1707.06347}.
+
+\bibitem{raffin2021stable}
+Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Maximilian
+  Ernestus, and Noah Dormann.
+\newblock Stable-baselines3: Reliable reinforcement learning implementations.
+\newblock {\em Journal of Machine Learning Research}, 22(268):1--8, 2021.
+\newblock \url{http://jmlr.org/papers/v22/20-1364.html}.
+
+\bibitem{hochreiter1997lstm}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock {\em Neural Computation}, 9(8):1735--1780, 1997.
+
+\bibitem{ng1999policy}
+Andrew~Y Ng, Daishi Harada, and Stuart Russell.
+\newblock Policy invariance under reward transformations: Theory and
+  application to reward shaping.
+\newblock In {\em Proceedings of the Sixteenth International Conference on
+  Machine Learning (ICML)}, pages 278--287, 1999.
+
+\bibitem{bengio2009curriculum}
+Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
+\newblock Curriculum learning.
+\newblock In {\em Proceedings of the 26th Annual International Conference on
+  Machine Learning (ICML)}, pages 41--48, 2009.
+\newblock \url{https://dl.acm.org/doi/10.1145/1553374.1553380}.
+
+\bibitem{chevalier2023minigrid}
+Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, et~al.
+\newblock Minigrid \& miniworld: Modular \& customizable reinforcement learning
+  environments for goal-oriented tasks.
+\newblock {\em Advances in Neural Information Processing Systems}, 36, 2023.
+\newblock \url{https://arxiv.org/abs/2306.13831}.
+
+\bibitem{hafner2021crafter}
+Danijar Hafner.
+\newblock Benchmarking the spectrum of agent capabilities.
+\newblock {\em arXiv preprint arXiv:2109.06780}, 2021.
+\newblock \url{https://arxiv.org/abs/2109.06780}.
+
+\bibitem{jiang2021plr}
+Minqi Jiang, Edward Grefenstette, and Tim Rockt{\"a}schel.
+\newblock Prioritized level replay.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  4940--4950. PMLR, 2021.
+\newblock \url{https://arxiv.org/abs/2010.03934}.
+
+\bibitem{ghosh2021epistemic}
+Dibya Ghosh, Jad Rahme, Aviral Kumar, Amy Zhang, Ryan~P Adams, and Sergey
+  Levine.
+\newblock Why generalization in {RL} is difficult: Epistemic {POMDP}s and
+  implicit partial observability.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  volume~34, 2021.
+\newblock \url{https://arxiv.org/abs/2107.06277}.
+
+\bibitem{singh1994pomdp}
+Satinder~P Singh, Tommi Jaakkola, and Michael~I Jordan.
+\newblock Learning without state-estimation in partially observable markovian
+  decision processes.
+\newblock In {\em Proceedings of the Eleventh International Conference on
+  Machine Learning (ICML)}, pages 284--292, 1994.
+\newblock
+  \url{https://www.cs.utexas.edu/~shivaram/readings/b2hd-SinghJJ1994.html}.
+
+\bibitem{pleines2022recurrent}
+Marco Pleines, Matthias Pallasch, Frank Zimmer, and Mike Preuss.
+\newblock Generalization, mayhems and limits in recurrent proximal policy
+  optimization.
+\newblock {\em arXiv preprint arXiv:2205.11104}, 2022.
+\newblock \url{https://arxiv.org/abs/2205.11104}.
+
+\bibitem{grigsby2024amago}
+Jake Grigsby, Linxi Fan, and Yuke Zhu.
+\newblock {AMAGO}: Scalable in-context reinforcement learning for adaptive
+  agents.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2024.
+\newblock \url{https://arxiv.org/abs/2310.09971}.
+
+\bibitem{oh2018sil}
+Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
+\newblock Self-imitation learning.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  3878--3887. PMLR, 2018.
+\newblock \url{https://arxiv.org/abs/1806.05635}.
+
+\bibitem{pineau2021repro}
+Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
+  Alina Beygelzimer, Florence d'Alch{\'e} Buc, Emily Fox, and Hugo Larochelle.
+\newblock Improving reproducibility in machine learning research (a report from
+  the neurips 2019 reproducibility program).
+\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
+\newblock \url{https://arxiv.org/abs/2003.12206}.
+
+\bibitem{henderson2018matters}
+Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
+  and David Meger.
+\newblock Deep reinforcement learning that matters.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, volume~32, 2018.
+\newblock \url{https://arxiv.org/abs/1709.06560}.
+
+\end{thebibliography}

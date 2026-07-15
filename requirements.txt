@@ -1,5 +1,20 @@
-gymnasium>=0.29
-stable-baselines3>=2.3
-numpy>=1.26
-tensorboard>=2.14
-websockets>=13.0
+# Stoneforge RL — direkte Abhängigkeiten, gepinnt für Reproduzierbarkeit.
+# Getestet mit Python 3.12.13 auf macOS (arm64). Vollständiger Lock: requirements.lock.txt
+# Installation:  python -m venv .venv && .venv/bin/pip install -r requirements.txt
+#
+# RL-Kern
+stable-baselines3==2.8.0
+sb3-contrib==2.8.0          # RecurrentPPO (LSTM) — wird zwingend gebraucht!
+torch==2.12.0
+gymnasium==1.2.3
+numpy==2.4.4
+#
+# Logging / Monitoring
+tensorboard==2.20.0
+websockets==16.0           # Live-Map WebSocket-Server
+#
+# Auswertung / Abbildungen
+matplotlib==3.10.8
+#
+# Build (C++-Binding via pybind11)
+pybind11==3.0.4

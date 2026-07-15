@@ -52,9 +52,16 @@ public:
         return flattenObservation(sim_.getObservation());
     }
 
+    // RL nutzt ausschließlich Navigation: MoveUp/Down/Left/Right (0–3).
+    // Mining, Bauen (Place), Angriff (Use) und Wait sind im RL-Binding entfernt —
+    // sie existieren nur noch im spielbaren Client.
+    static constexpr int kMovementActionCount = 4;
+
     py::tuple step(int action) {
-        if(action < 0 || action >= stoneforge::Simulation::kActionCount) {
-            throw std::runtime_error("action out of range");
+        if(action < 0 || action >= kMovementActionCount) {
+            throw std::runtime_error(
+                "action out of range (RL-Binding: nur Bewegung 0-3; "
+                "Mining/Place/Use/Wait sind entfernt)");
         }
 
         const auto result = sim_.step(static_cast<stoneforge::Action>(action));
@@ -72,7 +79,7 @@ public:
     }
 
     int actionSpaceN() const {
-        return stoneforge::Simulation::kActionCount;
+        return kMovementActionCount;
     }
 
     int observationSize() const {
@@ -98,6 +105,15 @@ public:
 
     py::tuple playerPos() const {
         const auto p = sim_.playerPos();
+        return py::make_tuple(p.x, p.y);
+    }
+
+    int tileAt(int x, int y) const {
+        return static_cast<int>(sim_.tileAt(x, y));
+    }
+
+    py::tuple exitPos() const {
+        const auto p = sim_.exitPos();
         return py::make_tuple(p.x, p.y);
     }
 
@@ -140,5 +156,7 @@ PYBIND11_MODULE(stoneforge_sim, m) {
                py::arg("force_guaranteed_path"), py::arg("disable_mobs") = false,
                py::arg("disable_energy") = false)
         .def("player_pos", &StoneforgeCoreEnv::playerPos)
+        .def("tile_at", &StoneforgeCoreEnv::tileAt, py::arg("x"), py::arg("y"))
+        .def("exit_pos", &StoneforgeCoreEnv::exitPos)
         .def("steps_without_progress", &StoneforgeCoreEnv::stepsWithoutProgress);
 }
