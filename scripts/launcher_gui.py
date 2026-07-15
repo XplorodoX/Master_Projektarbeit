@@ -414,8 +414,8 @@ class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Stoneforge RL Launcher")
-        self.geometry("980x720")
-        self.minsize(820, 600)
+        self.geometry("1100x760")
+        self.minsize(920, 640)
         self.configure(bg=BG)
 
         self._proc: Optional[subprocess.Popen] = None
@@ -609,18 +609,25 @@ class App(tk.Tk):
                                     font=("Helvetica", 9, "bold"))
         self._best_badge.pack(side="left", padx=12)
 
-        # Stat cards row
-        cards_row = tk.Frame(parent, bg=BG2)
-        cards_row.pack(fill="x", padx=12, pady=(0, 8))
+        # Stat cards row (responsive layout, wraps on narrow windows)
+        self._cards_row = tk.Frame(parent, bg=BG2)
+        self._cards_row.pack(fill="x", padx=12, pady=(0, 8))
 
-        self._card_ts     = StatCard(cards_row, "Timesteps",  color=ACCENT2)
-        self._card_reward = StatCard(cards_row, "∅ Reward",   color=ORANGE)
-        self._card_eplen  = StatCard(cards_row, "∅ Ep.Länge", color=TEXT)
-        self._card_eval   = StatCard(cards_row, "Eval Reward",color=GREEN)
-        self._card_fps    = StatCard(cards_row, "FPS",        color=DIM)
-        for c in (self._card_ts, self._card_reward, self._card_eplen,
-                  self._card_eval, self._card_fps):
-            c.pack(side="left", padx=4)
+        self._card_ts = StatCard(self._cards_row, "Timesteps", color=ACCENT2)
+        self._card_reward = StatCard(self._cards_row, "∅ Reward", color=ORANGE)
+        self._card_eplen = StatCard(self._cards_row, "∅ Ep.Länge", color=TEXT)
+        self._card_eval = StatCard(self._cards_row, "Eval Reward", color=GREEN)
+        self._card_fps = StatCard(self._cards_row, "FPS", color=DIM)
+        self._metric_cards = [
+            self._card_ts,
+            self._card_reward,
+            self._card_eplen,
+            self._card_eval,
+            self._card_fps,
+        ]
+        self._visible_metric_cards = list(self._metric_cards)
+        self._cards_row.bind("<Configure>", self._on_metrics_resize)
+        self._layout_metric_cards()
 
         # Curriculum stage indicators
         self._curr_frame = tk.Frame(parent, bg=BG2)
@@ -670,18 +677,16 @@ class App(tk.Tk):
             self._curr_frame.pack_forget()
             self._prog_label.config(text="")
             self._prog_ts_label.config(text="Build läuft…")
-            for card in (self._card_ts, self._card_reward,
-                         self._card_eplen, self._card_eval, self._card_fps):
-                card.pack_forget()
+            self._visible_metric_cards = []
+            self._layout_metric_cards()
         elif mode == "train":
             self._progress_indet.stop()
             self._progress_indet.grid_remove()
             self._progress.grid()
             self._progress["value"] = 0
             self._curr_frame.pack(fill="x", padx=12, pady=(0, 4))
-            for c in (self._card_ts, self._card_reward, self._card_eplen,
-                      self._card_eval, self._card_fps):
-                c.pack(side="left", padx=4)
+            self._visible_metric_cards = list(self._metric_cards)
+            self._layout_metric_cards()
             self._best_badge.config(text="")
             for dot in self._curr_dots:
                 dot.config(fg=BG4)
@@ -692,10 +697,44 @@ class App(tk.Tk):
             self._progress["value"] = 0
             self._curr_frame.pack_forget()
             self._prog_ts_label.config(text="Seed 0 / 50")
-            for card in (self._card_ts, self._card_reward,
-                         self._card_eplen, self._card_fps):
-                card.pack_forget()
-            self._card_eval.pack(side="left", padx=4)
+            self._visible_metric_cards = [self._card_eval]
+            self._layout_metric_cards()
+
+    def _on_metrics_resize(self, event: tk.Event) -> None:
+        self._layout_metric_cards(event.width)
+
+    def _layout_metric_cards(self, width: Optional[int] = None) -> None:
+        if not hasattr(self, "_cards_row"):
+            return
+
+        if width is None or width <= 1:
+            width = self._cards_row.winfo_width()
+
+        for card in self._metric_cards:
+            card.grid_forget()
+
+        # Reset columns before applying current layout.
+        for i in range(len(self._metric_cards)):
+            self._cards_row.columnconfigure(i, weight=0, uniform="")
+
+        if not self._visible_metric_cards:
+            return
+
+        if width >= 1020:
+            cols = 5
+        elif width >= 760:
+            cols = 3
+        else:
+            cols = 2
+
+        cols = min(cols, len(self._visible_metric_cards))
+        for i in range(cols):
+            self._cards_row.columnconfigure(i, weight=1, uniform="metric")
+
+        for idx, card in enumerate(self._visible_metric_cards):
+            row = idx // cols
+            col = idx % cols
+            card.grid(row=row, column=col, padx=4, pady=4, sticky="ew")
 
     def _hide_metrics(self) -> None:
         self._progress_indet.stop()
@@ -914,11 +953,13 @@ class App(tk.Tk):
             ("Alles  (Bindings + Client)",          self._do_build_all),
         ]:
             row = tk.Frame(card, bg=BG3)
-            row.pack(fill="x", pady=2)
+            row.pack(fill="x", padx=10, pady=4)
+            row.columnconfigure(0, weight=1)
             tk.Label(row, text=label, bg=BG3, fg=TEXT,
-                     font=("Helvetica", 10)).pack(side="left", padx=14, pady=10)
+                     font=("Helvetica", 10), wraplength=420,
+                     justify="left").grid(row=0, column=0, sticky="w", padx=(4, 10), pady=10)
             ttk.Button(row, text="Build", style="Secondary.TButton",
-                       command=cmd_fn).pack(side="right", padx=12)
+                       command=cmd_fn).grid(row=0, column=1, sticky="e", padx=(0, 4))
 
         self._dim(f, "Release-Modus · BUILD_PYTHON_BINDINGS=ON · -j4")
 
@@ -987,17 +1028,20 @@ class App(tk.Tk):
 
         opt = tk.Frame(card, bg=BG3)
         opt.pack(fill="x", padx=14, pady=(0, 8))
+                opt.columnconfigure(1, weight=1)
         tk.Label(opt, text="Seed:", bg=BG3, fg=TEXT,
-                 font=("Helvetica", 10)).grid(row=0, column=0, sticky="w", padx=(0, 8))
+                                 font=("Helvetica", 10)).grid(row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 6))
         self._play_seed = tk.IntVar(value=42)
-        ttk.Entry(opt, textvariable=self._play_seed, width=8).grid(row=0, column=1, sticky="w")
+                ttk.Entry(opt, textvariable=self._play_seed, width=10).grid(
+                        row=0, column=1, sticky="w", pady=(0, 6)
+                )
         tk.Label(opt, text="  Geschwindigkeit:", bg=BG3, fg=TEXT,
-                 font=("Helvetica", 10)).grid(row=0, column=2, padx=(18, 8))
+                                 font=("Helvetica", 10)).grid(row=1, column=0, sticky="w", padx=(0, 8))
         self._play_speed = tk.DoubleVar(value=1.0)
         tk.Spinbox(opt, textvariable=self._play_speed, from_=0.1, to=10.0,
                    increment=0.5, width=5, bg=BG3, fg=TEXT, relief="flat",
                    buttonbackground=BG4, insertbackground=TEXT,
-                   ).grid(row=0, column=3, sticky="w")
+                                     ).grid(row=1, column=1, sticky="w")
 
         self._sep(card)
 
@@ -1006,12 +1050,12 @@ class App(tk.Tk):
         self._play_monsters_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(opts2,
                         text="Monster aktivieren",
-                        variable=self._play_monsters_var).pack(side="left", padx=(0, 24))
+                        variable=self._play_monsters_var).pack(anchor="w", pady=(0, 6))
 
         self._dual_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(opts2, text="Dual-Modus  (zwei Modelle vergleichen)",
                         variable=self._dual_var,
-                        command=self._toggle_dual).pack(side="left")
+                        command=self._toggle_dual).pack(anchor="w")
 
         self._dual_inner = tk.Frame(card, bg=BG3)
         tk.Label(self._dual_inner, text="Modell 2 (Vergleich)", bg=BG3, fg=ACCENT,
@@ -1081,7 +1125,8 @@ class App(tk.Tk):
         tk.Label(f, text=title, bg=BG, fg=TEXT,
                  font=("Helvetica", 20, "bold")).pack(anchor="w", padx=28)
         tk.Label(f, text=subtitle, bg=BG, fg=DIM,
-                 font=("Helvetica", 10), wraplength=560).pack(anchor="w", padx=28, pady=(2, 14))
+                 font=("Helvetica", 10), wraplength=680, justify="left"
+                 ).pack(anchor="w", padx=28, pady=(2, 14))
 
     def _card(self, parent: ttk.Frame) -> tk.Frame:
         c = tk.Frame(parent, bg=BG3)
