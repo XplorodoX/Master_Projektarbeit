@@ -1,0 +1,48 @@
+okf_version: "0.1"
+name: stoneforge-rl-wiki
+title: Stoneforge RL — Projektwissen
+description: >
+  Wissensbasis zur Master-Projektarbeit "RL-Agent zur Exit-Suche in prozedural
+  generierten 2D-Welten". Enthält Konzepte, Systemkomponenten, Experimenthistorie,
+  getroffene Entscheidungen, bekannte Fallstricke und Literaturbelege.
+version: "1.0.0"
+updated: 2026-07-17
+language: de
+authors:
+  - name: Florian
+    role: Autor der Projektarbeit
+repository: Master_Projektarbeit
+entrypoint: README.md
+
+collections:
+  - id: concepts
+    path: concepts/
+    description: Domänen- und RL-Konzepte, die das Projekt trägt
+  - id: components
+    path: components/
+    description: Systemkomponenten (Code, Env, Skripte, Infrastruktur)
+  - id: experiments
+    path: experiments/
+    description: Durchgeführte Experimente mit Ergebnis und Bewertung
+  - id: decisions
+    path: decisions/
+    description: Getroffene Entscheidungen inkl. Begründung und Gegenbeweis
+  - id: pitfalls
+    path: pitfalls/
+    description: Bekannte Fallstricke — was schiefgeht und warum
+  - id: references
+    path: references/
+    description: Externe Literatur und Belege
+
+conventions:
+  frontmatter_required: [id, title, type, tags, updated]
+  link_syntax: "[[entry-id]]"
+  atomicity: Ein Eintrag = ein Konzept. Kurz halten, für Agenten optimiert.
+
+sources_of_truth:
+  - path: ../../CHANGELOG.md
+    note: Kanonische Experimenthistorie. Bei Widerspruch gewinnt der CHANGELOG.
+  - path: ../Projektdokumentation.tex
+    note: Auszuliefernde Projektarbeit (LaTeX).
+  - path: ../../.claude/CLAUDE.md
+    note: Arbeitsanweisungen für Agenten im Repo.
