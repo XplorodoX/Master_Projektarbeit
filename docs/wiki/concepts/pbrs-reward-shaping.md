@@ -3,14 +3,22 @@ id: pbrs-reward-shaping
 title: PBRS — Potential-Based Reward Shaping auf BFS-Distanz
 type: concept
 tags: [reward, theorie, cpp]
-related: [cpp-core, stoneforge-env, v11-env-bruch]
+related: [cpp-core, stoneforge-env, v11-env-bruch, ng-1999, ablation-abc]
 updated: 2026-07-17
 ---
 
 # Potential-Based Reward Shaping (PBRS)
 
-Implementiert in `src/core/simulation.cpp`. Parameter: **β = 2.5**, **γ = 0.999** (identisch zum
-RL-γ — das ist die Bedingung für Policy-Invarianz, nicht Kosmetik).
+Theoretische Grundlage: [[ng-1999]] — die kanonische Quelle für Policy-Invarianz.
+(Fehlte hier bis zum 17.07.2026 komplett; die Invarianz wurde behauptet, ohne sie zu belegen.)
+
+Implementiert in `src/core/simulation.cpp:1500–1514`. Parameter (verifiziert 17.07.2026):
+**`PBRS_BETA = 2.5F`**, **`PBRS_GAMMA = 0.999F`** — identisch zum RL-γ (`gamma=0.999` in
+`RPPO_KWARGS`). Diese Gleichheit ist die **Voraussetzung des Invarianz-Theorems**, nicht Kosmetik.
+
+Zur Herkunft von β = 2.5 steht ein Kommentar im Code: β wurde von 5.0 halbiert, nachdem der
+BFS-Buffer von 20 auf 80 vergrößert wurde. Mit β = 5 und altem Buffer kassierte der Agent beim
+**Rücklaufen** ≈ +2.5 pro Schritt — ein falsches Signal.
 
 ## Das Potential läuft auf BFS-Distanz
 

@@ -40,10 +40,19 @@ Der Flaschenhals ist nicht, wie viel das LSTM *behalten* kann, sondern wie gut e
 [[literatur-lstm-groesse]] (diminishing returns, 512 optimal / 1024 schlechter in einer PPO-LSTM-
 Studie) und "Memory Retention Is Not Enough" (arXiv 2601.15086).
 
-**Folge für den Ausblick:** Nicht größer, sondern **strukturierter** Speicher — GTrXL, Neural Map,
-FFM, In-Context-RL (AMAGO). Steht so im Fazit.
+**Folge für den Ausblick — vorsichtiger, als hier lange stand:** Naheliegend wäre "nicht größer,
+sondern **strukturierter** Speicher" (GTrXL, Neural Map, FFM, In-Context-RL wie AMAGO). Aber die
+Literatur trägt das nur schwach: [[memory-rewriting-2026]] findet klassische rekurrente Modelle
+**überlegen** gegenüber strukturierten Speichern und Transformern, [[popgym-2023]] sieht RNNs
+konkurrenzfähig. Als **offene Richtung** ausweisen, nicht als sichere Lösung. Siehe
+[[literatur-lstm-groesse]] — die früher hier zitierte "512-optimal"-Studie war ein
+Aktienhandels-Paper und ist raus.
 
-Nebenbefund: `caffeinate` hat sich selbst terminiert — bei Langläufen prüfen, ob der Mac
-tatsächlich wach bleibt.
+**Belegkraft:** n=1. Ein voller Lauf, kontrolliert gegen die v12-Baseline, phasenweise durchgängig
+schlechter — das ist ein solides Indiz, aber keine Seed-Statistik. So auch berichten.
+
+Nebenbefunde: ~3–4× langsamer als die 256er-Baseline. Der Lauf litt unter Sleep-Stalls; `caffeinate -w`
+hat sie behoben (danach ~48 fps). Bei Langläufen also **mit** `-w` starten — siehe
+[[nohup-training]].
 
 CHANGELOG `v2026-07-08.3`.

@@ -1,43 +1,58 @@
 ---
 id: literatur-lstm-groesse
-title: Literatur — LSTM-Größe hat diminishing returns
+title: LSTM-Größe — was die Literatur trägt und was nicht (KORRIGIERT)
 type: reference
-tags: [literatur, architektur, lstm]
-related: [e3-lstm512, recurrent-ppo, det-stoch-gap, pleines-2022]
+tags: [literatur, architektur, lstm, korrektur, warnung]
+verified: 2026-07-17
+related: [e3-lstm512, recurrent-ppo, popgym-2023, memory-rewriting-2026, pleines-2022]
+status: korrigiert
 updated: 2026-07-17
 ---
 
-# LSTM-Größe: diminishing returns
+# LSTM-Größe: was belegt ist — und was nicht
 
-Recherche 09.07.2026, zur Einordnung des E3-Befunds ([[e3-lstm512]]).
+> ⚠️ **Korrigiert am 17.07.2026.** Die frühere Fassung stützte sich auf eine Quelle, die für diese
+> Arbeit **nicht zitierfähig** ist. Details unten — **nicht** in die Arbeit übernehmen, ohne das
+> gelesen zu haben.
 
-## Befundlage
+## Die Quelle, die hier rausgeflogen ist
 
-- LSTM-Hidden-Size zeigt **diminishing returns**: Jenseits einer task-spezifischen Schwelle bringt
-  mehr Kapazität nur marginale Gewinne.
-- Eine konkrete PPO-LSTM-Studie findet **512 optimal, 1024 schlechter** — mehr Kapazität
-  *verschlechterte* das Ergebnis.
-- "Breiteste Einstellung → ähnliche oder leicht niedrigere finale Returns" ist ein wiederkehrendes
-  Muster.
+Behauptet wurde: *"Konkrete PPO-LSTM-Studie: 512 optimal, 1024 schlechter."*
 
-## Einordnung — ehrlich bleiben
+Nachrecherche (17.07.2026): Diese Zahlen stammen aus **arXiv 2212.02721 — "A Novel Deep
+Reinforcement Learning Based Automated Stock Trading System Using Cascaded LSTM Networks"**. Ein
+**Aktienhandels-Paper**. Die Metriken hinter den Zahlen sind CR (Cumulative Return), MER und SR
+(**Sharpe Ratio**) — Finanzkennzahlen, keine Success Rate.
 
-Die Literatur stützt die **allgemeine Aussage** (mehr Kapazität ≠ besser, es gibt ein Optimum) und
-macht damit den E3-Befund plausibel statt merkwürdig. Sie ist aber **kein Beleg für unsere konkrete
-Schwelle**: In der zitierten Studie war 512 das Optimum, bei uns liegt es bei 256. Die Schwelle ist
-task-spezifisch — das ist gerade der Punkt.
+**Warum das nicht geht:** Eine Hidden-Size-Ablation auf Börsenzeitreihen sagt nichts über
+Gedächtnisbedarf in prozeduraler POMDP-Navigation. Die Domänen teilen die Buchstaben "LSTM" und
+sonst nichts. Ein Prüfer, der der Fußnote nachgeht, findet ein Trading-Paper in einer
+RL-Navigations-Arbeit — das kostet mehr Glaubwürdigkeit, als die Zahl je einbringen könnte.
 
-Also: als Plausibilisierung zitieren, nicht als Beweis. Unser Beleg für 256 > 512 ist die eigene
-Messung ([[e3-lstm512]]: A 44 % gegen 73 %, phasenweise durchgängig schlechter), nicht die
-Literatur.
+## Was stattdessen trägt
 
-## Die eigentliche Pointe
+**1. Die eigene Messung.** [[e3-lstm512]] ist der Beleg für 256 > 512 *in dieser Umgebung*:
+A 44 % gegen 73 %, phasenweise durchgängig unter der Baseline, ein voller Lauf über 22 h 54 min.
+Das ist eine kontrollierte Einzelmessung in der Zieldomäne und schlägt jede fachfremde Analogie.
+Ehrlich dazusagen: **n=1**.
 
-Der Kernsatz, den E3 und diese Literatur gemeinsam tragen:
+**2. Domänenrichtige Literatur** für die *allgemeine* Aussage, dass mehr/aufwändigerer Speicher
+nicht automatisch besser ist:
+- [[popgym-2023]] — größter Vergleich über RL-Gedächtnismodelle (13 Baselines, 15 POMDPs).
+- [[memory-rewriting-2026]] — klassische rekurrente Modelle schlagen strukturierte Speicher und
+  Transformer beim Memory Rewriting.
+- [[pleines-2022]] — Grenzen von Recurrent PPO in prozeduraler Navigation.
+
+## Die Aussage, die man damit machen darf
 
 > **Mehr Gedächtnis-Kapazität ≠ besserer Gedächtnis-Nutzen.**
 
-Gestützt von "Memory Retention Is Not Enough…" (arXiv 2601.15086): Der Flaschenhals ist das
-*Abrufen* über lange Horizonte, nicht das *Behalten*. Deshalb zeigt der Ausblick auf
-**strukturierten** Speicher (GTrXL, Neural Map, FFM, AMAGO) statt auf größere LSTMs —
-siehe [[pleines-2022]].
+Belegt durch die eigene Messung, plausibilisiert durch die Benchmark-Literatur. Was man **nicht**
+sagen darf: dass es eine allgemeine, quantitativ übertragbare Schwelle gäbe ("512 ist zu viel").
+Die Schwelle ist task-spezifisch — das ist gerade der Punkt. Bei uns liegt sie bei 256.
+
+## Lehre
+
+Die alte Fassung entstand, weil eine Web-Recherche eine passend klingende Zahl fand und die
+Domäne nicht mitgeprüft wurde. **Bei jeder übernommenen Zahl gehört die Domäne der Quelle mit in
+die Notiz** — sonst wandert sie unbemerkt in die Arbeit.

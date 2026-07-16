@@ -26,10 +26,26 @@ Der wichtigste einzelne Hyperparameter im Projekt. Zweimal falsch gesetzt, zweim
 | `explained_variance` | ≈ 0.1 (Critic lernt nie) | > 0.85 (v10-Repro: **0.939**) |
 | SR-Verlauf | oszilliert 10–74 %, keine Konvergenz | stabiler Anstieg |
 
-Der Mechanismus: Bei `n_steps=256` und `batch=8` gibt es **32 Gradientenschritte pro Rollout**
-statt 4 — rund 8× mehr. Der Critic bekommt genug Updates, um dem bewegten Ziel zu folgen. Bei
-`batch=256` (v7–v9) war es sogar nur **ein** Batch pro Epoche — Full-Batch-Gradientenabstieg unter
-falschem Namen ([[v7-v9-rootcause]]).
+Der Mechanismus: Ein kleinerer `batch_size` zerlegt denselben Rollout-Puffer in mehr Minibatches →
+**~8× mehr Gradientenschritte pro Rollout** (64 → 8). Der Critic bekommt genug Updates, um dem
+bewegten Ziel zu folgen.
+
+<details>
+<summary>Nachrechnung (korrigiert 17.07.2026)</summary>
+
+Der Puffer ist `n_steps × n_envs = 256 × 16 = 4096` Transitionen (Default `--n-envs 16`, verifiziert
+in `train_curriculum.py:272`). Daraus folgt pro Epoche:
+
+| `batch_size` | Minibatches/Epoche |
+|---|---|
+| 8 | 512 |
+| 64 | 64 |
+| 256 (v7–v9) | 16 |
+
+Die frühere Fassung schrieb "32 statt 4" bzw. "ein Batch pro Epoche" — das rechnete mit
+`n_steps=256` **ohne** `n_envs` und war damit um Faktor 16 daneben. Das **Verhältnis** (8×) stimmte
+und trägt die Entscheidung; die Absolutzahlen waren falsch.
+</details>
 
 ## Warum das zweimal passieren konnte
 

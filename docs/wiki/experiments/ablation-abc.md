@@ -19,11 +19,26 @@ stellt: *Löst hier das RL das Problem oder ein Algorithmus, den ihr reingereich
 | **B** `ppo_no_bfs` | MLP | ✗ | ✗ (nur exit 5–12) | — | **0 %** (kollabiert) |
 | **C** `ppo_lstm_curriculum` | LSTM | ✗ | ✓ exit 5→45 | **86 %** | 36 % |
 
+Die Tabelle entspricht `tab:ablation` in `docs/Projektdokumentation.tex` (verifiziert 17.07.2026):
+**alle drei Zeilen auf Testset A bei Exit 35–45.**
+
+> ⚠️ **Falle: Für Bedingung A stehen im CHANGELOG *zwei* Zahlen — 100 % und 0 %.** Beide stimmen,
+> unter verschiedenen Bedingungen. Der ältere Ablations-Abschnitt führt A mit **100 % det** als
+> "Referenz-Obergrenze" — gemessen mit **236 Features und `forceGuaranteedPath=true`**, also nicht
+> auf dem standardisierten Testset. Nachgemessen am 15.06.2026 unter Standardbedingungen
+> (Exit 35–45) ergibt dasselbe Modell **0 % det / 32 % stoch** (`mean_steps=275`, es läuft immer in
+> den Stagnations-Abbruch). Der CHANGELOG sagt dazu selbst: *"A ist unter anderen Bedingungen
+> gemessen (236 Features, guaranteed path) — dient nur als Obergrenze."*
+>
+> **Für die Arbeit gilt die 0 %/32 %-Zeile**, weil nur sie mit B und C vergleichbar ist. Wer später
+> die 100 % im CHANGELOG findet, darf die Tabelle **nicht** "korrigieren".
+
 ## Die Aussage
 
-- **A:** Mit BFS-Distanz in der Observation ist die Aufgabe lösbar — aber das ist kein echtes RL,
-  sondern ein Agent, der einem Orakel folgt. Bezeichnend: deterministisch **0 %**; er hat nie
-  gelernt zu navigieren, nur zu folgen.
+- **A:** Mit BFS-Distanz in der Observation ist die Aufgabe lösbar — unter ihren eigenen,
+  leichteren Bedingungen sogar zu 100 %. Aber das ist kein echtes RL, sondern ein Agent, der einem
+  Orakel folgt: Auf der Zielverteilung (Exit 35–45, kein garantierter Pfad) bricht er auf
+  **0 % deterministisch** ein.
 - **B:** Nimmt man das BFS weg und lässt das MLP allein, **kollabiert** es. Das BFS war also nicht
   Beiwerk, sondern Voraussetzung.
 - **C:** Ein LSTM ohne BFS-Orakel löst die Aufgabe zu 86 %. **Gedächtnis ersetzt das Orakel.**

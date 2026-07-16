@@ -5,14 +5,24 @@ type: reference
 tags: [literatur, methodik, reproduzierbarkeit]
 bibkey: henderson2018matters
 url: https://arxiv.org/abs/1709.06560
-venue: arXiv 1709.06560 / AAAI 2018
+aaai: https://ojs.aaai.org/index.php/AAAI/article/view/11694
+venue: "AAAI 2018 (32nd AAAI Conference on Artificial Intelligence), arXiv 1709.06560"
+authors: "Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup, David Meger"
+verified: 2026-07-17
 related: [reproduzierbarkeit, v12-final, zielkriterium, pineau-2021, batch-size-8]
 updated: 2026-07-17
 ---
 
 # Henderson et al. (2018) — Deep RL that Matters
 
-**Kernkritik:** Deep-RL-Ergebnisse werden routinemäßig unsauber berichtet.
+**Vollständig:** Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup, David
+Meger: *Deep Reinforcement Learning that Matters.* AAAI 2018, arXiv:1709.06560.
+(Verifiziert 17.07.2026. Joelle Pineau ist auch Erstautorin von [[pineau-2021]] — die beiden
+Methodik-Quellen dieser Arbeit haben eine gemeinsame Autorin.)
+
+**Kernkritik:** Deep-RL-Ergebnisse werden routinemäßig unsauber berichtet. Nicht-Determinismus in
+Standard-Benchmarks plus die den Methoden eigene Varianz machen berichtete Ergebnisse schwer
+interpretierbar.
 
 - **Nie best-of-runs berichten.** Die Seed-Varianz ist massiv — der beste von fünf Läufen sagt
   nichts über die Methode.

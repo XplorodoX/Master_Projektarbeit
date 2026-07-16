@@ -35,9 +35,11 @@ RecurrentPPO.load("models/ppo_lstm_curriculum_v2/phase1_best_model.zip")
 | `ent_coef` | 0.01 | **0.05** |
 | Obs | 249 | **231** |
 
-`batch_size=256` bei `n_steps=256` bedeutet **genau ein Batch pro Epoche** — kein Mini-Batch-Learning,
-praktisch Full-Batch-Gradientenabstieg. Mit `batch_size=8` sind es 32 Batches, also ~32× mehr
-Gradientenschritte pro Rollout. Und `ent_coef=0.01` statt 0.05 nahm dem Agenten die Exploration.
+`batch_size=256` zerlegt den Rollout-Puffer (`n_steps × n_envs = 4096`) in nur **16 Minibatches pro
+Epoche**; mit `batch_size=8` sind es **512** — 32× mehr Gradientenschritte. Der Critic bekam schlicht
+zu wenige Updates. Und `ent_coef=0.01` statt 0.05 nahm dem Agenten die Exploration.
+(Zahlen korrigiert 17.07.2026 — die frühere Fassung rechnete ohne `n_envs=16`, siehe
+[[batch-size-8]].)
 
 ## Die Diagnose war im Log sichtbar
 

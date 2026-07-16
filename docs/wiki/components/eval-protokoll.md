@@ -19,7 +19,35 @@ Jede berichtete Zahl entsteht so — Abweichungen machen Läufe unvergleichbar.
 | Exit-Distanz | 35–45 |
 | Episoden-Cap | **4000** (= Env-`maxSteps`) — siehe [[eval-cap-4000]] |
 | Modi | deterministisch **und** stochastisch, beide berichtet |
-| Aggregation | Mittelwert ± Std, `ddof=1` (Stichprobe!) |
+| Aggregation | Mittelwert ± Std über die Läufe (⚠️ `ddof` uneinheitlich — siehe unten) |
+
+## ⚠️ Offener Befund: ddof ist inkonsistent (gefunden 17.07.2026)
+
+Die berichteten v12-Zahlen verwenden **`ddof=0`** (Populations-Std), nicht `ddof=1`. Nachgerechnet
+aus den Einzelwerten des CHANGELOG:
+
+| Größe | Einzelwerte | berichtet | = ddof | mit `ddof=1` wäre es |
+|-------|-------------|-----------|--------|---------------------|
+| A stoch | 64 / 76 / 80 | 73,3 ± **6,8** | 0 | ± **8,3** |
+| A det | 38 / 26 / 32 | 32,0 ± **4,9** | 0 | ± **6,0** |
+| B stoch | 72 / 80 / 88 | 80,0 ± **6,5** | 0 | ± **8,0** |
+| B det | 46 / 44 / 36 | 42,0 ± **4,3** | 0 | ± **5,3** |
+
+Die Nachmessung vom 15.07. rechnet dagegen **mit `ddof=1`** (A 72,7 ± 9,5). Zwei Messungen desselben
+Modells, zwei Rechenwege — die ±Werte sind untereinander nicht vergleichbar.
+
+**Warum das zählt:** Bei n=3 sind drei Läufe eine **Stichprobe**, keine Grundgesamtheit — `ddof=1`
+ist die korrekte Wahl, und `ddof=0` **unterschätzt die Streuung systematisch**. Das trifft
+ausgerechnet die Zahl, an der [[zielkriterium]] A hängt: Der Abstand zum 70-%-Ziel beträgt 3,3
+Punkte, die Streuung ± 6,8 (ddof=0) oder ± 8,3 (ddof=1).
+
+**Entwarnung:** Die Doku hängt ihre Aussage nicht am ±Std, sondern an einem **95-%-Bootstrap-CI**
+([66,7; 80,0] auf A, stratifiziert, 10 000 Resamples) — und benennt dort ausdrücklich, dass das
+Intervall die 70-%-Schwelle einschließt. Die inhaltliche Aussage ist also robust; die Inkonsistenz
+betrifft die ±Angabe daneben.
+
+**To-do:** Bei der n=7-Auswertung **einen** Weg festlegen (Empfehlung: `ddof=1`) und die
+n=3-Tabelle konsistent nachziehen. Siehe [[projekt-status]].
 
 A und B sind **disjunkt** und fest. Beide werden immer zusammen berichtet — dass B (77–80 %)
 regelmäßig **über** A (73 %) liegt, ist selbst ein Ergebnis: Die Seed-Auswahl erzeugt mehr Varianz
@@ -37,7 +65,7 @@ python scripts/eval_comparison.py --stochastic # stochastisch
 
 1. **Cap < 4000** → SR wird massiv unterschätzt (48 % @600 vs. 86 % @4000, gleiches Modell).
    Kostet nur ~21 s pro Eval. Nie sparen. → [[eval-cap-4000]]
-2. **`ddof=0`** statt 1 → zu kleine Std bei n=3. Wir haben eine Stichprobe, keine Grundgesamtheit.
+2. **`ddof`** einheitlich halten — siehe den Befund oben. Bei n=3 ist `ddof=1` korrekt.
 3. **LSTM-State** muss über die Episode korrekt mitgeführt und bei `reset()` genullt werden.
    Verifiziert 09.07.2026.
 4. **Obs-Shape** des Modells prüfen, sonst Shape-Mismatch → [[obs-shape-legacy]].

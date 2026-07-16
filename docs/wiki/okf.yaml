@@ -5,8 +5,18 @@ description: >
   Wissensbasis zur Master-Projektarbeit "RL-Agent zur Exit-Suche in prozedural
   generierten 2D-Welten". Enthält Konzepte, Systemkomponenten, Experimenthistorie,
   getroffene Entscheidungen, bekannte Fallstricke und Literaturbelege.
-version: "1.0.0"
+version: "1.1.0"
 updated: 2026-07-17
+changelog:
+  - version: "1.1.0"
+    date: 2026-07-17
+    note: >
+      Faktencheck gegen Primärliteratur, CHANGELOG und Code. 20 Fehler korrigiert,
+      4 Referenzen ergänzt (Ng 1999, POPGym, Memory-Rewriting, Stochastic/Deterministic Minds).
+      Protokoll in faktencheck-2026-07-17.md.
+  - version: "1.0.0"
+    date: 2026-07-17
+    note: Erstkompilation aus CHANGELOG, Doku, Code und Session-Memories.
 language: de
 authors:
   - name: Florian
@@ -36,13 +46,30 @@ collections:
 
 conventions:
   frontmatter_required: [id, title, type, tags, updated]
+  frontmatter_references: [bibkey, url, venue, authors, verified]
   link_syntax: "[[entry-id]]"
   atomicity: Ein Eintrag = ein Konzept. Kurz halten, für Agenten optimiert.
 
+# Reihenfolge der Autorität. Bei Widerspruch gewinnt der höhere Eintrag.
+# Session-Memories sind KEINE Quelle — sie sind Fundstellen, die zu prüfen sind
+# (siehe faktencheck-2026-07-17.md: fast alle gefundenen Fehler stammten von dort).
 sources_of_truth:
+  - path: ../../python/, ../../scripts/, ../../src/
+    note: Code gewinnt immer. Was hier steht, ist der Ist-Zustand.
   - path: ../../CHANGELOG.md
-    note: Kanonische Experimenthistorie. Bei Widerspruch gewinnt der CHANGELOG.
+    note: Kanonische Experimenthistorie inkl. Negativergebnissen und Caveats.
   - path: ../Projektdokumentation.tex
-    note: Auszuliefernde Projektarbeit (LaTeX).
+    note: Auszuliefernde Projektarbeit (LaTeX). Maßgeblich für berichtete Zahlen.
   - path: ../../.claude/CLAUDE.md
     note: Arbeitsanweisungen für Agenten im Repo.
+  - path: ../IMPROVEMENT_PLAN.md
+    note: >
+      ⚠️ NUR historisch. Momentaufnahme offener Probleme vom 11.06.2026 — vieles
+      davon ist längst behoben (z. B. P0.1 Data-Leakage, noch am selben Tag).
+      Niemals als Statusquelle verwenden.
+
+citation_policy:
+  - Jede Referenz braucht url + venue + authors + verified-Datum.
+  - Die Domäne der Quelle muss zur Aussage passen (kein Finanz-Paper für Navigations-RL).
+  - Wer eine Aussage einem Paper zuschreibt, muss sie dort gelesen haben —
+    Abstract-only ist im Eintrag als solches zu markieren.

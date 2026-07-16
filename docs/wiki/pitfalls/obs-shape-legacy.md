@@ -17,16 +17,24 @@ Modell erwartet z. B. 231 Features, das Env liefert 229.
 
 ## Lösung je Modellgeneration
 
+Die maßgebliche Quelle ist `_OBS_DIM_KWARGS` in `python/stoneforge_env.py` (verifiziert 17.07.2026):
+
 | Modell | Shape | kwargs |
 |--------|-------|--------|
 | aktuell (ab Env v11) | 229 | — (Default) |
 | v2–v10 (vor 06.07.2026) | 231 | `include_energy_inventory=True` |
-| `ppo_phase4` | 236 | `use_last_action_reward=True, action_buffer_len=1` |
-| `ppo_no_bfs` | 230 | inkompatibel, in `eval_comparison.py` mit `skip=True` |
+| `ppo_no_bfs` | 230 | `include_energy_inventory=True, use_step_frac=False` |
+| `ppo_phase4` | 236 | `include_energy_inventory=True, use_last_action_reward=True` |
 | v7–v9 | 249 | gescheiterte Läufe, keine Rekonstruktion nötig |
 
-Der bequeme Weg: `env_kwargs_for_model(model)` in `python/stoneforge_env.py` leitet die kwargs aus
-der Shape des geladenen Modells ab.
+Der bequeme Weg: `env_kwargs_for_model(model)` leitet die kwargs aus der Shape des geladenen Modells
+ab. **Alle fünf Layouts sind darüber ladbar** — "inkompatibel" ist keines.
+
+> ⚠️ **Korrigiert 17.07.2026.** Die frühere Fassung hatte das `skip`-Flag **vertauscht** und
+> `ppo_no_bfs` für inkompatibel erklärt. Tatsächlich steht in `scripts/eval_comparison.py`:
+> `A_ppo_phase4 → skip: True` (Zeile 43), `B_ppo_no_bfs → skip: False` (Zeile 50). Also genau
+> andersherum. Der Kommentar am `skip`-Flag ist zudem selbst veraltet ("inkompatibel mit aktueller
+> 230-Feature-Env" — die Env hat 229).
 
 ## Die Falle hinter der Falle
 

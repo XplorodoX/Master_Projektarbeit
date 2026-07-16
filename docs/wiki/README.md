@@ -25,7 +25,17 @@ Negativergebnisse sind hier ein Kernbeitrag, kein Abfall.
 | [experiments/](experiments/) | Ablation, v2, v7–v9-Rootcause, v11-Env-Bruch, v12, E1/E2/E3, Temperatur-Sweep |
 | [decisions/](decisions/) | batch_size=8, stochastische Eval, Eval-Cap 4000, kein größeres LSTM |
 | [pitfalls/](pitfalls/) | Obs-Shape-Legacy, prozessglobale Config, Rebuild-Pflicht, nohup, Testset-Leakage |
-| [references/](references/) | Singh 1994, Ghosh 2021, Pleines 2022, Henderson 2018, Pineau 2021 |
+| [references/](references/) | Singh 1994, Ghosh 2021, Ng 1999, Pleines 2022, Henderson 2018, Pineau 2021, POPGym, u. a. |
+
+## Quellenlage
+
+Alle Referenzen wurden am **17.07.2026 gegen die Primärquellen geprüft** — Autoren, Venue, Jahr und
+die konkret genutzte Aussage. Jeder `references/`-Eintrag trägt dafür ein `verified:`-Feld und eine
+URL. Der Check fand **20 Fehler**, darunter ein Paper, das das Gegenteil des Behaupteten sagt, und
+eine Quelle aus der Aktienhandels-Domäne. Protokoll: [Faktencheck 17.07.](faktencheck-2026-07-17.md).
+
+**Zwei Aussagen sind nur abstract-geprüft** und dort ausdrücklich markiert (Ghosh, POPGym) — vor
+Verwendung in der Arbeit selbst im Volltext nachschlagen.
 
 ## Konventionen
 

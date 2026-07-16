@@ -18,12 +18,13 @@ updated: 2026-07-17
 
 ## Ergebnis
 
-| Testset | stoch |
-|---------|-------|
-| A | **26 %** |
-| B | 42 % |
+| Testset | stoch | det |
+|---------|-------|-----|
+| A | **26 %** | 16 % |
+| B | 42 % | 24 % |
 
-Gegen die v12-Baseline (A 73,3 / B 80): **klar schlechter**, nicht knapp.
+Gegen die v12-Baseline (A 73,3 / 32 · B 80 / 42): **klar schlechter**, nicht knapp — und zwar in
+beiden Betriebsarten. Belegkraft: n=1, ab Phase 3 aus einem gemeinsamen Phase-2-Checkpoint.
 
 ## Bewertung
 

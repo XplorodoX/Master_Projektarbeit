@@ -40,8 +40,17 @@ Vier zusätzliche Seeds: `models/ppo_lstm_curriculum_v12_s{4,5,6,7}`, Logs
    Kurven — laut [[batch-size-8]]-Lehre also **nicht** vorschnell bewerten. Aber falls sie so
    enden, sinkt der n=7-Schnitt gegenüber n=3 spürbar.
 
+⚠️ **Dritter Punkt, gefunden beim Faktencheck 17.07.:** `v12_s4/config.json` trägt
+`_git_commit = 3c8fa26-dirty`, die Läufe s1–s3 entstanden auf ~`97ab30d`. **Ein n=7-Mittel mischt
+damit zwei Code-Stände**, einen davon mit uncommitteten Änderungen. Entwarnung ist wahrscheinlich,
+aber sie muss *ausgesprochen* werden: Die beiden offenen Änderungen vom 15.07. betreffen
+`launcher_gui.py` und `render_engine.cpp` — beides **Client-Dateien**, die laut Build-Graph nicht in
+`stoneforge_sim.so` landen ([[cpp-core]]). Vor der n=7-Aggregation kurz verifizieren und im
+CHANGELOG festhalten, sonst ist es eine unbelegte Annahme.
+
 **Nächster Schritt nach Abschluss:** Standard-Eval A+B (Cap 4000, det+stoch) auf alle 7 Seeds,
-Mittel ± Std mit `ddof=1`, dann CHANGELOG + Doku aktualisieren.
+Mittel ± Std — dabei **`ddof` festlegen und die n=3-Tabelle nachziehen** (die berichteten ±Werte
+sind `ddof=0`, siehe [[eval-protokoll]]). Dann CHANGELOG + Doku aktualisieren.
 
 ## ⚠️ Folge für die Doku, wenn n=7 fertig ist
 
@@ -59,9 +68,15 @@ und berichtet A ehrlich mit Streuung. Vorher überlegen, nicht hinterher.
 
 ## Offen
 
-- **[[testset-leakage]] (P0.1)** — bekannt, nicht behoben. Im Methodikteil offen benennen.
+- **`ddof` vereinheitlichen** und die n=3-Tabelle nachziehen → [[eval-protokoll]].
+- **Literatur-Korrekturen in die Doku ziehen** (Faktencheck 17.07., siehe [[faktencheck-2026-07-17]]):
+  [[ng-1999]] beim PBRS-Abschnitt nachtragen; den Ausblick "strukturierter Speicher" abschwächen;
+  prüfen, ob die Doku die Pineau-50→75-%-Zahl oder die "512-optimal"-Studie übernommen hat.
 - **Doku-Feinschliff** — inhaltlich rund (25 S., kompiliert exit 0), fehlt: eigene Durchsicht.
-- **Optional:** Bootstrap-95%-CIs statt ±Std ([[reproduzierbarkeit]]).
+- **Code-Stand-Mix bei n=7** verifizieren (siehe oben).
+
+Nicht mehr offen: Das **Testset-Leakage ist seit 11.06. behoben** ([[testset-leakage]]) und die
+**Bootstrap-CIs sind längst in der Doku** — beides stand hier fälschlich als offen.
 
 ## Erledigt (15.07.)
 
