@@ -1,0 +1,27 @@
+{
+  "phase1": {
+    "phase": 1,
+    "label": "Phase 1 (exit=5–12)",
+    "best_sr": 0.94,
+    "target_sr": 0.85,
+    "exit_range": "5-12",
+    "swarm_pool": {
+      "pool_size": 159,
+      "total_added": 159,
+      "total_sampled": 92
+    }
+  },
+  "_saved_at": "2026-07-16 13:10:54",
+  "phase2": {
+    "phase": 2,
+    "label": "Phase 2 (exit=12–25)",
+    "best_sr": 0.84,
+    "target_sr": 0.7,
+    "exit_range": "12-25",
+    "swarm_pool": {
+      "pool_size": 130,
+      "total_added": 289,
+      "total_sampled": 174
+    }
+  }
+}

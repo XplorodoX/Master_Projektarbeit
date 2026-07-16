@@ -2,6 +2,93 @@
 
 ---
 
+## v2026-07-15 — Branch-Merge nach main, zwei Client-Bugs gefixt, v12-Eval unabhängig reproduziert
+
+**Kontext:** `vps/lstm-curriculum-v2` wurde via PR #8 nach `main` gemergt (Merge-Commit `3c8fa26`).
+`main` und der RL-Branch waren in beide Richtungen divergiert; der Merge lief konfliktfrei
+(nur `CHANGELOG.md` und `scripts/launcher_gui.py` von beiden Seiten berührt, automatisch gemergt).
+
+#### Befund 1 — Spieländerungen berühren das RL-Env NICHT (Frage geklärt, kein Handlungsbedarf)
+**Anlass:** Nach den Client-Commits (`df0880f` tiles, `cf6890c` debug menu, `9326fec` invtext,
+`44936aa` structures) stand die Frage, ob trainierte Modelle noch gültig sind.
+
+**Nachweis über den Build-Graph (nicht nur Code-Lesen):**
+`stoneforge_sim.so` (RL-Binding) = `src/python/py_module.cpp` + `stoneforge_core`
+(`game_config`/`item`/`object`/`recipe`/`world`/`simulation`). `render_engine.cpp` und
+`render_ui.cpp` gehören ausschließlich zu `stoneforge_client` — zwei getrennte Binaries.
+Alle vier Spiel-Commits haben **nur** diese beiden Client-Dateien angefasst.
+`44936aa "structures"` ist trotz des Namens reines Rendering, **keine** Weltgenerierung.
+
+**Ergebnis:** Die Spieländerungen können das RL-Env technisch nicht erreichen. Modelle bleiben gültig.
+
+**Wichtige Abgrenzung:** Der real existierende Ergebnis-Bruch stammt NICHT vom Spiel, sondern aus
+`9a6b95d` (07.07., RL-Branch): Exit-Platzierung Luftlinie → BFS-Pfadlänge. Derselbe Seed erzeugt
+seitdem eine andere Welt. Die historischen 86 % (v2, Juni) sind gegen das alte Env gemessen und
+**nicht** mit v12-Zahlen vergleichbar (bereits als Env-v11-Breaking-Change dokumentiert).
+Legacy-Gegenprobe `ppo_lstm_curriculum` (231-dim) gegen Env v11: **68 % stoch / 18 % det** —
+kein Regressionsschaden, anderes Testset.
+
+#### Befund 2 — v12-Eval unabhängig reproduziert (bestätigt v2026-07-08)
+Neu gemessen am 15.07. auf denselben `best_model.zip`, Cap 4000:
+
+| Lauf | A stoch (08.07. → 15.07.) | A det | B stoch (08.07. → 15.07.) | B det (08.07. → 15.07.) |
+|------|---------------------------|-------|---------------------------|-------------------------|
+| Seed 1 | 64 % → 62 % | 38 % → **38 %** | 72 % → 72 % | 46 % → 44 % |
+| Seed 2 | 76 % → 76 % | 26 % → **26 %** | 80 % → 76 % | 44 % → 42 % |
+| Seed 3 | 80 % → 80 % | 32 % → **32 %** | 88 % → 84 % | 36 % → 34 % |
+| **Mittel ± Std** | 73,3 ± 6,8 → **72,7 ± 9,5** | 32,0 → **32,0 ± 6,0** | 80,0 ± 6,5 → **77,3 ± 6,1** | 42,0 → **40,0 ± 5,3** |
+
+**A det reproduziert exakt** (38/26/32) — wie bei deterministischer Eval zu erwarten. Stochastische
+Werte weichen im Sampling-Rauschen ab. **Offene Kleinigkeit:** B det liegt durchgängig exakt
+1 Seed (2 pp) niedriger als am 08.07.; bei deterministischer Eval sollte das exakt reproduzieren.
+Ursache ungeklärt — Verdacht: prozessglobale WorldGen-Config (bekannter Fallstrick) bzw.
+Env-Instanziierung einmal außerhalb vs. je Lauf. Für die Zielaussage irrelevant, für die
+Reproduzierbarkeits-Sektion aber erwähnenswert.
+
+**Statistik-Korrektur:** Std ist durchgehend Stichproben-Std (`ddof=1`, n=3). Zielaussage
+Testset A bleibt: Abstand zum Ziel (2,7 pp) < Streuung (9,5 pp) → bei n=3 **nicht** als
+„robust über 70 %" formulieren. Deshalb Aufstockung auf mehr Seeds (siehe unten).
+
+#### Änderung 1 — Launcher-IndentationError gefixt
+**Datei:** `scripts/launcher_gui.py`
+**Problem:** `python scripts/launcher_gui.py` (Haupteinstiegspunkt laut CLAUDE.md) startete seit
+`44936aa` (23.06.2026) **gar nicht** — `IndentationError` in `_build_section_play()`. Der Commit
+hatte `opt.columnconfigure(...)` mit 16 statt 8 Leerzeichen neu eingefügt und `ttk.Entry(...)`
+mit verschoben. Der Fehler lag ~3 Wochen unbemerkt auf `main`.
+**Lösung:** Statement-Einrückung auf die korrekten 8 Leerzeichen zurückgesetzt, Fortsetzungszeilen
+mit ausgerichtet. Die inhaltliche Absicht von `44936aa` (columnconfigure ergänzen, `width=10`)
+bleibt erhalten.
+
+| Zeile | vorher | nachher | Begründung |
+|-------|--------|---------|------------|
+| `opt.columnconfigure(1, ...)` | 16 Spaces | 8 Spaces | Statement-Ebene der Methode |
+| `ttk.Entry(...)` | 16 Spaces | 8 Spaces | dito; Fortsetzung auf 12 |
+
+**Validierung:** `ast.parse` fehlerfrei; GUI real instanziiert (`App()` + `update_idletasks`),
+Widget-Baum baut vollständig auf, Seed-Feld liefert 42. Kein `mainloop` nötig für den Nachweis.
+
+#### Änderung 2 — raylib-6.0-API-Bruch im Client gefixt
+**Datei:** `src/client/render_engine.cpp` (3 Aufrufstellen: 942, 1606, 2367)
+**Problem:** `cmake --build build` brach mit `no matching function for call to 'DrawCircleGradient'`
+ab — `stoneforge_client` ließ sich nicht bauen. Ursache: installiert ist **raylib 6.0** (Homebrew),
+der Code ist gegen die raylib-5.x-Signatur geschrieben.
+
+| | Signatur |
+|---|---|
+| raylib 5.x (Code-Annahme) | `DrawCircleGradient(int centerX, int centerY, float radius, Color, Color)` |
+| raylib 6.0 (installiert) | `DrawCircleGradient(Vector2 center, float radius, Color, Color)` |
+
+**Lösung:** Die beiden `int`-Koordinaten an allen 3 Stellen zu `Vector2{(float)x, (float)y}`
+zusammengefasst.
+**Validierung:** `cmake --build build -j` läuft komplett durch (alle 4 Targets inkl.
+`stoneforge_client`, Binary 594 KB). Verbleibende Warnungen (unused variables) sind vorbestehend.
+RL-Binding nach Rebuild unverändert intakt (Obs 229, `Discrete(4)`).
+
+**Hinweis:** Der Fix bindet den Client jetzt an raylib ≥ 6.0. Wer auf 5.x baut, braucht ein
+Versions-Switch. Für die Reproduzierbarkeits-Sektion: **raylib-Version pinnen.**
+
+---
+
 ## v2026-07-08 — Tile-Viewport bis über den Fensterrand
 
 ### v2026-07-08.A — Sicht-Radius erweitert

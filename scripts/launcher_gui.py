@@ -1028,20 +1028,20 @@ class App(tk.Tk):
 
         opt = tk.Frame(card, bg=BG3)
         opt.pack(fill="x", padx=14, pady=(0, 8))
-                opt.columnconfigure(1, weight=1)
+        opt.columnconfigure(1, weight=1)
         tk.Label(opt, text="Seed:", bg=BG3, fg=TEXT,
-                                 font=("Helvetica", 10)).grid(row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 6))
+                 font=("Helvetica", 10)).grid(row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 6))
         self._play_seed = tk.IntVar(value=42)
-                ttk.Entry(opt, textvariable=self._play_seed, width=10).grid(
-                        row=0, column=1, sticky="w", pady=(0, 6)
-                )
+        ttk.Entry(opt, textvariable=self._play_seed, width=10).grid(
+            row=0, column=1, sticky="w", pady=(0, 6)
+        )
         tk.Label(opt, text="  Geschwindigkeit:", bg=BG3, fg=TEXT,
-                                 font=("Helvetica", 10)).grid(row=1, column=0, sticky="w", padx=(0, 8))
+                 font=("Helvetica", 10)).grid(row=1, column=0, sticky="w", padx=(0, 8))
         self._play_speed = tk.DoubleVar(value=1.0)
         tk.Spinbox(opt, textvariable=self._play_speed, from_=0.1, to=10.0,
                    increment=0.5, width=5, bg=BG3, fg=TEXT, relief="flat",
                    buttonbackground=BG4, insertbackground=TEXT,
-                                     ).grid(row=1, column=1, sticky="w")
+                   ).grid(row=1, column=1, sticky="w")
 
         self._sep(card)
 

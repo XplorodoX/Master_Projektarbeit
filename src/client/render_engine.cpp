@@ -940,8 +940,7 @@ void drawStyledTile(
     const int cx = px + tileSize / 2;
     const int cy = py + tileSize / 2;
     DrawCircleGradient(
-        cx,
-        cy,
+        Vector2{static_cast<float>(cx), static_cast<float>(cy)},
         static_cast<float>(tileSize) * (0.45F + pulse * 0.12F),
         Fade(Color{151, 255, 219, 220}, 0.45F + pulse * 0.4F),
         Fade(Color{151, 255, 219, 0}, 0.0F)
@@ -1603,7 +1602,8 @@ void renderAiView(
 
     const int ex = centerX + (exit.x - player.x) * tileSize + tileSize / 2;
     const int ey = centerY + (exit.y - player.y) * tileSize + tileSize / 2;
-    DrawCircleGradient(ex, ey, static_cast<float>(tileSize) * 1.2F,
+    DrawCircleGradient(Vector2{static_cast<float>(ex), static_cast<float>(ey)},
+                       static_cast<float>(tileSize) * 1.2F,
                        Fade(Color{90, 255, 180, 255}, 0.4F), Fade(Color{90, 255, 180, 0}, 0.0F));
 
     const auto visibleMobs = sim.mobsInRect(
@@ -2364,7 +2364,9 @@ int stoneforge::client::RenderEngine::run(bool aiMode, bool aiDualMode, std::uin
 
         const int ex = centerX + (exit.x - player.x) * tileSize + tileSize / 2;
         const int ey = centerY + (exit.y - player.y) * tileSize + tileSize / 2;
-        DrawCircleGradient(ex, ey, static_cast<float>(tileSize) * 1.2F, Fade(Color{90, 255, 180, 255}, 0.4F), Fade(Color{90, 255, 180, 0}, 0.0F));
+        DrawCircleGradient(Vector2{static_cast<float>(ex), static_cast<float>(ey)},
+                           static_cast<float>(tileSize) * 1.2F,
+                           Fade(Color{90, 255, 180, 255}, 0.4F), Fade(Color{90, 255, 180, 0}, 0.0F));
 
         int mobIdx = 0;
         const auto visibleMobs = sim.mobsInRect(
