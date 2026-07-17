@@ -12,12 +12,30 @@ updated: 2026-07-17
 Implementiert in [[train-curriculum]]. Der Agent lernt nicht direkt auf Exit-Distanz 35–45 — das ist zu schwer für einen frischen Agenten
 (Ablation B kollabiert auf 0 %). Stattdessen vier Phasen mit wachsender Distanz:
 
-| Phase | Exit-Distanz | Gate |
-|-------|--------------|------|
-| 1 | 5–12 | SR-Ziel erreicht (85 %) |
-| 2 | 12–25 | SR-Ziel erreicht |
-| 3 | 25–45 | SR-Ziel erreicht |
-| 4 | Greedy Fine-Tune | `ent_coef` → 0.0001 |
+Exakte Werte aus `PHASES` in `train_curriculum.py:52–67` (verifiziert 17.07.2026):
+
+| Phase | Exit-Distanz (Train) | Eval auf | Budget | Gate | **Gate-Metrik** |
+|-------|---------------------|----------|--------|------|-----------------|
+| 1 | 5–12 | 5–12 | 500 k | SR ≥ 85 % | stochastisch |
+| 2 | 12–25 | 12–25 | 500 k | SR ≥ 70 % | stochastisch |
+| 3 | 25–45 | **35–45** | 1 M | SR ≥ 70 % | **deterministisch** |
+| 4 (Greedy Fine-Tune) | 25–45 | 35–45 | 200 k | SR ≥ 60 % | **deterministisch** |
+
+Zwei Details, die man leicht übersieht:
+
+- **Der Gate-Wechsel stoch → det ab Phase 3** ist Absicht: In Phase 1/2 ist die Policy mit
+  `ent_coef=0.05` bewusst stochastisch, ein det-Gate trüge dort kein Signal; ab Phase 3 (nach dem
+  Annealing-Start) ist det die Zielmetrik (Kommentar `train_curriculum.py:44–46`).
+- **Phase 3 trainiert auf 25–45, evaluiert aber nur auf 35–45** — dem Zielbereich.
+
+**Entropie-Annealing in Phase 3:** linear **0.05 → 0.001 über 500 k Steps**
+(`EntropyAnnealingCallback`, Aufruf Z. 457 mit `start_ent=RPPO_KWARGS["ent_coef"]`). Phase 4 setzt
+dann hart `ent_coef = 0.0001`.
+
+> ⚠️ Der **Docstring** des Callbacks (Z. 240) behauptet "from 0.01 to 0.001" — falsch, der Aufruf
+> übergibt 0.05. Der Kommentar an der Aufrufstelle (Z. 454–456) erklärt sogar, warum 0.05 sein
+> MUSS (sonst springt die Entropie beim Phasenwechsel abrupt). Dieselbe falsche 0.01 steht auch
+> als Formel im Aalen-Dokument → [[doku-worldgen-veraltet]].
 
 ## Leistungsbasiert, nicht zeitbasiert
 

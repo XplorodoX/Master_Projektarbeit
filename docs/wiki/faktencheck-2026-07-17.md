@@ -45,6 +45,9 @@ existiert — sie wurde nur falsch gelesen.
    Cumulative Return, Sharpe Ratio). Für Navigations-RL nicht zitierfähig → [[literatur-lstm-groesse]].
 4. **[[ng-1999]] fehlte** — Policy-Invarianz des PBRS wurde ohne Quelle behauptet, obwohl das die
    methodische Rechtfertigung der Reward-Konstruktion trägt.
+   > ⚠️ **Nachtrag:** Die Lücke war **allein im Wiki**. Die Arbeit zitiert Ng korrekt
+   > (`references.bib` Z. 140, Tex Z. 176 + 291). Die erste Fassung behauptete das Gegenteil —
+   > korrigiert, siehe [[doku-check-2026-07-17]].
 
 ## Weitere Korrekturen
 
@@ -88,3 +91,9 @@ mitgeprüft), Zuspitzungen ohne den Caveat des CHANGELOGs, und **veraltete Stän
 **Regel daraus:** Notizen sind Hypothesen, nicht Fakten. Für das Wiki gilt die Reihenfolge
 **Code → CHANGELOG → Doku → Primärquelle** — Memories nur als Fundstelle, nie als Beleg.
 Bei jeder übernommenen Zahl gehört die **Domäne der Quelle** mit in die Notiz.
+
+## Folgeprüfung: sind die Fehler in der Arbeit gelandet?
+
+**Nein, fast keiner** — die Doku ist sauberer als das Wiki es war. Vollständiges Ergebnis:
+[[doku-check-2026-07-17]]. Eine Pflichtkorrektur bleibt (Fehlzuschreibung an [[pleines-2022]],
+Tex Z. 696–697).

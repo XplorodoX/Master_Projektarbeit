@@ -14,7 +14,8 @@ Deutung des [[det-stoch-gap]], die Architekturentscheidung für ein LSTM — hä
 
 ## Die Kriterien sind erfüllt
 
-- Der Agent sieht **nur 15×15 Tiles** (`observationRadius=7`) → kein Vollzustand.
+- Der Agent sieht **nur 15×15 Tiles** (`observationRadius=7`) → kein Vollzustand. Die Welt selbst
+  ist theoretisch unendlich und wird lazy erzeugt ([[stoneforge-spiel]]).
 - Die **Exit-Position ist nicht sichtbar**, nur Richtungsfeatures (`exitDx`/`exitDy`) plus das
   Potentialfeld aus [[pbrs-reward-shaping]].
 - **Wände verbergen Pfade** → die Karte ist unvollständig, Sackgassen sind nicht vorhersehbar.

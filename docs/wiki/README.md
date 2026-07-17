@@ -9,6 +9,7 @@ Negativergebnisse sind hier ein Kernbeitrag, kein Abfall.
 
 ## Einstieg in 5 Minuten
 
+0. [Stoneforge — das Spiel](concepts/stoneforge-spiel.md) + [Weltgenerierung](components/weltgenerierung.md) — worauf alles aufsetzt
 1. [Problemstellung & Zielkriterium](concepts/zielkriterium.md) — was gilt als Erfolg
 2. [Stoneforge als POMDP](concepts/pomdp-charakter.md) — die zentrale These der Arbeit
 3. [Det/Stoch-Gap](concepts/det-stoch-gap.md) — der Diskussionskern
@@ -18,10 +19,13 @@ Negativergebnisse sind hier ein Kernbeitrag, kein Abfall.
 
 ## Karte
 
+Das Wiki hat zwei Hälften: **das Spiel** (Stoneforge selbst, Weltgenerierung, Tiles, Biome) und
+**das RL** (Agent, Training, Evaluation, Befunde). Wer die zweite verstehen will, braucht die erste.
+
 | Sammlung | Was drin steht |
 |----------|----------------|
-| [concepts/](concepts/) | POMDP, Det/Stoch-Gap, PBRS, Curriculum, Observation Space, Recurrent PPO, Zielkriterium |
-| [components/](components/) | Gym-Env, C++-Core, Trainingsskript, Eval-Protokoll, Swarm-Pool, Live-Map, Demo |
+| [concepts/](concepts/) | **Spiel:** Stoneforge, Tile-Typen, Biome · **RL:** POMDP, Det/Stoch-Gap, PBRS, Curriculum, Observation Space, Recurrent PPO, Zielkriterium |
+| [components/](components/) | **Spiel:** Weltgenerierung, Exit-Platzierung, C++-Core · **RL:** Gym-Env, Trainingsskript, Eval-Protokoll, Swarm-Pool, Demo |
 | [experiments/](experiments/) | Ablation, v2, v7–v9-Rootcause, v11-Env-Bruch, v12, E1/E2/E3, Temperatur-Sweep |
 | [decisions/](decisions/) | batch_size=8, stochastische Eval, Eval-Cap 4000, kein größeres LSTM |
 | [pitfalls/](pitfalls/) | Obs-Shape-Legacy, prozessglobale Config, Rebuild-Pflicht, nohup, Testset-Leakage |

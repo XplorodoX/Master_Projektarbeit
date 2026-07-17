@@ -5,9 +5,16 @@ description: >
   Wissensbasis zur Master-Projektarbeit "RL-Agent zur Exit-Suche in prozedural
   generierten 2D-Welten". Enthält Konzepte, Systemkomponenten, Experimenthistorie,
   getroffene Entscheidungen, bekannte Fallstricke und Literaturbelege.
-version: "1.1.0"
+version: "1.2.0"
 updated: 2026-07-17
 changelog:
+  - version: "1.2.0"
+    date: 2026-07-17
+    note: >
+      Spiel-Hälfte ergänzt (fehlte komplett): Stoneforge selbst, prozedurale Weltgenerierung,
+      Tile-Typen, Biome, Exit-Platzierung. Alle Angaben gegen world.cpp/types.hpp/game_config.json
+      verifiziert. Dabei Abweichungen im Aalen-Doku-Kapitel 4 gefunden — siehe
+      pitfalls/doku-worldgen-veraltet.md (u. a. "Garantierter Pfad AKTIVIERT" ist falsch).
   - version: "1.1.0"
     date: 2026-07-17
     note: >
@@ -27,10 +34,14 @@ entrypoint: README.md
 collections:
   - id: concepts
     path: concepts/
-    description: Domänen- und RL-Konzepte, die das Projekt trägt
+    description: >
+      Konzepte, die das Projekt tragen — Spielseite (Stoneforge, Tile-Typen, Biome)
+      und RL-Seite (POMDP, Det/Stoch-Gap, PBRS, Curriculum, Observation Space)
   - id: components
     path: components/
-    description: Systemkomponenten (Code, Env, Skripte, Infrastruktur)
+    description: >
+      Systemkomponenten — Spielseite (Weltgenerierung, Exit-Platzierung, C++-Core)
+      und RL-Seite (Env, Trainingsskript, Eval, Swarm, Demo)
   - id: experiments
     path: experiments/
     description: Durchgeführte Experimente mit Ergebnis und Bewertung

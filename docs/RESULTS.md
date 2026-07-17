@@ -1,6 +1,6 @@
 # Stoneforge RL — Ergebnistabelle
 
-*Automatisch generiert am 09.07.2026 — nicht manuell bearbeiten.*
+*Automatisch generiert am 17.07.2026 — nicht manuell bearbeiten.*
 *Quelle: `models/*/results.json` + `logs/eval_results/*.json`*
 
 Regenerieren: `python scripts/generate_results_table.py`
@@ -19,6 +19,10 @@ Regenerieren: `python scripts/generate_results_table.py`
 | ppo_lstm_curriculum_v12_s1 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%        | —              | 7h 48m 20s    | 07.07.2026 |
 | ppo_lstm_curriculum_v12_s2 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%        | —              | 7h 39m 50s    | 07.07.2026 |
 | ppo_lstm_curriculum_v12_s3 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%        | —              | 8h 32m 57s    | 07.07.2026 |
+| ppo_lstm_curriculum_v12_s4 | rppo | —         | 16     | —                 | —      | —            | —              | —             | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s5 | rppo | —         | 16     | —                 | —      | —            | —              | —             | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s6 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%        | —              | 29h 31m 52s   | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s7 | rppo | —         | 16     | —                 | —      | —            | —              | —             | 15.07.2026 |
 
 
 ---
@@ -243,5 +247,81 @@ Beste SR: 88.0% @ Step 499,840
 | 1,474,528 | 14.0% | 7/50    | Phase 4 (Greedy Fine-Tune) [det=14%|stoch=52%]      | 2026-07-08 04:07 |
 | 1,499,520 | 14.0% | 7/50    | Phase 4 (Greedy Fine-Tune) [det=14%|stoch=54%]      | 2026-07-08 04:11 |
 | 1,524,512 | 6.0%  | 3/50    | Phase 4 (Greedy Fine-Tune) [det=6%|stoch=8%]        | 2026-07-08 04:16 |
+
+
+**ppo_lstm_curriculum_v12_s4** — 77 Eval-Punkte,
+Beste SR: 94.0% @ Step 224,928
+
+*(Zeige letzte 10 von 77 Einträgen)*
+
+| Step      | SR    | Erfolge | Label                                                | Zeitstempel      |
+| --------- | ----- | ------- | ---------------------------------------------------- | ---------------- |
+| 1,424,544 | 8.0%  | 4/50    | Phase 3 (exit=25–45, eval 35–45) [det=8%|stoch=28%]  | 2026-07-17 00:34 |
+| 1,449,536 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=40%] | 2026-07-17 00:40 |
+| 1,474,528 | 18.0% | 9/50    | Phase 3 (exit=25–45, eval 35–45) [det=18%|stoch=54%] | 2026-07-17 00:47 |
+| 1,499,520 | 22.0% | 11/50   | Phase 3 (exit=25–45, eval 35–45) [det=22%|stoch=70%] | 2026-07-17 00:53 |
+| 1,524,512 | 6.0%  | 3/50    | Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=16%]  | 2026-07-17 00:59 |
+| 1,549,504 | 6.0%  | 3/50    | Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=8%]   | 2026-07-17 01:06 |
+| 1,574,496 | 40.0% | 20/50   | Phase 3 (exit=25–45, eval 35–45) [det=40%|stoch=82%] | 2026-07-17 01:12 |
+| 1,599,488 | 24.0% | 12/50   | Phase 3 (exit=25–45, eval 35–45) [det=24%|stoch=42%] | 2026-07-17 01:17 |
+| 1,624,480 | 18.0% | 9/50    | Phase 3 (exit=25–45, eval 35–45) [det=18%|stoch=56%] | 2026-07-17 01:23 |
+| 1,649,472 | 4.0%  | 2/50    | Phase 3 (exit=25–45, eval 35–45) [det=4%|stoch=32%]  | 2026-07-17 01:55 |
+
+
+**ppo_lstm_curriculum_v12_s5** — 76 Eval-Punkte,
+Beste SR: 72.0% @ Step 374,880
+
+*(Zeige letzte 10 von 76 Einträgen)*
+
+| Step      | SR    | Erfolge | Label                                                | Zeitstempel      |
+| --------- | ----- | ------- | ---------------------------------------------------- | ---------------- |
+| 1,149,632 | 18.0% | 9/50    | Phase 3 (exit=25–45, eval 35–45) [det=18%|stoch=24%] | 2026-07-17 00:38 |
+| 1,174,624 | 30.0% | 15/50   | Phase 3 (exit=25–45, eval 35–45) [det=30%|stoch=64%] | 2026-07-17 00:44 |
+| 1,199,616 | 8.0%  | 4/50    | Phase 3 (exit=25–45, eval 35–45) [det=8%|stoch=18%]  | 2026-07-17 00:50 |
+| 1,224,608 | 24.0% | 12/50   | Phase 3 (exit=25–45, eval 35–45) [det=24%|stoch=66%] | 2026-07-17 00:57 |
+| 1,249,600 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=38%] | 2026-07-17 01:04 |
+| 1,274,592 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=42%] | 2026-07-17 01:09 |
+| 1,299,584 | 30.0% | 15/50   | Phase 3 (exit=25–45, eval 35–45) [det=30%|stoch=62%] | 2026-07-17 01:16 |
+| 1,324,576 | 24.0% | 12/50   | Phase 3 (exit=25–45, eval 35–45) [det=24%|stoch=64%] | 2026-07-17 01:21 |
+| 1,349,568 | 32.0% | 16/50   | Phase 3 (exit=25–45, eval 35–45) [det=32%|stoch=62%] | 2026-07-17 01:27 |
+| 1,374,560 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=58%] | 2026-07-17 02:29 |
+
+
+**ppo_lstm_curriculum_v12_s6** — 78 Eval-Punkte,
+Beste SR: 88.0% @ Step 374,880
+
+*(Zeige letzte 10 von 78 Einträgen)*
+
+| Step      | SR    | Erfolge | Label                                                | Zeitstempel      |
+| --------- | ----- | ------- | ---------------------------------------------------- | ---------------- |
+| 1,349,568 | 28.0% | 14/50   | Phase 3 (exit=25–45, eval 35–45) [det=28%|stoch=54%] | 2026-07-17 00:35 |
+| 1,374,560 | 20.0% | 10/50   | Phase 3 (exit=25–45, eval 35–45) [det=20%|stoch=36%] | 2026-07-17 00:42 |
+| 1,224,608 | 30.0% | 15/50   | Phase 4 (Greedy Fine-Tune) [det=30%|stoch=54%]       | 2026-07-17 00:50 |
+| 1,249,600 | 24.0% | 12/50   | Phase 4 (Greedy Fine-Tune) [det=24%|stoch=56%]       | 2026-07-17 00:56 |
+| 1,274,592 | 6.0%  | 3/50    | Phase 4 (Greedy Fine-Tune) [det=6%|stoch=22%]        | 2026-07-17 01:02 |
+| 1,299,584 | 4.0%  | 2/50    | Phase 4 (Greedy Fine-Tune) [det=4%|stoch=6%]         | 2026-07-17 01:08 |
+| 1,324,576 | 34.0% | 17/50   | Phase 4 (Greedy Fine-Tune) [det=34%|stoch=56%]       | 2026-07-17 01:14 |
+| 1,349,568 | 20.0% | 10/50   | Phase 4 (Greedy Fine-Tune) [det=20%|stoch=44%]       | 2026-07-17 01:20 |
+| 1,374,560 | 36.0% | 18/50   | Phase 4 (Greedy Fine-Tune) [det=36%|stoch=58%]       | 2026-07-17 01:26 |
+| 1,399,552 | 24.0% | 12/50   | Phase 4 (Greedy Fine-Tune) [det=24%|stoch=62%]       | 2026-07-17 02:28 |
+
+
+**ppo_lstm_curriculum_v12_s7** — 77 Eval-Punkte,
+Beste SR: 90.0% @ Step 299,904
+
+*(Zeige letzte 10 von 77 Einträgen)*
+
+| Step      | SR    | Erfolge | Label                                                | Zeitstempel      |
+| --------- | ----- | ------- | ---------------------------------------------------- | ---------------- |
+| 1,399,552 | 10.0% | 5/50    | Phase 3 (exit=25–45, eval 35–45) [det=10%|stoch=20%] | 2026-07-17 00:36 |
+| 1,424,544 | 26.0% | 13/50   | Phase 3 (exit=25–45, eval 35–45) [det=26%|stoch=36%] | 2026-07-17 00:42 |
+| 1,449,536 | 6.0%  | 3/50    | Phase 3 (exit=25–45, eval 35–45) [det=6%|stoch=20%]  | 2026-07-17 00:49 |
+| 1,474,528 | 22.0% | 11/50   | Phase 3 (exit=25–45, eval 35–45) [det=22%|stoch=18%] | 2026-07-17 00:56 |
+| 1,499,520 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=14%] | 2026-07-17 01:02 |
+| 1,524,512 | 0.0%  | 0/50    | Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=4%]   | 2026-07-17 01:08 |
+| 1,549,504 | 12.0% | 6/50    | Phase 3 (exit=25–45, eval 35–45) [det=12%|stoch=26%] | 2026-07-17 01:14 |
+| 1,574,496 | 20.0% | 10/50   | Phase 3 (exit=25–45, eval 35–45) [det=20%|stoch=34%] | 2026-07-17 01:20 |
+| 1,599,488 | 24.0% | 12/50   | Phase 3 (exit=25–45, eval 35–45) [det=24%|stoch=42%] | 2026-07-17 01:26 |
+| 1,624,480 | 14.0% | 7/50    | Phase 3 (exit=25–45, eval 35–45) [det=14%|stoch=48%] | 2026-07-17 02:28 |
 
 

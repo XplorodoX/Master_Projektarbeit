@@ -69,9 +69,11 @@ und berichtet A ehrlich mit Streuung. Vorher überlegen, nicht hinterher.
 ## Offen
 
 - **`ddof` vereinheitlichen** und die n=3-Tabelle nachziehen → [[eval-protokoll]].
-- **Literatur-Korrekturen in die Doku ziehen** (Faktencheck 17.07., siehe [[faktencheck-2026-07-17]]):
-  [[ng-1999]] beim PBRS-Abschnitt nachtragen; den Ausblick "strukturierter Speicher" abschwächen;
-  prüfen, ob die Doku die Pineau-50→75-%-Zahl oder die "512-optimal"-Studie übernommen hat.
+- **Eine Doku-Korrektur (Pflicht):** `Projektdokumentation.tex` Z. 696–697 schreibt "bekannte
+  abnehmende Grenzerträge rekurrenter Netze" [[pleines-2022]] zu — das zeigt das Paper nicht.
+  Formulierungsvorschlag in [[doku-check-2026-07-17]]. Die übrigen Falschangaben aus dem
+  [[faktencheck-2026-07-17]] sind **nicht** in der Arbeit gelandet; [[ng-1999]] ist längst korrekt
+  zitiert.
 - **Doku-Feinschliff** — inhaltlich rund (25 S., kompiliert exit 0), fehlt: eigene Durchsicht.
 - **Code-Stand-Mix bei n=7** verifizieren (siehe oben).
 

@@ -15,9 +15,9 @@ CHANGELOG `v2026-07-06`, Commit `9a6b95d`.
 
 ## Was sich geändert hat
 
-1. **Exit-Platzierung nach BFS-Laufweg** statt Luftlinie. Vorher hieß "Exit-Distanz 35–45" real
-   ein Laufweg von **42–75** Feldern — die Aufgabe war unbemerkt schwerer als deklariert. Jetzt
-   heißt 35–45 auch 35–45.
+1. **Exit-Platzierung nach BFS-Laufweg** statt Luftlinie ([[exit-platzierung]]). Vorher hieß
+   "Exit-Distanz 35–45" real ein Laufweg von **42–75** Feldern — die Aufgabe war unbemerkt schwerer
+   als deklariert. Jetzt heißt 35–45 auch 35–45.
 2. **Wand-Penalty entfernt**, Loop-Penalty −0.15 → **−0.05** (Straf-Stacking entschärft,
    siehe [[pbrs-reward-shaping]]).
 3. **Tote Features raus:** Energie + Inventar aus der Observation (231 → **229**), nachdem
@@ -25,7 +25,8 @@ CHANGELOG `v2026-07-06`, Commit `9a6b95d`.
 4. **Config-Leck gefixt** → [[config-prozessglobal]]. Der Eval-Callback verschob still die
    Phase-3-Trainingsverteilung auf 35–45. Das lief lange unbemerkt mit.
 5. `forceGuaranteedPath` ist **redundant** geworden: Die BFS-Exit-Platzierung garantiert
-   Lösbarkeit von selbst.
+   Lösbarkeit von selbst. Der Manhattan-Carve ist seither abgeschaltet — was das Aalen-Dokument
+   falsch darstellt, siehe [[doku-worldgen-veraltet]].
 
 ## Die Konsequenz für die Arbeit
 

@@ -35,11 +35,10 @@ RL-Ergebnisse hat, kann sie hier ablegen.
 
 ## Was im Core steckt
 
-- **Weltgenerierung** (prozedural, seed-basiert)
-- **BFS** — Grundlage für [[pbrs-reward-shaping]] und die Exit-Platzierung
-- **Biom-Schwellwerte**: hartkodiert in `World::sampleBaseTile()` (`world.cpp`). **Nicht** über
-  `game_config.json` tunebar — die früheren cold/warm/moss-Keys waren tote Konfiguration und
-  wurden entfernt.
+- **Weltgenerierung** (prozedural, seed-basiert) → [[weltgenerierung]]
+- **BFS** — Grundlage für [[pbrs-reward-shaping]] und die [[exit-platzierung]]
+- **Biom-Schwellwerte**: hartkodiert, **nicht** über `game_config.json` tunebar → [[biome]]
+- **Das Spiel selbst** (Tiles, Mining, Inventar) → [[stoneforge-spiel]], [[tile-typen]]
 
 ## Fallstricke
 

@@ -22,27 +22,58 @@ ist der rote Faden des Kapitels.
 Alles hängt an einem initialen **Seed**. Damit eine unendliche Welt ohne Speicherung konsistent
 bleibt, wird jede Zelle direkt aus ihren Koordinaten berechnet statt gespeichert.
 
-**Hash-Funktion** `World::mix()` (Z. 113) — eine splitmix64-artige Bit-Mischung
-(Konstanten `0xbf58476d1ce4e5b9`, `0x94d049bb133111eb`).
+**Hash-Funktion** `World::mix()` (Z. 113) — das ist **exakt der splitmix64-Finalizer**
+(im Web verifiziert 17.07.2026): `x ^= x>>30; x *= 0xbf58476d1ce4e5b9; x ^= x>>27;
+x *= 0x94d049bb133111eb; x ^= x>>31`. Beide Konstanten und alle drei Shifts stimmen mit der
+Referenz überein; die Konstruktion selbst stammt ursprünglich aus dem 64-Bit-Finalizer von
+MurmurHash3.
+
+Wichtig für die Einordnung: Verwendet wird nur der **Finalizer als Koordinaten-Hash**, nicht
+splitmix64 als PRNG-*Strom* (es gibt keinen fortlaufenden State + `0x9e3779b97f4a7c15`-Increment).
+Das ist die korrekte Wahl — für eine unendliche Welt braucht man einen zustandslosen Hash
+`(x, y, salt) → Wert`, keinen Zufallsstrom.
 
 **`World::noise01(x, y, salt)`** (Z. 124) kombiniert Koordinaten, Welt-Seed und einen
-**funktionsspezifischen Salt** zu einem Pseudozufallswert in [0, 1]. Die Salts trennen die
-Domänen voneinander, damit Biom, Dichte, Erz und Bäume nicht korrelieren:
+**funktionsspezifischen Salt** zu einem Pseudozufallswert in [0, 1]. Auch hier sind die
+Multiplikatoren keine Zufallszahlen, sondern **die xxHash64-Primes** (Web-verifiziert 17.07.2026):
+`0x9e3779b185ebca87` = PRIME64_1 (für x), `0xc2b2ae3d27d4eb4f` = PRIME64_2 (für y),
+`0x165667b19e3779f9` = PRIME64_3 (für den Seed). Der Generator kombiniert also erprobte
+Mix-Konstanten aus zwei etablierten Hash-Familien (xxHash64-Primes zum Einmischen, splitmix64-
+Finalizer zum Aufrühren) — solide Wahl, keine Marke Eigenbau.
+
+Die Salts trennen die Domänen voneinander, damit Biom, Dichte, Erz und Bäume nicht korrelieren:
 
 ```json
 "noiseSalts": { "biome": 2882395322, "density": 270544960,
                 "ore": 2575857510, "tree": 1430532898 }
 ```
 
-## 2. Value Noise mit Smoothstep
+## 2. Value Noise mit Smoothstep — und nicht Perlin
 
-Für zusammenhängende Strukturen wird **Value Noise** auf Gitterzellen verwendet: Die vier Eckpunkte
-einer Zelle werden gesampelt und bilinear interpoliert. Die Glättung nutzt **Smoothstep**:
+Für zusammenhängende Strukturen wird **Value Noise** auf Gitterzellen verwendet (`sampleValue`,
+Z. ~141): Die vier Eckpunkte werden gesampelt und bilinear interpoliert. Die Glättung nutzt
+**Smoothstep** (= Hermite-Interpolation):
 
 $$S(t) = 3t^2 - 2t^3$$
 
-Im Code als `t * t * (3.0 - 2.0 * t)` (Z. ~136). Smoothstep hat an beiden Enden Ableitung null —
+Im Code als `t * t * (3.0 - 2.0 * t)` (Z. ~133). Smoothstep hat an beiden Enden Ableitung null —
 deshalb sieht man die Zellgrenzen nicht.
+
+> **Es ist definitiv Value Noise, nicht Perlin** (Code + Web-Abgleich 17.07.2026). Der Unterschied:
+> Value Noise legt **skalare Zufallswerte** auf die Gitterecken und interpoliert sie; Perlin
+> (Gradient Noise) legt **Gradientenvektoren** an die Ecken und interpoliert die **Skalarprodukte**
+> mit den Abstandsvektoren. Im Code steht:
+>
+> ```cpp
+> const double v00 = noise01(x0, y0, salt);   // skalarer Wert, kein Gradient
+> ...
+> return lerp(lerp(v00, v10, tx), lerp(v01, v11, tx), ty);
+> ```
+>
+> Vier Werte, zwei Lerps — kein Skalarprodukt, kein Gradient. **Value Noise.**
+>
+> Das Aalen-Dokument sagt korrekt "Value Noise" ✓. `docs/stoneforge_game_description.md` behauptet
+> **"Perlin-Noise"** ✗ — falsch, siehe [[doku-worldgen-veraltet]].
 
 ## 3. Domain Warping und fraktale Kombination
 
@@ -75,8 +106,31 @@ Der Cutoff 0,86 ist reines Balancing — er macht Seen selten. Wasser wird **nie
 gelegt (`isLakeAt`, Z. 320). Wichtig: Wasser ist eine **Maske**, kein Tile-Typ → [[tile-typen]].
 
 **Strukturen / Landmarken** — feste Wahrscheinlichkeit **P = 0,10 pro Chunk**
-(`kStructureChance`, Z. 220). Die Optik stammt aus handgemachten, biomspezifischen
-**5 × 5-ASCII-Matrizen** (Z. ~239). Nicht generiert, sondern gezeichnet.
+(`kStructureChance`, Z. 220). Die Form stammt aus handgemachten **5 × 5-ASCII-Matrizen**
+(Z. ~241–277), je eine pro Biom, per `switch(biomeTag)` gewählt. Nicht generiert, sondern
+gezeichnet. Platziert wird das Muster an einer gerauschten Position im Chunk (`maxOffset =
+kChunkSize − 5 = 3`), nur `#`-Zellen werden gesetzt.
+
+Die Standardform (vor dem `switch`) ist eine Raute:
+
+```
+..#..      #...#      ..#..
+.###.      .#.#.      .###.
+#####      #####      ##.##
+.###.      .###.      #...#
+..#..      #...#      #####
+Default    Grasland   Wald
+& Wüste
+```
+
+> ⚠️ **Präzisierung (17.07.2026):** "biomspezifisch" gilt für **sechs von sieben** Biomen. Die
+> **Wüste** (`case 2`) setzt ein Muster, das **byte-identisch mit dem Default-Fallback** ist — sie
+> hat als einziges Biom nie eine eigene Form bekommen. **Pyramiden gibt es nicht**; der String
+> "pyramid" kommt im gesamten Projekt nicht vor.
+>
+> Was der Client zeichnet, ist davon unabhängig: Gerendert wird über Sprites
+> (`SpriteId::StructureDesertA`/`B`, zwei Varianten je Biom). Die ASCII-Matrix bestimmt nur, **welche
+> Zellen** belegt sind — nicht, wie sie aussehen.
 
 ## 5. Exit-Platzierung — der wichtigste Schritt
 
