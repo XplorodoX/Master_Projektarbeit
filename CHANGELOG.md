@@ -2,6 +2,268 @@
 
 ---
 
+## v2026-07-18.4 — Struktur-Straffung „Variante B": Kriterienrevision in die Methodik, neuer Abschnitt „Iterative Modellverbesserung"
+
+**Kontext:** Externes Feedback schlug einen Voll-Umbau der Kapitelstruktur vor. Bewusst nur die
+risikoarme Teilmenge umgesetzt („Variante B"); Kapitel-4/6-Verschmelzung und DQN-Streichung
+wurden **verworfen** (Begründung: Referenz-Churn kurz vor Abgabe bzw. Wiederaufreißen der
+Baseline-Lücke aus v2026-07-18.2). Kompiliert exit 0, 30 S., keine undefinierten Referenzen.
+
+#### Änderung 1 — Kriterienrevision von §1.1 in die Methodik verschoben
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** §1.1 verteidigte die Metrik-Revision auf S. 2 mit POMDP-, v11- und
+Streuungs-Argumenten, die der Leser erst ab Kapitel 2 bzw. 5 verstehen kann („Verteidigung vor
+der Erklärung").
+**Lösung:** Die Zielsetzung behält die Kriterien plus eine **kompakte Offenlegung** (Revision,
+fixiert 08.06., Exposé-Kriterium wird mitberichtet und deutlich verfehlt) mit Vorwärtsverweis.
+Die vollständige Begründung (drei Gründe, Tabelle gegen die 90-%-Metrik, Projektziele-Absatz)
+steht jetzt als `\subsection{Revision des Erfolgskriteriums}` in der Methodik nach dem
+Evaluationsprotokoll — Label `sec:kriterienrevision` wandert mit, alle Verweise (Abstract,
+Related Work) bleiben gültig. **Wichtig:** Die Offenlegung selbst bleibt in §1 — sie ist die
+HARKing-Absicherung und darf nicht erst auf S. 15 kommen.
+
+#### Änderung 2 — Neuer Methodik-Abschnitt „Iterative Modellverbesserung" (`sec:iteration`)
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Die entscheidungsprägenden Befunde des Entwicklungsverlaufs (Anhang) waren im
+Hauptteil unsichtbar — die Methodik las sich, als sei die Konfiguration vom Himmel gefallen.
+**Lösung:** Halbseitiger Abschnitt zwischen Curriculum und Evaluationsprotokoll mit den drei
+Schlüsselbefunden inkl. Anhang-Verweisen: (1) Hyperparameter dominieren Features (ent_coef,
+Tab. Root-Cause), (2) Einzel-Snapshots validieren nicht (batch 64→8, EV 0,1→0,85),
+(3) das Eval-Protokoll ist Teil des Experiments (Cap-Artefakt 48 % vs. 86 %; Data-Leakage bis
+11.06.). Neue Labels: `sec:iteration`, `sec:batchsize`, `sec:ziele`.
+
+---
+
+## v2026-07-18.3 — Redaktionelle Politur (externes Feedback, selektiv umgesetzt)
+
+**Kontext:** Externes Redaktions-Feedback zur Doku; drei von vier Punkten umgesetzt, einer nur
+teilweise (Begründung unten). Keine inhaltlichen oder Zahlen-Änderungen; kompiliert exit 0, 29 S.
+
+1. **Zusammenfassung mit Aufhänger:** Neuer Einstieg über die Relevanzfrage (Generalisierung auf
+   ungesehene Umgebungen), dann Kernbefund der Ablation, *dann* die Zahlen. Das verfehlte
+   Testset-Kriterium bleibt bewusst prominent im ersten Absatzdrittel — die Redlichkeit ist die
+   Stärke der Arbeit; ein „Erfolgs-Framing", das sie abschwächt, wurde **nicht** übernommen.
+2. **POMDP-Vorwegnahme in den Grundlagen (§2.2):** Der Singh-1994-Satz (stochastische
+   gedächtnislose Politik kann jede deterministische übertreffen) steht jetzt schon im
+   Grundlagenkapitel — der Det/Stoch-Gap wird damit als *geprüfte Hypothese* eingeführt, nicht
+   als nachträgliche Erklärung.
+3. **Fazit umstrukturiert:** `\paragraph`-Köpfe (Ergebnis / Methodischer Beitrag / Inhaltlicher
+   Kernbeitrag / **Technische Leistung** (neu: C++-Engine, pybind11, Pipeline, Monitoring als
+   Voraussetzung der Root-Cause-Analysen) / **Einschränkungen (Threats to Validity)** / Ausblick).
+4. **Etappe 3 (Anhang) skimmbar:** Lead-ins `Symptom:` / `Root-Cause:` / `Ergebnis:` gefettet.
+   Übrige Etappen hatten bereits Bold-Struktur; Tabelle „Root-Cause" war bereits prägnant —
+   nicht angefasst.
+
+---
+
+## v2026-07-18.2 — Gutachter-Feedback: Related Work ausgebaut, Baseline-Lücke ausgewiesen, n=7-Lernkurven-Abbildung
+
+**Kontext:** Umsetzung von drei Punkten aus einem internen Gutachter-Review der Doku. Keine neuen
+Messungen; Doku kompiliert exit 0 (jetzt 29 S.).
+
+#### Änderung 1 — Baseline-Versprechen aufgelöst (DQN/A2C)
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Die Grundlagen kündigten DQN und A2C als „Baseline geführt" an, aber im
+Evaluationskapitel gab es keine einzige DQN/A2C-Zahl — ein unerfülltes Versprechen im eigenen Text.
+**Lösung:** (a) Ankündigungen aus den Grundlagen entfernt, stattdessen Verweis auf die Methodik.
+(b) Neuer Absatz „Algorithmenwahl" in § Methodik: der frühe DQN-Anlauf (Mai 2026, Q-Wert-Kollaps +
+Replay-Buffer konservierte einen später behobenen Reward-Fehler → Wechsel auf on-policy PPO,
+Quelle: CHANGELOG 16.05.). (c) Die fehlende quantifizierte DQN/A2C-Baseline auf v11 ist jetzt
+**explizit als Grenze (5) im Fazit** ausgewiesen statt stillschweigend offen.
+
+#### Änderung 2 — Related Work von ~½ auf ~1½ Seiten ausgebaut
+
+**Datei:** `docs/Projektdokumentation.tex` (§ Einordnung), `docs/references.bib`
+**Problem:** Nur drei Benchmark-Verweise; die Methoden-Literatur (Gedächtnis, Curriculum,
+Exploration), die die Arbeit verstreut nutzt, war nicht gebündelt eingeordnet.
+**Lösung:** Zwei neue Absätze: (a) *Gedächtnis in teilbeobachtbaren Umgebungen* — DRQN, R2D2
+(State-Handling wichtiger als Architektur), Pleines 2022, POPGym (GRU schlägt aufwändigere
+Modelle — stützt die eigene E3-Ablation), AMAGO-Verweis in den Ausblick. (b) *Curriculum und
+Exploration* — Bengio 2009, PLR (Seed-Pool als vereinfachte Variante), ICM/RND als
+Verallgemeinerung des eigenen zählbasierten Explorations-Bonus. Der bisherige Einzelabsatz zu PLR
+ging darin auf. **Neue BibTeX-Einträge:** `kapturowski2019r2d2`, `morad2023popgym`; die bisher
+unzitierten Einträge `togelius2011search`, `pathak2017icm`, `burda2018rnd` werden jetzt zitiert.
+
+#### Änderung 3 — Lernkurven-Abbildung für das Endergebnis (n=7)
+
+**Dateien:** `scripts/plot_v12_learning_curves.py` (neu), `docs/figures/fig_v12_lernkurven.{pdf,png}` (neu),
+`docs/Projektdokumentation.tex`
+**Problem:** Die einzige Lernkurve im Hauptteil (`fig:lernkurve`) zeigt den *historischen*
+Referenzlauf vor v11 — das Endergebnis (v12, n=7) hatte keine Trainingsverlaufs-Abbildung.
+**Lösung:** Neue Abbildung `fig:v12kurven` in § Endergebnis: 2×2-Panels je Curriculum-Phase,
+dünne Linien = stochastische SR der 7 Einzelläufe (Val-Seeds 6000–6049), dicke Linien =
+Ensemble-Mittel stoch. + det. (nur wo ≥4 Läufe Daten haben). Die alte Abbildung bleibt, ist aber
+in Referenz und Caption als historischer Referenzlauf (Bedingung C, prä-v11) gekennzeichnet.
+
+**Zwei Fallstricke, die der Plot-Code behandeln muss (für Reproduktion wichtig):**
+1. Das Feld `sr` in `eval_history.json` enthält die **Gating-Metrik der Phase** (stoch in P1/2,
+   **det** in P3/4) — det/stoch müssen aus dem Label geparst werden, sonst mischt man Metriken.
+2. Der Schrittzähler läuft je Phase weiter bzw. übernimmt beim Phasenwechsel den Stand des
+   geladenen Best-Checkpoints — je Panel wird auf „Schritte seit Phasenstart" normalisiert.
+   Eine **kumulative** Achse über alle Phasen wäre irreführend (SR scheint zu fallen, weil die
+   Phasen schwerer werden und die Läufe sie zu verschiedenen Zeitpunkten erreichen); deshalb
+   die Panel-Aufteilung.
+
+---
+
+## v2026-07-18 — Doku-Konsistenzpass: n=3-Reste beseitigt, ddof=1 vereinheitlicht
+
+**Kontext:** Abschluss-Review der Doku vor Abgabe. Keine neuen Messungen — reine
+Konsistenzkorrekturen an `docs/Projektdokumentation.tex` (kompiliert exit 0, PDF neu gebaut).
+
+#### Änderung 1 — n=3-Reste nach dem n=7-Umbau
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Der Umbau auf n=7 (v2026-07-17) hatte drei Stellen übersehen, die noch „drei Läufe"
+behaupteten — im Widerspruch zur n=7-Ergebnistabelle derselben Arbeit.
+
+| Stelle | vorher | nachher |
+|--------|--------|---------|
+| Evaluationsprotokoll (§ Methodik) | „drei unabhängige Läufe (Seeds 1–3) … Bootstrap-Konfidenzintervalle" | „sieben unabhängige Läufe … ddof=1, 95-%-CIs" |
+| Repro-Checkliste „Anzahl Läufe" | „drei unabhängige Seeds" | „sieben unabhängige Seeds" |
+| Repro-Checkliste „Zufallsquellen" | „Mittelung über drei Läufe" | „… sieben Läufe" |
+| Repro-Checkliste „Rechenaufwand" | „ca. 8 h (CPU)" | + Hinweis: Läufe 4–7 gedrosselt 29–36 h (zugeklappter Laptop), ohne Ergebnisrelevanz |
+| Titelseite | Datum „6. Juli 2026" | „18. Juli 2026" |
+
+#### Änderung 2 — ddof=1 durchgehend (schließt den offenen Befund aus [[eval-protokoll]])
+
+**Datei:** `docs/Projektdokumentation.tex` (§ Endergebnis, Absatz „Der Weg von n=3 zu n=7")
+**Problem:** Die im Text zitierte n=3-Zwischenauswertung stand mit `ddof=0` (A 73,3 ± 6,8 /
+B 80,0 ± 6,5), die n=7-Tabelle daneben mit `ddof=1` — zwei Rechenwege im selben Abschnitt.
+**Lösung:** n=3-Werte auf `ddof=1` umgerechnet: **A 73,3 ± 8,3 / B 80,0 ± 8,0** (Einzelwerte
+64/76/80 bzw. 72/80/88, nachgerechnet). Damit ist die gesamte Arbeit einheitlich `ddof=1`.
+
+#### Kein Handlungsbedarf mehr (Stichproben verifiziert)
+
+- **Pleines-Fehlzuschreibung** (doku-check-2026-07-17): Die Doku enthält bereits die korrigierte
+  Formulierung („Grenzen rekurrenter Politiken …, deren Gedächtnisanforderungen über reine
+  Kapazität hinausgehen") — die Pflichtkorrektur war schon umgesetzt.
+- **Code-Stand-Mix n=7:** bereits am 17.07. verifiziert (Alternativerklärung 2 in v2026-07-17).
+
+**Wiki nachgezogen:** `projekt-status` (Offen-Liste bereinigt), `eval-protokoll` (ddof-Befund →
+behoben), `v12-final` (Update-Notiz). **Ergebnis:** keine Messwerte geändert außer der
+ddof-Umrechnung; Aussagen der Arbeit unverändert.
+
+**Weiter offen:** eigene Durchsicht der Doku, Betreuer-Mail versenden, Hochschul-Formalia
+(Deckblatt, eidesstattliche Erklärung, Nachname „Laurin"), optional Bootstrap-CI für n=7.
+
+---
+
+## v2026-07-17 — Aufstockung auf n=7 abgeschlossen: **Zielkriterium A wird verfehlt** (65,7 % statt ≥ 70 %)
+
+**Setup:** Die vier Zusatzläufe `models/ppo_lstm_curriculum_v12_s{4,5,6,7}` (gestartet 15.07. 21:14)
+sind am 17.07. zwischen 09:25 und 09:32 komplett durchgelaufen (alle 4 Phasen, kein Absturz).
+Laufzeit 29,5–36,3 h statt der erwarteten 8–12 h — Ursache: **zugeklappter Laptop → gedrosselte CPU**.
+Ohne Ergebnisrelevanz (Training ist step-basiert, Curriculum leistungsbasiert).
+
+Standardisierter Eval auf allen 7 finalen `best_model.zip`: Testset A (7000–7049) + Holdout B
+(8000–8049), je 50 Seeds, exit 35–45, Cap 4000, det + stoch, LSTM-State korrekt geführt.
+
+#### Ergebnis (n=7)
+
+| Lauf | A stoch | A det | B stoch | B det |
+|------|---------|-------|---------|-------|
+| Seed 1 | 62 % | 38 % | 76 % | 46 % |
+| Seed 2 | 84 % | 26 % | 76 % | 44 % |
+| Seed 3 | 76 % | 32 % | 80 % | 36 % |
+| Seed 4 | 74 % | 40 % | 74 % | 38 % |
+| Seed 5 | 58 % | 20 % | 62 % | 34 % |
+| Seed 6 | 50 % | 20 % | 50 % | 14 % |
+| Seed 7 | 56 % | 28 % | 50 % | 16 % |
+| **Mittel ± Std (ddof=1)** | **65,7 ± 12,4** | **29,1 ± 8,0** | **66,9 ± 12,8** | **32,6 ± 12,7** |
+| 95 %-CI (t, df=6) | [54,2; 77,2] | — | [55,0; 78,7] | — |
+
+**Zielkriterien:** Testset A ≥ 70 %: **65,7 % ✗ VERFEHLT** (stochastisch). Holdout B ≥ 60 %:
+**66,9 % ✓** (stochastisch, aber CI reicht bis 55,0 — im Mittel erfüllt, nicht mit statistischer
+Sicherheit).
+
+⚠️ **Damit ist die bisherige Headline „beide Zielkriterien erfüllt" (n=3: A 73,3 / B 80,0) hinfällig.**
+Die Aufstockung hat den Mittelwert **gesenkt**, nicht stabilisiert: A 73,3 → 65,7, B 80,0 → 66,9.
+Der n=3-Wert war zu optimistisch — exakt das Risiko, das die Doku selbst benannt hatte
+(„das 95 %-CI [66,7; 80,0] schließt die 70 %-Schwelle ein — im Mittel, aber nicht mit statistischer
+Sicherheit übertroffen"). Genau dafür fordert Henderson et al. mehrere Seeds.
+
+#### Drei Alternativerklärungen geprüft und ALLE ausgeschlossen
+
+1. **Messfehler?** Nein. Das neu geschriebene Eval-Skript reproduziert **alle sechs det-Werte von
+   s1–s3 bitgenau** (A 38/26/32, B 46/44/36 — identisch mit v2026-07-08). Stoch weicht um 2–8 Punkte
+   ab = erwartetes Sampling-Rauschen.
+2. **Code-Stand?** Nein. s1–s3 liefen auf `~97ab30d`, s4–s7 auf `3c8fa26-dirty`.
+   `git diff 97ab30d 3c8fa26 -- src/core src/python src/include python/ assets/base/game_config.json
+   scripts/train_curriculum.py` ergibt **genau eine Datei: `python/doc_logger.py` (+22 Zeilen)** — die
+   `_git_commit()`-Stempelfunktion selbst. Simulation, Binding, Env, Trainingsskript und Config sind
+   **identisch**. Die übrigen Diffs (`launcher_gui.py`, `render_engine.cpp`, `render_ui.cpp`) sind
+   Client-Dateien und landen nicht in `stoneforge_sim.so`.
+3. **Umgebung?** Nein. `torch` (14.05.) und `sb3_contrib` (15.05.) im venv sind älter als **beide**
+   Lauf-Chargen; die `requirements.txt`-Pinnung vom 09.07. war reine Deklaration, kein Reinstall.
+
+**Fazit: Es ist Seed-Varianz.** s4 liegt mit 74 % mitten im s1–s3-Band; der Welch-Test s1–s3 vs.
+s4–s7 (74,0 vs. 59,5) ist mit **p = 0,149 nicht signifikant** — n ist schlicht zu klein für eine
+Aussage über einen Chargen-Unterschied. Die n=7-Zahlen sind damit belastbar und aggregierbar.
+
+#### Trainings-Evals der neuen Läufe (Val-Seeds 6000–6049, nicht A/B)
+
+| Lauf | Dauer | P1 | P2 | P3 (det) | P4 (det) |
+|------|-------|----|----|----------|----------|
+| s4 | 36h 12m | 0,94 | 0,84 | 0,40 | 0,42 |
+| s5 | 36h 18m | 0,72 | 0,70 | 0,32 | 0,28 |
+| s6 | 29h 32m | 0,82 | 0,88 | 0,38 | 0,36 |
+| s7 | 36h 13m | 0,90 | 0,76 | 0,32 | 0,26 |
+
+Die det-Werte (0,26–0,42) liegen im selben Band wie s1–s3 → **der Det/Stoch-Gap besteht auch bei
+n=7 unverändert**. Der Kernbeitrag der Arbeit (Gedächtnis schlägt Orakel; Gap als POMDP-Signatur)
+ist von der Höhe der SR unabhängig und bleibt.
+
+#### Doku auf n=7 umgeschrieben (17.07., kompiliert exit 0, 27 S.)
+
+1. **Headline-Zahlen** an allen 11 Stellen auf n=7 gezogen (Zusammenfassung, Ergebnistabelle,
+   Ablations-Caption, Fazit, Grenzen, Zeitleiste). `ddof=1` durchgehend, t-basierte CIs.
+   Die historischen 86 % (Ablation, Etappen-Narrativ) bleiben bewusst stehen.
+2. **Neuer Abschnitt „Revision des Erfolgskriteriums" (`sec:kriterienrevision`).** Anlass: Das
+   **Exposé setzt ≥ 90 % über 100 unbekannte Seeds** an — die Doku berichtete gegen 70/60 und nannte
+   diese „**vorab definiert**". Das war faktisch falsch und hätte als HARKing gelesen werden können
+   (Kriterien nach Ergebniskenntnis angepasst und als a priori dargestellt). Jetzt offengelegt und
+   begründet: (a) POMDP-Charakter bei Exposé-Erstellung unbekannt, (b) v11 deckte auf, dass
+   „35–45" real 42–75 Felder Laufweg hieß, (c) Streuung ±12 pp macht eine 90 %-Schwelle
+   unerreichbar. BibTeX `kerr1998harking` ergänzt, Label `sec:relatedwork` nachgetragen.
+3. **Bericht gegen die Exposé-Metrik selbst** ergänzt: A(50) + B(50) = exakt die geforderten
+   100 unbekannten Seeds → **66,3 % ± 12,1** (bester Lauf 80,0 %) gegen das 90 %-Ziel = **deutlich
+   verfehlt**. Bewusst mitgeführt, damit die Revision nicht wie das Austauschen eines unbequemen
+   Maßstabs wirkt. Ebenfalls festgehalten: Die 90 % standen unter *Reward Design und Evaluierung*,
+   nicht unter *Projektziele* — die Muss- und Nice-to-Have-Kriterien des Exposés sind **vollständig
+   erfüllt**.
+
+#### ⚠️ Literatur-Behauptung „25–53 % Success Rate" entfernt (unbelegbar)
+
+Die Doku behauptete, publizierte Zero-Shot-Ergebnisse auf prozeduralen Labyrinthen lägen bei
+**25–53 % Success Rate** (Verweis auf MiniGrid/Crafter/Procgen). Die Zahl hatte **keine Provenienz**
+und fiel bei der Prüfung durch:
+
+- **Procgen** berichtet **normalisierten Return** $(R-R_{min})/(R_{max}-R_{min})$, **keine Success Rate**.
+- **MiniGrid**: PPO-LSTM erreicht auf KeyCorridorS3R3 **100 %** — widerspricht der Spanne direkt.
+- **Crafter**: Achievements/Reward, keine Labyrinth-Erfolgsquote.
+
+Drei Benchmarks, drei Metriken, eine Zahl, die in keiner davon steht. Sie wäre nach dem verfehlten
+Zielkriterium fast zum **Hauptargument** geworden ("wir liegen über dem publizierten Spektrum") —
+und hätte an genau dieser Stelle gebrochen. **Ersetzt** durch einen Absatz, der die
+Nicht-Vergleichbarkeit explizit macht: Belastbar ist nur der Vergleich *innerhalb* der Arbeit
+(gleicher Generator, gleiche Metrik, gleiches Protokoll).
+
+#### Offene nächste Schritte
+
+1. **Betreuer informieren** — Mail-Entwurf in `docs/betreuer_mail_entwurf.md` (nicht versendet).
+   Die Exposé/Doku-Differenz findet ein Prüfer beim Nebeneinanderlegen in zwei Minuten.
+2. Bootstrap-CI für die n=7-Tabelle (aktuell t-basiert; die alte n=3-Tabelle hatte ein Bootstrap-CI).
+3. Eigene Durchsicht der umgeschriebenen Abschnitte.
+
+Eval-Skript: `scratchpad/final_eval_n7.py`. Prüfprotokolle: `docs/wiki/faktencheck-*.md`,
+`docs/wiki/doku-check-2026-07-17.md`.
+
+---
+
 ## v2026-07-15 — Branch-Merge nach main, zwei Client-Bugs gefixt, v12-Eval unabhängig reproduziert
 
 **Kontext:** `vps/lstm-curriculum-v2` wurde via PR #8 nach `main` gemergt (Merge-Commit `3c8fa26`).

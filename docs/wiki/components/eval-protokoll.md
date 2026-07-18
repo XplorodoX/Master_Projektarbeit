@@ -19,9 +19,14 @@ Jede berichtete Zahl entsteht so — Abweichungen machen Läufe unvergleichbar.
 | Exit-Distanz | 35–45 |
 | Episoden-Cap | **4000** (= Env-`maxSteps`) — siehe [[eval-cap-4000]] |
 | Modi | deterministisch **und** stochastisch, beide berichtet |
-| Aggregation | Mittelwert ± Std über die Läufe (⚠️ `ddof` uneinheitlich — siehe unten) |
+| Aggregation | Mittelwert ± Std über die Läufe, **`ddof=1`** (vereinheitlicht 18.07.2026) |
 
-## ⚠️ Offener Befund: ddof ist inkonsistent (gefunden 17.07.2026)
+## ✅ Behoben (18.07.2026): ddof war inkonsistent (gefunden 17.07.2026)
+
+**Erledigt:** Die Doku rechnet jetzt durchgehend `ddof=1` — die n=7-Tabelle (`tab:v12`) tat das
+schon, die im Text zitierte n=3-Zwischenauswertung wurde nachgezogen (A 73,3 ± 8,3 / B 80,0 ± 8,0
+statt ± 6,8 / ± 6,5). CHANGELOG `v2026-07-18`. Der ursprüngliche Befund bleibt unten als Protokoll
+stehen.
 
 Die berichteten v12-Zahlen verwenden **`ddof=0`** (Populations-Std), nicht `ddof=1`. Nachgerechnet
 aus den Einzelwerten des CHANGELOG:
@@ -46,8 +51,7 @@ Punkte, die Streuung ± 6,8 (ddof=0) oder ± 8,3 (ddof=1).
 Intervall die 70-%-Schwelle einschließt. Die inhaltliche Aussage ist also robust; die Inkonsistenz
 betrifft die ±Angabe daneben.
 
-**To-do:** Bei der n=7-Auswertung **einen** Weg festlegen (Empfehlung: `ddof=1`) und die
-n=3-Tabelle konsistent nachziehen. Siehe [[projekt-status]].
+**To-do (erledigt 18.07.):** `ddof=1` festgelegt, n=3-Textstellen in der Doku nachgezogen.
 
 A und B sind **disjunkt** und fest. Beide werden immer zusammen berichtet — dass B (77–80 %)
 regelmäßig **über** A (73 %) liegt, ist selbst ein Ergebnis: Die Seed-Auswahl erzeugt mehr Varianz

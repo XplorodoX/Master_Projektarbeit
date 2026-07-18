@@ -56,3 +56,33 @@ Die Schwelle ist task-spezifisch — das ist gerade der Punkt. Bei uns liegt sie
 Die alte Fassung entstand, weil eine Web-Recherche eine passend klingende Zahl fand und die
 Domäne nicht mitgeprüft wurde. **Bei jeder übernommenen Zahl gehört die Domäne der Quelle mit in
 die Notiz** — sonst wandert sie unbemerkt in die Arbeit.
+
+## Derselbe Fehler ein zweites Mal: die „25–53 %"-Spanne (17.07.2026)
+
+Die Doku behauptete: *"Publizierte Zero-Shot-Ergebnisse auf prozeduralen Labyrinthen liegen
+typischerweise bei 25–53 % Success Rate"* — mit Verweis auf MiniGrid, Crafter und Procgen. Die
+Zahl hatte **keine Provenienz** (kein Eintrag im CHANGELOG, keine konkrete Fundstelle) und fiel
+beim Faktencheck durch:
+
+| Zitierter Benchmark | Was er wirklich berichtet |
+|---|---|
+| **Procgen** | **normalisierten Return** $(R-R_{min})/(R_{max}-R_{min})$ in [0,1] — **keine Success Rate**. 0,25–0,53 normalisierter Return ≠ 25–53 % Erfolgsquote. |
+| **MiniGrid** | aufgabenspezifische Success Rate — PPO-LSTM erreicht auf KeyCorridorS3R3 **100 %**. Widerspricht der Spanne direkt. |
+| **Crafter** | Achievements/Reward, keine Labyrinth-Erfolgsquote. |
+
+Die Spanne mischte also **drei Benchmarks mit drei verschiedenen Metriken** zu einer Zahl, die in
+keiner der drei Quellen steht.
+
+**Besonders gefährlich war, dass sie fast tragend wurde:** Sie sollte als Hauptargument dienen
+("unser Wert liegt über dem publizierten Spektrum"), nachdem [[v12-final]] das Zielkriterium
+verfehlte. Ein Prüfer, der nachfragt, hätte die Verteidigung an ihrer wichtigsten Stelle
+zerlegt.
+
+**Ersetzt durch** einen Absatz, der die Nicht-Vergleichbarkeit **explizit macht** (§ Einordnung in
+verwandte Arbeiten): Unterschiedliche Metriken + unterschiedliche Sichtradien/Episodenlängen →
+eine Aussage "über/unter dem Stand der Technik" wäre Scheinpräzision. Belastbar ist nur der
+Vergleich **innerhalb** der Arbeit (Ablation, Gap-Experimente, eigene Kriterien) — gleicher
+Generator, gleiche Metrik, gleiches Protokoll.
+
+**Die verschärfte Regel:** Eine Zahl, die eine Verteidigung tragen soll, braucht eine
+Primärquelle mit Seitenzahl — nicht drei Benchmark-Zitate in der Nähe.

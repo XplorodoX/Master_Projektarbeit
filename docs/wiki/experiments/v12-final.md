@@ -11,10 +11,54 @@ updated: 2026-07-17
 
 # v12 — Endergebnis
 
-Drei Läufe (`models/ppo_lstm_curriculum_v12_s{1,2,3}`), Seeds 1–3, `batch_size=8`, alle vier
-Phasen über Nacht komplett durchgelaufen (7,7–8,5 h, kein Absturz). CHANGELOG `v2026-07-08`.
+**Sieben Läufe** (`models/ppo_lstm_curriculum_v12_s{1..7}`), `batch_size=8`, alle vier Phasen
+komplett durchgelaufen. s1–s3: 07./08.07. (7,7–8,5 h). s4–s7: 15.–17.07. (29,5–36,3 h, gedrosselt
+wegen zugeklapptem Laptop — ohne Ergebnisrelevanz).
 
-## Zahlen — Vorsicht, es gibt zwei Sätze
+## 🔴 Endstand n=7 (17.07.2026) — Ziel A wird VERFEHLT
+
+CHANGELOG `v2026-07-17`. **Das ist der maßgebliche Stand.** Die n=3-Zahlen darunter sind
+historisch.
+
+| Testset | stoch | 95-%-CI (t, df=6) | Ziel | erfüllt? |
+|---------|-------|-------------------|------|----------|
+| **A** (7000–7049) | **65,7 % ± 12,4** | [54,2; 77,2] | ≥ 70 % | **✗ NEIN** |
+| **B** (8000–8049) | **66,9 % ± 12,8** | [55,0; 78,7] | ≥ 60 % | ✓ ja |
+
+det: A **29,1 % ± 8,0** · B **32,6 % ± 12,7** (Std durchgehend `ddof=1`).
+
+Einzelwerte A stoch: 62 / 84 / 76 / 74 / 58 / 50 / 56 · B stoch: 76 / 76 / 80 / 74 / 62 / 50 / 50.
+
+**Die Aufstockung hat die Zahlen gesenkt, nicht stabilisiert:** A 73,3 → 65,7, B 80,0 → 66,9. Der
+n=3-Mittelwert war zu optimistisch. Von den vier Ziel/Modus-Kombinationen hält nur noch **B
+stochastisch** — und dessen CI reicht bis 55,0, also unter die Schwelle.
+
+**Das ist kein Betriebsunfall, sondern der Zweck der Übung.** Die Doku hatte das Risiko selbst
+benannt (CI [66,7; 80,0] schließt 70 % ein). [[henderson-2018]] fordert genau deshalb mehrere
+Seeds — hier hat die Forderung geliefert, was sie soll.
+
+## Drei Alternativerklärungen geprüft, alle ausgeschlossen
+
+| Verdacht | Ergebnis |
+|---|---|
+| **Messfehler** | ✗ Das neue Eval-Skript reproduziert **alle sechs det-Werte von s1–s3 bitgenau** (38/26/32, 46/44/36 = identisch mit dem 08.07.-Stand) |
+| **Code-Stand** (s1–s3 auf `~97ab30d`, s4–s7 auf `3c8fa26-dirty`) | ✗ `git diff` über `src/core src/python src/include python/ game_config.json train_curriculum.py` = **genau eine Datei**: `doc_logger.py` (+22 Z., die `_git_commit()`-Stempelfunktion). Simulation, Env, Trainingsskript **identisch**. Die übrigen Diffs sind Client-Dateien ([[cpp-core]]). |
+| **Umgebung** | ✗ `torch` (14.05.) und `sb3_contrib` (15.05.) im venv sind älter als **beide** Chargen; die `requirements.txt`-Pinnung vom 09.07. war Deklaration, kein Reinstall |
+
+**Es ist Seed-Varianz.** s4 liegt mit 74 % mitten im s1–s3-Band; Welch-Test s1–s3 (74,0) vs. s4–s7
+(59,5): **p = 0,149, nicht signifikant**. Die n=7-Zahlen sind belastbar.
+
+## Was bleibt — und was fällt
+
+**Fällt:** der Anspruch „beide Zielkriterien erfüllt".
+
+**Bleibt unberührt:** Der [[det-stoch-gap]] besteht bei n=7 unverändert (det 29,1/32,6, Trainings-Evals
+der neuen Läufe 0,26–0,42 = dasselbe Band wie s1–s3). Und der Kernbeitrag [[ablation-abc]]
+("Gedächtnis schlägt Orakel") hängt an der *Relation* der Bedingungen, nicht an der Höhe der SR.
+
+---
+
+## Historisch: n=3 (08.07.) — überholt, nicht mehr als Ergebnis berichten
 
 **Wie am 08.07. gemessen und in der Doku ausformuliert (n=3, Tab. `tab:v12`):**
 
@@ -27,6 +71,8 @@ Einzelläufe — A stoch: 64 / 76 / 80 · A det: 38 / 26 / 32 · B stoch: 72 / 8
 
 ⚠️ Diese ±Werte sind **`ddof=0`** (nachgerechnet 17.07.2026). Mit `ddof=1` — der bei n=3 korrekten
 Stichproben-Variante — wären es A ± 8,3 / B ± 8,0. Siehe [[eval-protokoll]].
+**Update 18.07.:** Die Doku zitiert die n=3-Zwischenauswertung jetzt durchgehend mit `ddof=1`
+(± 8,3 / ± 8,0); die ddof=0-Werte hier bleiben als historisches Protokoll stehen.
 
 **Nachmessung 15.07. gegen Env v11 (dieselben Modelle, unabhängig reproduziert, hier `ddof=1`):**
 A 72,7 % ± 9,5 stoch / 32,0 % ± 6,0 det · B 77,3 % ± 6,1 stoch / 40,0 % ± 5,3 det.

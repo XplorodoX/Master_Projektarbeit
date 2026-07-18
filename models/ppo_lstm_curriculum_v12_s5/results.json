@@ -11,7 +11,7 @@
       "total_sampled": 57
     }
   },
-  "_saved_at": "2026-07-17 07:21:21",
+  "_saved_at": "2026-07-17 09:32:39",
   "phase2": {
     "phase": 2,
     "label": "Phase 2 (exit=12–25)",
@@ -35,5 +35,72 @@
       "total_added": 363,
       "total_sampled": 264
     }
-  }
+  },
+  "phase4": {
+    "phase": 4,
+    "label": "Phase 4 (Greedy Fine-Tune)",
+    "best_sr": 0.28,
+    "target_sr": 0.6,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 43,
+      "total_added": 406,
+      "total_sampled": 297
+    }
+  },
+  "algo": "rppo",
+  "training_duration": "36h 18m 16s",
+  "phases": [
+    {
+      "phase": 1,
+      "label": "Phase 1 (exit=5–12)",
+      "best_sr": 0.72,
+      "target_sr": 0.85,
+      "exit_range": "5-12",
+      "swarm_pool": {
+        "pool_size": 92,
+        "total_added": 92,
+        "total_sampled": 57
+      }
+    },
+    {
+      "phase": 2,
+      "label": "Phase 2 (exit=12–25)",
+      "best_sr": 0.7,
+      "target_sr": 0.7,
+      "exit_range": "12-25",
+      "swarm_pool": {
+        "pool_size": 74,
+        "total_added": 166,
+        "total_sampled": 122
+      }
+    },
+    {
+      "phase": 3,
+      "label": "Phase 3 (exit=25–45, eval 35–45)",
+      "best_sr": 0.32,
+      "target_sr": 0.7,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 197,
+        "total_added": 363,
+        "total_sampled": 264
+      }
+    },
+    {
+      "phase": 4,
+      "label": "Phase 4 (Greedy Fine-Tune)",
+      "best_sr": 0.28,
+      "target_sr": 0.6,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 43,
+        "total_added": 406,
+        "total_sampled": 297
+      }
+    }
+  ],
+  "best_sr_testset_a": 0.72,
+  "exit_range": "5-45 (curriculum)",
+  "final_model": "models/ppo_lstm_curriculum_v12_s5/best_model.zip"
 }

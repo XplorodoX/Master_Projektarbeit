@@ -662,5 +662,45 @@
     "n": 50,
     "label": "Phase 4 (Greedy Fine-Tune) [det=14%|stoch=34%]",
     "timestamp": "2026-07-17 09:07:05"
+  },
+  {
+    "step": 924704,
+    "sr": 0.28,
+    "successes": 14,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=28%|stoch=62%]",
+    "timestamp": "2026-07-17 09:12:21"
+  },
+  {
+    "step": 949696,
+    "sr": 0.26,
+    "successes": 13,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=26%|stoch=46%]",
+    "timestamp": "2026-07-17 09:17:45"
+  },
+  {
+    "step": 974688,
+    "sr": 0.12,
+    "successes": 6,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=12%|stoch=60%]",
+    "timestamp": "2026-07-17 09:23:00"
+  },
+  {
+    "step": 999680,
+    "sr": 0.26,
+    "successes": 13,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=26%|stoch=64%]",
+    "timestamp": "2026-07-17 09:27:53"
+  },
+  {
+    "step": 1024672,
+    "sr": 0.1,
+    "successes": 5,
+    "n": 50,
+    "label": "Phase 4 (Greedy Fine-Tune) [det=10%|stoch=54%]",
+    "timestamp": "2026-07-17 09:32:04"
   }
 ]
