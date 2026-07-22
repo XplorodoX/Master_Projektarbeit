@@ -2,6 +2,130 @@
 
 ---
 
+## v2026-07-22.1 — Betreuer-Bestätigung: Revision des Erfolgskriteriums abgesegnet
+
+**Kontext:** Anfrage per E-Mail an den Betreuer (Prof. Dr. Carsten Lecon, Hochschule Aalen), ob
+die dokumentierte Absenkung des Zielkriteriums von 90\,\% (Exposé) auf 70\,\%/60\,\% (Testset
+A/Holdout B) so in Ordnung ist (Entwurf: `docs/betreuer_mail_entwurf.md`).
+
+**Antwort (22.07.2026, wörtlich):** „Ja. Das Exposé ist hier kein verbindliches Dokument."
+
+**Bedeutung:** Die Revision ist damit nicht nur methodisch begründet (POMDP-Charakter,
+Distanzmessungsfehler vor v11, Seed-Streuung von ±12 Punkten, Abschnitt
+„Revision des Erfolgskriteriums") und vorab dokumentiert (Changelog-Fixierung 08.06.2026, einen
+Monat vor den finalen Läufen), sondern zusätzlich vom Betreuer schriftlich bestätigt. Kein
+Handlungsbedarf für die Doku selbst; die Bestätigung dient als zusätzlicher Beleg der
+methodischen Redlichkeit, falls die Kriterienrevision im Kolloquium hinterfragt wird.
+
+---
+
+## v2026-07-18.7 — Stilüberarbeitung: Gedankenstriche entfernt, Wortwahl neutralisiert
+
+**Kontext:** Durchgang durch `Projektdokumentation.tex` mit zwei Zielen: (1) alle
+Gedankenstriche (`---`) im Fließtext entfernen, ersetzt durch Punkt, Semikolon, Doppelpunkt
+oder Komma je nach Satzbezug; (2) Wortwahl auf sachlich-neutralen wissenschaftlichen Stil
+prüfen (recherchiert: Sachlichkeit, keine Wertungen/Übertreibungen, kurze klare Sätze als
+Kernregeln für Abschlussarbeiten). Kompiliert exit 0, 30 S., keine undefinierten Referenzen.
+
+#### Änderung 1 — ca. 90 Gedankenstriche im Fließtext entfernt
+**Datei:** `docs/Projektdokumentation.tex` (durchgängig, Abstract bis Anhang)
+**Problem:** Der Gedankenstrich wurde durchgängig als Universal-Verbindung genutzt (Einschub,
+Begründung, Aufzählung, Gegensatz), was im Deutschen unüblich und für einen Prüfer als
+Stilbruch auffällig ist.
+**Lösung:** Jede Stelle einzeln nach Satzbezug aufgelöst: Kausalzusammenhänge → Punkt/Semikolon,
+Erläuterungen → Doppelpunkt, lose Nebeninformation → Komma/Klammer. Tabellenplatzhalter für
+fehlende Werte (leere Zellen) auf den kürzeren Halbgeviertstrich (`--`) vereinheitlicht, das ist
+die LaTeX-Konvention für „kein Wert" und bewusst von der Fließtext-Bereinigung unterschieden.
+
+#### Änderung 2 — Wertende/übertreibende Formulierungen neutralisiert
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Einzelne Formulierungen legten dem Leser eine Bewertung nahe statt die Daten
+sprechen zu lassen, oder waren umgangssprachlich/dramatisierend: „Hyperparameter-Krise",
+„Initialisierungs-Pech", „unterschätzen die Kompetenz massiv", „oszillierte wild", „schlicht
+einen günstigen Schnappschuss erwischt", „Bemerkenswert ist, dass…" (2×), „chaotisch
+oszillierend" (2×), „entlarvte", „lehrreiches Zwischenbild", „Beschönigung".
+**Lösung:** Durchgängig durch sachliche, quantifizierte Beschreibungen ersetzt (z.\,B.
+„Fehlkonfigurierte Hyperparameter", „ungünstige Zufallsinitialisierung", „unterschätzen die
+Kompetenz erheblich", „schwankte stark und unregelmäßig", „stark schwankende Kurve/Lerndynamik").
+Keine Zahlen- oder Ergebnisänderungen.
+
+---
+
+## v2026-07-18.6 — Externer Faktencheck der Doku: 4 Fehler gefunden und behoben (1 davon gravierend)
+
+**Kontext:** Web-Recherche aller extern prüfbaren Behauptungen der Doku (Literaturaussagen,
+Bibliographie, Statistik) auf Belastbarkeit vor Abgabe. **Ergebnis: Kernaussagen halten** —
+Singh 1994 (stochastische > deterministische Politiken im POMDP), Ghosh 2021 (epistemic POMDP),
+POPGym (15 Envs, 13 Baselines, GRU/LSTM vorn), Pleines 2022, AMAGO (ICLR 2024 Spotlight),
+Procgen-Normalized-Return-Formel: alle korrekt wiedergegeben. Gesamte Statistik (Tab. `tab:v12`,
+100-Seed-Tabelle, t-CIs df=6, Welch p=0,149, ddof=1) unabhängig nachgerechnet — **bitgenau
+reproduziert**. Kompiliert exit 0, 30 S.
+
+#### Änderung 1 — 🔴 Erfundene Co-Autoren im Togelius-Bibeintrag (gravierend)
+**Datei:** `docs/references.bib` (`togelius2011search`)
+**Problem:** Autorenliste enthielt zwei **nicht existierende Namen** („Kastadjian, Georgios",
+„Faust, Mohammed S"). Tatsächliche Autoren: Togelius, Yannakakis, **Stanley**, **Browne**
+(IEEE TCIAIG 3(3), 2011, DOI 10.1109/TCIAIG.2011.2148116). Derselbe Fehlertyp wie in
+[[literatur-lstm-groesse]] dokumentiert — ein Prüfer, der den Eintrag nachschlägt, findet
+Phantom-Autoren.
+**Lösung:** Autoren korrigiert.
+
+#### Änderung 2 — Falscher Cite-Key: Pineau-Checkliste zitierte Ghosh-Paper
+**Datei:** `docs/Projektdokumentation.tex` (§ Versuchsübersicht)
+**Problem:** „Checklisten von Pineau et al. \cite{ghosh2021epistemic}" — der Key zeigt auf das
+epistemic-POMDP-Paper, nicht auf den Reproducibility-Report.
+**Lösung:** → `\cite{pineau2021repro}`.
+
+#### Änderung 3 — R2D2-Aussage stärker als das Paper
+**Datei:** `docs/Projektdokumentation.tex` (§ Related Work)
+**Problem:** „…für die Leistung entscheidender ist als die Architektur selbst" — diesen
+Architektur-Vergleich macht Kapturowski et al. 2019 nicht; das Paper zeigt große Effekte von
+Stored-State/Burn-in bei fester Architektur.
+**Lösung:** Umformuliert zu „…die Leistung erheblich beeinflusst — bei ansonsten unveränderter
+Architektur".
+
+#### Änderung 4 — RND-Jahr korrigiert
+**Datei:** `docs/references.bib` (`burda2018rnd`)
+**Problem:** `year=2018` mit `booktitle=ICLR` — RND erschien auf der ICLR **2019** (arXiv 2018).
+**Lösung:** Jahr → 2019 (Key bleibt `burda2018rnd`).
+
+---
+
+## v2026-07-18.5 — Ausblick umgebaut: „Diagnose vor Architekturwechsel" (gestufter Plan statt AMAGO-Reflex)
+
+**Kontext:** Nachfrage im Gutachter-Review, ob für Folgearbeiten direkt auf Transformer-basierte
+In-Context-Architekturen (AMAGO) gewechselt werden soll oder ob RecurrentPPO noch Potenzial hat.
+Der bisherige Ausblick nannte AMAGO als Punkt 1 ohne Einordnung. Kompiliert exit 0, 30 S.,
+keine undefinierten Referenzen.
+
+#### Änderung 1 — Ausblick als gestufter Plan mit Diagnose-Weiche
+
+**Datei:** `docs/Projektdokumentation.tex` (§ Fazit und Ausblick, `\paragraph{Ausblick.}`)
+**Problem:** Der Ausblick empfahl den Architekturwechsel, ohne zu klären, ob der Det/Stoch-Gap
+überhaupt ein Gedächtnis-Kapazitätsproblem ist. Zwei eigene Befunde sprechen gegen einen Reflex:
+(1) Die Skalierung des Gaps mit der Weglänge ist auch mit der Schleifenbrecher-Hypothese
+konsistent (unter `ent_coef=0.05` trainierte Politik nutzt Restrauschen als impliziten
+Schleifenbrecher, ohne je Anreiz zu deterministischer Kompetenz); (2) E3 (LSTM 512) zeigte,
+dass mehr Gedächtniskapazität hier schadet; POPGym (morad2023popgym) zeigt rekurrente Modelle
+als konkurrenzfähig gegenüber Transformern.
+**Lösung:** AMAGO wird als *Hypothese* statt *Entscheidung* eingeordnet; neuer 4-Punkte-Plan:
+1. **Diagnose** (Stundenbereich): (a) lineare Belief-Probe auf dem LSTM-Hidden-State
+   (Exit-Richtung/BFS-Distanz) — kollabiert sie auf langen Wegen → echtes Belief-Tracking-Limit;
+   (b) Entropie-Annealing in Phase 4 mit Modellselektion auf *deterministischer* SR als Test
+   der Schleifenbrecher-Hypothese.
+2. **RecurrentPPO-Restpotenzial:** Auxiliary-Loss-Kopf (BFS-Distanz aus Hidden-State — formt den
+   Belief-State explizit, recycelt das Orakel als Trainingssignal ohne Testzeit-Bedarf);
+   R2D2-Burn-in (kapturowski2019r2d2).
+3. **Architekturvergleich als Folgearbeit**, nur bei positivem Probe-Befund: LSTM /
+   Transformer-Gedächtnis / AMAGO auf demselben Generator+Protokoll (Verweis
+   `sec:relatedwork`: nur Vergleiche im selben Messregime sind belastbar). Praktische Hürde
+   benannt: lange Transformer-Kontexte brauchen GPU; CPU-Läufe hier 8–36 h.
+4. **Unverändert übernommen:** engere CIs, temperaturkalibrierte Eval (T=0,5), PLR + SIL.
+
+Keine Zahlen- oder Ergebnisänderungen; alle zitierten Quellen waren bereits in `references.bib`.
+
+---
+
 ## v2026-07-18.4 — Struktur-Straffung „Variante B": Kriterienrevision in die Methodik, neuer Abschnitt „Iterative Modellverbesserung"
 
 **Kontext:** Externes Feedback schlug einen Voll-Umbau der Kapitelstruktur vor. Bewusst nur die

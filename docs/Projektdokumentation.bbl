@@ -125,8 +125,8 @@ Danijar Hafner.
 \newblock \url{https://arxiv.org/abs/2109.06780}.
 
 \bibitem{togelius2011search}
-Julian Togelius, Georgios Kastadjian, Mohammed~S Faust, and Georgios~N
-  Yannakakis.
+Julian Togelius, Georgios~N. Yannakakis, Kenneth~O. Stanley, and Cameron
+  Browne.
 \newblock Search-based procedural content generation: A taxonomy and survey.
 \newblock {\em IEEE Transactions on Computational Intelligence and AI in
   Games}, 3(3):172--186, 2011.
@@ -179,8 +179,16 @@ Deepak Pathak, Pulkit Agrawal, Alexei~A Efros, and Trevor Darrell.
 \bibitem{burda2018rnd}
 Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
 \newblock Exploration by random network distillation.
-\newblock In {\em International Conference on Learning Representations}, 2018.
+\newblock In {\em International Conference on Learning Representations}, 2019.
 \newblock \url{https://arxiv.org/abs/1810.12894}.
+
+\bibitem{pineau2021repro}
+Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
+  Alina Beygelzimer, Florence d'Alch{\'e} Buc, Emily Fox, and Hugo Larochelle.
+\newblock Improving reproducibility in machine learning research (a report from
+  the neurips 2019 reproducibility program).
+\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
+\newblock \url{https://arxiv.org/abs/2003.12206}.
 
 \bibitem{ghosh2021epistemic}
 Dibya Ghosh, Jad Rahme, Aviral Kumar, Amy Zhang, Ryan~P Adams, and Sergey
@@ -197,13 +205,5 @@ Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
 \newblock In {\em International Conference on Machine Learning (ICML)}, pages
   3878--3887. PMLR, 2018.
 \newblock \url{https://arxiv.org/abs/1806.05635}.
-
-\bibitem{pineau2021repro}
-Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
-  Alina Beygelzimer, Florence d'Alch{\'e} Buc, Emily Fox, and Hugo Larochelle.
-\newblock Improving reproducibility in machine learning research (a report from
-  the neurips 2019 reproducibility program).
-\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
-\newblock \url{https://arxiv.org/abs/2003.12206}.
 
 \end{thebibliography}

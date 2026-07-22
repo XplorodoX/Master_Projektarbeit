@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  18 JUL 2026 15:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  22 JUL 2026 11:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -874,7 +874,13 @@ File: figures/fig_game_real.png Graphic file (type png)
 <use figures/fig_game_real.png>
 Package pdftex.def Info: figures/fig_game_real.png  used on input line 314.
 (pdftex.def)             Requested size: 327.7763pt x 213.99304pt.
- [5 <./figures/fig_game_real.png>]
+
+Overfull \hbox (3.82672pt too wide) in paragraph at lines 321--328
+\T1/lmr/m/n/10.95 schnitt [][]2.2[][]). Oh-ne Ge-dächt-nis ist sie nicht de-ter
+-mi-nis-tisch lös-bar (sie-he Ab-la-ti-on in Ab-schnitt [][]7.1[][]). 
+ []
+
+[5 <./figures/fig_game_real.png>]
 File: figures/fig_game_real.png Graphic file (type png)
 <use figures/fig_game_real.png>
 Package pdftex.def Info: figures/fig_game_real.png  used on input line 331.
@@ -884,24 +890,25 @@ File: figures/fig_ki_sicht.png Graphic file (type png)
 <use figures/fig_ki_sicht.png>
 Package pdftex.def Info: figures/fig_ki_sicht.png  used on input line 333.
 (pdftex.def)             Requested size: 213.96529pt x 139.69244pt.
- [6 <./figures/fig_ki_sicht.png (PNG copy)>]
+
 Underfull \hbox (badness 4492) in paragraph at lines 402--402
 []\T1/lmr/m/n/10.95 Tabelle 2: []Reward-Komponenten (Env v11). Der frü-he-re es
 -ka-lie-ren-de Wand-Penalty
  []
 
+[6 <./figures/fig_ki_sicht.png (PNG copy)>]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 [7] [8]
-Overfull \hbox (1.9094pt too wide) in paragraph at lines 554--564
+Overfull \hbox (1.9094pt too wide) in paragraph at lines 555--565
 []\T1/lmr/bx/n/10.95 Der POMDP-Charakter der Um-ge-bung. \T1/lmr/m/n/10.95 Bei 
 ei-nem Sicht-ra-di-us von 7 (15$\OMS/lmsy/m/n/10.95 ^^B$\T1/lmr/m/n/10.95 15-Fe
 nster)
  []
 
 [9] [10]
-Overfull \hbox (7.00603pt too wide) in paragraph at lines 698--713
+Overfull \hbox (7.00603pt too wide) in paragraph at lines 699--714
  [][] 
  []
 
@@ -909,7 +916,7 @@ Overfull \hbox (7.00603pt too wide) in paragraph at lines 698--713
 <figures/fig_lernkurve.pdf, id=414, 375.804pt x 216.81pt>
 File: figures/fig_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 815.
+Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 816.
 (pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
 
 
@@ -917,17 +924,17 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 822.
+(hyperref)                removing `math shift' on input line 823.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 822.
+(hyperref)                removing `math shift' on input line 823.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (9.68022pt too wide) in paragraph at lines 854--862
+Overfull \hbox (9.68022pt too wide) in paragraph at lines 855--863
 []\T1/lmr/bx/n/10.95 Das Holdout-Kriterium ist er-füllt, das Testset-Kriterium 
 ver-fehlt: \T1/lmr/m/n/10.95 B er-reicht $\OT1/lmr/m/n/10.95 66[]9 % \OMS/lmsy/
 m/n/10.95 ^^U
@@ -936,21 +943,21 @@ m/n/10.95 ^^U
 <figures/fig_v12_lernkurven.pdf, id=417, 541.46982pt x 370.8481pt>
 File: figures/fig_v12_lernkurven.pdf Graphic file (type pdf)
 <use figures/fig_v12_lernkurven.pdf>
-Package pdftex.def Info: figures/fig_v12_lernkurven.pdf  used on input line 865
+Package pdftex.def Info: figures/fig_v12_lernkurven.pdf  used on input line 866
 .
 (pdftex.def)             Requested size: 455.24411pt x 311.81018pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 [12]
-Overfull \hbox (14.33513pt too wide) in paragraph at lines 906--915
+Overfull \hbox (14.33513pt too wide) in paragraph at lines 907--916
 \T1/lmr/m/n/10.95 Com-mits. Ein Diff über den ge-sam-ten Si-mu-la-ti-ons-pfad (
 \T1/lmtt/m/n/10.95 src/core\T1/lmr/m/n/10.95 , \T1/lmtt/m/n/10.95 src/python\T1
 /lmr/m/n/10.95 , \T1/lmtt/m/n/10.95 src/include\T1/lmr/m/n/10.95 ,
  []
 
 [13 <./figures/fig_lernkurve.pdf>]
-Overfull \hbox (15.1868pt too wide) in paragraph at lines 915--918
+Overfull \hbox (15.1868pt too wide) in paragraph at lines 916--919
 []\T1/lmr/bx/n/10.95 Laufzeitumgebung: \T1/lmr/m/n/10.95 aus-ge-schlos-sen. Die
  in-stal-lier-ten Ver-sio-nen von \T1/lmtt/m/n/10.95 torch \T1/lmr/m/n/10.95 un
 d \T1/lmtt/m/n/10.95 sb3-contrib
@@ -961,67 +968,54 @@ d \T1/lmtt/m/n/10.95 sb3-contrib
 File: figures/fig_det_gap_distanz.pdf Graphic file (type pdf)
 <use figures/fig_det_gap_distanz.pdf>
 Package pdftex.def Info: figures/fig_det_gap_distanz.pdf  used on input line 95
-0.
+1.
 (pdftex.def)             Requested size: 364.19667pt x 212.45845pt.
 
-Overfull \hbox (1.63603pt too wide) in paragraph at lines 957--970
+Overfull \hbox (1.63603pt too wide) in paragraph at lines 958--971
 \T1/lmr/m/n/10.95 voll-stän-dig be-ob-acht-ba-ren MDP stets ei-ne \T1/lmr/m/it/
 10.95 de-ter-mi-nis-ti-sche \T1/lmr/m/n/10.95 Po-li-tik op-ti-mal ist, kön-nen 
 in POMD-
  []
 
 [15 <./figures/fig_det_gap_distanz.pdf>]
-Overfull \hbox (20.18047pt too wide) in paragraph at lines 992--1001
+Overfull \hbox (20.18047pt too wide) in paragraph at lines 993--1002
 []\T1/lmr/m/n/10.95 Ergänzend wur-de ge-prüft, ob der Gap le-dig-lich ein Ka-li
 -brie-rungs-ar-te-fakt der Argmax-Auswertung
  []
 
 [16]
-Overfull \hbox (25.42381pt too wide) in paragraph at lines 1072--1090
+Overfull \hbox (16.45653pt too wide) in paragraph at lines 1060--1071
+\T1/lmr/m/n/10.95 die de-ter-mi-nis-ti-sche Re-pro-du-zier-bar-keit pro Seed un
+d die durch-gän-gi-ge Experiment-Protokollierung,
+ []
+
+
+Overfull \hbox (25.42381pt too wide) in paragraph at lines 1073--1091
  []\T1/lmr/bx/n/10.95 Einschränkungen (Threats to Va-li-di-ty).[] \T1/lmr/m/n/1
 0.95 (1) Der Det/Stoch-Gap bleibt be-ste-hen ($\OT1/lmr/m/n/10.95 29[]1 %$\T1/l
 mr/m/n/10.95 /$\OT1/lmr/m/n/10.95 32[]6 %$
  []
 
-
-Overfull \hbox (31.1182pt too wide) in paragraph at lines 1097--1099
-[]\T1/lmr/bx/n/10.95 Engere Kon-fi-den-z-in-ter-val-le \T1/lmr/m/n/10.95 durch 
-mehr Läu-fe/Seeds und stra-ti-fi-zier-te Bootstrap-Auswertung. 
- []
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Overfull \hbox (15.33786pt too wide) in paragraph at lines 1138--1141
+[17]
+Overfull \hbox (15.33786pt too wide) in paragraph at lines 1171--1174
 []\T1/lmr/bx/n/10.95 Code & Kon-fi-gu-ra-ti-on: \T1/lmr/m/n/10.95 Re-po-si-to-r
 y mit Trainings-/Eval-Skripten; je Lauf ei-ne \T1/lmtt/m/n/10.95 config.json
  []
 
-[17]
-Overfull \hbox (8.35132pt too wide) in paragraph at lines 1157--1161
+
+Overfull \hbox (8.35132pt too wide) in paragraph at lines 1190--1194
 []\T1/lmr/bx/n/10.95 Statistische Un-si-cher-heit: \T1/lmr/m/n/10.95 Bei 50 See
 ds be-trägt das 95%-Konfidenzintervall ei-ner Success-
  []
 
-
-Overfull \hbox (7.46675pt too wide) in paragraph at lines 1172--1172
-[]\T1/lmr/bx/n/14.4 Anhang: Ent-wick-lungs-ver-lauf --- von der Ba-se-li-ne zum
- LSTM-
- []
-
-[18]
-<figures/fig_entwicklung.pdf, id=656, 426.07181pt x 221.31136pt>
+[18] [19]
+<figures/fig_entwicklung.pdf, id=665, 426.07181pt x 221.31136pt>
 File: figures/fig_entwicklung.pdf Graphic file (type pdf)
 <use figures/fig_entwicklung.pdf>
-Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 1239.
+Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 1272.
 (pdftex.def)             Requested size: 386.96027pt x 200.99854pt.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Overfull \hbox (15.96457pt too wide) in paragraph at lines 1256--1270
+Overfull \hbox (15.96457pt too wide) in paragraph at lines 1289--1303
 \T1/lmr/bx/n/10.95 Symptom: \T1/lmr/m/n/10.95 Ei-ne Se-rie von Ver-bes-se-rungs
 -ver-su-chen (v6--v9: Wand-Penalty-Entfernung, visit_count-
  []
@@ -1029,150 +1023,146 @@ Overfull \hbox (15.96457pt too wide) in paragraph at lines 1256--1270
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[19]
-Overfull \hbox (3.7252pt too wide) in paragraph at lines 1302--1302
+
+Overfull \hbox (3.7252pt too wide) in paragraph at lines 1335--1335
 []\T1/lmr/bx/n/12 Etappe 5 (07.07.2026): Ers-ter v11-Gesamtlauf, Monitoring-Red
 esign und
  []
 
-<figures/fig_v11_lernkurve.pdf, id=669, 512.7205pt x 251.56421pt>
+[20 <./figures/fig_entwicklung.pdf>]
+<figures/fig_v11_lernkurve.pdf, id=731, 512.7205pt x 251.56421pt>
 File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_v11_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 1323
+Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 1356
 .
 (pdftex.def)             Requested size: 386.96027pt x 189.8588pt.
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Overfull \hbox (16.29742pt too wide) in paragraph at lines 1333--1347
+Overfull \hbox (16.29742pt too wide) in paragraph at lines 1366--1380
 []\T1/lmr/bx/n/10.95 Live-Monitoring-Redesign. \T1/lmr/m/n/10.95 Das WebSocket-
 Dashboard aus Etap-pe 2 wur-de nach Dashboard-
  []
 
-[20 <./figures/fig_entwicklung.pdf>]
-<figures/fig_livemap.png, id=730, 1405.25pt x 702.625pt>
+[21 <./figures/fig_v11_lernkurve.pdf>]
+<figures/fig_livemap.png, id=788, 1405.25pt x 702.625pt>
 File: figures/fig_livemap.png Graphic file (type png)
 <use figures/fig_livemap.png>
-Package pdftex.def Info: figures/fig_livemap.png  used on input line 1350.
+Package pdftex.def Info: figures/fig_livemap.png  used on input line 1383.
 (pdftex.def)             Requested size: 409.71692pt x 204.8603pt.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[21 <./figures/fig_v11_lernkurve.pdf>]
-<figures/fig_cap_artefakt.pdf, id=788, 462.52798pt x 245.718pt>
+ [22 <./figures/fig_livemap.png (PNG copy)>]
+<figures/fig_cap_artefakt.pdf, id=796, 462.52798pt x 245.718pt>
 File: figures/fig_cap_artefakt.pdf Graphic file (type pdf)
 <use figures/fig_cap_artefakt.pdf>
-Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 1410.
+Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 1443.
 
 (pdftex.def)             Requested size: 364.19667pt x 193.48894pt.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Overfull \hbox (2.33298pt too wide) in paragraph at lines 1431--1434
+Overfull \hbox (2.33298pt too wide) in paragraph at lines 1464--1467
 []\T1/lmr/m/it/10.95 Wand-/Loop-Penalties (Maÿ-nah-me B7)? \T1/lmr/m/n/10.95 En
 t-las-tet oh-ne neu-en Lauf: Die Batch-Validierung
  []
 
-[22 <./figures/fig_livemap.png (PNG copy)>]
-<figures/fig_batch_vergleich.pdf, id=796, 476.98201pt x 404.712pt>
+
+Overfull \hbox (10.23384pt too wide) in paragraph at lines 1486--1494
+[]\T1/lmr/bx/n/10.95 Schritt 4: Dia-gno-se, hoch-va-ria-ble Lern-dy-na-mik stat
+t de-fek-ter Co-de. \T1/lmr/m/n/10.95 Die Ge-samtschau
+ []
+
+
+Overfull \hbox (7.6698pt too wide) in paragraph at lines 1486--1494
+\T1/lmr/m/n/10.95 74% oh-ne Kon-ver-genz), der Cri-tic er-reicht nur ver-ein-ze
+l-te, nicht an-hal-ten-de \T1/lmtt/m/n/10.95 explained_variance\T1/lmr/m/n/10.9
+5 -
+ []
+
+[23 <./figures/fig_cap_artefakt.pdf>]
+<figures/fig_batch_vergleich.pdf, id=852, 476.98201pt x 404.712pt>
 File: figures/fig_batch_vergleich.pdf Graphic file (type pdf)
 <use figures/fig_batch_vergleich.pdf>
-Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 14
-80.
+Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 15
+13.
 (pdftex.def)             Requested size: 386.96027pt x 328.33366pt.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[23 <./figures/fig_cap_artefakt.pdf>] [24 <./figures/fig_batch_vergleich.pdf>]
-Overfull \hbox (5.8401pt too wide) in paragraph at lines 1526--1528
+ [24 <./figures/fig_batch_vergleich.pdf>]
+Overfull \hbox (5.8401pt too wide) in paragraph at lines 1559--1561
 []\T1/lmr/bx/n/10.95 Eval-Callback: \T1/lmr/m/n/10.95 pha-sen-ge-rech-tes Ga-ti
 ng (Ta-bel-le [][]3[][]), Episoden-Caps pro Pha-se, Det+Stoch-
  []
 
-<figures/fig_exit_distanz.pdf, id=910, 410.79002pt x 226.33928pt>
+<figures/fig_exit_distanz.pdf, id=909, 410.79002pt x 226.33928pt>
 File: figures/fig_exit_distanz.pdf Graphic file (type pdf)
 <use figures/fig_exit_distanz.pdf>
-Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 1532.
+Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 1565.
 
 (pdftex.def)             Requested size: 364.19667pt x 200.6677pt.
-<figures/fig_fps_benchmark.pdf, id=913, 375.804pt x 216.81pt>
+[25 <./figures/fig_exit_distanz.pdf>]
+<figures/fig_fps_benchmark.pdf, id=979, 375.804pt x 216.81pt>
 File: figures/fig_fps_benchmark.pdf Graphic file (type pdf)
 <use figures/fig_fps_benchmark.pdf>
-Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 1557
+Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 1590
 .
 (pdftex.def)             Requested size: 327.7763pt x 189.10948pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[25 <./figures/fig_exit_distanz.pdf>]
-<figures/fig_batch64_validation.pdf, id=982, 375.804pt x 274.626pt>
+<figures/fig_batch64_validation.pdf, id=984, 375.804pt x 274.626pt>
 File: figures/fig_batch64_validation.pdf Graphic file (type pdf)
 <use figures/fig_batch64_validation.pdf>
 Package pdftex.def Info: figures/fig_batch64_validation.pdf  used on input line
- 1591.
+ 1624.
 (pdftex.def)             Requested size: 327.7763pt x 239.53868pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Underfull \hbox (badness 1565) in paragraph at lines 1612--1612
+Underfull \hbox (badness 1565) in paragraph at lines 1645--1645
 []\T1/lmr/m/n/10 Curriculum P1; nai-ver Trans-fer kol-la-biert $\OMS/lmsy/m/n/1
 0 !$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1618--1618
+Underfull \hbox (badness 10000) in paragraph at lines 1651--1651
 []\T1/lmr/m/n/10 v6--v9 schei-tern $\OMS/lmsy/m/n/10 !$ \T1/lmr/m/n/10 Root-Cau
 se
  []
 
 
-Underfull \hbox (badness 6252) in paragraph at lines 1619--1619
+Underfull \hbox (badness 6252) in paragraph at lines 1652--1652
 []\T1/lmr/m/n/10 v10-Reproduktion ab-ge-schlos-sen (Re-fe-renz-mo-
  []
 
 
-Underfull \hbox (badness 5711) in paragraph at lines 1621--1621
+Underfull \hbox (badness 5711) in paragraph at lines 1654--1654
 []\T1/lmr/m/n/10 v11-Läufe Seed 0/1 sta-gnie-ren; Monitoring-
  []
 
 
-Underfull \hbox (badness 7595) in paragraph at lines 1623--1623
+Underfull \hbox (badness 7595) in paragraph at lines 1656--1656
 []\T1/lmr/bx/n/10 v12-Läufe Seeds 1--3 (batch=8)\T1/lmr/m/n/10 ; Gap-
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-Overfull \hbox (5.08095pt too wide) in paragraph at lines 1645--1649
+[26 <./figures/fig_fps_benchmark.pdf>]
+Overfull \hbox (5.08095pt too wide) in paragraph at lines 1678--1682
 []\T1/lmr/m/it/10.95 Hyperparameter do-mi-nie-ren Fea-tu-res: \T1/lmr/m/n/10.95
  Al-le v7-Feature-Ideen schei-ter-ten an ver-stell-ten Basis-
  []
 
-[26 <./figures/fig_fps_benchmark.pdf>] (./Projektdokumentation.bbl [27 <./figur
-es/fig_batch64_validation.pdf>] [28] [29]) [30] (./Projektdokumentation.aux)
+(./Projektdokumentation.bbl [27 <./figures/fig_batch64_validation.pdf>]
+[28] [29]) [30] (./Projektdokumentation.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `Projektdokumentation.out' has not changed.
-(rerunfilecheck)             Checksum: ADF4A0CF96C6CA86B4B75FB5E96F62E5;11511.
+(rerunfilecheck)             Checksum: C3A81FBD3AF91952415067BCE7AEDF77;11520.
  ) 
 Here is how much of TeX's memory you used:
  23626 strings out of 467525
  441317 string characters out of 5418982
- 860279 words of memory out of 5000000
+ 859230 words of memory out of 5000000
  51948 multiletter control sequences out of 15000+600000
  726202 words of font info for 103 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,12n,104p,820b,589s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,104p,820b,591s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2026/tex
@@ -1188,10 +1178,10 @@ public/lm/lmsy10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/
 lmsy7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb><
 /usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local
 /texlive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Projektdokumentation.pdf (30 pages, 1259504 bytes).
+Output written on Projektdokumentation.pdf (30 pages, 1261312 bytes).
 PDF statistics:
- 1249 PDF objects out of 1440 (max. 8388607)
- 717 compressed objects within 8 object streams
+ 1253 PDF objects out of 1440 (max. 8388607)
+ 721 compressed objects within 8 object streams
  171 named destinations out of 1000 (max. 500000)
  472 words of extra memory for PDF output out of 10000 (max. 10000000)
 

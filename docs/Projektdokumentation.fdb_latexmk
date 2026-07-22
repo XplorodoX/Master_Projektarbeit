@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex Projektdokumentation"] 1784382219.54732 "Projektdokumentation.aux" "Projektdokumentation.bbl" "Projektdokumentation" 1784382260.42041 0
-  "./references.bib" 1784361244.10104 10181 502dfdb8b7ac879399b643384604b6d3 ""
+["bibtex Projektdokumentation"] 1784711110.52303 "Projektdokumentation.aux" "Projektdokumentation.bbl" "Projektdokumentation" 1784711167.02332 0
+  "./references.bib" 1784385485.24456 10179 4961b8423cfeb48c72ca53088cd0fb55 ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "Projektdokumentation.aux" 1784382260.00763 32008 2c6614b3e86b103ae18879fd3d034deb "pdflatex"
+  "Projektdokumentation.aux" 1784711166.57568 31984 513f9e50d59e09bb7fc991a25a551473 "pdflatex"
   (generated)
   "Projektdokumentation.bbl"
   "Projektdokumentation.blg"
   (rewritten before read)
-["pdflatex"] 1784382258.78521 "Projektdokumentation.tex" "Projektdokumentation.pdf" "Projektdokumentation" 1784382260.42062 0
+["pdflatex"] 1784711165.35215 "Projektdokumentation.tex" "Projektdokumentation.pdf" "Projektdokumentation" 1784711167.02362 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1254269338 2375 baa924870cfb487815765f9094cf3728 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc" 1202520719 3486 c7eadf5dcc57b3b2d11736679f6636ba ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1202520719 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -213,10 +213,10 @@
   "/usr/local/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1777292126 5573038 b99aad5e4898a9034e953632f940512b ""
   "/usr/local/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1777292086 3636773 5547418caec5a7fb0abd29c0293eb0e0 ""
   "/usr/local/texlive/2026/texmf.cnf" 1774209515 577 648cd9f92f9c0eac486f4c71c85cfbbe ""
-  "Projektdokumentation.aux" 1784382260.00763 32008 2c6614b3e86b103ae18879fd3d034deb "pdflatex"
-  "Projektdokumentation.bbl" 1784382219.66683 8875 d1c43101505567624cb244110d2f8d8e "bibtex Projektdokumentation"
-  "Projektdokumentation.out" 1784382260.01102 11511 adf4a0cf96c6ca86b4b75fb5e96f62e5 "pdflatex"
-  "Projektdokumentation.tex" 1784382249.97681 89427 a5ecd078c94f59856ad9ac0117f25790 ""
+  "Projektdokumentation.aux" 1784711166.57568 31984 513f9e50d59e09bb7fc991a25a551473 "pdflatex"
+  "Projektdokumentation.bbl" 1784711110.66806 8873 b406da8b7ac774648d303f55f1991254 "bibtex Projektdokumentation"
+  "Projektdokumentation.out" 1784711166.57894 11520 c3a81fbd3af91952415067bce7aedf77 "pdflatex"
+  "Projektdokumentation.tex" 1784711152.9523 91624 56144ad278073b4ae3109a6e9c476fcd ""
   "figures/fig_ai_observation.png" 1784141242.66855 70278 a535331d1e5cfd306957580e45ac8b9f ""
   "figures/fig_batch64_validation.pdf" 1784141242.67114 13222 1aea92710b2591ae3fe3882886908d06 ""
   "figures/fig_batch_vergleich.pdf" 1784141242.67149 18339 63a62ee034a3599d0cc95a4e8b4370a2 ""
