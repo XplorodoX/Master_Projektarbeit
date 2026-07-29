@@ -1,0 +1,18 @@
+\babel@toc {ngerman}{}\relax 
+\contentsline {figure}{\numberline {1}{\ignorespaces Agent-Umwelt-Interaktion im MDP}}{4}{figure.1}%
+\contentsline {figure}{\numberline {2}{\ignorespaces MDP gegenüber POMDP}}{4}{figure.2}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Partielle Beobachtbarkeit am Beispiel Stoneforge}}{5}{figure.3}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Wirkung des PPO-Clippings}}{6}{figure.4}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Rekurrente Politik über die Zeit}}{7}{figure.5}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients}}{9}{figure.6}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Lernkurve des historischen Referenzlaufs}}{16}{figure.7}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Trainingsverläufe der sieben v12-Läufe}}{17}{figure.8}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Erfolgsquote nach Startdistanz zum Exit}}{21}{figure.9}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Entwicklung über die Modellgenerationen}}{26}{figure.10}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs}}{28}{figure.11}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Live-Monitoring-Dashboard}}{28}{figure.12}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Eval-Cap-Artefakt}}{29}{figure.13}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Batch-Größen-Forensik}}{31}{figure.14}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung}}{32}{figure.15}%
+\contentsline {figure}{\numberline {16}{\ignorespaces Training-FPS nach Device und Batch-Größe}}{33}{figure.16}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Validierungslauf batch\_size=64}}{34}{figure.17}%

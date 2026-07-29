@@ -1,6 +1,6 @@
 # Stoneforge RL — Ergebnistabelle
 
-*Automatisch generiert am 17.07.2026 — nicht manuell bearbeiten.*
+*Automatisch generiert am 25.07.2026 — nicht manuell bearbeiten.*
 *Quelle: `models/*/results.json` + `logs/eval_results/*.json`*
 
 Regenerieren: `python scripts/generate_results_table.py`
@@ -9,29 +9,43 @@ Regenerieren: `python scripts/generate_results_table.py`
 
 ## 1 — Trainings-Runs
 
-| Modell                     | Algo | Timesteps | n_envs | Exit-Range        | Device | Beste SR (A) | SR Holdout (B) | Training-Zeit | Datum      |
-| -------------------------- | ---- | --------- | ------ | ----------------- | ------ | ------------ | -------------- | ------------- | ---------- |
-| exp_E1_critic              | rppo | —         | 16     | 5-45 (curriculum) | —      | 56.0%        | —              | 5h 58m 15s    | 08.07.2026 |
-| exp_E2_curric              | rppo | —         | 16     | 5-45 (curriculum) | —      | 38.0%        | —              | 6h 0m 13s     | 08.07.2026 |
-| exp_E3_lstm512             | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%        | —              | 22h 54m 41s   | 08.07.2026 |
-| ppo_lstm_curriculum        | rppo | 2,200,000 | 16     | 5-45 (curriculum) | mps    | 86.0%        | —              | 3h 12m 44s    | 25.06.2026 |
-| ppo_lstm_curriculum_v11    | rppo | —         | 16     | —                 | —      | —            | —              | —             | 07.07.2026 |
-| ppo_lstm_curriculum_v12_s1 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%        | —              | 7h 48m 20s    | 07.07.2026 |
-| ppo_lstm_curriculum_v12_s2 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%        | —              | 7h 39m 50s    | 07.07.2026 |
-| ppo_lstm_curriculum_v12_s3 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%        | —              | 8h 32m 57s    | 07.07.2026 |
-| ppo_lstm_curriculum_v12_s4 | rppo | —         | 16     | 5-45 (curriculum) | —      | 94.0%        | —              | 36h 11m 32s   | 15.07.2026 |
-| ppo_lstm_curriculum_v12_s5 | rppo | —         | 16     | 5-45 (curriculum) | —      | 72.0%        | —              | 36h 18m 16s   | 15.07.2026 |
-| ppo_lstm_curriculum_v12_s6 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%        | —              | 29h 31m 52s   | 15.07.2026 |
-| ppo_lstm_curriculum_v12_s7 | rppo | —         | 16     | 5-45 (curriculum) | —      | 90.0%        | —              | 36h 13m 2s    | 15.07.2026 |
+> ⚠️ **Die SR-Spalten sind Maxima über den gesamten Eval-Verlauf, keine Endergebnisse.** Ein Lauf kann bei Step 25k einmalig 94 % erreichen und bei Step 1,5 Mio. auf 4 % stehen; beides steht in derselben Zeile. Diese Werte dienen ausschließlich der Verlaufsdiagnose. Die berichtsfähigen Endergebnisse (bestes Modell nach Validierungs-SR, ausgewertet auf Testset A / Holdout B) stehen in `docs/Projektdokumentation.tex`, Tabelle „Endergebnis (v12, n=7)".
+
+| Modell                     | Algo | Timesteps | n_envs | Exit-Range        | Device | Max. Val-SR im Verlauf (A-Proto.) | Max. Val-SR im Verlauf (B-Proto.) | Training-Zeit | Datum      |
+| -------------------------- | ---- | --------- | ------ | ----------------- | ------ | --------------------------------- | --------------------------------- | ------------- | ---------- |
+| exp_E1_critic              | rppo | —         | 16     | 5-45 (curriculum) | —      | 56.0%                             | —                                 | 5h 58m 15s    | 08.07.2026 |
+| exp_E2_curric              | rppo | —         | 16     | 5-45 (curriculum) | —      | 38.0%                             | —                                 | 6h 0m 13s     | 08.07.2026 |
+| exp_E3_lstm512             | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%                             | —                                 | 22h 54m 41s   | 08.07.2026 |
+| ppo_lstm_curriculum        | rppo | 2,200,000 | 16     | 5-45 (curriculum) | mps    | 86.0%                             | —                                 | 3h 12m 44s    | 25.06.2026 |
+| ppo_lstm_curriculum_v11    | rppo | —         | 16     | —                 | —      | —                                 | —                                 | —             | 07.07.2026 |
+| ppo_lstm_curriculum_v12_s1 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%                             | —                                 | 7h 48m 20s    | 07.07.2026 |
+| ppo_lstm_curriculum_v12_s2 | rppo | —         | 16     | 5-45 (curriculum) | —      | 92.0%                             | —                                 | 7h 39m 50s    | 07.07.2026 |
+| ppo_lstm_curriculum_v12_s3 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%                             | —                                 | 8h 32m 57s    | 07.07.2026 |
+| ppo_lstm_curriculum_v12_s4 | rppo | —         | 16     | 5-45 (curriculum) | —      | 94.0%                             | —                                 | 36h 11m 32s   | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s5 | rppo | —         | 16     | 5-45 (curriculum) | —      | 72.0%                             | —                                 | 36h 18m 16s   | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s6 | rppo | —         | 16     | 5-45 (curriculum) | —      | 88.0%                             | —                                 | 29h 31m 52s   | 15.07.2026 |
+| ppo_lstm_curriculum_v12_s7 | rppo | —         | 16     | 5-45 (curriculum) | —      | 90.0%                             | —                                 | 36h 13m 2s    | 15.07.2026 |
 
 
 ---
 
 ## 2 — Ablation-Vergleiche
 
-*Noch keine Ablation-Ergebnisse vorhanden.*
+### baselines
 
-*Werden automatisch gespeichert wenn `eval_comparison.py` läuft.*
+- **Seeds:** —
+- **Exit-Range:** —
+- **Modus:** Deterministisch
+- **Datum:** —
+
+
+### baselines_and_models
+
+- **Seeds:** —
+- **Exit-Range:** —
+- **Modus:** Deterministisch
+- **Datum:** —
+
 
 
 ---
@@ -39,7 +53,7 @@ Regenerieren: `python scripts/generate_results_table.py`
 ## 3 — Eval-Verläufe pro Modell
 
 **exp_E1_critic** — 24 Eval-Punkte,
-Beste SR: 56.0% @ Step 624,800
+Maximum im Verlauf (kein Endergebnis): 56.0% @ Step 624,800
 
 *(Zeige letzte 10 von 24 Einträgen)*
 
@@ -58,7 +72,7 @@ Beste SR: 56.0% @ Step 624,800
 
 
 **exp_E2_curric** — 24 Eval-Punkte,
-Beste SR: 38.0% @ Step 624,800
+Maximum im Verlauf (kein Endergebnis): 38.0% @ Step 624,800
 
 *(Zeige letzte 10 von 24 Einträgen)*
 
@@ -77,7 +91,7 @@ Beste SR: 38.0% @ Step 624,800
 
 
 **exp_E3_lstm512** — 88 Eval-Punkte,
-Beste SR: 92.0% @ Step 74,976
+Maximum im Verlauf (kein Endergebnis): 92.0% @ Step 74,976
 
 *(Zeige letzte 10 von 88 Einträgen)*
 
@@ -96,7 +110,7 @@ Beste SR: 92.0% @ Step 74,976
 
 
 **ppo_lstm_curriculum** — 4 Eval-Punkte,
-Beste SR: 86.0% @ Step 2,000,000
+Maximum im Verlauf (kein Endergebnis): 86.0% @ Step 2,000,000
 
 | Step      | SR    | Erfolge | Label                | Zeitstempel      |
 | --------- | ----- | ------- | -------------------- | ---------------- |
@@ -107,7 +121,7 @@ Beste SR: 86.0% @ Step 2,000,000
 
 
 **ppo_lstm_curriculum_v11** — 59 Eval-Punkte,
-Beste SR: 48.0% @ Step 524,832
+Maximum im Verlauf (kein Endergebnis): 48.0% @ Step 524,832
 
 *(Zeige letzte 10 von 59 Einträgen)*
 
@@ -126,7 +140,7 @@ Beste SR: 48.0% @ Step 524,832
 
 
 **ppo_lstm_curriculum_v11_s1** — 19 Eval-Punkte,
-Beste SR: 38.0% @ Step 449,856
+Maximum im Verlauf (kein Endergebnis): 38.0% @ Step 449,856
 
 *(Zeige letzte 10 von 19 Einträgen)*
 
@@ -145,7 +159,7 @@ Beste SR: 38.0% @ Step 449,856
 
 
 **ppo_lstm_curriculum_v11_s1_cap600** — 11 Eval-Punkte,
-Beste SR: 16.0% @ Step 49,984
+Maximum im Verlauf (kein Endergebnis): 16.0% @ Step 49,984
 
 *(Zeige letzte 10 von 11 Einträgen)*
 
@@ -164,7 +178,7 @@ Beste SR: 16.0% @ Step 49,984
 
 
 **ppo_lstm_curriculum_v11_s1_nostream** — 3 Eval-Punkte,
-Beste SR: 18.0% @ Step 24,992
+Maximum im Verlauf (kein Endergebnis): 18.0% @ Step 24,992
 
 | Step   | SR    | Erfolge | Label                                  | Zeitstempel      |
 | ------ | ----- | ------- | -------------------------------------- | ---------------- |
@@ -174,7 +188,7 @@ Beste SR: 18.0% @ Step 24,992
 
 
 **ppo_lstm_curriculum_v11_s1_noswarm** — 12 Eval-Punkte,
-Beste SR: 40.0% @ Step 274,912
+Maximum im Verlauf (kein Endergebnis): 40.0% @ Step 274,912
 
 *(Zeige letzte 10 von 12 Einträgen)*
 
@@ -193,7 +207,7 @@ Beste SR: 40.0% @ Step 274,912
 
 
 **ppo_lstm_curriculum_v12_s1** — 71 Eval-Punkte,
-Beste SR: 94.0% @ Step 24,992
+Maximum im Verlauf (kein Endergebnis): 94.0% @ Step 24,992
 
 *(Zeige letzte 10 von 71 Einträgen)*
 
@@ -212,7 +226,7 @@ Beste SR: 94.0% @ Step 24,992
 
 
 **ppo_lstm_curriculum_v12_s2** — 71 Eval-Punkte,
-Beste SR: 92.0% @ Step 399,872
+Maximum im Verlauf (kein Endergebnis): 92.0% @ Step 399,872
 
 *(Zeige letzte 10 von 71 Einträgen)*
 
@@ -231,7 +245,7 @@ Beste SR: 92.0% @ Step 399,872
 
 
 **ppo_lstm_curriculum_v12_s3** — 82 Eval-Punkte,
-Beste SR: 88.0% @ Step 499,840
+Maximum im Verlauf (kein Endergebnis): 88.0% @ Step 499,840
 
 *(Zeige letzte 10 von 82 Einträgen)*
 
@@ -250,7 +264,7 @@ Beste SR: 88.0% @ Step 499,840
 
 
 **ppo_lstm_curriculum_v12_s4** — 88 Eval-Punkte,
-Beste SR: 94.0% @ Step 224,928
+Maximum im Verlauf (kein Endergebnis): 94.0% @ Step 224,928
 
 *(Zeige letzte 10 von 88 Einträgen)*
 
@@ -269,7 +283,7 @@ Beste SR: 94.0% @ Step 224,928
 
 
 **ppo_lstm_curriculum_v12_s5** — 88 Eval-Punkte,
-Beste SR: 72.0% @ Step 374,880
+Maximum im Verlauf (kein Endergebnis): 72.0% @ Step 374,880
 
 *(Zeige letzte 10 von 88 Einträgen)*
 
@@ -288,7 +302,7 @@ Beste SR: 72.0% @ Step 374,880
 
 
 **ppo_lstm_curriculum_v12_s6** — 78 Eval-Punkte,
-Beste SR: 88.0% @ Step 374,880
+Maximum im Verlauf (kein Endergebnis): 88.0% @ Step 374,880
 
 *(Zeige letzte 10 von 78 Einträgen)*
 
@@ -307,7 +321,7 @@ Beste SR: 88.0% @ Step 374,880
 
 
 **ppo_lstm_curriculum_v12_s7** — 88 Eval-Punkte,
-Beste SR: 90.0% @ Step 299,904
+Maximum im Verlauf (kein Endergebnis): 90.0% @ Step 299,904
 
 *(Zeige letzte 10 von 88 Einträgen)*
 

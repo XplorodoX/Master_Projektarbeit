@@ -66,8 +66,11 @@ der Ablationstabelle **bleibt bewusst stehen** (mit Klarstellung in der Caption)
 - **Doku-Feinschliff** — inhaltlich rund (27 S., kompiliert exit 0), fehlt: eigene Durchsicht.
 - **Betreuer-Mail versenden** (`docs/betreuer_mail_entwurf.md`) — Kriterienrevision + verfehltes
   Ziel A vor Abgabe besprechen.
-- **Formalia der Hochschule prüfen:** Deckblatt, eidesstattliche Erklärung, Verzeichnisse; Autor
-  „Laurin" hat noch keinen Nachnamen auf der Titelseite.
+- ~~**Formalia der Hochschule prüfen:** Deckblatt, eidesstattliche Erklärung, Verzeichnisse;
+  Autor „Laurin" hat noch keinen Nachnamen auf der Titelseite.~~ **Erledigt 25.07.**
+  (CHANGELOG `v2026-07-25.2`/`.3`): Deckblatt, alle vier Verzeichnisse, eidesstattliche
+  Erklärung ergänzt; Studiengang auf Master Informatik und Security korrigiert;
+  Autor vervollständigt zu **Laurin Rößler**.
 - Bootstrap-CI für die n=7-Tabelle (aktuell t-basiert; nice-to-have).
 
 ## Erledigt (18.07., 4. Runde) — Struktur-Straffung, CHANGELOG `v2026-07-18.4`

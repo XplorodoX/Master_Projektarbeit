@@ -10,91 +10,376 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds,
+                decorations.pathreplacing}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
-\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{longtable}
+\geometry{a4paper, left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
 
-\title{\textbf{Stoneforge RL: Projektdokumentation}\\
-\large Navigation in prozedural generierten Welten mit Reinforcement Learning:\\
-Stand und Entwicklung}
-\author{Florian Merlau \and Laurin}
-\date{18. Juli 2026}
+% Verzeichnisse sollen im PDF-Lesezeichenbaum und im Inhaltsverzeichnis auftauchen
+\usepackage[titles]{tocloft}
 
 \begin{document}
 
-\maketitle
+% ===================================================================
+%  DECKBLATT
+% ===================================================================
+\begin{titlepage}
+\centering
+\vspace*{1cm}
 
-\begin{abstract}
+{\large\scshape Hochschule Aalen\\
+Technik, Wirtschaft und Gesundheit\par}
+\vspace{0.4cm}
+{\large Fakultät Elektronik und Informatik\par}
+\vspace{0.3cm}
+{\large Masterstudiengang Informatik und Security (M.\,Sc.)\par}
+
+\vspace{2.5cm}
+
+{\Large\bfseries Projektarbeit\par}
+
+\vspace{1.2cm}
+
+\rule{\textwidth}{0.4pt}
+\vspace{0.6cm}
+
+{\huge\bfseries Navigation in prozedural generierten\\[0.25cm]
+2D-Welten mit Reinforcement Learning\par}
+
+\vspace{0.7cm}
+
+{\Large Generalisierung eines rekurrenten Agenten auf\\[0.15cm]
+unbekannte Welten am Beispiel \emph{Stoneforge}\par}
+
+\vspace{0.6cm}
+\rule{\textwidth}{0.4pt}
+
+\vfill
+
+\begin{tabular}{@{}ll@{}}
+\textbf{Vorgelegt von:}    & Florian Merlau \\
+                           & Laurin Rößler \\[0.5cm]
+\textbf{Betreuer:}         & Prof.\ Dr.\ Carsten Lecon \\[0.5cm]
+\textbf{Abgabedatum:}      & 25.\ Juli 2026 \\
+\end{tabular}
+
+\vspace{1.5cm}
+
+\end{titlepage}
+
+% ===================================================================
+%  VORSPANN  (römische Seitenzahlen)
+% ===================================================================
+\pagenumbering{roman}
+\setcounter{page}{2}
+
+% ===================================================================
+%  EIDESSTATTLICHE ERKLÄRUNG
+% ===================================================================
+\section*{Eidesstattliche Erklärung}
+\addcontentsline{toc}{section}{Eidesstattliche Erklärung}
+
+Wir versichern hiermit, dass wir die vorliegende Projektarbeit mit dem Thema
+\glqq Navigation in prozedural generierten 2D-Welten mit Reinforcement
+Learning\grqq{} selbstständig verfasst und keine anderen als die angegebenen
+Quellen und Hilfsmittel benutzt haben. Alle Stellen, die wörtlich oder
+sinngemäß aus Veröffentlichungen oder anderen Quellen entnommen sind, sind als
+solche kenntlich gemacht. Die Arbeit wurde in gleicher oder ähnlicher Form
+noch keiner Prüfungsbehörde vorgelegt.
+
+Eingesetzte Hilfsmittel sind im Anhang~\ref{sec:reproduzierbarkeit}
+dokumentiert; der vollständige Quellcode sowie das lückenlos geführte
+Experiment-Changelog liegen dem Projekt-Repository bei.
+
+\vspace{2.5cm}
+
 \noindent
-Wie lernt ein Agent, sich in Umgebungen zurechtzufinden, die er nie zuvor
-gesehen hat? Diese Frage ist zentral für jeden Einsatz von Reinforcement
-Learning (RL) jenseits fest umrissener Trainingsbedingungen: Ein Verfahren,
-das nur eine bekannte Karte auswendig lernt, hat nichts gelöst. Die
-vorliegende Projektarbeit untersucht sie an einer eigens entwickelten
-Plattform: den prozedural generierten 2D-Welten von \emph{Stoneforge}
-(C++-Kern, Python-Anbindung), in denen ein Agent mit lokalem Sichtfeld den
-Exit unbekannter Welten finden muss.
+\begin{tabular}{@{}p{6cm}p{6cm}@{}}
+\hrulefill & \hrulefill \\[0.2cm]
+Ort, Datum & Florian Merlau \\[2.5cm]
+\hrulefill & \hrulefill \\[0.2cm]
+Ort, Datum & Laurin Rößler \\
+\end{tabular}
 
-Der inhaltliche Kernbefund ist eine Ablation: Ein rekurrenter Agent
-(RecurrentPPO mit LSTM, Curriculum-Training) navigiert \emph{ohne} globale
-Wegweiser-Features nahezu so gut wie ein reaktiver Agent \emph{mit}
-BFS-\glqq Orakel\grqq{} in der Beobachtung; das Gedächtnis ersetzt die globale
-Pfadinformation. Quantitativ erreicht der beste Agent über \textbf{sieben
-unabhängige Läufe} (Mittel $\pm$ Std) \textbf{65{,}7\,\% $\pm$ 12{,}4 Success
-Rate} (stochastisch) auf Testset~A bzw.\ \textbf{66{,}9\,\% $\pm$ 12{,}8} auf dem
-Holdout~B. Damit wird das Holdout-Kriterium ($\geq$60\,\%) erfüllt, das
-Testset-Kriterium ($\geq$70\,\%) hingegen \emph{verfehlt}.
+\clearpage
 
-Ein methodischer Kernbefund der Arbeit liegt genau hier: Eine Zwischenauswertung
-über nur drei Läufe hatte 73{,}3\,\% / 80{,}0\,\% ergeben und beide Kriterien
-scheinbar erfüllt. Die Aufstockung auf sieben Läufe senkte beide Werte deutlich;
-der Dreier-Mittelwert war zu optimistisch. Das ist die empirische Bestätigung
-genau jener Seed-Varianz, vor der Henderson et al.\ \cite{henderson2018matters}
-warnen und derentwegen sie mehrere Läufe fordern
-(Abschnitt~\ref{sec:kriterienrevision}). Dokumentiert
-werden die Umgebung, die Methodik, die zentrale Ablation (MLP vs.\ LSTM), der
-vollständige Entwicklungsverlauf von Projektbeginn bis heute (inkl.\ negativer
-Ergebnisse und Root-Cause-Analysen, Quelle: Experiment-Changelog), die
-Umgebungsrevision v11 vom 06.07.2026 sowie eine Performance-Analyse (CPU vs.\
-Apple-GPU, Batch-Größe), die die Trainingszeit halbiert.
-\end{abstract}
+% ===================================================================
+%  KURZFASSUNG
+% ===================================================================
+\section*{Kurzfassung}
+\addcontentsline{toc}{section}{Kurzfassung}
 
-\section{Zielsetzung}
+Diese Projektarbeit untersucht, ob ein Reinforcement-Learning-Agent in
+prozedural generierten, nur teilweise einsehbaren 2D-Welten eine
+Navigationsstrategie lernt, die auf unbekannte Welten übertragbar ist. Als
+Versuchsplattform dient das eigens entwickelte Spiel \emph{Stoneforge}
+(C++-Kern, Python-Anbindung). Der Agent sieht nur einen lokalen
+$15{\times}15$-Ausschnitt und muss den Ausgang finden. Trainiert wird
+RecurrentPPO (PPO mit LSTM-Gedächtnis) mit einem vierstufigen Curriculum;
+bewertet wird die Erfolgsquote auf 50 trainingsfremden Welten, gemittelt über
+sieben unabhängige Trainingsläufe.
+
+Der Agent erreicht $65{,}7\,\% \pm 12{,}4$ auf dem Testset und
+$66{,}9\,\% \pm 12{,}8$ auf dem Holdout und erfüllt damit das Holdout-, nicht
+aber das Testset-Kriterium. Über dieses Einzelergebnis hinaus liefert die
+Arbeit zwei methodische Beiträge. Erstens einen kalibrierten Bezugspunkt: Eine
+ungelernte Kompass-Heuristik erreicht unter identischem Protokoll $92\,\%$ und
+ist bei vergleichbarer Erfolgsquote dreimal wegeffizienter als der trainierte
+Agent. Die Erfolgsquote ist in dieser Parametrisierung folglich nicht
+trennscharf, denn die Umgebung erfordert das Gedächtnis nicht, dessen Nutzen
+sie messen soll. Zweitens die Quantifizierung der Streuung über
+Trainingsläufe: Die Aufstockung von drei auf sieben Läufe senkte das Ergebnis
+um rund acht Prozentpunkte; wenige Läufe führen hier systematisch zu
+optimistischen Aussagen. Aus beiden Befunden leitet die Arbeit ein korrigiertes
+Messregime für Folgearbeiten ab und stellt mit der Referenzpolitik das
+Instrument bereit, mit dem sich die Aufgabenschwierigkeit vorab kalibrieren
+lässt.
+
+\vspace{0.5cm}
+\noindent\textbf{Schlagwörter:} Reinforcement Learning, POMDP, Generalisierung,
+prozedurale Generierung, RecurrentPPO, Curriculum Learning, Baseline-Vergleich
+
+\clearpage
+
+% ===================================================================
+%  VERZEICHNISSE
+% ===================================================================
+\tableofcontents
+\clearpage
+
+\listoffigures
+\addcontentsline{toc}{section}{Abbildungsverzeichnis}
+\clearpage
+
+\listoftables
+\addcontentsline{toc}{section}{Tabellenverzeichnis}
+\clearpage
+
+\section*{Abkürzungs- und Symbolverzeichnis}
+\addcontentsline{toc}{section}{Abkürzungs- und Symbolverzeichnis}
+
+\begin{longtable}{@{}ll@{}}
+\toprule
+\textbf{Kürzel} & \textbf{Bedeutung} \\
+\midrule
+\endhead
+A2C   & Advantage Actor-Critic, synchrone Variante von A3C \\
+\texttt{approx\_kl} & Maß für die Stärke einer Politikänderung pro Update \\
+BFS   & \emph{Breadth-First Search}, Breitensuche; liefert den kürzesten begehbaren Weg \\
+BPTT  & \emph{Backpropagation Through Time}, Lernverfahren rekurrenter Netze \\
+CNN   & \emph{Convolutional Neural Network}, faltendes neuronales Netz \\
+DQN   & \emph{Deep Q-Network}, wertbasiertes RL-Verfahren \\
+DRQN  & \emph{Deep Recurrent Q-Network}, DQN mit Gedächtnis \\
+EV    & \emph{Explained Variance}, Gütemaß der gelernten Wertfunktion \\
+GAE   & \emph{Generalized Advantage Estimation}, Schätzung des Vorteils \\
+HARKing & \emph{Hypothesizing After the Results are Known} \\
+LSTM  & \emph{Long Short-Term Memory}, rekurrente Netzarchitektur (Gedächtnis) \\
+MDP   & \emph{Markov Decision Process}, Markow-Entscheidungsprozess \\
+MLP   & \emph{Multilayer Perceptron}, vorwärtsgerichtetes Netz ohne Gedächtnis \\
+MPS   & \emph{Metal Performance Shaders}, GPU-Backend von Apple \\
+PBRS  & \emph{Potential-Based Reward Shaping}, politikerhaltende Belohnungsformung \\
+PLR   & \emph{Prioritized Level Replay}, priorisierte Level-Wiederholung \\
+POMDP & \emph{Partially Observable MDP}, teilweise beobachtbarer MDP \\
+PPO   & \emph{Proximal Policy Optimization}, das hier verwendete RL-Hauptverfahren \\
+RL    & \emph{Reinforcement Learning}, bestärkendes Lernen \\
+SB3   & \emph{Stable-Baselines3}, verwendete RL-Bibliothek \\
+SR    & \emph{Success Rate}, Erfolgsquote: Anteil gelöster Welten \\
+\midrule
+$\gamma$      & Diskontfaktor: Gewicht künftiger Belohnungen (hier $0{,}999$) \\
+$\varepsilon$ & Zufallsanteil der Vergleichspolitik (Abschnitt~\ref{sec:baselines}) \\
+$\eta$        & Pfadeffizienz: kürzester Weg geteilt durch tatsächliche Schritte \\
+$\pi(a\mid s)$ & Politik: Wahrscheinlichkeit, im Zustand $s$ die Aktion $a$ zu wählen \\
+$\Phi(s)$     & Potentialfunktion des Reward Shapings \\
+$\sigma$      & Standardabweichung über Trainingsläufe \\
+\bottomrule
+\end{longtable}
+
+\clearpage
+
+% ===================================================================
+%  HAUPTTEIL  (arabische Seitenzahlen)
+% ===================================================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{Einleitung}
+\label{sec:einleitung}
+
+\subsection{Motivation}
+
+Ein Computerprogramm, das ein Videospiel-Level fehlerfrei durchspielt, hat
+zunächst nur eines bewiesen: dass es \emph{dieses} Level beherrscht. Interessant
+wird es erst, wenn es ein Level meistert, das es nie zuvor gesehen hat. Genau
+diese Unterscheidung, zwischen Auswendiglernen und tatsächlichem Lernen einer
+Strategie, ist die zentrale offene Frage beim praktischen Einsatz von
+\emph{Reinforcement Learning} (RL, bestärkendes Lernen): einem Verfahren, bei
+dem ein Programm (der \emph{Agent}) nicht durch vorgegebene Regeln, sondern
+durch Versuch, Irrtum und Belohnung lernt.
+
+Die Übertragbarkeit auf Unbekanntes heißt in der Fachsprache
+\emph{Generalisierung}. Sie zu prüfen ist schwierig, weil ein Agent, der immer
+dieselbe Umgebung sieht, deren Eigenheiten mitlernt, ohne dass es auffällt. Ein
+etabliertes Gegenmittel ist die \emph{prozedurale Generierung}: Die Umgebung
+wird für jeden Durchlauf neu per Zufallszahl erzeugt, sodass Auswendiglernen
+nichts nützt \cite{cobbe2020procgen, risi2020increasing}. Auf diesem Prinzip
+beruht die vorliegende Arbeit.
+
+\subsection{Die Aufgabe in Kürze}
+\label{sec:aufgabe_kurz}
+
+Für diese Arbeit wurde ein eigenes 2D-Spiel entwickelt: \emph{Stoneforge}. Die
+Spielwelt besteht aus einem Raster aus Feldern (Wiese, Wald, Fels, Wasser), das
+aus einer Zufallszahl, dem sogenannten \emph{Seed}, erzeugt wird. Derselbe Seed
+erzeugt immer dieselbe Welt, ein anderer Seed eine völlig andere. Irgendwo in
+dieser Welt liegt ein Ausgang (\emph{Exit}); der Agent startet in der Mitte und
+soll ihn erreichen. Er darf pro Zug ein Feld nach oben, unten, links oder
+rechts gehen.
+
+Die Schwierigkeit liegt darin, dass der Agent die Welt nicht überblickt. Er
+sieht nur einen Ausschnitt von $15\times15$ Feldern um sich herum; alles
+darüber hinaus ist für ihn schwarz. Zusätzlich kennt er die \emph{Richtung}, in
+der der Ausgang liegt, so wie ein Kompass die Himmelsrichtung anzeigt, aber
+nicht den \emph{Weg} dorthin. Steht eine lange Felswand zwischen ihm und dem
+Ziel, muss er selbst herausfinden, ob er sie nördlich oder südlich umgehen
+soll, und sich dabei merken, wo er schon war. Abbildung~\ref{fig:pomdp_schema}
+auf Seite~\pageref{fig:pomdp_schema} stellt diesen Unterschied zwischen
+Weltzustand und Agentensicht gegenüber.
+
+Gelernt wird durch Belohnung: Erreicht der Agent den Ausgang, erhält er einen
+großen positiven Wert; jeder Schritt kostet ein wenig. Über Millionen von
+Versuchen passt er sein Verhalten so an, dass die Summe der Belohnungen
+möglichst groß wird. Gemessen wird am Ende die \emph{Erfolgsquote}
+(\emph{Success Rate}): der Anteil von 50 vorher nie gesehenen Welten, in denen
+er den Ausgang findet.
+
+\subsection{Problemstellung und Forschungsfrage}
+
+Aus dem beschriebenen Aufbau folgt die eigentliche Schwierigkeit: Weil der
+Agent nur einen Ausschnitt sieht, sind zwei völlig verschiedene Stellen der
+Welt für ihn unter Umständen nicht unterscheidbar. Die naheliegende Abhilfe
+wäre, ihm den richtigen Weg vorzurechnen und als zusätzliche Eingabe
+mitzugeben, ein \glqq Orakel\grqq{}. Dann löst er die Aufgabe zwar, hat aber
+nichts gelernt, was ohne dieses Orakel funktioniert.
+
+Daraus ergibt sich die Forschungsfrage dieser Arbeit:
+
+\begin{quote}
+\itshape
+Kann ein Reinforcement-Learning-Agent in prozedural generierten, nur teilweise
+einsehbaren 2D-Welten eine Navigationsstrategie lernen, die auch auf
+unbekannten Welten funktioniert, ohne dass ihm der Weg zum Ziel vorberechnet
+wird?
+\end{quote}
+
+\noindent
+Die Frage ist bewusst offen nach der Architektur gestellt. \emph{Wie} ein
+Agent das leisten könnte, ist selbst Teil des Untersuchungsgegenstands: Dass
+dafür ein internes Gedächtnis erforderlich ist, war zu Projektbeginn eine
+Vermutung und ergab sich erst im Verlauf aus dem Scheitern gedächtnisloser
+Varianten (Anhang~\ref{sec:entwicklung}).
+
+\subsection{Zielsetzung und Erfolgskriterien}
 \label{sec:ziele}
 
-Gegenstand der Projektarbeit ist die Frage, ob ein Reinforcement-Learning-Agent
-in prozedural generierten, nur teilweise beobachtbaren 2D-Welten robuste
-Navigationsstrategien lernen kann, die auf unbekannte Welten (neue Seeds)
-generalisieren, statt einzelne Karten auswendig zu lernen
-\cite{cobbe2020procgen, risi2020increasing}. Die Erfolgskriterien, gegen die in
+Die Erfolgskriterien, gegen die in
 dieser Arbeit berichtet wird, lauten:
 
 \begin{itemize}
-  \item \textbf{Testset A} (Seeds 7000--7049): $\geq 70\,\%$ Success Rate,
-  \item \textbf{Holdout B} (Seeds 8000--8049): $\geq 60\,\%$ Success Rate,
+  \item \textbf{Testset A} (Seeds 7000--7049): $\geq 70\,\%$ Erfolgsquote,
+  \item \textbf{Holdout B} (Seeds 8000--8049): $\geq 60\,\%$ Erfolgsquote,
   \item pro Konfiguration mindestens 3 Trainingsläufe (Mittelwert $\pm$ Standardabweichung).
 \end{itemize}
 
 \noindent
-Diese Kriterien sind \emph{nicht} identisch mit der im Exposé angesetzten
-Evaluierungsmetrik; sie sind das Ergebnis einer im Projektverlauf begründeten
-Revision. Weil eine nachträgliche Anpassung von Erfolgskriterien andernfalls den
-Charakter des \emph{HARKing} annähme (Hypothesenbildung nach Kenntnis der
-Ergebnisse, \cite{kerr1998harking}), sei das Wesentliche vorab offengelegt:
-Die revidierten Kriterien sind seit dem 08.06.2026 im Experiment-Changelog
-fixiert, einen Monat vor den finalen Läufen, und das ursprüngliche
-Exposé-Kriterium wird in dieser Arbeit mitberichtet (Ergebnis: deutlich
-verfehlt). Die vollständige Begründung setzt Kenntnisse über die Umgebung und
-ihre Schwierigkeit voraus und folgt deshalb in der Methodik
-(Abschnitt~\ref{sec:kriterienrevision}).
+Beide Schwellen wurden vor den Auswertungsläufen festgelegt; ihre Herleitung
+aus den Eigenschaften der Aufgabe folgt in Abschnitt~\ref{sec:kriterienrevision}.
+
+\subsection{Aufbau der Arbeit}
+\label{sec:aufbau}
+
+Die Arbeit folgt dem üblichen Ablauf empirischer Untersuchungen: erst die
+Begriffe, dann der Aufbau des Versuchs, dann die Messungen, zuletzt deren
+Bewertung.
+
+\begin{itemize}
+  \item \textbf{Kapitel~\ref{sec:grundlagen} (Grundlagen)} erklärt die
+        verwendeten Verfahren von Grund auf: was ein
+        Markow-Entscheidungsprozess ist, warum ein eingeschränktes Sichtfeld
+        die Aufgabe grundlegend verändert, wie die eingesetzten Lernverfahren
+        arbeiten und was Gedächtnis, Belohnungsformung und Curriculum
+        bedeuten. Wer mit RL vertraut ist, kann es überspringen.
+  \item \textbf{Kapitel~\ref{sec:relatedwork} (Verwandte Arbeiten)} ordnet die
+        Aufgabe in bestehende Forschungsumgebungen ein und begründet, warum
+        ein Zahlenvergleich mit ihnen nicht seriös möglich ist.
+  \item \textbf{Kapitel~\ref{sec:umgebung} (Umgebung)} beschreibt
+        \emph{Stoneforge} im Detail: was der Agent genau sieht, welche
+        Aktionen er hat, wie er belohnt wird und warum jede erzeugte Welt
+        nachweislich lösbar ist.
+  \item \textbf{Kapitel~\ref{sec:methodik} (Methodik)} legt das Vorgehen offen:
+        Lernverfahren und Einstellungen, das stufenweise Training, die strikte
+        Trennung der Weltmengen für Training, Auswahl und Messung sowie die
+        Begründung der Erfolgsschwellen.
+  \item \textbf{Kapitel~\ref{sec:technik} (Technische Umsetzung)} dokumentiert
+        die Implementierung: C++-Kern, Python-Anbindung, Trainingspipeline und
+        Werkzeuge.
+  \item \textbf{Kapitel~\ref{sec:evaluation} (Evaluation)} berichtet die
+        Messergebnisse: die Gegenüberstellung mit und ohne Orakel, das
+        Endergebnis über sieben Läufe, den Vergleich gegen ungelernte
+        Referenzpolitiken und die Analyse des Abstands zwischen den beiden
+        Auswertungsarten.
+  \item \textbf{Kapitel~\ref{sec:ausblick} (Fazit und Ausblick)} bewertet die
+        Ergebnisse gegen die Forschungsfrage, benennt die Grenzen der Arbeit
+        und leitet daraus die nächsten Schritte ab.
+\end{itemize}
+
+\paragraph{Zur Versionsbezeichnung.}
+Im Folgenden tauchen wiederholt Kürzel wie \emph{v11} oder \emph{v12} auf. Sie
+bezeichnen Entwicklungsstände des Projekts und sind nötig, weil Ergebnisse
+verschiedener Stände \emph{nicht} vergleichbar sind: Ändert sich die
+Weltgenerierung, erzeugt derselbe Seed eine andere Welt. Zwei Stände sind für
+das Verständnis ausreichend:
+
+\begin{itemize}
+  \item \textbf{v11} bezeichnet die am 06.07.2026 überarbeitete Umgebung. Sie
+        ist der Stand, auf dem alle berichteten Endergebnisse beruhen.
+        Wesentliche Änderungen: Die Exit-Entfernung wird seither über den
+        tatsächlichen Laufweg statt über die Luftlinie festgelegt, wirkungslose
+        Beobachtungsmerkmale wurden entfernt und mehrere Strafterme entschärft
+        (Details in Abschnitt~\ref{sec:v11}).
+  \item \textbf{v12} bezeichnet die darauf aufbauende \emph{Trainings}-Konfiguration
+        vom 08.07.2026, mit der die sieben finalen Läufe erzeugt wurden. Die
+        Umgebung ist dabei unverändert v11; v12 unterscheidet sich nur in den
+        Trainingseinstellungen (Tabelle~\ref{tab:basiskonfig}).
+\end{itemize}
+
+\noindent
+Ältere Stände (v2 bis v10) kommen ausschließlich im Entwicklungsverlauf
+(Anhang~\ref{sec:entwicklung}) vor. Wo im Hauptteil ältere Zahlen zitiert
+werden, ist der zugehörige Stand jeweils angegeben.
+
+\vspace{0.3cm}
+\noindent
+Zwei Anhänge ergänzen den Hauptteil: Anhang~\ref{sec:reproduzierbarkeit} führt
+alle Angaben zusammen, die zur Reproduktion der Ergebnisse nötig sind;
+Anhang~\ref{sec:entwicklung} dokumentiert den chronologischen
+Entwicklungsverlauf einschließlich der gescheiterten Versuche und ihrer
+Ursachenanalysen. Mehrere zentrale Erkenntnisse der Arbeit, darunter die
+Wirkung der Batch-Größe und das Eval-Cap-Artefakt, ergaben sich erst aus dem
+Vergleich fehlgeschlagener mit funktionierenden Läufen und sind deshalb dort
+nachzulesen.
 
 \section{Grundlagen}
 \label{sec:grundlagen}
 
-Dieses Kapitel fasst die im Projekt verwendeten Konzepte und Verfahren zusammen.
-Es beschränkt sich auf das, was für die Methodik und die Ergebnisse benötigt wird.
+Zwei Entscheidungen dieser Arbeit lassen sich erst vor dem Hintergrund der
+folgenden Begriffe begründen: die Wahl einer rekurrenten statt einer reaktiven
+Politik und die Wahl der stochastischen Auswertung als Primärmetrik.
+Für eine vollständige Einführung in das Gebiet sei auf Sutton und Barto
+\cite{sutton2018rl} verwiesen.
 
 \subsection{Reinforcement Learning und der Markov-Entscheidungsprozess}
+\label{sec:mdp}
 
 Reinforcement Learning (RL) beschreibt das Lernen durch Interaktion: Ein Agent
 wählt in einem Zustand eine Aktion, erhält eine Belohnung (Reward) und geht in
@@ -108,6 +393,44 @@ $V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t=s]$ gibt den erwarteten Return ab einem
 Zustand an. Der Diskontfaktor $\gamma$ gewichtet spätere Rewards geringer; im
 Projekt wird $\gamma = 0{,}999$ verwendet.
 
+Abbildung~\ref{fig:mdp_loop} zeigt diesen Kreislauf. Er ist die Grundfigur des
+gesamten Verfahrens: Alles, was in dieser Arbeit trainiert wird, ist eine
+Variante dieser Schleife, in der die Umgebung \emph{Stoneforge} heißt, die
+Aktionen die vier Bewegungsrichtungen sind und der Reward aus
+Abschnitt~\ref{sec:umgebung} stammt.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners=2pt, minimum width=3.4cm, minimum height=1.0cm,
+              align=center, font=\small},
+  >={Stealth[length=2.4mm]}
+]
+  \node[box] (agent) at (0,2.4) {\textbf{Agent}};
+  \node[box] (env)   at (0,0)   {\textbf{Umgebung}};
+
+  % rechts: Aktion vom Agenten hinunter zur Umgebung
+  \draw[->, thick] (agent.east) -- (3.0,2.4) -- (3.0,0) -- (env.east);
+  \node[font=\scriptsize, align=center, anchor=west] at (3.15,1.2)
+       {Aktion\\[-1pt]$A_t$};
+
+  % links: Zustand und Reward von der Umgebung hinauf zum Agenten
+  \draw[->, thick] (env.west) -- (-3.0,0) -- (-3.0,2.4) -- (agent.west);
+  \node[font=\scriptsize, align=center, anchor=east] at (-3.15,1.2)
+       {Zustand $S_t$\\[-1pt]Reward $R_t$};
+
+  % Zeitschritt-Trennung: gestrichelte Linie quer durch den Rueckkanal
+  \draw[dashed, gray!70] (-3.9,1.2) -- (-0.9,1.2);
+  \node[font=\scriptsize, gray!70, anchor=north] at (-2.0,1.1)
+       {$S_{t+1},\; R_{t+1}$};
+\end{tikzpicture}
+\caption[Agent-Umwelt-Interaktion im MDP]{Die Agent-Umwelt-Interaktion im
+Markov-Entschei\-dungs\-pro\-zess; die gestrichelte Linie markiert den Übergang
+zum nächsten Zeitschritt. Eigene Darstellung in Anlehnung an Sutton und Barto
+\cite[Abb.~3.1]{sutton2018rl}.}
+\label{fig:mdp_loop}
+\end{figure}
+
 \subsection{Partielle Beobachtbarkeit (POMDP)}
 \label{sec:pomdp}
 
@@ -118,12 +441,64 @@ Beobachtung kann zu verschiedenen globalen Zuständen gehören. Eine reaktive
 Politik, die nur die aktuelle Beobachtung nutzt, ist deshalb im Allgemeinen
 nicht optimal. Abhilfe schafft ein internes Gedächtnis, das vergangene
 Beobachtungen zu einem \emph{Belief-State} zusammenfasst
-\cite{hausknecht2015drqn}. Eine zweite Konsequenz ist für diese Arbeit
+\cite{hausknecht2015drqn}. Abbildung~\ref{fig:mdp_vs_pomdp} stellt beide Fälle
+gegenüber: Im MDP greift die Politik direkt auf den Zustand zu, im POMDP
+liegt eine Beobachtungsfunktion dazwischen, und die Politik muss aus der
+Vorgeschichte erst rekonstruieren, wo sie sich vermutlich befindet.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  b/.style={draw, rounded corners=2pt, minimum height=0.8cm, align=center, font=\small},
+  >={Stealth[length=2mm]}, node distance=0.9cm
+]
+% ---------------- MDP ----------------
+\begin{scope}
+  \node[b, minimum width=1.5cm] (s1) at (0,0) {Zustand\\$s_t$};
+  \node[b, minimum width=1.5cm, right=1.3cm of s1] (pi1) {Politik\\$\pi(a\mid s)$};
+  \node[b, minimum width=1.5cm, right=1.3cm of pi1] (a1) {Aktion\\$a_t$};
+  \draw[->, thick] (s1) -- (pi1);
+  \draw[->, thick] (pi1) -- (a1);
+  \node[font=\small\bfseries, above=0.35cm of pi1] {MDP: vollständig beobachtbar};
+\end{scope}
+% ---------------- POMDP ----------------
+\begin{scope}[yshift=-2.7cm]
+  \node[b, minimum width=1.5cm] (s2) at (0,0) {Zustand\\$s_t$};
+  \node[b, minimum width=1.6cm, right=0.75cm of s2, fill=black!7] (o2)
+        {Beobachtung\\$o_t = O(s_t)$};
+  \node[b, minimum width=1.7cm, right=0.75cm of o2, fill=black!7] (b2)
+        {Belief\\$b_t(h_{1:t})$};
+  \node[b, minimum width=1.5cm, right=0.75cm of b2] (pi2) {Politik\\$\pi(a\mid b)$};
+  \node[b, minimum width=1.2cm, right=0.75cm of pi2] (a2) {Aktion\\$a_t$};
+  \draw[->, thick] (s2) -- (o2);
+  \draw[->, thick] (o2) -- (b2);
+  \draw[->, thick] (b2) -- (pi2);
+  \draw[->, thick] (pi2) -- (a2);
+  % Rekurrenz
+  \draw[->, thick] (b2.north) .. controls +(0,0.75) and +(0,0.75) .. (b2.north west)
+        node[midway, above, font=\scriptsize] {$b_{t-1}$};
+  \node[font=\small\bfseries, above=1.05cm of pi2] {POMDP: nur Ausschnitt sichtbar};
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+        ($(o2.south west)+(0,-0.15)$) -- ($(b2.south east)+(0,-0.15)$)
+        node[midway, below=4pt, font=\scriptsize] {vom Agenten zu leisten};
+\end{scope}
+\end{tikzpicture}
+\caption[MDP gegenüber POMDP]{Vollständige (oben) gegenüber partieller
+Beobachtbarkeit (unten). Grau hinterlegt sind die beiden Schritte, die im POMDP
+zusätzlich anfallen: die Beobachtung $o_t = O(s_t)$ und die Bildung eines
+\emph{Beliefs} aus ihr und der Vorgeschichte. Eigene Darstellung; Formalismus
+nach Kaelbling et al.\ \cite{kaelbling1998pomdp}.}
+\label{fig:mdp_vs_pomdp}
+\end{figure} Eine zweite Konsequenz ist für diese Arbeit
 zentral: Unter partieller Beobachtbarkeit kann eine \emph{stochastische}
-gedächtnislose Politik jede deterministische erheblich übertreffen
-\cite{singh1994pomdp}. Ein Leistungsabstand zwischen Sampling- und
-Argmax-Auswertung derselben Politik ist also theoretisch erwartbar und wird
-in der Evaluation als Hypothese geprüft
+gedächtnislose Politik jede deterministische gedächtnislose erheblich
+übertreffen \cite{singh1994pomdp}. Zu beachten ist die Reichweite dieser
+Aussage: Sie gilt für \emph{gedächtnislose} Politiken. Ist der Belief-State
+hinreichend genau rekonstruiert, existiert wieder eine optimale
+deterministische Politik. Ein Leistungsabstand zwischen Sampling- und
+Argmax-Auswertung einer \emph{rekurrenten} Politik ist daher gerade kein
+notwendiges Merkmal der Aufgabe, sondern ein Indikator für einen
+unvollständigen Belief-State; er wird in der Evaluation als solcher geprüft
 (Abschnitt~\ref{sec:evaluation}). Stoneforge ist ein POMDP, da der Agent nur einen
 lokalen $15{\times}15$-Ausschnitt sieht (siehe Abschnitt~\ref{sec:umgebung}).
 Abbildung~\ref{fig:pomdp_schema} stellt den Unterschied schematisch dar.
@@ -133,11 +508,10 @@ Abbildung~\ref{fig:pomdp_schema} stellt den Unterschied schematisch dar.
   \includegraphics[width=0.47\textwidth]{figures/fig_game_world.png}
   \hfill
   \includegraphics[width=0.47\textwidth]{figures/fig_ai_observation.png}
-  \caption{Schematische Darstellung der partiellen Beobachtbarkeit am Beispiel
-  Stoneforge: Links der vollständige Weltzustand (hier ein
-  $31{\times}31$-Ausschnitt), rechts die Beobachtung des Agenten: nur das
-  $15{\times}15$-Sichtfeld ist bekannt (rot umrandet), der Rest ist unbekannt;
-  der Pfeil zeigt die Kompassrichtung zum Exit, nicht den Weg.}
+  \caption[Partielle Beobachtbarkeit am Beispiel Stoneforge]{Partielle Beobachtbarkeit am Beispiel Stoneforge. Links der vollständige
+  Weltzustand ($31{\times}31$-Ausschnitt), rechts die Beobachtung des Agenten:
+  nur das rot umrandete $15{\times}15$-Sichtfeld ist bekannt. Der Pfeil zeigt
+  die Kompassrichtung zum Exit, nicht den Weg.}
   \label{fig:pomdp_schema}
 \end{figure}
 
@@ -181,6 +555,52 @@ in der Zielfunktion abgeschnitten (\emph{clipping}):
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\big(r_t(\theta)\,A_t,\;
 \operatorname{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\,A_t\big)\right].
 \]
+Abbildung~\ref{fig:ppo_clip} veranschaulicht die Wirkung des Clippings an einem
+einzelnen Zeitschritt. War die Aktion besser als erwartet ($A_t > 0$), lohnt es
+sich, ihre Wahrscheinlichkeit zu erhöhen, aber nur bis zum Faktor $1+\epsilon$;
+darüber hinaus verläuft die Zielfunktion flach, der Anreiz für einen größeren
+Schritt entfällt. War sie schlechter als erwartet ($A_t < 0$), gilt dasselbe
+spiegelbildlich bei $1-\epsilon$. Genau das verhindert die zu großen
+Aktualisierungen, an denen einfache Policy-Gradient-Verfahren scheitern.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0, >={Stealth[length=1.8mm]}, font=\small]
+% ---------------- A > 0 ----------------
+\begin{scope}
+  \draw[->] (-0.15,0) -- (2.75,0) node[right, font=\scriptsize] {$r$};
+  \draw[->] (0,-0.25) -- (0,1.95) node[above, font=\scriptsize] {$L^{\text{CLIP}}$};
+  % linear bis 1+eps, dann flach
+  \draw[very thick, blue!70!black] (0,0) -- (1.7,1.7) -- (2.6,1.7);
+  \draw[dotted, gray] (1.0,0) -- (1.0,1.0);
+  \draw[dotted, gray] (1.7,0) -- (1.7,1.7);
+  \node[font=\scriptsize] at (1.0,-0.28) {$1$};
+  \node[font=\scriptsize] at (1.78,-0.28) {$1+\epsilon$};
+  \fill[red] (1.0,1.0) circle (2pt);
+  \node[font=\small] at (1.3,1.85) {$A_t > 0$};
+\end{scope}
+% ---------------- A < 0 ----------------
+\begin{scope}[xshift=5.2cm]
+  \draw[->] (-0.15,0) -- (2.75,0) node[right, font=\scriptsize] {$r$};
+  \draw[->] (0,-1.95) -- (0,0.35) node[above, font=\scriptsize] {$L^{\text{CLIP}}$};
+  % flach bis 1-eps, dann linear fallend
+  \draw[very thick, blue!70!black] (0,-0.6) -- (0.6,-0.6) -- (1.85,-1.85);
+  \draw[dotted, gray] (1.0,0) -- (1.0,-1.0);
+  \draw[dotted, gray] (0.6,0) -- (0.6,-0.6);
+  \node[font=\scriptsize] at (0.52,0.22) {$1-\epsilon$};
+  \node[font=\scriptsize] at (1.05,0.22) {$1$};
+  \fill[red] (1.0,-1.0) circle (2pt);
+  \node[font=\small] at (2.0,-0.35) {$A_t < 0$};
+\end{scope}
+\end{tikzpicture}
+\caption[Wirkung des PPO-Clippings]{Ein einzelner Term der abgeschnittenen
+Zielfunktion $L^{\text{CLIP}}$ über dem Wahrscheinlichkeitsverhältnis
+$r_t(\theta)$, links für positiven, rechts für negativen Advantage. Der rote
+Punkt markiert den Startpunkt der Optimierung ($r = 1$). Eigene Darstellung in
+Anlehnung an Schulman et al.\ \cite[Abb.~1]{schulman2017ppo}.}
+\label{fig:ppo_clip}
+\end{figure}
+
 Zusätzlich wird ein Entropie-Term addiert, der Exploration fördert; sein Gewicht
 (\texttt{ent\_coef}) steuert, wie stochastisch die Politik bleibt. Trainiert
 wird in Zyklen: Erst sammeln die parallelen Umgebungen einen Rollout von
@@ -191,12 +611,29 @@ die Implementierung aus Stable-Baselines3 \cite{raffin2021stable}.
 Eine gelernte stochastische Politik lässt sich auf zwei Arten ausführen:
 \emph{stochastisch} (die Aktion wird aus der Verteilung $\pi(a\mid s)$ gezogen,
 Sampling) oder \emph{deterministisch} (stets die wahrscheinlichste Aktion,
-Argmax). Beide Betriebsarten können unterschiedlich gut abschneiden; ihr
-Vergleich ist ein zentraler Untersuchungsgegenstand dieser Arbeit.
+Argmax). Dasselbe trainierte Modell kann in beiden Betriebsarten
+unterschiedlich gut abschneiden. Der Abstand zwischen beiden Messwerten wird in
+dieser Arbeit durchgängig als \textbf{Det/Stoch-Gap} bezeichnet; er ist einer
+ihrer zentralen Untersuchungsgegenstände, weil er sich als groß und
+hartnäckig erwiesen hat (Abschnitt~\ref{sec:gapexperimente}). Anschaulich
+gesprochen: Der Agent löst die Aufgabe zuverlässiger, wenn er würfelt, als
+wenn er stets seine eigene beste Aktion wählt. Dass dies unter partieller
+Beobachtbarkeit möglich ist, folgt aus Abschnitt~\ref{sec:pomdp}; dass es bei
+einer Politik \emph{mit} Gedächtnis dennoch erklärungsbedürftig bleibt,
+ebenfalls.
 
 \subsection{Rekurrente Politiken (LSTM)}
+\label{sec:lstm}
 
-Um in einem POMDP ein Gedächtnis bereitzustellen, wird die Politik um ein
+Alle bisher genannten Verfahren lassen sich mit einem gewöhnlichen
+vorwärtsgerichteten neuronalen Netz umsetzen, einem \emph{Multilayer Perceptron}
+(MLP). Ein solches Netz bildet jede Beobachtung unabhängig auf eine Aktion ab
+und besitzt kein Gedächtnis: Es kann nicht unterscheiden, ob es eine Stelle
+zum ersten oder zum zehnten Mal sieht. Unter partieller Beobachtbarkeit ist das
+eine wesentliche Einschränkung (Abschnitt~\ref{sec:pomdp}); die Bezeichnung
+\emph{MLP} steht im Folgenden durchgängig für diese gedächtnislose Variante.
+
+Um in einem POMDP ein Gedächtnis bereitzustellen, wird die Politik daher um ein
 rekurrentes Netz erweitert. Long Short-Term Memory (LSTM) ist eine
 rekurrente Architektur, die Information über viele Zeitschritte hinweg speichern
 kann \cite{hochreiter1997lstm}. Der LSTM-Zustand approximiert den Belief-State
@@ -205,6 +642,41 @@ rekurrentem Netz und wertbasiertem RL wurde als DRQN eingeführt
 \cite{hausknecht2015drqn}; im Projekt wird die policy-gradient-Variante
 RecurrentPPO (PPO mit LSTM-Politik) aus \emph{sb3-contrib} verwendet, mit einer
 LSTM-Größe von 256.
+
+Wie das Gedächtnis wirkt, zeigt Abbildung~\ref{fig:lstm_unrolled} in der über
+die Zeit \glqq entrollten\grqq{} Darstellung: Der verborgene Zustand $h_t$ wird
+von Schritt zu Schritt weitergereicht und sammelt so Information, die in der
+einzelnen Beobachtung nicht enthalten ist. Für Stoneforge ist das genau die
+Information \glqq hier war ich schon\grqq{} bzw.\ \glqq diese Wand bin ich
+bereits nach Norden abgelaufen\grqq.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  cell/.style={draw, rounded corners=2pt, minimum width=1.15cm, minimum height=0.8cm,
+               font=\small, fill=black!7},
+  io/.style={font=\scriptsize, align=center},
+  >={Stealth[length=2mm]}, node distance=1.5cm
+]
+  \foreach \i/\lbl in {1/{t{-}1}, 2/{t}, 3/{t{+}1}} {
+    \node[cell] (c\i) at (2.3*\i, 0) {LSTM};
+    \node[io, below=0.7cm of c\i] (o\i) {Beobachtung\\$o_{\lbl}$};
+    \node[io, above=0.7cm of c\i] (a\i) {Aktion\\$a_{\lbl}$};
+    \draw[->] (o\i) -- (c\i);
+    \draw[->] (c\i) -- (a\i);
+  }
+  \draw[->, thick] (c1) -- node[above, font=\scriptsize] {$h_{t-1}$} (c2);
+  \draw[->, thick] (c2) -- node[above, font=\scriptsize] {$h_{t}$} (c3);
+  \draw[->, thick, dashed] (1.35,0) -- (c1);
+  \draw[->, thick, dashed] (c3) -- (8.6,0);
+  \node[font=\scriptsize, anchor=south] at (8.1,0.12) {$h_{t+1}$};
+\end{tikzpicture}
+\caption[Rekurrente Politik über die Zeit]{Über die Zeit entrollte rekurrente
+Politik: Neben der aktuellen Beobachtung $o_t$ erhält jeder Zeitschritt den
+verborgenen Zustand $h_{t-1}$ des Vorschritts. Eigene Darstellung; rekurrente
+Politiken im RL nach Hausknecht und Stone \cite{hausknecht2015drqn}.}
+\label{fig:lstm_unrolled}
+\end{figure}
 
 \subsection{Reward Shaping (PBRS)}
 
@@ -223,7 +695,7 @@ berücksichtigt sie Wände und Umwege.
 Curriculum Learning bezeichnet das Training mit ansteigender
 Aufgabenschwierigkeit statt einer zufälligen Reihenfolge \cite{bengio2009curriculum}.
 Im Projekt wird die Exit-Distanz stufenweise erhöht; der Übergang zwischen den
-Stufen erfolgt leistungsbasiert (eine Stufe gilt ab einer Ziel-Erfolgsrate als
+Stufen erfolgt leistungsbasiert (eine Stufe gilt ab einer Ziel-Erfolgsquote als
 bestanden).
 
 \subsection{Prozedurale Generierung und Generalisierung}
@@ -272,17 +744,22 @@ werden im Ausblick diskutiert.
 \paragraph{Curriculum und Exploration.}
 Curriculum Learning geht auf Bengio et al.\ zurück
 \cite{bengio2009curriculum}; das hier verwendete leistungsbasierte Gating ist
-eine einfache Instanz, Prioritized Level Replay \cite{jiang2021plr} die
-naheliegende Weiterentwicklung auf Level-Ebene; der Seed-Pool-Mechanismus
-dieser Arbeit (Abschnitt~\ref{sec:technik}) ist eine vereinfachte Variante
-davon. Der Explorations-Bonus für neu betretene Tiles ist eine zählbasierte
+eine einfache Instanz, Prioritized Level Replay (PLR) \cite{jiang2021plr} die
+naheliegende Weiterentwicklung auf Level-Ebene. PLR wiederholt gezielt jene
+Level, an denen der Agent noch am meisten lernen kann, statt sie
+gleichverteilt zu ziehen. Das Training dieser Arbeit enthält eine stark
+vereinfachte Variante dieses Gedankens: einen \emph{Seed-Pool}, der einen Teil
+der Episodenstarts durch bereits gelöste Welten ersetzt
+(Abschnitt~\ref{sec:technik}). Wie in Abschnitt~\ref{sec:etappe5} diskutiert,
+kehrt diese Variante die Auswahlrichtung von PLR gerade um und ist deshalb
+kritisch zu sehen. Der Explorations-Bonus für neu betretene Tiles ist eine zählbasierte
 Form intrinsischer Motivation; kuriositätsgetriebene Verfahren wie ICM
 \cite{pathak2017icm} und RND \cite{burda2018rnd} verallgemeinern dieses
 Prinzip auf Beobachtungsräume, in denen Neuheit nicht direkt abzählbar ist.
 Dies ist hier nicht erforderlich, da die Tile-Position Neuheit unmittelbar definiert.
 
 \paragraph{Zur Vergleichbarkeit der absoluten Zahlen.}
-Ein direkter Vergleich der hier erreichten Success Rate mit publizierten Werten
+Ein direkter Vergleich der hier erreichten Erfolgsquote mit publizierten Werten
 dieser Benchmarks ist \emph{nicht} seriös möglich, weil sie unterschiedliche
 Metriken berichten: Procgen aggregiert über den \emph{normalisierten Return}
 $(R - R_{\min})/(R_{\max} - R_{\min})$ und nicht über eine Erfolgsquote
@@ -294,7 +771,7 @@ der Form \glqq unser Wert liegt über/unter dem Stand der Technik\grqq{} wäre
 daher eine Scheinpräzision und wird hier bewusst nicht getroffen.
 
 Belastbar ist der Vergleich nur \emph{innerhalb} dieser Arbeit: gegen die eigene
-Ablation (Tabelle~\ref{tab:ablation}), gegen die Gap-Experimente
+Gegenüberstellung (Tabelle~\ref{tab:ablation}), gegen die Gap-Experimente
 (Abschnitt~\ref{sec:gapexperimente}) und gegen die eigenen, vorab fixierten
 Kriterien (Abschnitt~\ref{sec:kriterienrevision}). Alle Vergleichsbedingungen
 laufen dort auf demselben Generator, mit derselben Metrik und demselben
@@ -312,7 +789,7 @@ Abbildung~\ref{fig:player_client} zeigt die Benutzeroberfläche und die Spielwel
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.72\textwidth]{figures/fig_game_real.png}
-  \caption{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}
+  \caption[Benutzeroberfläche des spielbaren C++-Clients]{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}
   \label{fig:player_client}
 \end{figure}
 
@@ -322,18 +799,11 @@ Der Agent sieht nur einen lokalen $15{\times}15$-Ausschnitt der Welt sowie einen
 \emph{Luftlinien}-Kompass zum Exit, nicht den Weg. Wände, Sackgassen und
 Umwege außerhalb des Sichtfensters sind unbekannt: Die Aufgabe ist ein
 \emph{Partially Observable Markov Decision Process} (POMDP,
-Abschnitt~\ref{sec:pomdp}). Ohne Gedächtnis ist
-sie nicht deterministisch lösbar (siehe Ablation in
-Abschnitt~\ref{sec:ablation}).
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.47\textwidth]{figures/fig_game_real.png}
-  \hfill
-  \includegraphics[width=0.47\textwidth]{figures/fig_ki_sicht.png}
-  \caption{Vergleich der Spielumgebung (echte Screenshots): Links die tatsächliche Umgebung (voller Sichtbereich), rechts die Sichtweise der KI: die lokale $15\times15$-Observation, bei der außerhalb liegende Bereiche ungesehen/abgedunkelt sind, mit dem gelben Exit-Kompass. Das Sichtfeld ist zur Verdeutlichung rot markiert.}
-  \label{fig:game_vs_ai}
-\end{figure}
+Abschnitt~\ref{sec:pomdp}). Beide Perspektiven stellt
+Abbildung~\ref{fig:pomdp_schema} auf Seite~\pageref{fig:pomdp_schema}
+gegenüber: links die Welt, wie sie tatsächlich aussieht, rechts das, was der
+Agent davon sieht. Für eine gedächtnislose Politik sind dabei verschiedene
+Weltpositionen ununterscheidbar (Abschnitt~\ref{sec:ablation}).
 
 \subsection{Beobachtung, Aktionen, Episodenende}
 
@@ -352,7 +822,7 @@ Episodenfortschritt & Schritt / 4000 & 1 \\
 \textbf{Gesamt (Env v11)} & & \textbf{229} \\
 \bottomrule
 \end{tabular}
-\caption{Observation der Umgebungsversion v11. Die früheren Features
+\caption[Aufbau der Observation (Env v11)]{Observation der Umgebungsversion v11. Die früheren Features
 \emph{Energie} und \emph{Inventar} waren im RL-Setup konstant (tote Features)
 und wurden am 06.07.2026 entfernt (vorher 231 Dimensionen).}
 \label{tab:obs}
@@ -373,13 +843,23 @@ auf der BFS-Pfaddistanz zum Exit:
 F(s, s') \;=\; \gamma\,\Phi(s') - \Phi(s), \qquad
 \Phi(s) \;=\; -\,\frac{d_{\mathrm{BFS}}(s)}{128},
 \end{equation}
-mit $\gamma = 0.999$ (identisch zum RL-Discount) und Gewicht $\beta = 2.5$
-(netto ca.\ $+0.01$ pro Tile echtem Fortschritt). PBRS ist beweisbar
+mit $\gamma = 0.999$ (identisch zum RL-Discount) und Gewicht $\beta = 2.5$.
+Ein Tile echter Fortschritt liefert damit rund $+0{,}02$; abzüglich des
+Schritt-Malus von $-0{,}01$ (Tabelle~\ref{tab:reward}) verbleiben netto etwa
+$+0{,}01$. PBRS ist beweisbar
 \emph{policy-invariant}; es beschleunigt die Konvergenz, ohne die optimale
 Politik zu verändern \cite{ng1999policy}. Entscheidend ist, dass das Potential
 die \emph{echte} Pfaddistanz (BFS durch Wände gerechnet) verwendet, nicht die
 Luftlinie: Ein Luftlinien-Potential würde den Agenten systematisch in Sackgassen
 führen.
+
+Diese Garantie gilt allerdings nur für den PBRS-Term selbst. Die übrigen
+Komponenten in Tabelle~\ref{tab:reward} (Explorations-Bonus, Schritt-, Loop-,
+Idle- und Schadens-Penalty) sind gewöhnliche Reward-Terme und verändern die
+optimale Politik prinzipiell mit. Der frühere eskalierende Wand-Penalty
+($-0.05$/$-0.25$) wurde aus genau diesem Grund entfernt: Die Summe vieler
+kleiner Strafen machte Erkunden in engen Korridoren unwirtschaftlicher als
+Stillstand.
 
 \begin{table}[h]
 \centering
@@ -394,12 +874,12 @@ PBRS (BFS-Distanz, pro Schritt) & $\approx \pm 0.02$ \\
 Explorations-Bonus (neue Tile) & $+0.02$ \\
 Schritt-Penalty & $-0.01$ \\
 2-Schritt-Loop-Penalty & $-0.05$ \\
+Idle-Penalty (Aktion ohne Positionswechsel) & $-0.04$ \\
+Schadens-Penalty (pro verlorenem HP) & $-0.5$ \\
 \bottomrule
 \end{tabular}
-\caption{Reward-Komponenten (Env v11). Der frühere eskalierende Wand-Penalty
-($-0.05$/$-0.25$) wurde entfernt: Die Summe vieler kleiner Strafen
-(\glqq Straf-Stacking\grqq) machte Erkunden in engen Korridoren
-unwirtschaftlicher als Stillstand.}
+\caption[Reward-Komponenten (Env v11)]{Vollständige Reward-Komponenten der
+Umgebungsversion v11 gemäß \texttt{Simulation::computeReward()}.}
 \label{tab:reward}
 \end{table}
 
@@ -440,7 +920,7 @@ ausgewiesen (Abschnitt~\ref{sec:ausblick}).
 \subsection{Curriculum}
 
 Das Training verläuft leistungsbasiert in vier Phasen steigender Exit-Distanz;
-eine Phase endet, wenn die Ziel-Success-Rate in zwei aufeinanderfolgenden
+eine Phase endet, wenn die Ziel-Erfolgsquote in zwei aufeinanderfolgenden
 Evaluationen erreicht wird.
 
 \begin{table}[h]
@@ -456,7 +936,7 @@ Evaluationen erreicht wird.
 4 & 25--45 (Greedy Fine-Tune) & 60\,\% & deterministisch & 0.0001 \\
 \bottomrule
 \end{tabular}
-\caption{Curriculum (Stand v11). Phase 1/2 gaten auf der stochastischen SR, da
+\caption[Curriculum in vier Phasen]{Curriculum (Stand v11). Phase 1/2 gaten auf der stochastischen SR, da
 die Politik dort mit \texttt{ent\_coef}=0.05 absichtlich nahe-uniform ist und
 die deterministische SR konstruktionsbedingt kein Signal trägt.}
 \label{tab:curriculum}
@@ -476,7 +956,8 @@ voller zu partieller Beobachtbarkeit beschrieben) wäre daher redundant;
 zudem wäre es hier riskant, weil ein groß\-es Sichtfeld anfangs eine
 \emph{reaktive} Strategie ohne Gedächtnisnutzung belohnt, die beim
 Verkleinern des Fensters wertlos wird (dieselbe Nicht-Übertragbarkeit, die
-die Ablation in Abschnitt~\ref{sec:ablation} für das BFS-Orakel zeigt).
+die Gegenüberstellung in Abschnitt~\ref{sec:ablation} für das BFS-Orakel
+zeigt).
 
 \subsection{Iterative Modellverbesserung}
 \label{sec:iteration}
@@ -519,11 +1000,12 @@ Reverse-Engineering in Befund 1 nicht möglich gewesen.
 
 \subsection{Evaluationsprotokoll}
 
-Zentrale Metrik ist die \emph{Success Rate} (SR): der Anteil von 50 festen,
+Zentrale Metrik ist die \emph{Erfolgsquote} (\emph{Success Rate}, SR): der
+Anteil von 50 festen,
 trainingsfremden Welten, in denen der Agent den Exit innerhalb des Episodenlimits
 (4\,000 Schritte) erreicht. Ein zu kurzes Limit verfälscht die SR erheblich
 (dasselbe Modell: 48\,\% bei Limit 600 gegenüber 86\,\% bei 4\,000;
-Abschnitt~\ref{sec:cap}), daher wird stets mit dem vollen Limit gemessen.
+Abschnitt~\ref{sec:etappe6}), daher wird stets mit dem vollen Limit gemessen.
 
 Strikte Seed-Trennung: Validierung (6000--6049) steuert Phasenwechsel und
 Modellauswahl; Testset A (7000--7049) und Holdout B (8000--8049) werden
@@ -541,94 +1023,65 @@ Für das Endergebnis werden sieben unabhängige Läufe gemittelt
 als Trainings-Diagnosemetrik dient die \texttt{explained\_variance} des Critics.
 Ergebnisse in Abschnitt~\ref{sec:evaluation}.
 
-\subsection{Revision des Erfolgskriteriums}
+\subsection{Herleitung der Erfolgsschwellen}
 \label{sec:kriterienrevision}
 
-Die in Abschnitt~\ref{sec:ziele} genannten Kriterien (70\,\%/60\,\%) sind eine
-im Projektverlauf begründete Revision des Exposés. Das Exposé (Stand
-Projektbeginn) definierte als Evaluierungsmetrik eine \textbf{Success Rate von
-$\geq 90\,\%$ über 100 unbekannte Seeds}. Dieser Wert wurde zu einem Zeitpunkt
-angesetzt, an dem drei später zentrale Eigenschaften der Aufgabe noch nicht
-bekannt waren:
+Die folgende Herleitung setzt Kenntnis der Umgebung voraus und steht deshalb
+hier und nicht bei der Nennung der Kriterien in
+Abschnitt~\ref{sec:ziele}.
+
+Die dort genannten Schwellen (70\,\% auf Testset~A,
+60\,\% auf Holdout~B) ersetzen die im Exposé angesetzte Metrik von
+$\geq 90\,\%$ über 100 unbekannte Seeds. Drei Eigenschaften der Aufgabe, die zu
+Projektbeginn noch nicht bekannt waren, machen einen Wert in dieser Höhe
+unerreichbar:
 
 \begin{enumerate}
   \item \textbf{Der POMDP-Charakter der Umgebung.} Bei einem Sichtradius von 7
-        (15$\times$15-Fenster) und nicht sichtbarem Ziel ist die Aufgabe partiell
-        beobachtbar (Abschnitt~\ref{sec:pomdp}). Anders als im MDP ist im POMDP
-        eine deterministische Politik
-        nicht mehr garantiert optimal; stochastische gedächtnislose Politiken
-        können dort jede deterministische erheblich übertreffen
-        \cite{singh1994pomdp}; ein Deterministic/Stochastic-Gap ist erwartbar und
-        keine Fehlfunktion (Abschnitt~\ref{sec:evaluation}).
-        Ein Schwellenwert von 90\,\% unterstellt implizit eine nahezu vollständig
-        lösbare Aufgabe.
+        und nicht sichtbarem Ziel ist die Aufgabe partiell beobachtbar
+        (Abschnitt~\ref{sec:pomdp}). Eine deterministische Politik über der
+        \emph{Beobachtung} ist damit nicht mehr garantiert optimal
+        \cite{singh1994pomdp}, hinzu kommt die epistemische Unsicherheit über
+        den Seed \cite{ghosh2021epistemic}. Eine Schwelle von 90\,\%
+        unterstellt dagegen eine nahezu vollständig lösbare Aufgabe.
   \item \textbf{Die tatsächliche Schwierigkeit der Distanzvorgabe.} Bis zur
-        Umgebungsrevision v11 wurde die Exit-Distanz als Luftlinie gemessen. Eine
-        Vorgabe von \glqq 35--45\grqq{} entsprach real einem Laufweg von 42--75
-        Feldern; erst die BFS-basierte Exit-Platzierung stellte die deklarierte
-        Distanz her (Abschnitt~\ref{sec:v11}).
-  \item \textbf{Die Streuung über Trainingsläufe.} Sie beträgt in dieser Umgebung
-        rund $\pm$12 Prozentpunkte (Tabelle~\ref{tab:v12}); eine Schwelle von
-        90\,\% liegt damit weit außerhalb dessen, was die Methode hier stabil
-        liefert.
+        Umgebungsrevision v11 wurde die Exit-Distanz als Luftlinie gemessen;
+        eine Vorgabe von \glqq 35--45\grqq{} entsprach real einem Laufweg von
+        42--75 Feldern (Abschnitt~\ref{sec:v11}).
+  \item \textbf{Die Streuung über Trainingsläufe.} Sie beträgt rund $\pm 12$
+        Prozentpunkte (Tabelle~\ref{tab:v12}). Eine Schwelle von 90\,\% liegt
+        weit außerhalb dessen, was das Verfahren hier stabil liefert.
 \end{enumerate}
 
 \noindent
-Die revidierten Kriterien (70\,\% / 60\,\%) sind seit dem \textbf{08.06.2026} im
-Experiment-Changelog dokumentiert, einen Monat vor den finalen v12-Läufen
-(08.07.) und der $n=7$-Auswertung (17.07.). Sie wurden also nicht in Kenntnis der
-hier berichteten Ergebnisse gewählt; dass das Testset-Kriterium am Ende dennoch
-verfehlt wird, zeigt zugleich, dass auch die revidierte Schwelle keine bequeme
-war. Für sämtliche in dieser Arbeit berichteten Läufe erfolgte die
-Modellselektion ausschließlich auf den disjunkten Validierungs-Seeds 6000--6049
-(Evaluationsprotokoll, oben); die Testsets~A und~B wurden nur in der finalen
-Evaluation verwendet.
-
-\paragraph{Bericht gegen die ursprüngliche Metrik.}
-Damit die Revision nicht als Ersetzen eines unbequemen Maßstabs missverstanden
-wird, wird zusätzlich gegen die Exposé-Metrik selbst berichtet. Deren
-Messaufbau ist unverändert erfüllt: Testset~A (50 Seeds) und Holdout~B (50 Seeds)
-ergeben zusammen genau die geforderten \textbf{100 unbekannten Seeds}. Das Exposé
-legte die Auswertungsart nicht fest; berichtet wird hier die stochastische
-Betriebsart (zur Begründung dieser Wahl Abschnitt~\ref{sec:evaluation};
-deterministisch läge der Wert bei $30{,}9\,\%$). Über sieben Läufe ergibt sich:
-
-\begin{center}
-\small
-\begin{tabular}{@{}lrrrrrrrr@{}}
-\toprule
-\textbf{Lauf} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & \textbf{Mittel} \\
-\midrule
-SR über 100 Seeds & 69{,}0 & 80{,}0 & 78{,}0 & 74{,}0 & 60{,}0 & 50{,}0 & 53{,}0 & \textbf{66{,}3 $\pm$ 12{,}1} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent
-Gegen die ursprünglich angesetzte Schwelle von 90\,\% bedeutet das: \textbf{Das
-Exposé-Kriterium wird deutlich verfehlt} (66{,}3\,\% im Mittel, 80{,}0\,\% im
-besten Einzellauf). Dieser Wert wird hier mitgeführt, nicht weil er
-günstig wäre, sondern weil eine Kriterienrevision nur dann transparent ist, wenn das
-alte Kriterium mitberichtet und nicht stillschweigend fallengelassen wird.
-
-\paragraph{Die Projektziele des Exposés sind davon unberührt.}
-Die 90\,\%-Angabe stand im Exposé unter \emph{Reward Design und Evaluierung}, nicht
-unter den \emph{Projektzielen}. Letztere sind vollständig erfüllt. Als
-Muss-Kriterien: die C++-Engine mit deterministischer Chunk-Generierung, die
-\texttt{pybind11}-Brücke als vektorisiertes Gymnasium-Environment sowie
-\glqq Basis-Training eines PPO-Agenten, der auf unbekannten Seeds sein Zielgebiet
-erreicht\grqq{} (ohne Schwellenwertangabe). Ebenso alle Nice-to-Have-Kriterien:
-grafischer Raylib-Client, PPO-LSTM und Crafting-System.
+Die Schwellen 70\,\%/60\,\% sind seit dem 16.05.2026 im Experiment-Changelog
+festgehalten, also lange vor den finalen Läufen (08.07.) und der
+$n=7$-Auswertung (17.07.); sie wurden nicht in Kenntnis der hier berichteten
+Ergebnisse gewählt und sind damit kein Fall von \emph{HARKing}
+(\emph{Hypothesizing After the Results are Known} \cite{kerr1998harking}).
+Dass das Testset-Kriterium am Ende
+dennoch verfehlt wird, zeigt, dass auch die revidierte Schwelle keine bequeme
+war. Gegen die ursprüngliche Exposé-Metrik gemessen ergeben Testset~A und
+Holdout~B zusammen die geforderten 100 unbekannten Seeds und einen Mittelwert
+von $66{,}3\,\% \pm 12{,}1$ (stochastisch); die 90\,\%-Schwelle wird deutlich
+verfehlt. Das Exposé nennt als zweite Zielgröße die Minimierung der
+\emph{Steps per Episode}. Auch sie wird verfehlt, und zwar deutlicher als die
+Erfolgsquote: Die in Abschnitt~\ref{sec:baselines} berichtete Pfadeffizienz von
+$\eta \approx 0{,}05$ entspricht rund dem Zwanzigfachen des kürzesten Weges.
 
 \subsection{Versuchsübersicht: Setup je Iteration}
 \label{sec:versuchsuebersicht}
 
-Zur Reproduzierbarkeit (im Sinne der Checklisten von Pineau et al.\
-\cite{pineau2021repro} bzw.\ Henderson et al.) dokumentiert dieser Abschnitt
-das exakte Setup jeder systematischen Iteration. Alle Läufe teilen die in
+Die folgenden Angaben zum Setup jeder systematischen Iteration folgen den
+Reproduzierbarkeits-Checklisten von Pineau et al.\ \cite{pineau2021repro} bzw.\
+Henderson et al.\ \cite{henderson2018matters}.
+Alle Läufe teilen die in
 Tabelle~\ref{tab:basiskonfig} gelistete Basiskonfiguration; die Iterationen in
-Tabelle~\ref{tab:iterationen} verändern jeweils \emph{genau einen} Faktor
-gegenüber der v12-Baseline (kontrollierte Ablation). Die vollständige Historie
+Tabelle~\ref{tab:iterationen} verändern jeweils einen \emph{inhaltlichen} Faktor
+gegenüber der v12-Baseline. Sie sind allerdings weder vollständig kontrolliert
+(E1/E2 laufen zusätzlich mit reduziertem Phase-3-Budget) noch repliziert
+($n=1$ je Arm); die daraus ableitbaren Schlüsse sind entsprechend schwach und
+werden in Abschnitt~\ref{sec:gapexperimente} eingegrenzt. Die vollständige Historie
 inklusive Zwischenständen liegt im Experiment-Changelog (\texttt{CHANGELOG.md});
 je Lauf existiert eine \texttt{config.json} mit den hier tabellierten Werten.
 
@@ -652,7 +1105,7 @@ Curriculum & 4 Phasen (Tab.~\ref{tab:curriculum}), leistungsbasiert \\
 Eval & Testset A 7000--7049, Holdout B 8000--8049, Cap 4000, det + stoch \\
 \bottomrule
 \end{tabular}
-\caption{Gemeinsame Basiskonfiguration aller Iterationen (Quelle:
+\caption[Gemeinsame Basiskonfiguration aller Iterationen]{Gemeinsame Basiskonfiguration aller Iterationen (Quelle:
 \texttt{config.json} der v12-Läufe).}
 \label{tab:basiskonfig}
 \end{table}
@@ -671,14 +1124,20 @@ Eval & Testset A 7000--7049, Holdout B 8000--8049, Cap 4000, det + stoch \\
 \textbf{E3} lstm512 & LSTM $256\!\to\!512$ & Phase 1 & 44/14\,\% & 58/20\,\% \\
 \bottomrule
 \end{tabular}
-\caption{Systematische Iterationen zur Schließung des Det/Stoch-Gaps. Jede
-verändert genau einen Faktor. E1/E2 setzen aus einem gemeinsamen
-Phase-2-Checkpoint auf (Phase-3-Budget 400k statt 1.0\,Mio.\ Schritte); E3 ist
-ein voller Lauf. Ergebnis: kein Arm schlägt die v12-Baseline (Test A stochastisch
-73\,\%). Werte standardisiert (50 Seeds, Cap 4000). Details:
-Abschnitt~\ref{sec:evaluation} und \texttt{CHANGELOG.md}.}
+\caption[Systematische Iterationen zur Schließung des Det/Stoch-Gaps]{Iterationen zur Schließung des Det/Stoch-Gaps; jeder Arm ein Einzellauf,
+die Baseline ein Mittel aus drei Läufen. Werte standardisiert (50 Seeds, Limit
+4\,000). Zur Aussagekraft siehe Abschnitt~\ref{sec:gapexperimente}.}
 \label{tab:iterationen}
 \end{table}
+
+\noindent
+Zwei Einschränkungen sind beim Lesen der Tabelle zu beachten. E1 und E2 setzen
+aus einem gemeinsamen Phase-2-Checkpoint auf und erhalten nur 400k statt
+1{,}0\,Mio.\ Phase-3-Schritte; sie variieren gegenüber der Baseline also zwei
+Größen und nicht eine. E3 ist dagegen ein voller Lauf ab Phase~1. Da zudem
+jeder Arm nur einmal gelaufen ist, die Streuung über Läufe aber rund $\pm 12$
+Punkte beträgt, sind Abstände unterhalb von etwa 25 Punkten nicht
+interpretierbar.
 
 Ergänzend zeigt die Fehleranalyse in Tabelle~\ref{tab:rootcause} die frühere
 Generationenreihe (v2/v10 Referenz, v7--v9 fehlgeschlagen), deren Setup sich
@@ -700,13 +1159,13 @@ Tabelle~\ref{tab:stack} listet die verwendeten Komponenten.
 \toprule
 \textbf{Komponente} & \textbf{Technologie} & \textbf{Zweck} \\
 \midrule
-Simulationskern & C++20 (ca.\ 8\,000 LOC) & Weltgenerierung, Spiellogik, Reward, BFS \\
+Simulationskern & C++20 (ca.\ 4\,500 LOC) & Weltgenerierung, Spiellogik, Reward, BFS \\
 Binding & pybind11 2.13 & C++-Kern als Python-Modul (\texttt{stoneforge\_sim}) \\
 Build & CMake & Kern, Binding, Clients \\
 RL-Umgebung & Python 3.12, Gymnasium 1.2 & \texttt{StoneforgeWorldEnv} (Gym-API) \\
 RL-Algorithmen & Stable-Baselines3 / sb3-contrib 2.8 & PPO, DQN, A2C, RecurrentPPO \\
 Deep Learning & PyTorch 2.12 (CPU) & Netz- und LSTM-Training \\
-Spiel-Client & raylib 5.5 (C++) & spielbarer Client, KI-Zuschaumodus \\
+Spiel-Client & raylib 5.5 (C++, ca.\ 4\,500 LOC) & spielbarer Client, KI-Zuschaumodus \\
 Monitoring & TensorBoard, WebSockets & Trainingsmetriken, Live-Visualisierung \\
 Auswertung & NumPy, Matplotlib & Evaluation, Abbildungen \\
 \bottomrule
@@ -715,10 +1174,11 @@ Auswertung & NumPy, Matplotlib & Evaluation, Abbildungen \\
 \label{tab:stack}
 \end{table}
 
-Die Simulation ist deterministisch pro Seed; Training und Evaluation laufen
-vollständig auf der CPU (Apple M1 Pro). Ein Vergleich mit der Apple-GPU (MPS)
-ergab keine Beschleunigung (Abschnitt~\ref{sec:performance}); der Durchsatz
-liegt je nach Konfiguration bei ca.\ 90--190 Umgebungsschritten pro Sekunde.
+Die Simulation ist deterministisch pro Seed. Training und Evaluation laufen
+vollständig auf der CPU; ein Vergleich mit der GPU ergab für dieses kleine Netz
+keine Beschleunigung. Der Durchsatz liegt je nach Konfiguration bei ca.\
+90--190 Umgebungsschritten pro Sekunde. Die verwendete Hardware und der
+zugehörige Benchmark sind in Anhang~\ref{sec:performance} dokumentiert.
 
 \subsection{Umgebung und Binding}
 
@@ -728,7 +1188,8 @@ Tile-Typen, HP, Exit-Kompass $dx/dy$, Schrittanteil); der Aktionsraum ist
 \texttt{Discrete(4)} (vier Bewegungsrichtungen). Die im Spiel vorhandenen
 Aktionen Mining, Bauen und Kampf sind im RL-Binding deaktiviert und werfen bei
 Aufruf einen Fehler; sie existieren nur im spielbaren Client. Eine Episode endet
-bei Erreichen des Exits oder nach 4\,000 Schritten.
+bei Erreichen des Exits, nach 4\,000 Schritten oder als Early-Stop-Truncation
+nach 256 Schritten ohne positiven Reward (Abschnitt~\ref{sec:umgebung}).
 
 Zwei Implementierungsdetails waren fehlerkritisch: (1)~Die
 Weltgenerierungs-Konfiguration ist im C++-Kern prozessglobal; jede Env-Instanz
@@ -761,10 +1222,16 @@ Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json} und
 
 \subsection{Monitoring und Werkzeuge}
 
-Trainingsmetriken (u.\,a.\ \texttt{explained\_variance}, Entropie,
-\texttt{approx\_kl}) werden nach TensorBoard geschrieben. Zusätzlich streamt
+Trainingsmetriken werden nach TensorBoard geschrieben. Neben der bereits
+eingeführten \texttt{explained\_variance} (Güte der Wertfunktion,
+Abschnitt~\ref{sec:grundlagen}) und der Entropie der Politik ist dabei
+\texttt{approx\_kl} von Bedeutung: ein Schätzwert dafür, wie stark sich die
+Politik durch ein Update verändert hat. Werte nahe null zeigen an, dass das
+Training faktisch stillsteht; sehr große Werte deuten auf zu grobe Schritte
+hin. Die Größe dient in dieser Arbeit als schneller Test, ob ein Lauf
+überhaupt lernt (Anhang~\ref{sec:entwicklung}). Zusätzlich streamt
 ein WebSocket-Server den Trainingszustand in eine Browser-Ansicht:
-Erfolgsraten-Kurven (deterministisch und stochastisch), Minimaps der 16
+Erfolgsquoten-Kurven (deterministisch und stochastisch), Minimaps der 16
 parallelen Agenten und eine Explorations-Heatmap. Eine Launcher-GUI (Tkinter)
 bündelt Training, Evaluation und Abspielen. Zum Vorführen steuert
 \texttt{demo\_agent.py} den grafischen Client: Der Client läuft im
@@ -775,34 +1242,52 @@ demselben Seed.
 \section{Evaluation}
 \label{sec:evaluation}
 
-Dieser Abschnitt fasst die Ergebnisse zusammen; das Evaluationsprotokoll
-(Seed-Trennung, Metrik, Betriebsarten) ist in Abschnitt~\ref{sec:methodik}
-beschrieben. Zunächst die zentrale Ablation, anschließend das quantitative
-Endergebnis und die Analyse des Det/Stoch-Gaps.
+Das Evaluationsprotokoll (Seed-Trennung, Metrik, Betriebsarten) ist in
+Abschnitt~\ref{sec:methodik} beschrieben. Die Ergebnisse sind nach Beweislast
+geordnet: Der Vergleich gegen ungelernte Referenzpolitiken
+(Abschnitt~\ref{sec:baselines}) schränkt die Aussagekraft aller vorher
+berichteten Zahlen ein und steht deshalb nach ihnen.
 
-\subsection{Zentrale Ablation: Gedächtnis schlägt Orakel}
+\subsection{Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}
 \label{sec:ablation}
 
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{@{}llccrr@{}}
+\begin{tabular}{@{}llcccrr@{}}
 \toprule
-\textbf{Bedingung} & \textbf{Architektur} & \textbf{BFS in Obs} & \textbf{Curriculum} & \textbf{SR stoch.} & \textbf{SR det.} \\
+\textbf{Bedingung} & \textbf{Arch.} & \textbf{BFS in Obs} & \textbf{Curric.} & \textbf{Obs-Dim.} & \textbf{SR stoch.} & \textbf{SR det.} \\
 \midrule
-A (\texttt{ppo\_phase4}) & MLP & ja & ja & 32\,\% & 0\,\% \\
-B (\texttt{ppo\_no\_bfs}) & MLP & nein & nein & -- & 0\,\% \\
-C (\texttt{ppo\_lstm\_curriculum}) & \textbf{LSTM} & nein & ja & \textbf{86\,\%} & 36\,\% \\
+A (\texttt{ppo\_phase4}) & MLP & ja & ja & 236 & 32\,\% & 0\,\% \\
+B (\texttt{ppo\_no\_bfs}) & MLP & nein & nein & 230 & -- & $\approx 0\,\%$ \\
+C (\texttt{ppo\_lstm\_curriculum}) & \textbf{LSTM} & nein & ja & 231 & \textbf{86\,\%} & 36\,\% \\
 \bottomrule
 \end{tabular}
-\caption{Ablation auf Testset A (Exit 35--45). Der LSTM-Agent ohne
-BFS-\glqq Orakel\grqq{} schlägt den MLP-Agenten mit BFS-Features deutlich:
-Gedächtnis ist für die POMDP-Navigation wichtiger als zusätzliche Wegweiser-Features.
-Modell C ist der ursprüngliche Referenzlauf (Umgebung vor der v11-Revision, Einzellauf);
-der finalisierte Stand über sieben unabhängige Läufe liegt bei $65{,}7\,\%$ (Testset A)
-bzw.\ $66{,}9\,\%$ (Holdout B), siehe Tabelle~\ref{tab:v12}.}
+\caption[Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel]{Gegenüberstellung dreier Modelle auf Testset~A (Exit 35--45), Stand
+Juni 2026; je ein Einzellauf. Zur eingeschränkten Aussagekraft siehe den
+folgenden Absatz.}
 \label{tab:ablation}
 \end{table}
+
+\paragraph{Aussagekraft.}
+Diese Gegenüberstellung ist \emph{keine} kontrollierte Ablation. Vier
+Einschränkungen begrenzen, was aus ihr folgt. Erstens unterscheiden sich A und
+C in \emph{zwei} Faktoren gleichzeitig (Architektur \emph{und} BFS-Features),
+der Effekt ist also nicht separierbar. Zweitens laufen die drei Bedingungen auf
+unterschiedlichen Observationsräumen und Umgebungsständen, alle vor der
+v11-Revision; A wurde zudem mit \texttt{forceGuaranteedPath} und 236 Merkmalen
+trainiert und erreicht unter dem damaligen kurzdistanzigen Eval-Protokoll
+100\,\% deterministisch, unter dem hier verwendeten (Exit 35--45) hingegen
+0\,\%. Drittens ist B kein vollwertiger Vergleichsarm: Der Lauf wurde bei
+720\,k von 2\,Mio.\ Schritten abgebrochen und enthielt einen
+Stagnations-Penalty, der später als schädlich erkannt und entfernt wurde.
+Viertens ist jede Bedingung ein Einzellauf, bei einer Streuung über Läufe von
+rund $\pm 12$ Punkten (Tabelle~\ref{tab:v12}).
+
+Belastbar ist daher nur die schwache Aussage, dass eine rekurrente Politik
+\emph{ohne} lokale BFS-Features eine Leistung erreicht, die eine gedächtnislose
+Politik \emph{mit} diesen Features unter demselben Protokoll nicht erreicht
+hat.
 
 Das finale Modell (v12, Mittel über sieben Läufe) erreicht auf Holdout B
 $66{,}9\,\%$ (stochastisch) und erfüllt damit das Holdout-Kriterium; auf Testset A
@@ -814,8 +1299,8 @@ finalen v12-Läufe zeigt Abbildung~\ref{fig:v12kurven}.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/fig_lernkurve.pdf}
-\caption{Lernkurve des historischen Referenzlaufs
-(\texttt{ppo\_lstm\_curriculum}, Bedingung C der Ablation, Umgebung vor der
+\caption[Lernkurve des historischen Referenzlaufs]{Lernkurve des historischen Referenzlaufs
+(\texttt{ppo\_lstm\_curriculum}, Bedingung C, Umgebung vor der
 v11-Revision; Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds).}
 \label{fig:lernkurve}
 \end{figure}
@@ -824,7 +1309,7 @@ v11-Revision; Curriculum-Phase 3, stochastische Evaluation auf 50 Seeds).}
 \label{sec:endergebnis}
 
 Die sieben finalen Curriculum-Läufe (alle vier Phasen durchlaufen) ergeben auf
-den finalen Modellen:
+dem je Lauf nach Validierungs-SR besten Modell:
 
 \begin{table}[h]
 \centering
@@ -845,18 +1330,26 @@ Seed 7 & 56\,\% & 28\,\% & 50\,\% & 16\,\% \\
 95\,\%-CI & [54{,}2;\,77{,}2] & [21{,}8;\,36{,}5] & [55{,}0;\,78{,}7] & [20{,}8;\,44{,}4] \\
 \bottomrule
 \end{tabular}
-\caption{Endergebnis der v12-Läufe über sieben Seeds (finales Modell je Lauf;
-Testset A und Holdout B, je 50 Seeds, Limit 4\,000, deterministisch und
-stochastisch). Standardabweichung als Stichproben-Std ($\mathrm{ddof}=1$);
-95\,\%-Konfidenzintervall über die $t$-Verteilung ($\mathrm{df}=6$).}
+\caption[Endergebnis der v12-Läufe über sieben Seeds]{Endergebnis der sieben v12-Läufe auf Testset~A und Holdout~B (je 50
+Seeds, Limit 4\,000, beide Betriebsarten). Standardabweichung als
+Stichproben-Std ($\mathrm{ddof}=1$), Konfidenzintervall über die
+$t$-Verteilung ($\mathrm{df}=6$).}
 \label{tab:v12}
 \end{table}
+
+\noindent
+Ausgewertet wird je Lauf nicht der letzte Checkpoint, sondern das nach
+Validierungs-Erfolgsquote beste Modell. Die Auswahl erfolgt ausschließlich auf
+den disjunkten Seeds 6000--6049. Da über einen Lauf hinweg mehrere Dutzend
+Checkpoints bewertet werden, enthält der so gewählte Wert einen
+Selektionsoptimismus gegenüber der Validierung, nicht jedoch gegenüber A
+und~B.
 
 \textbf{Das Holdout-Kriterium ist erfüllt, das Testset-Kriterium verfehlt:}
 B erreicht $66{,}9\,\% \geq 60\,\%$, A bleibt mit $65{,}7\,\%$ um 4{,}3
 Prozentpunkte unter der 70\,\%-Schwelle. Deterministisch werden beide Kriterien
 verfehlt ($29{,}1\,\%$ / $32{,}6\,\%$); zur Einordnung dieses Gaps siehe
-Abschnitt~\ref{sec:evaluation}. Abbildung~\ref{fig:v12kurven} zeigt die
+Abschnitt~\ref{sec:detstochgap}. Abbildung~\ref{fig:v12kurven} zeigt die
 zugrunde liegenden Trainingsverläufe aller sieben Läufe: Die hohe
 Volatilität der Lerndynamik innerhalb der Phasen ist dieselbe Streuungsquelle,
 die sich in den $\pm$12 Punkten der Endergebnisse niederschlägt.
@@ -864,23 +1357,22 @@ die sich in den $\pm$12 Punkten der Endergebnisse niederschlägt.
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_v12_lernkurven.pdf}
-\caption{Trainingsverläufe der sieben v12-Läufe auf den Validierungs-Seeds
-6000--6049, getrennt nach Curriculum-Phase (eine gemeinsame kumulative
-Schrittachse würde wegen des leistungsbasierten Gatings Werte
-unterschiedlicher Phasen mischen). Dünne Linien: stochastische SR der
-Einzelläufe; dicke Linien: Ensemble-Mittel stochastisch (dunkelblau) und
-deterministisch (grün), berechnet wo mindestens vier Läufe Daten liefern.
-Sichtbar sind die volatile Lerndynamik innerhalb jeder Phase und der über
-alle Phasen persistente Det/Stoch-Gap. Die Evaluationsschwierigkeit
-entspricht der jeweiligen Phase; die Werte sind daher nur innerhalb eines
-Panels vergleichbar.}
+\caption[Trainingsverläufe der sieben v12-Läufe]{Trainingsverläufe der sieben v12-Läufe auf den Validierungs-Seeds
+6000--6049, getrennt nach Curriculum-Phase. Dünne Linien: stochastische
+Erfolgsquote der Einzelläufe; dicke Linien: Ensemble-Mittel stochastisch
+(dunkelblau) und deterministisch (grün). Da die Schwierigkeit je Phase
+verschieden ist, sind die Werte nur innerhalb eines Panels vergleichbar.}
 \label{fig:v12kurven}
 \end{figure}
 
 \paragraph{Der Weg von $n=3$ zu $n=7$ ist selbst ein Ergebnis.}
 Eine Zwischenauswertung über die ersten drei Läufe hatte
 $73{,}3 \pm 8{,}3$ (A) und $80{,}0 \pm 8{,}0$ (B) ergeben und beide Kriterien
-scheinbar erfüllt. Da der Abstand zur Schwelle (3{,}3 Punkte) dort kleiner war als
+scheinbar erfüllt. (Skriptkonsistent gerechnet, d.\,h.\ mit demselben
+Eval-Skript wie die $n{=}7$-Auswertung, lauten dieselben drei Läufe
+$74{,}0\,\%$ bzw.\ $77{,}3\,\%$; der Effekt der Aufstockung ist also
+$74{,}0 \to 65{,}7$ und nicht ein Artefakt des Skriptwechsels.)
+Da der Abstand zur Schwelle (3{,}3 Punkte) dort kleiner war als
 die Streuung und das damalige Bootstrap-Intervall auf A ($[66{,}7;\,80{,}0]$) die
 70\,\%-Schwelle einschloss, war die Aussage \glqq robust über 70\,\%\grqq{} nicht
 belegbar. Vier zusätzliche Läufe wurden gezielt zur Klärung dieser Frage
@@ -931,7 +1423,153 @@ derselben Distanzverteilung, die frühere Differenz war eine Eigenschaft der
 kleinen Stichprobe. Ein Gegentest mit den Phase-2-Zwischenmodellen ergab keine
 Verbesserung; das finale Modell bleibt das Ausgabemodell.
 
+\subsection{Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}
+\label{sec:baselines}
+
+Eine Erfolgsquote ist ohne Untergrenze nicht interpretierbar: Ohne Bezugspunkt
+bleibt offen, ob 65\,\% eine gelernte Fähigkeit ausdrücken oder bereits durch
+Zufall erreichbar sind.
+
+Verglichen werden zwei ungelernte Politiken, die \emph{dieselbe} Beobachtung
+erhalten wie der Agent:
+
+\begin{itemize}
+  \item \textbf{Random:} gleichverteilte Bewegung; absolute Untergrenze.
+  \item \textbf{Kompass-Zufallslauf:} mit Wahrscheinlichkeit $\varepsilon$
+        gleichverteilt zufällig, sonst ein Schritt in die dominante Richtung des
+        Luftlinien-Kompasses ($\mathit{exitDx}/\mathit{exitDy}$). Diese Politik
+        nutzt \emph{zwei} der 229 Merkmale; das lokale $15{\times}15$-Grid wird
+        vollständig ignoriert. Sie hat kein Gedächtnis, keine Parameter und
+        wurde nicht trainiert. Der einzige freie Wert $\varepsilon$ wurde
+        ausschließlich auf den Validierungs-Seeds 6000--6049 gewählt, also nach
+        demselben Protokoll wie die Modellselektion; Testset~A und Holdout~B
+        wurden dafür nicht verwendet.
+\end{itemize}
+
+Als zweite Metrik dient die \textbf{Pfadeffizienz}
+$\eta = d_{\mathrm{BFS}}(s_0)\,/\,T_{\mathrm{Erfolg}}$, gemittelt über die
+erfolgreichen Episoden: das Verhältnis aus kürzestem Weg und tatsächlich
+benötigten Schritten. $\eta = 1$ bedeutet optimale Navigation, $\eta = 0{,}05$
+einen zwanzigfachen Umweg. Sie ist erforderlich, weil die Erfolgsquote bei
+einem Episodenlimit von 4\,000 Schritten und einer mittleren Optimallänge von
+40 Schritten (Faktor 100) kaum diskriminiert. Sie greift zugleich die zweite,
+im Exposé neben der Erfolgsquote genannte Zielgröße auf (Minimierung der
+\emph{Steps per Episode}), die dort nicht quantifiziert worden war.
+Tabelle~\ref{tab:baselines} stellt beide Metriken für alle Politiken
+gegenüber.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Testset A}} & \multicolumn{2}{c}{\textbf{Holdout B}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+\textbf{Politik} & \textbf{SR} & \textbf{$\eta$} & \textbf{SR} & \textbf{$\eta$} \\
+\midrule
+Random (gleichverteilt) & $5{,}2 \pm 2{,}7$ & 0{,}021 & $10{,}4 \pm 1{,}7$ & 0{,}025 \\
+Kompass-Zufallslauf, $\varepsilon = 0{,}4$ & $60{,}4 \pm 4{,}8$ & \textbf{0{,}153} & $61{,}6 \pm 5{,}0$ & \textbf{0{,}161} \\
+Kompass-Zufallslauf, $\varepsilon = 0{,}9$ & $\mathbf{92{,}0 \pm 5{,}1}$ & 0{,}047 & $\mathbf{91{,}6 \pm 4{,}3}$ & 0{,}048 \\
+\midrule
+RecurrentPPO v12 ($n=7$, stoch.) & $65{,}7 \pm 12{,}4$ & 0{,}049 & $66{,}9 \pm 12{,}8$ & 0{,}057 \\
+\bottomrule
+\end{tabular}
+\caption[Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten]{Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten; Protokoll
+identisch (je 50 Seeds, Exit 35--45, Limit 4\,000). $\eta$ bezeichnet die
+Pfadeffizienz, die beiden $\varepsilon$-Werte die auf der Validierung
+erfolgs- bzw.\ effizienzoptimale Einstellung. Alle Baseline-Werte sind Mittel
+über fünf Wiederholungen mit unterschiedlichem Politik-Zufallsstrom
+(RNG-Seeds 100--104) bei festen Weltseeds. Erzeugt mit
+\texttt{scripts/eval\_baselines.py}. Die Random-Zeile reagiert bei ihrem
+niedrigen Niveau merklich auf die Wahl des Politik-Zufallsstroms (mit den
+RNG-Seeds 0--4: $10{,}4 \pm 4{,}6$ auf A); die Kompass-Zeilen sind stabil
+($89{,}6 \pm 1{,}7$ bei $\varepsilon = 0{,}9$).}
+\label{tab:baselines}
+\end{table}
+
+\paragraph{Befund.} Der Kompass-Zufallslauf übertrifft den trainierten Agenten
+auf \emph{beiden} Achsen. Bei vergleichbarer Pfadeffizienz
+($\eta \approx 0{,}05$) erreicht er 92\,\% statt 65{,}7\,\%; bei
+vergleichbarer Erfolgsquote ($\approx 60\,\%$) ist er mit $\eta = 0{,}15$ rund
+dreimal wegeffizienter. Der Agent liegt zwar deutlich über der
+Zufallsuntergrenze von 5--10\,\%, erreicht aber an keinem Betriebspunkt die Leistung
+einer Heuristik aus vier Zeilen Code, die 227 seiner 229 Eingangsmerkmale
+ignoriert.
+
+\paragraph{Kein Episodenbudget kehrt das Bild um.} Naheliegend wäre der
+Einwand, das Problem liege allein am großzügigen Limit von 4\,000 Schritten.
+Das lässt sich exakt prüfen: Wer eine Welt bei Schritt $T$ löst, löst sie unter
+jedem Budget $\geq T$; aus einem einzigen Lauf mit protokollierten
+Erfolgsschritten folgt daher die vollständige Kurve
+\emph{Erfolgsquote über Budget} (Tabelle~\ref{tab:capsweep}). Das Ergebnis ist
+eindeutig: Bei \emph{jedem} Budget erreicht oder übertrifft mindestens eine der
+beiden ungelernten Politiken alle drei trainierten Läufe. Ein engeres
+Episodenlimit ist als Korrektur damit nicht ausreichend.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Kompass-Zufallslauf}} & \multicolumn{3}{c}{\textbf{RecurrentPPO v12}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+\textbf{Budget} & $\varepsilon = 0{,}4$ & $\varepsilon = 0{,}9$ & Lauf 1 & Lauf 2 & Lauf 3 \\
+\midrule
+120 ($3\times$ Optimum) & \textbf{4\,\%}  & 0\,\%  & 0\,\%  & 2\,\%  & 0\,\% \\
+200                     & \textbf{22\,\%} & 0\,\%  & 0\,\%  & 4\,\%  & 0\,\% \\
+300                     & \textbf{28\,\%} & 0\,\%  & 2\,\%  & 10\,\% & 6\,\% \\
+500                     & \textbf{36\,\%} & 10\,\% & 12\,\% & 22\,\% & 12\,\% \\
+800                     & \textbf{54\,\%} & 18\,\% & 20\,\% & 32\,\% & 30\,\% \\
+1\,500                  & \textbf{62\,\%} & 54\,\% & 40\,\% & 48\,\% & 54\,\% \\
+4\,000                  & 64\,\%          & \textbf{88\,\%} & 64\,\% & 78\,\% & 74\,\% \\
+\bottomrule
+\end{tabular}
+\caption[Erfolgsquote als Funktion des Episodenbudgets]{Erfolgsquote auf Testset~A in Abhängigkeit des Episodenbudgets
+(BFS-Optimum $\varnothing$ 40 Schritte). Hervorgehoben ist je Zeile der
+höchste Wert.}
+\label{tab:capsweep}
+\end{table}
+
+\paragraph{Was daraus folgt und was nicht.} Der Befund entwertet weder die
+Plattform noch die methodische Arbeit dieses Projekts; er entwertet die
+\emph{Aufgabenstellung} in ihrer aktuellen Parametrisierung. Drei Eigenschaften
+wirken zusammen: (1)~Das Episodenlimit übersteigt die Optimallänge um den
+Faktor 100, sodass ungerichtete Suche genug Zeit hat; (2)~der
+Luftlinien-Kompass liefert dauerhaft eine grob richtige Richtung, sodass ein
+verrauschter Gradientenaufstieg genügt; (3)~die erzeugten Welten sind
+hinreichend offen, dass Sackgassen durch Zufallsbewegung wieder verlassen
+werden. Unter diesen Bedingungen ist Gedächtnis für die Erfolgsquote schlicht
+nicht erforderlich, und die Metrik kann folglich nicht messen, ob es gelernt
+wurde.
+
+Damit ist die zentrale Leistungsaussage dieser Arbeit einzuschränken: Belegt
+ist, dass der Agent die Aufgabe löst und dabei deutlich über der
+Zufallsuntergrenze liegt; \emph{nicht} belegt ist, dass er eine Strategie
+gelernt hat, die über gerichtete Zufallssuche hinausgeht. Diese Einschränkung
+betrifft auch die Gegenüberstellung in Abschnitt~\ref{sec:ablation}: Wenn eine
+kompassgetriebene Zufallspolitik 92\,\% erreicht, ist der Vergleich
+\glqq LSTM ohne BFS\grqq{} gegen \glqq MLP mit BFS\grqq{} kein Test der
+Gedächtnisfähigkeit, sondern misst überwiegend, wie gut die jeweilige Politik
+den Kompass ausnutzt und wie stark sie in Schleifen gerät.
+
+\paragraph{Konsequenz für Folgearbeiten.} Die naheliegende Reaktion ist nicht,
+den Agenten weiter zu tunen, sondern die Aufgabe selbst zu korrigieren. Da
+Tabelle~\ref{tab:capsweep} zeigt, dass eine Änderung des Episodenbudgets allein
+nicht genügt, führt der Weg über die Weltgenerierung: Der Wandanteil muss so
+weit erhöht werden, dass ungerichtete Suche scheitert, ohne die Lösbarkeit zu
+gefährden. Die Baseline-Politik dient dabei als Kalibrierinstrument, mit dem
+sich ein geeigneter Schwierigkeitsgrad \emph{vor} jedem weiteren Training
+bestimmen lässt. Das Vorgehen ist in Abschnitt~\ref{sec:ausblick} ausgeführt.
+Erst unter einem solchen Regime lässt sich die Forschungsfrage dieser Arbeit
+beantworten.
+
+Eine unabhängige Wiederholung der Modellmessung mit anderem Zufallsstrom
+ergab $68{,}6\,\%$ auf Testset~A statt der in Tabelle~\ref{tab:v12}
+berichteten $65{,}7\,\%$. Die Abweichung von knapp drei Punkten entspricht dem
+erwarteten Sampling-Rauschen und ändert die Aussage nicht.
+
 \subsection{Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}
+\label{sec:detstochgap}
 
 Der Abstand zwischen stochastischer und deterministischer SR ist kein
 Schwelleneffekt, sondern wächst kontinuierlich mit der Weglänge
@@ -949,46 +1587,79 @@ Politik nicht per se suboptimal, Abschnitt~\ref{sec:grundlagen}).
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig_det_gap_distanz.pdf}
-\caption{Erfolgsrate nach Startdistanz zum Exit (120 Validierungs-Welten,
+\caption[Erfolgsquote nach Startdistanz zum Exit]{Erfolgsquote nach Startdistanz zum Exit (120 Validierungs-Welten,
 finales v12-Modell, Limit 4\,000): Die deterministische SR fällt kontinuierlich
 mit der Weglänge, die stochastische bleibt hoch.}
 \label{fig:detgap}
 \end{figure}
 
-Dieser Befund ist kein Trainingsartefakt, sondern theoretisch fundiert: Während
-in einem vollständig beobachtbaren MDP stets eine \emph{deterministische} Politik
-optimal ist, können in POMDPs \emph{stochastische} gedächtnislose Politiken einen
-erheblich höheren erwarteten Ertrag erzielen als jede deterministische
-\cite{singh1994pomdp}. Der beobachtete Gap (stochastisch~$>$~deterministisch) ist
-damit die erwartbare Signatur einer partiell beobachtbaren Aufgabe, nicht das
-Symptom eines Fehlers. Verschärft wird dies durch die \emph{Generalisierungs}-
-Anforderung: Ghosh et al.\ zeigen, dass bereits das Ziel, auf unbekannte Level
-(hier: neue Seeds) zu generalisieren, selbst eine Form partieller Beobachtbarkeit
-induziert (\emph{epistemic POMDP}), deren optimale Politik ebenfalls stochastisch
-ist \cite{ghosh2021epistemic}. Die Wahl der stochastischen Evaluation als
-Primärmetrik ist somit theoretisch gerechtfertigt und keine nachträgliche
-Umdeutung des deterministischen Leistungsabfalls.
+Zur theoretischen Einordnung ist eine Unterscheidung nötig, die in der
+Zwischendokumentation dieses Projekts zunächst unscharf blieb. Singh et al.\
+zeigen, dass in POMDPs \emph{stochastische gedächtnislose} Politiken jede
+deterministische gedächtnislose erheblich übertreffen können
+\cite{singh1994pomdp}. Dieses Resultat erklärt den hier beobachteten Gap
+jedoch \emph{nicht}, denn die verwendete Politik ist nicht gedächtnislos: Über
+einem hinreichend genauen Belief-State existiert wieder eine optimale
+deterministische Politik. Dass die Argmax-Auswertung des LSTM-Agenten dennoch
+deutlich abfällt, ist daher primär ein Hinweis auf einen \emph{unvollständigen}
+Belief-State, also eine Gedächtnis-Limitation, und nur mittelbar eine
+Eigenschaft der Aufgabe. Singh et al.\ liefern die Motivation dafür, warum
+stochastisches Verhalten unter partieller Beobachtbarkeit überhaupt nützlich
+sein kann, nicht aber eine Rechtfertigung des konkreten Gaps.
+
+Der Teil der Begründung, der auch \emph{mit} Gedächtnis trägt, stammt aus der
+Generalisierungs-Anforderung: Ghosh et al.\ zeigen, dass bereits das Ziel, auf
+unbekannte Level (hier: neue Seeds) zu generalisieren, selbst eine Form
+partieller Beobachtbarkeit induziert (\emph{epistemic POMDP}), deren optimale
+Politik stochastisch ist und die durch mehr Gedächtnis über die
+\emph{aktuelle} Episode nicht aufgelöst wird \cite{ghosh2021epistemic}. Die
+Unsicherheit liegt hier über der Identität der Welt, nicht über dem Zustand
+innerhalb einer bekannten Welt. Auf dieses Argument, nicht auf Singh et al.,
+stützt sich die Wahl der stochastischen Evaluation als Primärmetrik. Der Gap
+ist damit teils erwartbar (epistemische Unsicherheit über Seeds), teils ein
+offenes Defizit des gelernten Belief-States; die Trennung beider Anteile ist
+mit den vorliegenden Daten nicht möglich und wird als Diagnoseschritt~1 im
+Ausblick (Abschnitt~\ref{sec:ausblick}) vorgeschlagen.
 
 \subsection{Versuche zur Schließung des Det/Stoch-Gaps}
 \label{sec:gapexperimente}
 
 Um zu prüfen, ob der Gap durch gezielte Eingriffe verkleinerbar ist, wurden drei
-kontrollierte Experimente durchgeführt, die jeweils \emph{genau einen} Faktor
-gegenüber der v12-Baseline verändern (Setup in Tabelle~\ref{tab:iterationen}):
+Experimente durchgeführt, die je einen inhaltlichen Faktor gegenüber der
+v12-Baseline verändern (Setup in Tabelle~\ref{tab:iterationen}):
 \textbf{E1} verstärkt den Critic (\texttt{vf\_coef} $0{,}5\to1{,}0$),
 \textbf{E2} glättet den Curriculum-Übergang (Phase~3 nur bis Distanz~35 statt~45),
-\textbf{E3} vergrößert das Gedächtnis (LSTM $256\to512$). \textbf{Kein Ansatz
-schlägt die Baseline:} E1 hebt die deterministische SR leicht (42\,\% statt
-32\,\% auf A), verliert aber stochastisch deutlich (56\,\% statt 73\,\%); der
-stärkere Value-Anteil verschiebt das Verhalten Richtung Determinismus, ohne die
-Gesamtleistung zu verbessern. E2 verschlechtert sich durchgängig (A~26\,\%),
-weil das Modell auf den längsten, eval-relevanten Distanzen untertrainiert bleibt.
-E3 liegt in \emph{allen} Phasen auf oder unter der 256er-Baseline (A~44\,\%,
-det.\ am schwächsten) bei rund dreifachem Rechenaufwand. Mehr Gedächtnis-
-\emph{Kapazität} bedeutet in dieser Umgebung also nicht mehr Gedächtnis-\emph{Nutzen}.
-Der Befund passt zu den bekannten Grenzen rekurrenter Politiken in prozeduraler
-Navigation, deren Gedächtnisanforderungen über reine Kapazität hinausgehen
-\cite{pleines2022recurrent}.
+\textbf{E3} vergrößert das Gedächtnis (LSTM $256\to512$).
+
+\paragraph{Aussagekraft.} Diese drei Läufe sind Einzelmessungen ($n=1$) gegen
+eine Baseline aus drei Läufen. Die in Abschnitt~\ref{sec:endergebnis}
+gemessene Streuung über Trainingsläufe beträgt $\sigma \approx 12$
+Prozentpunkte; ein Einzellauf kann also allein durch Seed-Varianz um mehr als
+20 Punkte von der Baseline abweichen. Die Arme sind daher \emph{kein}
+Wirksamkeitsnachweis, sondern eine Vorauswahl: Sie können eine Hypothese
+schwächen, aber nicht widerlegen. Konsequenterweise wird hier nur die schwache
+Form berichtet.
+
+\textbf{Kein Arm zeigt einen Hinweis auf Verbesserung.}
+E1 hebt die deterministische SR (42\,\% statt 32\,\% auf A), liegt stochastisch
+aber niedriger (56\,\% statt 73\,\%). Beide Differenzen liegen innerhalb bzw.\
+knapp oberhalb von $1{,}5\,\sigma$ und sind bei $n=1$ nicht belastbar; die
+Richtung (mehr Value-Gewicht $\to$ determinierteres Verhalten) ist plausibel,
+aber unbestätigt. E2 liegt mit A~26\,\% rund $4\,\sigma$ unter der Baseline;
+das ist auch bei $n=1$ deutlich und mechanistisch erklärbar, weil das Modell
+auf den längsten, eval-relevanten Distanzen untertrainiert bleibt. Zu beachten
+ist, dass E1 und E2 zusätzlich nur 400k statt 1{,}0\,Mio.\ Phase-3-Schritte
+erhielten; ihr Rückstand ist also teilweise ein Budget-, kein Faktoreffekt.
+E3 liegt mit A~44\,\% rund $2{,}5\,\sigma$ unter der Baseline, ist ein voller
+Lauf mit identischem Budget und zeigt in \emph{allen} Curriculum-Phasen Werte
+auf oder unter der 256er-Baseline bei rund dreifachem Rechenaufwand. Das ist
+der belastbarste der drei Befunde: Mehr Gedächtnis-\emph{Kapazität} bedeutet in
+dieser Umgebung jedenfalls nicht mehr Gedächtnis-\emph{Nutzen}. Er passt zu den
+bekannten Grenzen rekurrenter Politiken in prozeduraler Navigation, deren
+Gedächtnisanforderungen über reine Kapazität hinausgehen
+\cite{pleines2022recurrent}. Eine Replikation von E1 und E3 mit je zwei
+weiteren Seeds steht aus und ist der nächste offene Punkt
+(Abschnitt~\ref{sec:ausblick}).
 
 Ergänzend wurde geprüft, ob der Gap lediglich ein Kalibrierungsartefakt der
 Argmax-Auswertung ist. Ein Temperatur-Sweep zwischen reinem Argmax ($T{=}0$) und
@@ -1014,11 +1685,20 @@ $T = 0{,}75$         & $63{,}3 \pm 7{,}5$ & $72{,}0 \pm 6{,}5$ \\
 \textbf{Sampling ($T{=}1$)} & $\mathbf{70{,}7 \pm 8{,}2}$ & $\mathbf{79{,}3 \pm 6{,}6}$ \\
 \bottomrule
 \end{tabular}
-\caption{Temperatur-Sweep der Evaluation (Mittel $\pm$ Std über die drei
-v12-Läufe, je 50 Seeds, Limit 4\,000). Der Verlauf ist monoton: volles
-Sampling ist optimal.}
+\caption[Temperatur-Sweep der Evaluation]{Erfolgsquote in Abhängigkeit der Sampling-Temperatur (Mittel $\pm$ Std
+über die drei v12-Läufe, je 50 Seeds, Limit 4\,000).}
 \label{tab:temperatur}
 \end{table}
+
+\noindent
+Ein Hinweis zur Konsistenz: Die Zeile $T{=}1$ ($70{,}7\,\%$ auf A) misst
+dieselbe Größe wie die oben genannten $73{,}3\,\%$ und die in
+Abschnitt~\ref{sec:endergebnis} nachgerechneten $74{,}0\,\%$. Die drei Werte
+stammen aus unabhängigen Messungen mit drei Skripten; die Streuung von rund
+drei Punkten entspricht dem Sampling-Rauschen über 50 Bernoulli-Versuche. Das
+ist kein Widerspruch, zeigt aber, dass Unterschiede dieser Größenordnung nicht
+interpretierbar sind. Vergleiche \emph{innerhalb} der Tabelle bleiben zulässig,
+da sie aus demselben Lauf stammen.
 
 Zusammengenommen widersteht der Det/Stoch-Gap dem Tuning einzelner Stellschrauben;
 er ist teils fundamental (POMDP). Nicht-architektonische Hebel wie Hilfs- bzw.\
@@ -1030,110 +1710,130 @@ ehesten über strukturiertes statt größeres Gedächtnis anzugehen
 \section{Fazit und Ausblick}
 \label{sec:ausblick}
 
-\paragraph{Ergebnis.} Über sieben unabhängige Läufe erreicht der Agent
-$65{,}7\,\% \pm 12{,}4$ (Testset~A) und $66{,}9\,\% \pm 12{,}8$ (Holdout~B)
-stochastische Success Rate. Damit ist das Holdout-Kriterium ($\geq 60\,\%$)
-erfüllt, das Testset-Kriterium ($\geq 70\,\%$) verfehlt
-(Abschnitt~\ref{sec:endergebnis}).
+\subsection{Ergebnis}
 
-\paragraph{Methodischer Beitrag.}
-Dass dieses Ergebnis \emph{unter} der Zwischenauswertung mit drei Läufen liegt
-($73{,}3\,\%$ / $80{,}0\,\%$), ist der zweite methodische Beitrag der Arbeit: Die
-Aufstockung wurde gezielt gestartet, weil der Abstand zur Schwelle kleiner war als
-die Streuung; sie zeigte, dass der Dreier-Mittelwert zu optimistisch war.
-Damit reproduziert die Arbeit am eigenen Gegenstand, wovor Henderson et al.\
-\cite{henderson2018matters} warnen, und liefert ein Argument für die von ihnen
-geforderte Praxis. Ein auf drei Läufen berichtetes \glqq beide Ziele erfüllt\grqq{}
-wäre nicht falsch gemessen, aber nicht haltbar gewesen.
+Über sieben unabhängige Läufe erreicht der Agent $65{,}7\,\% \pm 12{,}4$
+(Testset~A) und $66{,}9\,\% \pm 12{,}8$ (Holdout~B) stochastische Erfolgsquote.
+Das Holdout-Kriterium ($\geq 60\,\%$) ist damit erfüllt, das Testset-Kriterium
+($\geq 70\,\%$) verfehlt.
 
-\paragraph{Inhaltlicher Kernbeitrag.}
-Der inhaltliche Kernbeitrag ist davon unberührt, weil er auf der \emph{Relation}
-der Ablationsbedingungen beruht, nicht auf der Höhe der Success Rate: die Ablation
-\emph{Gedächtnis schlägt Orakel}. Ein rekurrenter Agent ohne
-BFS-Wegweiser in der Beobachtung erreicht nahezu dieselbe stochastische Leistung
-wie ein MLP \emph{mit} Orakel; der LSTM-Zustand approximiert den Belief-State
-und ersetzt die globale Pfadinformation. Die Umgebung ist nach der v11-Revision
-methodisch sauber (präzise Schwierigkeitssteuerung, policy-invariantes Shaping,
-keine toten Features, strikte Seed-Trennung).
+Diese Zahlen sind jedoch nur gegen die Zufallsuntergrenze von 5--10\,\%
+aussagekräftig, nicht gegen eine kompetente ungelernte Referenz: Ein
+Kompass-Zufallslauf erreicht 92\,\% und ist bei vergleichbarer Erfolgsquote
+zugleich dreimal wegeffizienter (Abschnitt~\ref{sec:baselines}). Bei einem
+Episodenbudget vom Hundertfachen der Optimallänge misst die gewählte Metrik
+nicht die Fähigkeit, um die es geht, und ein engeres Budget behebt das nicht
+(Tabelle~\ref{tab:capsweep}). \textbf{Die Forschungsfrage ist mit dem
+vorliegenden Aufbau daher nicht entscheidbar: Die Umgebung erfordert das
+Gedächtnis nicht, dessen Nutzen sie messen soll.} Dieser Befund betrifft die
+Interpretation sämtlicher Leistungszahlen der Arbeit, einschließlich der
+Gegenüberstellung in Abschnitt~\ref{sec:ablation}.
 
-\paragraph{Technische Leistung.}
-Neben den RL-Ergebnissen steht eine vollständige, selbst entwickelte
-Experimentierplattform: eine C++-Engine (ca.\ 8\,000 LOC) mit
-deterministischer prozeduraler Weltgenerierung, über \texttt{pybind11} als
-Gymnasium-Umgebung gekapselt, dazu Curriculum-Trainingspipeline,
-standardisierte Evaluationsskripte, Live-Monitoring (WebSocket-Dashboard)
-und ein spielbarer Client mit KI-Zuschaumodus
-(Abschnitt~\ref{sec:technik}). Diese Infrastruktur, insbesondere die
-deterministische Reproduzierbarkeit pro Seed und die durchgängige
-Experiment-Protokollierung, war die Voraussetzung für die
-Root-Cause-Analysen des Entwicklungsverlaufs (Anhang) und ist für
-Folgearbeiten wiederverwendbar.
+\subsection{Beiträge}
 
-\paragraph{Einschränkungen (Threats to Validity).}
-(1)~Der Det/Stoch-Gap bleibt bestehen ($29{,}1\,\%$/$32{,}6\,\%$
-deterministisch): Er wächst mit der Weglänge, ist theoretisch als POMDP-Effekt
-begründet \cite{singh1994pomdp, ghosh2021epistemic} und empirisch als
-\emph{monoton} in der Sampling-Temperatur bestätigt, also kein Argmax-Artefakt.
-Drei kontrollierte Versuche zu seiner Schließung (stärkerer Critic, sanfteres
-Curriculum, größeres LSTM) blieben allesamt unter der Baseline
-(Abschnitt~\ref{sec:gapexperimente}); der Gap ist durch das Tuning einzelner
-Stellschrauben nicht schließbar. (2)~\textbf{Das Testset-Kriterium ($\geq 70\,\%$)
-wird verfehlt} ($65{,}7\,\%$); nur das Holdout-Kriterium ist erfüllt. (3)~Die
-statistische Präzision bleibt auch bei sieben Läufen begrenzt: Die Streuung über
-Läufe beträgt rund $\pm$12 Punkte, das 95\,\%-CI auf Holdout~B reicht bis
-$55{,}0\,\%$ hinab, also unter die 60\,\%-Schwelle, die im Mittel erfüllt ist.
-Belastbare Aussagen über Schwellenwerte in dieser Größenordnung erfordern
-deutlich mehr Läufe. (4)~Alle Ergebnisse stammen aus einem einzigen Generator.
-(5)~Ein quantifizierter Vergleich mit nicht-rekurrenten Standardverfahren
-(DQN, A2C) auf der finalen Umgebung fehlt: Der frühe DQN-Anlauf scheiterte
-vor der v11-Revision und wurde nicht wiederholt
-(Abschnitt~\ref{sec:methodik}).
+\paragraph{Methodisch.} Die Zwischenauswertung über drei Läufe hatte
+$73{,}3\,\%$ / $80{,}0\,\%$ ergeben und beide Kriterien scheinbar erfüllt. Die
+Aufstockung auf sieben Läufe senkte beide Werte deutlich. Ein auf drei Läufen
+berichtetes \glqq beide Ziele erfüllt\grqq{} wäre nicht falsch gemessen, aber
+nicht haltbar gewesen. Zusammen mit dem Baseline-Befund reproduziert die Arbeit
+damit zweimal am eigenen Gegenstand, wovor Henderson et al.\
+\cite{henderson2018matters} warnen: zu wenige Läufe und ein fehlender
+Referenzpunkt führen unabhängig voneinander zu Fehlschlüssen.
 
-\paragraph{Ausblick.}
-Die meistgenannte Richtung für den offenen Det/Stoch-Gap ist der Wechsel auf
-Transformer-basierte In-Context-Architekturen (z.\,B.\ AMAGO
-\cite{grigsby2024amago}). Diese Arbeit ordnet ihn als \emph{Hypothese}
-ein, nicht als Entscheidung, und zwar aus zwei Gründen: Erstens ist noch nicht belegt,
-dass der Gap tatsächlich ein Kapazitätsproblem des Gedächtnisses ist. Die
-Skalierung mit der Weglänge ist konsistent mit degradierendem Belief-Tracking,
-aber ebenso mit einer einfacheren Erklärung: Eine unter hohem
-Entropie-Koeffizienten ($0{,}05$) trainierte Politik kann ihr Restrauschen
-nutzen, um Handlungsschleifen zu verlassen, ohne dass im Training ein Anreiz
-für eine deterministisch tragfähige Aktionswahl bestand. Zweitens zeigt die
-themennahe Literatur: Im breitesten verfügbaren POMDP-Vergleich bleiben
-rekurrente Modelle gegenüber Transformern konkurrenzfähig
-\cite{morad2023popgym}, und die eigene Ablation E3 (Abschnitt~%
-\ref{sec:gapexperimente}) zeigte, dass mehr Gedächtniskapazität in dieser
-Umgebung die Leistung verschlechtert. Daraus ergibt sich ein gestufter Plan:
+\paragraph{Inhaltlich.} Ein rekurrenter Agent ohne BFS-Gradientenfeatures
+erreicht mindestens dieselbe stochastische Leistung wie ein MLP \emph{mit}
+diesen Features; der LSTM-Zustand ersetzt die vorberechnete lokale
+Pfadinformation. Diese Aussage ist doppelt begrenzt: durch die Einschränkungen
+der Gegenüberstellung (Tabelle~\ref{tab:ablation}) und dadurch, dass der
+globale Luftlinien-Kompass in beiden Bedingungen erhalten bleibt. Ersetzt wird
+also die \emph{lokale} Wegweiserinformation, nicht jede globale Zielinformation.
+
+\paragraph{Technisch.} Entstanden ist eine vollständige Experimentierplattform:
+ein C++-Kern mit deterministischer prozeduraler Weltgenerierung, über
+\texttt{pybind11} als Gymnasium-Umgebung gekapselt, dazu
+Curriculum-Trainingspipeline, standardisierte Evaluationsskripte,
+Live-Monitoring und ein spielbarer Client mit KI-Zuschaumodus
+(Abschnitt~\ref{sec:technik}). Die deterministische Reproduzierbarkeit pro Seed
+und die durchgängige Experiment-Protokollierung waren die Voraussetzung für die
+Root-Cause-Analysen im Anhang~\ref{sec:entwicklung} und sind für Folgearbeiten
+wiederverwendbar.
+
+\subsection{Einschränkungen}
+
 \begin{enumerate}
-  \item \textbf{Diagnose vor Architekturwechsel} (Experimente im
-        Stundenbereich): (a)~Eine lineare Probe auf dem LSTM-Hidden-State, die
-        Exit-Richtung bzw.\ BFS-Distanz vorhersagt. Kollabiert die Probe auf
-        langen Wegen, liegt tatsächlich ein Belief-Tracking-Limit vor; bleibt
-        sie stabil, liegt das Problem in der Politik, nicht im Gedächtnis.
+  \item \textbf{Die Erfolgsmetrik ist nicht trennscharf} und wird von einer
+        ungelernten Heuristik übertroffen (Abschnitt~\ref{sec:baselines}). Dies
+        ist die schwerwiegendste Einschränkung, weil sie alle übrigen
+        Leistungsaussagen relativiert.
+  \item \textbf{Das Testset-Kriterium wird verfehlt} ($65{,}7\,\%$ statt
+        $\geq 70\,\%$); nur das Holdout-Kriterium ist erfüllt.
+  \item \textbf{Der Det/Stoch-Gap bleibt bestehen} ($29{,}1\,\%$ bzw.\
+        $32{,}6\,\%$ deterministisch). Er wächst mit der Weglänge und ist
+        monoton in der Sampling-Temperatur, also kein Argmax-Artefakt.
+        Theoretisch erwartbar ist nur der Anteil aus der epistemischen
+        Unsicherheit über den Seed \cite{ghosh2021epistemic}; der Rest ist ein
+        Defizit des gelernten Belief-States. Die drei Versuche zu seiner
+        Schließung sind Einzelläufe und belegen nicht, dass er
+        tuning-resistent \emph{ist}.
+  \item \textbf{Begrenzte statistische Präzision:} Die Streuung über Läufe
+        beträgt rund $\pm 12$ Punkte; das 95\,\%-Konfidenzintervall auf
+        Holdout~B reicht bis $55{,}0\,\%$ hinab, also unter die im Mittel
+        erfüllte Schwelle.
+  \item \textbf{Ein einziger Generator} und \textbf{keine quantifizierte
+        Baseline nicht-rekurrenter Verfahren} (DQN, A2C) auf der finalen
+        Umgebung: Der frühe DQN-Anlauf scheiterte vor der v11-Revision und
+        wurde nicht wiederholt.
+\end{enumerate}
+
+\subsection{Ausblick}
+
+Die Reihenfolge der folgenden Punkte ergibt sich aus dem Befund von
+Abschnitt~\ref{sec:baselines}: Solange die Aufgabe die untersuchte Fähigkeit
+nicht erfordert, ist jede weitere Optimierung des Agenten nicht
+interpretierbar. Die Reparatur des Messregimes steht deshalb vor allem anderen.
+
+\begin{enumerate}
+  \item \textbf{Härtung der Umgebung.} Der Wandanteil wird derzeit pro Biom
+        fest vorgegeben (7\,\% im Wald bis 25\,\% im Bergland) und durch einen
+        zellulären Automaten geglättet. Er sollte zu einem steuerbaren
+        Parameter werden und so weit erhöht werden, bis der Kompass-Zufallslauf
+        einbricht, die Lösbarkeit aber bei 100\,\% bleibt. Das Vorgehen ist
+        zweistufig: erst die Baseline-Politik als Kalibrierinstrument einsetzen,
+        dann trainieren. Ein Trainingslauf ohne diese Vorabprüfung wäre erneut
+        nicht interpretierbar.
+  \item \textbf{Billige Diagnosen vor jedem Architekturwechsel.} (a)~Eine
+        lineare Probe auf dem LSTM-Hidden-State, die Exit-Richtung bzw.\
+        BFS-Distanz vorhersagt: Kollabiert sie auf langen Wegen, liegt ein
+        Belief-Tracking-Limit vor, sonst liegt das Problem in der Politik.
         (b)~Entropie-Annealing in Phase~4 mit Modellselektion auf der
-        \emph{deterministischen} Success Rate als direkter Test der
-        Erklärung über das Restrauschen.
-  \item \textbf{Restpotenzial in RecurrentPPO ausschöpfen}: ein
-        Auxiliary-Loss-Kopf, der aus dem Hidden-State die BFS-Distanz
-        vorhersagt; dies formt den Belief-State explizit und verwendet das
-        BFS-Orakel als Trainingssignal weiter, ohne es zur Testzeit zu
-        benötigen. Ergänzend Burn-in für Sequenzstarts nach dem Vorbild von
-        R2D2 \cite{kapturowski2019r2d2}.
-  \item \textbf{Architekturvergleich als Folgearbeit}: Erst wenn die Probe aus
-        Schritt~1 ein Kapazitätslimit zeigt, ist der Wechsel die methodisch
-        begründete nächste Frage; dann als kontrollierter Vergleich
-        (LSTM~/ Transformer-Gedächtnis~/ AMAGO) auf demselben Generator und
-        Protokoll, da nur Vergleiche innerhalb desselben Messregimes belastbar
-        sind (Abschnitt~\ref{sec:relatedwork}). Für lange Transformer-Kontexte
-        ist dedizierte GPU-Rechenzeit Voraussetzung; auf der hier verwendeten
-        CPU-Hardware (Läufe von 8--36\,h) ist das nicht praktikabel.
-  \item \textbf{Unabhängig davon}: engere Konfidenzintervalle durch mehr
-        Läufe/Seeds und stratifizierte Bootstrap-Auswertung;
-        temperaturkalibrierte Evaluation als kostengünstige Maßnahme ohne
-        Neutraining ($T{=}0{,}5$ reduziert das Argmax-Defizit erheblich);
-        Verkleinerung des Train/Test-Gaps via vollwertiges Prioritized Level
-        Replay \cite{jiang2021plr}, ergänzend Self-Imitation \cite{oh2018sil}.
+        deterministischen Erfolgsquote. (c)~One-Hot- oder Embedding-Kodierung
+        des lokalen Grids statt der bisherigen ordinalen Tile-IDs; dass das
+        Grid kaum genutzt wird, legt die Baseline-Analyse nahe.
+        (d)~Replikation von E1 und E3 mit je zwei weiteren Seeds.
+  \item \textbf{Restpotenzial in RecurrentPPO.} Ein Auxiliary-Loss-Kopf, der
+        aus dem Hidden-State die BFS-Distanz vorhersagt, formt den
+        Belief-State explizit und nutzt das Orakel als Trainings-, nicht als
+        Testzeitsignal. Ergänzend Burn-in für Sequenzstarts nach R2D2
+        \cite{kapturowski2019r2d2}, temperaturkalibrierte Evaluation
+        ($T = 0{,}5$ ohne Neutraining) sowie vollwertiges Prioritized Level
+        Replay \cite{jiang2021plr} und Self-Imitation \cite{oh2018sil}.
+  \item \textbf{Architekturvergleich als Folgearbeit.} Der Wechsel auf
+        Transformer-basierte In-Context-Verfahren (z.\,B.\ AMAGO
+        \cite{grigsby2024amago}) ist die meistgenannte Richtung, hier aber
+        bewusst nur eine Hypothese. Denn erstens ist nicht belegt, dass der Gap
+        ein Kapazitätsproblem ist: Eine unter hoher Entropie trainierte Politik
+        kann ihr Restrauschen zum Verlassen von Schleifen nutzen, ohne je einen
+        Anreiz für eine deterministisch tragfähige Aktionswahl gehabt zu haben.
+        Zweitens bleiben rekurrente Modelle im breitesten verfügbaren
+        POMDP-Vergleich gegenüber den dort geprüften Attention-Modellen
+        konkurrenzfähig; zu beachten ist, dass es sich dabei um
+        \emph{lineare} Transformer-Varianten handelt und nicht um volle
+        Softmax-Attention, wie AMAGO sie verwendet
+        \cite{morad2023popgym}. Die eigene E3-Ablation zeigte, dass mehr
+        Gedächtniskapazität hier schadet. Erst wenn Schritt~2 ein
+        Kapazitätslimit nachweist, wird der Wechsel zur begründeten nächsten
+        Frage; dann als kontrollierter Vergleich auf demselben Generator und
+        Protokoll.
 \end{enumerate}
 
 \section{Anhang: Reproduzierbarkeit}
@@ -1143,6 +1843,7 @@ Dieser Anhang folgt den Reproduzierbarkeits-Checklisten von Pineau et al.\
 \cite{pineau2021repro} und Henderson et al.\ \cite{henderson2018matters}. Alle Trainingsläufe sind über
 Seed, gepinnte Umgebung und \texttt{config.json} reproduzierbar; die vollständige
 Änderungshistorie inklusive verworfener Varianten liegt im Experiment-Changelog.
+Tabelle~\ref{tab:sysumgebung} listet die verwendeten Software-Versionen.
 
 \begin{table}[h]
 \centering
@@ -1161,7 +1862,7 @@ NumPy & 2.4.4 \\
 Abhängigkeiten (gepinnt) & \texttt{requirements.txt} (\texttt{==}) + \texttt{requirements.lock.txt} \\
 \bottomrule
 \end{tabular}
-\caption{Systemumgebung. Nach jeder Änderung an \texttt{game\_config.json} oder
+\caption[Systemumgebung]{Systemumgebung. Nach jeder Änderung an \texttt{game\_config.json} oder
 am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}
 \label{tab:sysumgebung}
 \end{table}
@@ -1176,7 +1877,7 @@ am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}
         (v7--v10-Fehleranalyse, Tab.~\ref{tab:rootcause}; Iterationen E1--E3).
   \item \textbf{Anzahl Läufe:} sieben unabhängige Seeds; berichtet werden
         Mittelwert $\pm$ Standardabweichung, \emph{kein} Best-of-Runs
-        (Kernkritik von Henderson et al.).
+        (Kernkritik von Henderson et al.\ \cite{henderson2018matters}).
   \item \textbf{Datentrennung:} disjunkte Seed-Mengen: Validierung
         (6000--6049) für Phasenwechsel und Modellauswahl, Testset A
         (7000--7049) und Holdout B (8000--8049) ausschließlich für die
@@ -1188,7 +1889,7 @@ am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}
         häufiger Fehler beim Evaluieren rekurrenter Politiken wird damit
         vermieden.
   \item \textbf{Statistische Unsicherheit:} Bei 50 Seeds beträgt das
-        95\,\%-Konfidenzintervall einer Success-Rate bis zu $\pm14$
+        95\,\%-Konfidenzintervall einer Erfolgsquote bis zu $\pm14$
         Prozentpunkte; Unterschiede unterhalb dieser Größe sind nicht
         signifikant zu interpretieren.
   \item \textbf{Rechenaufwand:} je voller Curriculum-Lauf ca.\ 8\,h (CPU) bei
@@ -1205,8 +1906,7 @@ am C++-Kern ist ein Rebuild des Python-Bindings erforderlich.}
 \section{Anhang: Entwicklungsverlauf von der Baseline zum LSTM-Agenten}
 \label{sec:entwicklung}
 
-Dieser Abschnitt dokumentiert die Entwicklung des RL-Teils chronologisch von
-Projektbeginn bis heute. Primärquelle ist das durchgängig geführte
+Primärquelle der folgenden Chronologie ist das durchgängig geführte
 Experiment-Changelog (\texttt{CHANGELOG.md}), in dem jede Änderung mit Problem,
 Lösung und Messergebnis festgehalten wurde. Negative Ergebnisse sind bewusst
 enthalten; sie haben die Architekturentscheidungen maßgeblich geprägt.
@@ -1256,7 +1956,8 @@ Luftlinien-Kompass ist als Fernbereichssignal notwendig.
 Mit funktionierender Baseline wurde die Forschungsfrage geschärft: \emph{Kann
 der Agent auch ohne BFS-Orakel in der Observation navigieren?} Der Wechsel auf
 RecurrentPPO (LSTM) mit Curriculum, Explorations-Bonus und step\_frac-Feature
-(231-dim Obs, kein BFS) lieferte am 08.06.2026 das zentrale Ergebnis:
+(231-dim Obs, kein BFS) wurde am 07.06.2026 gestartet und lieferte nach der
+Auswertung am Folgetag das zentrale Ergebnis:
 \textbf{86\,\% stochastisch / 36\,\% deterministisch} auf Testset A und
 68\,\% / 18\,\% auf Holdout B; damals waren beide Zielkriterien stochastisch erfüllt
 (der final über sieben unabhängige Läufe reproduzierte Wert liegt bei
@@ -1270,11 +1971,9 @@ Heatmap-Evaluation, Early-Stop-Truncation.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig_entwicklung.pdf}
-\caption{Entwicklung über die Modellgenerationen (Testset A, Exit 35--45).
+\caption[Entwicklung über die Modellgenerationen]{Entwicklung über die Modellgenerationen (Testset A, Exit 35--45).
 Links die MLP-Baselines mit BFS-Orakel in der Observation, rechts der
-LSTM-Agent ohne Orakel. Der Kernbeitrag: nahezu gleiche stochastische
-Leistung ohne globale Pfadinformation. Der Det/Stoch-Gap zieht sich als
-zentrales Thema durch alle Generationen.}
+LSTM-Agent ohne Orakel.}
 \label{fig:entwicklung}
 \end{figure}
 
@@ -1314,7 +2013,7 @@ nach 2{,}2\,Mio.\ Steps in 3\,h\,12\,m; das aktuelle Referenzmodell
 Obs-Dimension & 231 & 249 & Zusatzfeatures ohne funktionierende Basis \\
 \bottomrule
 \end{tabular}
-\caption{Root-Cause-Analyse: \texttt{ent\_coef} erwies sich als dominanter
+\caption[Root-Cause-Analyse der fehlgeschlagenen Läufe v7--v9]{Root-Cause-Analyse: \texttt{ent\_coef} erwies sich als dominanter
 Faktor. Die Reproduktion der v2-Konfiguration (v10) stellte das Lernen wieder
 her.}
 \label{tab:rootcause}
@@ -1328,8 +2027,10 @@ Abschnitt~\ref{sec:v11} und Abschnitt~\ref{sec:performance}. Höhepunkte:
 präzise Schwierigkeitssteuerung über BFS-Laufweg, Behebung eines
 prozess-globalen Config-Lecks (das zuvor unbemerkt die
 Phase-3-Trainingsverteilung verschob), Entfernung toter Features und
-Straf-Terme, sowie die validierte Verdopplung der Trainingsgeschwindigkeit
-(batch\_size 8 $\to$ 64, CPU statt GPU).
+Straf-Terme, sowie die Wahl der CPU als Rechen-Device. Die an diesem Tag
+ebenfalls vorgenommene Verdopplung der Trainingsgeschwindigkeit über
+\texttt{batch\_size} 8 $\to$ 64 galt zunächst als validiert, wurde am Folgetag
+jedoch widerlegt (Abschnitt~\ref{sec:etappe6}) und zurückgenommen.
 
 \subsection{Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign
 und Seed-Replay-Analyse}
@@ -1354,12 +2055,9 @@ Aufgabenverteilung wirkt als Regularisierer.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig_v11_lernkurve.pdf}
-\caption{Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand;
-der Lauf ist zum Redaktionszeitpunkt in Phase 3). Seit v11 misst jeder
-Eval-Checkpoint beide Betriebsarten; der Det/Stoch-Gap ist damit erstmals
-über den gesamten Verlauf sichtbar. Vertikale Linien: Phasenwechsel
-(dort wird jeweils das Bestmodell der Vorphase geladen; die x-Achse ist
-über die Phasen kumuliert). Erzeugt mit \texttt{scripts/plot\_run\_curve.py}.}
+\caption[Lernkurve des ersten v11-Gesamtlaufs]{Lernkurve des ersten v11-Gesamtlaufs (Seed 0, Zwischenstand in Phase 3),
+beide Betriebsarten. Vertikale Linien: Phasenwechsel; die x-Achse ist über die
+Phasen kumuliert. Erzeugt mit \texttt{scripts/plot\_run\_curve.py}.}
 \label{fig:v11kurve}
 \end{figure}
 
@@ -1381,7 +2079,7 @@ unkorrigiert alle stepbasierten Zeitachsen verfälscht.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.9\textwidth]{figures/fig_livemap.png}
-\caption{Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile,
+\caption[Live-Monitoring-Dashboard]{Live-Monitoring (Demo mit Zufallsagenten): KPI-Zeile,
 Weltkarten-Minimaps (grau = Wand, blaugrau = erkundeter Boden, grün =
 Startpunkt) und uPlot-Charts. Im Training zusätzlich: goldene Raute =
 gesichteter Exit, grüner Blitz bei Exit-Erfolg, Viridis-Heatmap.}
@@ -1413,14 +2111,13 @@ Fehlersuche vom Eval-Artefakt zur Batch-Größen-Korrektur}
 \label{sec:etappe6}
 
 Die Stagnation der v11-Läufe wurde am Nachmittag des 07.07.\ in einer
-mehrstufigen, hypothesengetriebenen Fehlersuche aufgeklärt. Der Weg wird
-hier bewusst vollständig dokumentiert, inklusive der verworfenen
-Hypothesen, weil die Zwischenergebnisse jeweils die nächste Maßnahme
-bestimmten und zwei der Befunde methodische Tragweite über das konkrete
-Problem hinaus haben.
+mehrstufigen, hypothesengetriebenen Fehlersuche aufgeklärt. Die folgende
+Darstellung enthält auch die verworfenen Hypothesen, da erst deren Ausschluss
+die jeweils nächste Maßnahme bestimmte. Zwei der Befunde, das Eval-Cap-Artefakt
+und die Wirkung der Batch-Größe, haben Tragweite über das konkrete Problem
+hinaus.
 
 \textbf{Schritt 1: Messartefakt entdeckt, Eval-Episoden-Caps.}
-\label{sec:cap}
 Ausgangspunkt war ein Widerspruch: Der Vergleichslauf Seed~1 stagnierte in
 Phase~1 bei 12--16\,\% (wie Seed~0), obwohl die Batch-Validierung derselben
 Konfiguration 52\,\% erreicht hatte. Eine Nachmessung des besten
@@ -1441,13 +2138,9 @@ Fortschrittswahrnehmung gleichzeitig verfälschen.}
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig_cap_artefakt.pdf}
-\caption{Eval-Cap-Artefakt: Success Rate \emph{desselben Modells}
-(bester Phase-1-Checkpoint, Seed 0) als Funktion des Episoden-Caps der
-Evaluation (50 Val-Seeds; aus einem einzigen Cap-4000-Lauf mit
-protokollierten Schritten-bis-Erfolg abgeleitet). Die stochastische SR
-saturiert erst bei Cap 4000; die deterministische ist Cap-unabhängig
-(Argmax-Läufe scheitern nicht an Zeit, sondern an Schleifen).
-Erzeugt mit \texttt{scripts/plot\_etappe6\_figures.py}.}
+\caption[Eval-Cap-Artefakt]{Erfolgsquote \emph{desselben Modells} (bester Phase-1-Checkpoint, Seed 0)
+in Abhängigkeit des Episodenlimits der Evaluation, 50 Val-Seeds. Erzeugt mit
+\texttt{scripts/plot\_etappe6\_figures.py}.}
 \label{fig:capartefakt}
 \end{figure}
 
@@ -1511,12 +2204,9 @@ erkauft und damit wertlos.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig_batch_vergleich.pdf}
-\caption{Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, Evals auf
-50 Val-Seeds mit Cap 4000). Oben: stochastische SR; batch=8 steigt stetig
-auf 84--88\,\%, während batch=64 sowohl nackt (A1-Reproduktion) als auch im
-Curriculum-Stack stark oszilliert bzw.\ stagniert. Unten:
-\texttt{explained\_variance} des Critics (EMA-geglättet, Rohkurven blass);
-nur mit batch=8 entstehen ab $\approx$\,100k anhaltende Hochphasen.
+\caption[Batch-Größen-Forensik]{Batch-Größen-Forensik (alle Läufe Seed 1, Phase-1-Setup, 50 Val-Seeds,
+Limit 4\,000). Oben: stochastische Erfolgsquote. Unten:
+\texttt{explained\_variance} des Critics, EMA-geglättet mit blassen Rohkurven.
 Erzeugt mit \texttt{scripts/plot\_etappe6\_figures.py}.}
 \label{fig:batchvgl}
 \end{figure}
@@ -1534,7 +2224,10 @@ kurvenbasierte Bewertung).
 \label{sec:v11}
 
 Eine systematische Überprüfung der Umgebung gegen Best Practices des
-Environment- und Reward-Designs führte zu sieben verifizierten Änderungen:
+Environment- und Reward-Designs führte zu zehn dokumentierten Änderungen. Die
+folgenden sieben betreffen Umgebung, Reward und Evaluation; die übrigen drei
+(Device- und Batch-Benchmark, Konsistenz- und Usability-Bereinigung) sind in
+Abschnitt~\ref{sec:performance} beschrieben.
 
 \begin{enumerate}
   \item \textbf{Tote Features entfernt:} Energie und Inventar waren konstant;
@@ -1563,7 +2256,7 @@ Environment- und Reward-Designs führte zu sieben verifizierten Änderungen:
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig_exit_distanz.pdf}
-\caption{Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen
+\caption[Wirkung der BFS-basierten Exit-Platzierung]{Wirkung der BFS-basierten Exit-Platzierung: tatsächliche Laufweg-Distanzen
 (min/$\varnothing$/max über je 50 Seeds) vor und nach dem Fix.}
 \label{fig:exitdist}
 \end{figure}
@@ -1578,17 +2271,20 @@ Ergebnisse ab v11 als neue Baseline zu behandeln.
 
 \subsubsection{CPU schlägt Apple-GPU (MPS)}
 
-Ein kontrollierter Benchmark (identisches Trainings-Setup, 8192 Steps) zeigt:
+Sämtliche Läufe dieser Arbeit entstanden auf einem Notebook der Apple-M-Serie
+(M1 Pro, 8 Performance-Kerne, macOS arm64); als Rechen-Device stand damit neben
+der CPU die integrierte GPU über das MPS-Backend zur Verfügung. Ein
+kontrollierter Benchmark (identisches Trainings-Setup, 8192 Steps) zeigt:
 Die GPU ist für dieses kleine Netz (LSTM 256, 229 Inputs) in \emph{jeder}
 Konfiguration langsamer als die CPU; der Kernel-Dispatch-Overhead pro
 Mini-Update übersteigt den Rechengewinn (Abbildung~\ref{fig:fps}). Dies deckt
-sich mit der Empfehlung der SB3-Autoren, GPUs erst bei CNN-Politiken oder großen
-Netzen einzusetzen \cite{raffin2021stable}.
+sich mit der Empfehlung der SB3-Dokumentation, PPO ohne CNN-Politik primär auf
+der CPU zu betreiben \cite{sb3docs}.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/fig_fps_benchmark.pdf}
-\caption{Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen,
+\caption[Training-FPS nach Device und Batch-Größe]{Training-FPS nach Device und Batch-Größe (RecurrentPPO, 16 Umgebungen,
 Apple M-Serie). MPS wurde für batch $\geq 128$ nicht weiter gemessen, da bereits
 bei 64 unterlegen.}
 \label{fig:fps}
@@ -1616,22 +2312,23 @@ reproduzierbar, der Verlauf dorthin sprang jedoch regellos zwischen 24 und
 16--28\,\%. Mit \texttt{batch\_size}=8 lernt dieselbe Konfiguration stetig
 auf 84--88\,\% (Abbildung~\ref{fig:batchvgl}). Die Batch-Größe \emph{war}
 also doch ein kritischer v2-Erfolgsfaktor; sie wurde auf 8 zurückgesetzt.
-Der Abschnitt bleibt als Beleg des methodischen Fehlers erhalten:
-\emph{Einzel-Messpunkte volatiler Prozesse validieren nichts.}
+Die Lehre daraus: \emph{Einzel-Messpunkte volatiler Prozesse validieren
+nichts.}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/fig_batch64_validation.pdf}
-\caption{Validierungslauf \texttt{batch\_size}=64 (Phase-1-Setup, Env v11),
-Stand 06.07.: \texttt{approx\_kl} über der Lernschwelle,
-\texttt{explained\_variance} mit wiederkehrenden Hochphasen. Die daraus
-gezogene Freigabe von batch=64 wurde am 07.07.\ widerlegt
-(Abschnitt~\ref{sec:etappe6}): Die Hochphasen sind transient, die Dynamik
-konvergiert nicht.}
+\caption[Validierungslauf batch\_size=64]{Validierungslauf \texttt{batch\_size}=64 (Phase-1-Setup, Env v11), Stand
+06.07.: \texttt{approx\_kl} und \texttt{explained\_variance} über der Zeit. Zur
+späteren Widerlegung dieses Befunds siehe Abschnitt~\ref{sec:etappe6}.}
 \label{fig:batchval}
 \end{figure}
 
 \subsection{Zeitleiste und Lessons Learned}
+
+Tabelle~\ref{tab:timeline} fasst den Verlauf der vorangegangenen Abschnitte
+chronologisch zusammen; die anschließende Liste hält die übertragbaren
+Erkenntnisse fest.
 
 \begin{table}[h]
 \centering
@@ -1645,7 +2342,7 @@ konvergiert nicht.}
 16.05. & Curriculum P1; naiver Transfer kollabiert $\to$ Mixed-Dist. & 56\,\% $\to$ 86\,\% stoch \\
 16.05. & Phase 4 (Reward-Tuning), 3-Läufe-Protokoll & 98\,\% stoch / 2\,\% det \\
 18.05. & Delta-BFS-Kodierung + Temperature-Sampling & 100\,\% stoch / 42\,\% det \\
-07.06. & \textbf{RecurrentPPO ohne BFS-Orakel (Kernbeitrag)} & \textbf{86\,\% / 36\,\%} \\
+07./08.06. & \textbf{RecurrentPPO ohne BFS-Orakel (Kernbeitrag)}; Lauf gestartet 07.06., ausgewertet 08.06. & \textbf{86\,\% / 36\,\%} \\
 08.06. & POMDP-These; Callback-Bugs; Swarm/Live-Map & -- \\
 11.06. & Data-Leakage behoben (Val-Set 6000er); Lösbarkeit 100\,\% & -- \\
 13.--15.06. & v6--v9 scheitern $\to$ Root-Cause (ent\_coef/batch/n\_steps) & 0--12\,\% \\
@@ -1657,7 +2354,7 @@ konvergiert nicht.}
 17.07. & \textbf{Aufstockung auf $n=7$} (Seeds 4--7); Alternativerklärungen ausgeschlossen & \textbf{65{,}7\,\% / 66{,}9\,\%} (A/B, stoch, $n=7$) \\
 \bottomrule
 \end{tabular}
-\caption{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt{CHANGELOG.md}).
+\caption[Zeitleiste der RL-Entwicklung]{Zeitleiste der RL-Entwicklung (Auswahl; vollständig in \texttt{CHANGELOG.md}).
 SR-Angaben je nach Etappe mit unterschiedlichem Protokoll; Werte vor dem 11.06.\
 ohne strikte Val/Test-Trennung.}
 \label{tab:timeline}
@@ -1696,6 +2393,8 @@ ohne strikte Val/Test-Trennung.}
         auf die Hyperparameter.
 \end{itemize}
 
+\clearpage
+\addcontentsline{toc}{section}{Literaturverzeichnis}
 \bibliographystyle{unsrt}
 \bibliography{references}
 

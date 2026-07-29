@@ -1,13 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{henderson2018matters}
-Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
-  and David Meger.
-\newblock Deep reinforcement learning that matters.
-\newblock In {\em Proceedings of the AAAI Conference on Artificial
-  Intelligence}, volume~32, 2018.
-\newblock \url{https://arxiv.org/abs/1709.06560}.
-
 \bibitem{cobbe2020procgen}
 Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
 \newblock Leveraging procedural generation to benchmark reinforcement learning.
@@ -21,12 +13,6 @@ Sebastian Risi and Julian Togelius.
   generation.
 \newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
 \newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
-
-\bibitem{kerr1998harking}
-Norbert~L. Kerr.
-\newblock {HARKing}: Hypothesizing after the results are known.
-\newblock {\em Personality and Social Psychology Review}, 2(3):196--217, 1998.
-\newblock \url{https://journals.sagepub.com/doi/10.1207/s15327957pspr0203_4}.
 
 \bibitem{sutton2018rl}
 Richard~S. Sutton and Andrew~G. Barto.
@@ -179,16 +165,9 @@ Deepak Pathak, Pulkit Agrawal, Alexei~A Efros, and Trevor Darrell.
 \bibitem{burda2018rnd}
 Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
 \newblock Exploration by random network distillation.
-\newblock In {\em International Conference on Learning Representations}, 2019.
-\newblock \url{https://arxiv.org/abs/1810.12894}.
-
-\bibitem{pineau2021repro}
-Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
-  Alina Beygelzimer, Florence d'Alch{\'e} Buc, Emily Fox, and Hugo Larochelle.
-\newblock Improving reproducibility in machine learning research (a report from
-  the neurips 2019 reproducibility program).
-\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
-\newblock \url{https://arxiv.org/abs/2003.12206}.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2019.
+\newblock Preprint 2018, \url{https://arxiv.org/abs/1810.12894}.
 
 \bibitem{ghosh2021epistemic}
 Dibya Ghosh, Jad Rahme, Aviral Kumar, Amy Zhang, Ryan~P Adams, and Sergey
@@ -199,11 +178,41 @@ Dibya Ghosh, Jad Rahme, Aviral Kumar, Amy Zhang, Ryan~P Adams, and Sergey
   volume~34, 2021.
 \newblock \url{https://arxiv.org/abs/2107.06277}.
 
+\bibitem{kerr1998harking}
+Norbert~L. Kerr.
+\newblock {HARKing}: Hypothesizing after the results are known.
+\newblock {\em Personality and Social Psychology Review}, 2(3):196--217, 1998.
+\newblock \url{https://journals.sagepub.com/doi/10.1207/s15327957pspr0203_4}.
+
+\bibitem{pineau2021repro}
+Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
+  Alina Beygelzimer, Florence d'Alch{\'e} Buc, Emily Fox, and Hugo Larochelle.
+\newblock Improving reproducibility in machine learning research (a report from
+  the neurips 2019 reproducibility program).
+\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
+\newblock \url{https://arxiv.org/abs/2003.12206}.
+
+\bibitem{henderson2018matters}
+Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
+  and David Meger.
+\newblock Deep reinforcement learning that matters.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, volume~32, 2018.
+\newblock \url{https://arxiv.org/abs/1709.06560}.
+
 \bibitem{oh2018sil}
 Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
 \newblock Self-imitation learning.
 \newblock In {\em International Conference on Machine Learning (ICML)}, pages
   3878--3887. PMLR, 2018.
 \newblock \url{https://arxiv.org/abs/1806.05635}.
+
+\bibitem{sb3docs}
+{Stable-Baselines3 Contributors}.
+\newblock Stable-baselines3 documentation: {PPO}, 2025.
+\newblock
+  \url{https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html},
+  abgerufen am 25.07.2026: \glqq PPO is meant to be run primarily on the CPU,
+  especially when you are not using a CNN\grqq.
 
 \end{thebibliography}

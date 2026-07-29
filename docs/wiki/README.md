@@ -16,6 +16,7 @@ Negativergebnisse sind hier ein Kernbeitrag, kein Abfall.
 4. [Ablation A→B→C](experiments/ablation-abc.md) — die Narrativlinie
 5. [v12: Endergebnis](experiments/v12-final.md) — die Zahlen, die in die Arbeit gehen
 6. [Aktueller Stand](projekt-status.md) — was gerade läuft, was offen ist
+7. [Aufbau der wiss. Doku](concepts/wissenschaftliche-doku-aufbau.md) — Gliederung, Verzeichnisse, roter Faden, Abstract-Regeln, Checkliste vor Abgabe
 
 ## Karte
 
@@ -24,7 +25,7 @@ Das Wiki hat zwei Hälften: **das Spiel** (Stoneforge selbst, Weltgenerierung, T
 
 | Sammlung | Was drin steht |
 |----------|----------------|
-| [concepts/](concepts/) | **Spiel:** Stoneforge, Tile-Typen, Biome · **RL:** POMDP, Det/Stoch-Gap, PBRS, Curriculum, Observation Space, Recurrent PPO, Zielkriterium |
+| [concepts/](concepts/) | **Spiel:** Stoneforge, Tile-Typen, Biome · **RL:** POMDP, Det/Stoch-Gap, PBRS, Curriculum, Observation Space, Recurrent PPO, Zielkriterium · **Schreiben:** [Aufbau wiss. Doku](concepts/wissenschaftliche-doku-aufbau.md) |
 | [components/](components/) | **Spiel:** Weltgenerierung, Exit-Platzierung, C++-Core · **RL:** Gym-Env, Trainingsskript, Eval-Protokoll, Swarm-Pool, Demo |
 | [experiments/](experiments/) | Ablation, v2, v7–v9-Rootcause, v11-Env-Bruch, v12, E1/E2/E3, Temperatur-Sweep |
 | [decisions/](decisions/) | batch_size=8, stochastische Eval, Eval-Cap 4000, kein größeres LSTM |

@@ -2,6 +2,710 @@
 
 ---
 
+## v2026-07-26.1 — Externe Durchsicht: Abstract neu gewichtet, Meta-Prosa entfernt, neun Korrekturen
+
+**Kontext:** Vollständige Durchsicht von Deckblatt bis Fazit mit Nachrechnen aller Zahlen
+gegen Rohdaten, Code und Primärliteratur. Verifiziert wurden u. a. Tab. 7 gegen
+`scratchpad_final_eval_n7.json` (alle 28 Werte exakt), Mittelwerte/ddof=1-Std/t-CIs (df=6),
+Welch-Test (t=1,764, df=4,21, p=0,149), Tab. 4 gegen `Simulation::computeReward()`,
+PBRS-Arithmetik, die 5.120 Gradient-Updates gegen die `RecurrentRolloutBuffer`-Semantik,
+LOC-Angaben (Kern 4.469 / Client 4.585) und sämtliche Bibliotheksversionen.
+
+**Eigene Nachmessung:** Die Sichtbarkeits-Staffelung des Curriculums (72 % / 6 % / 0 % Exit
+im 15×15-Sichtfeld bei Episodenstart) reproduziert über 200 Welten je Phase **exakt**
+(145/200, 13/200, 0/200). Tab. 9 (Baselines) reproduziert mit `--repeats 5 --rng-offset 100`
+**zeichengenau** in allen zwölf Werten.
+
+### Änderung 1 — Kurzfassung neu gewichtet
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Zwei Fehler in einem Absatz. (a) Sachlich falsch: „erreicht 92 % und ist
+**zugleich wegeffizienter**" — bei ε=0,9 ist η=0,047, der Agent liegt mit 0,049 darüber.
+Wegeffizienter ist nur ε=0,4, und der erreicht 60,4 %. Der Haupttext (§7.3) formuliert es
+korrekt, die Kurzfassung zog zwei Betriebspunkte zusammen. (b) Gewichtung: ein Satz Ergebnis
+gegen vier Sätze Selbstentwertung, kein Wort zum Beitrag.
+**Lösung:** Aussage korrigiert auf „bei vergleichbarer Erfolgsquote dreimal wegeffizienter";
+Umbau von „zwei methodische **Befunde**" auf „zwei methodische **Beiträge**" (kalibrierter
+Bezugspunkt + Quantifizierung der Lauf-Streuung). Der Negativbefund bleibt vollständig
+erhalten, inklusive „nicht trennscharf". Aufstockungseffekt beziffert (rund acht Punkte).
+
+### Änderung 2 — Meta-Prosa entfernt
+
+**Problem:** Inhaltsangaben in Prosa vor jedem Kapitel, redundant zu Inhaltsverzeichnis
+*und* § 1.5 „Aufbau der Arbeit" (z. B. „Dieses Kapitel beantwortet die Frage, wie gemessen
+wurde.").
+**Lösung:** Gestrichen in § 2, § 5 (8 → 3 Zeilen), § 5.6, § 7, § 7.3, § 1.2 und Anhang B.
+Erhalten bleibt jeweils nur die nicht-offensichtliche Information (z. B. *warum* die
+Schwellen-Herleitung am Kapitelende steht). „bis heute" im Anhang entfernt.
+
+### Änderung 3 — Drei Abbildungen für „Welt vs. Agentensicht" auf eine reduziert
+
+`fig_game_real.png` war zweimal eingebunden (Abb. 4 und linke Hälfte von Abb. 5); Abb. 3
+machte inhaltlich denselben Punkt. Abb. 5 (`fig:game_vs_ai`) entfernt, § 4.1 verweist jetzt
+auf `fig:pomdp_schema`. 17 statt 18 Abbildungen.
+
+### Änderung 4 — Zirkulärer Querverweis behoben
+
+§ 7.2 verwies für die Gap-Einordnung auf `sec:evaluation` (Kapitel 7 — der Leser steht schon
+darin). Ursache: § 7.4 hatte **kein Label**. `\label{sec:detstochgap}` ergänzt, Verweis
+umgehängt. Zusätzlich `sec:cap` entfernt (stand nach `\textbf{}` und löste auf dieselbe
+Nummer auf wie `sec:etappe6`).
+
+### Änderung 5 — Tabelle 9 wurde im Text nie referenziert
+
+Die zentrale Baseline-Tabelle hatte kein einziges `\ref`. Einführender Satz in § 7.3 ergänzt.
+(Die Prüfung in `v2026-07-25.9`, Befund 3, hatte nur Abbildungen erfasst.)
+
+### Änderung 6 — Widerspruch 7 vs. 10 Änderungen in v11
+
+| Stelle | vorher | nachher |
+|---|---|---|
+| Etappe 4 + Zeitleiste | „zehn dokumentierte Änderungen" | unverändert |
+| § A.6 | „sieben verifizierte Änderungen" | „zehn dokumentiert; die folgenden sieben betreffen Umgebung/Reward/Eval, die übrigen drei stehen in § A.7" |
+
+### Änderung 7 — Datumsinkonsistenz Kernbeitrag
+
+Zeitleiste sagte 07.06., § A.2 sagte 08.06. Laut Changelog: Lauf gestartet 07.06.,
+ausgewertet 08.06. Beide Stellen darauf vereinheitlicht.
+
+### Änderung 8 — Zwei Belege nachgeschärft
+
+| Stelle | Problem | Korrektur |
+|---|---|---|
+| § A.7.1 | „Empfehlung der SB3-Autoren" mit `\cite{raffin2021stable}` — das JMLR-Paper enthält diese Empfehlung nicht, die Online-Doku schon | Neuer Bib-Key `sb3docs` mit Wortlaut („PPO is meant to be run primarily on the CPU, especially when you are not using a CNN") und Abrufdatum |
+| § 8.4 | „gegenüber **Transformern** konkurrenzfähig" `\cite{morad2023popgym}` — POPGyms Attention-Baselines sind *lineare* Varianten (u. a. FART), nicht volle Softmax-Attention wie bei AMAGO | Präzisiert; die Argumentation gegen einen voreiligen AMAGO-Wechsel bleibt tragfähig, wird aber nachprüfbar |
+
+`burda2018rnd`: Key 2018 / Feld 2019 (ICLR 2019) im `note`-Feld aufgelöst.
+
+### Änderung 9 — Random-Baseline: Streuung über den Politik-Zufallsstrom offengelegt
+
+**Problem:** 5,2 % (RNG-Seeds 100–104) ist der niedrigste von drei vorliegenden Messwerten;
+mit RNG-Seeds 0–4 ergibt dieselbe Politik **10,4 ± 4,6 %** auf A, der alte 3er-Lauf 8,0 %.
+Berichtet wurde ausgerechnet der Wert, der die Aussage „deutlich über dem Zufall" am besten
+stützt. Die Kompass-Zeilen sind dagegen stabil (89,6 vs. 92,0 bei ε=0,9) — der Kernbefund
+wackelt nicht.
+**Lösung:** Spannweite in der Caption von Tab. 9 offengelegt; „Zufallsuntergrenze von 5 %"
+→ **5–10 %** an beiden Stellen (§ 7.3, § 8.1).
+
+### Änderung 10 — Exposé-Zweitmetrik nachgetragen
+
+Das Exposé nennt neben ≥ 90 % SR die Minimierung der *Steps per Episode*. § 5.5 rechnete nur
+gegen die SR ab. Ergänzt: Auch diese Zielgröße wird verfehlt, und zwar deutlicher
+(η ≈ 0,05 = rund zwanzigfacher Umweg). Die Pfadeffizienz ist in § 7.3 jetzt explizit als
+Aufgreifen dieser Exposé-Metrik ausgewiesen.
+
+### Änderung 11 — Reproduzierbarkeit der Baseline-Tabelle hergestellt
+
+**Datei:** `scripts/eval_baselines.py`
+**Problem:** Das abgelegte `logs/eval_results/baselines.json` stammte aus einem älteren
+3-Wiederholungs-Lauf ohne ε=0,4 und passte nicht zu Tab. 9. Das Skript enthielt ε=0,4 gar
+nicht in der Standardliste und hatte `repeats=3` — die Doku-Zeile war mit dem
+ausgelieferten Skript **nicht erzeugbar**, obwohl die Zahlen korrekt sind.
+
+| Parameter | vorher | nachher | Begründung |
+|---|---|---|---|
+| ε-Liste | 0,3/0,5/0,6/0,8/0,9 | 0,3/**0,4**/0,5/0,6/0,8/0,9 | ε=0,4 ist der in Tab. 9 berichtete effizienzoptimale Punkt |
+| `--repeats` | 3 | **5** | Doku-Tabelle mittelt über 5 |
+| `--rng-offset` | — | **100** (neu) | Politik-RNG-Seeds der Doku-Messung explizit steuerbar |
+
+Rohdaten mit dem Doku-Protokoll neu erzeugt.
+
+### Änderung 12 — Zweiter Durchgang: Restbestände
+
+- **§ 5-Opener ganz entfernt.** Die verbliebene Ein-Satz-Begründung („steht am Ende dieses
+  Kapitels, weil sie Kenntnis der Umgebung voraussetzt") war weiterhin eine Aussage über
+  Dokumentstruktur. Sie steht jetzt am Anfang von § 5.5, also dort, wo sie den Leser
+  tatsächlich betrifft. Kapitel 5 beginnt direkt mit § 5.1.
+- **Begriff „Erfolgsrate" eliminiert** (3 Fundstellen: Curriculum-Gating, Monitoring,
+  Bildunterschrift Abb. 9). `v2026-07-25.9` hatte auf „Erfolgsquote" vereinheitlicht, diesen
+  dritten Synonym-Strang aber übersehen. Jetzt: Erfolgsquote 27×, „Success Rate" nur noch 2×
+  an den beiden Definitionsstellen, „Erfolgsrate" 0×.
+- **HARKing war eine Karteileiche.** Der Begriff stand im Abkürzungsverzeichnis, kam im Text
+  aber **0×** vor — § 5.5 zitierte Kerr nur, ohne das Konzept zu benennen. Statt den Eintrag zu
+  streichen, ist der Begriff jetzt an der Stelle ausgeschrieben, an der das Argument geführt
+  wird; das macht die methodische Absicherung explizit statt implizit.
+
+**Gegenprüfung:** Alle 20 Abkürzungen und 6 Symbole des Verzeichnisses werden im Text
+verwendet. Schlüsselzahlen über das Dokument hinweg konsistent (65,7 12× · 66,9 8× · 29,1 3× ·
+32,6 3× · 74,0 5× · 73,3 4×), keine widersprüchlichen Varianten.
+
+### Offener Punkt — Durchsatzangabe § 6.1
+
+Nicht geändert, weil es eine Sachfrage an die Autoren ist: § 6.1 nennt „ca. 90--190
+Umgebungsschritte pro Sekunde". Die Untergrenze stammt aus dem 8192-Schritt-Mikrobenchmark
+(88 FPS bei batch=8). Aus den Produktivläufen gerechnet liegt der Wert darunter:
+`v12_s1` erreicht laut `eval_history.json` rund 1,72 Mio. Umgebungsschritte in 7 h 48 m
+(= 28.100 s) → **≈ 61 FPS** Ende-zu-Ende bzw. ≈ 68 FPS nach Abzug der Eval-Zeit
+(≈ 69 Eval-Punkte à ≈ 42 s). Ein Leser, der die 8 h gegen die Schrittzahl gegenrechnet, trifft
+auf diese Lücke. Kein Ergebnis hängt daran; zu klären wäre nur, ob § 6.1 den reinen
+Trainings- oder den Ende-zu-Ende-Durchsatz meinen soll.
+
+#### Ergebnis
+
+46 Seiten, kompiliert fehlerfrei, 0 undefinierte Referenzen, keine unaufgelösten Labels.
+Verbleibende LaTeX-Warnungen: ausschließlich „`h' float specifier changed to `ht'".
+
+---
+
+## v2026-07-25.9 — Vollständige Durchsicht: Zahlenfehler in der Baseline-Tabelle korrigiert
+
+**Kontext:** Durchsicht des gesamten Dokuments nach den zahlreichen Eingriffen der letzten
+Runden. Geprüft wurden Zahlenkonsistenz gegen die Rohdaten, Querverweise, Zitate,
+Begriffskonsistenz und Widersprüche zwischen Abschnitten.
+
+### ⚠️ Befund 1 — Random-Baseline war ein Einzeldurchlauf, Caption behauptete fünf
+
+**Problem:** Die Zeile „Random" in Tabelle `tab:baselines` stammte aus
+`baselines_and_models.json` (**ein** Durchlauf, `sr_std = 0`), während die Kompass-Zeilen aus
+fünf Wiederholungen gemittelt waren. Die Bildunterschrift behauptete für alle Zeilen fünf
+Wiederholungen. Der Einzeldurchlauf war zudem ein günstiger Ausreißer.
+
+**Messung nachgeholt** (5 Wiederholungen, Politik-RNG-Seeds 100–104, Weltseeds fix):
+
+| | Doku vorher (n=1) | korrigiert (n=5) |
+|---|---|---|
+| Testset A | 10,0 % · η 0,022 | **5,2 ± 2,7 %** · η 0,021 |
+| Holdout B | 16,0 % · η 0,030 | **10,4 ± 1,7 %** · η 0,025 |
+
+Alle abhängigen Stellen nachgezogen: „Zufallsuntergrenze von 10 %" → 5 % (Fazit 8.1 und
+Evaluation 7.3). Die inhaltliche Aussage verstärkt sich dadurch — der Agent liegt weiter über
+dem Zufall, als bisher berichtet.
+
+### Befund 2 — Widerspruch zwischen PPO- und POMDP-Abschnitt
+
+Der PPO-Abschnitt verwies für den Det/Stoch-Gap auf „warum das kein Widerspruch sein muss,
+wurde in Abschnitt 2.2 begründet". Abschnitt 2.2 war in `v2026-07-25.x` aber genau gegenteilig
+korrigiert worden (Singh gilt nur für gedächtnislose Politiken; bei rekurrenter Politik ist der
+Gap ein Belief-State-Defizit). Verweis umformuliert.
+
+### Befund 3 — Drei Floats ohne Verweis im Text
+
+`fig:game_vs_ai`, `tab:sysumgebung` und `tab:timeline` waren gesetzt, wurden aber nirgends
+referenziert. Je ein einführender Satz ergänzt. Automatisierte Gegenprüfung: keine
+unreferenzierten Abbildungen oder Tabellen mehr, keine fehlenden Labels.
+
+### Befund 4 — Fehlende Zitate
+
+Zwei Nennungen „Henderson et al." ohne `\cite` (Abschnitt Versuchsübersicht,
+Repro-Checkliste). Ergänzt.
+
+### Befund 5 — Begriffsinkonsistenzen
+
+- **„Success Rate" vs. „Erfolgsquote"** gemischt (10× / 18×). Vereinheitlicht auf
+  **Erfolgsquote** als Leitbegriff, mit „(Success Rate, SR)" bei der Definition in der
+  Methodik und im Abkürzungsverzeichnis.
+- **„Ablation"** wurde weiterhin für die A/B/C-Gegenüberstellung verwendet, obwohl der
+  Abschnitt in `v2026-07-25.x` bewusst zu „Gegenüberstellung" umbenannt wurde, weil es eben
+  keine kontrollierte Ablation ist. Vier Reststellen korrigiert.
+
+### Befund 6 — Überclaim im Umgebungskapitel
+
+„Ohne Gedächtnis ist sie nicht deterministisch lösbar" — nach dem Baseline-Befund nicht mehr
+haltbar in dieser Absolutheit. Ersetzt durch die belegbare Aussage, dass für eine
+gedächtnislose Politik verschiedene Weltpositionen ununterscheidbar sind.
+
+### Befund 7 — Verworrene Messanmerkung
+
+Der Absatz „Anmerkung zur Messung" erklärte eine Abweichung (68,6 % vs. 65,7 %) und schloss
+mit „Berichtet wird der Wert aus Tabelle 7" — die Erklärung betraf also eine Zahl, die gar
+nicht in der Tabelle steht. Auf zwei Sätze reduziert.
+
+#### Ergebnis
+
+46 Seiten, kompiliert fehlerfrei, 0 undefined references, keine unreferenzierten Floats.
+
+---
+
+## v2026-07-25.8 — Prozess-Erzählung und Selbstkommentierung entfernt
+
+**Problem (vom Team gemeldet):** Der Satz „Der Befund entstand erst in der Schlussdurchsicht,
+betrifft die Interpretation sämtlicher Leistungszahlen dieser Arbeit und wird deshalb an
+erster Stelle berichtet" erzählt die Entstehungsgeschichte statt die Sache. Zwei der drei
+Teilsätze sind Meta-Kommentar („entstand erst in der Schlussdurchsicht", „wird deshalb an
+erster Stelle berichtet"), und der erste liest sich als Eingeständnis, obwohl der Befund eine
+Leistung ist. Eine Doku sollte über den Gegenstand sprechen, nicht über sich selbst.
+
+**Vorgehen:** Gezielte Suche nach dem Muster (`wird bewusst berichtet`, `bewusst ausführlich`,
+`Schlussdurchsicht`, `bleibt als Beleg erhalten`, …). Sechs Stellen gefunden und bereinigt:
+
+| Ort | vorher | nachher |
+|-----|--------|---------|
+| Fazit 8.1 | „Der Befund entstand erst in der Schlussdurchsicht, … und wird deshalb an erster Stelle berichtet." | „Dieser Befund betrifft die Interpretation sämtlicher Leistungszahlen der Arbeit, einschließlich der Gegenüberstellung in Abschnitt 7.1." |
+| Evaluation 7.3 | „Diese Arbeit hat diese Untergrenze zunächst nicht erhoben; sie wurde erst bei der Schlussdurchsicht nachgeholt. Der Befund wird deshalb hier vollständig berichtet." | „Ohne Bezugspunkt bleibt offen, ob 65 % eine gelernte Fähigkeit ausdrücken oder bereits durch Zufall erreichbar sind. Dieser Abschnitt liefert den Bezugspunkt." |
+| Anhang Batch-Größe | „Der Abschnitt bleibt als Beleg des methodischen Fehlers erhalten: …" | „Die Lehre daraus: …" |
+| Einleitung 1.5 | „Der Anhang ist bewusst ausführlich, weil …" | konkret: welche Erkenntnisse dort stehen (Batch-Größe, Eval-Cap-Artefakt) |
+| Anhang Etappe 6 | „Der Weg wird hier bewusst vollständig dokumentiert, inklusive der verworfenen Hypothesen, weil …" | „Die folgende Darstellung enthält auch die verworfenen Hypothesen, da erst deren Ausschluss die jeweils nächste Maßnahme bestimmte." |
+| Kurzfassung | „Die Arbeit dokumentiert diesen Befund, leitet daraus ein korrigiertes Messregime ab und beschreibt den vollständigen Entwicklungsverlauf einschließlich der negativen Ergebnisse." | „Aus diesem Befund leitet die Arbeit ein korrigiertes Messregime für Folgearbeiten ab." |
+
+**Regel für künftige Änderungen:** Sätze, die mit „Diese Arbeit …", „Der Abschnitt …",
+„… wird bewusst …" beginnen, beschreiben meist das Dokument statt den Gegenstand. Sie sind nur
+dann berechtigt, wenn sie eine ungewöhnliche Strukturentscheidung erklären, die der Leser sonst
+für einen Fehler hielte — nicht, um die eigene Redlichkeit zu betonen.
+
+#### Ergebnis
+
+46 Seiten, kompiliert fehlerfrei, 0 undefined references. Kurzfassung 184 Wörter (Norm 150–250).
+
+---
+
+## v2026-07-25.7 — Forschungsfrage korrigiert, Exposé-Rechtfertigung entschlackt
+
+#### Änderung 1 — Forschungsfrage setzte das Ergebnis voraus
+
+**Problem (vom Team gemeldet):** Die Frage lautete „Kann ein RL-Agent **mit internem
+Gedächtnis** …". Das Gedächtnis war aber kein Teil der Fragestellung, sondern ein *Befund*
+des Projekts: Dass es nötig ist, ergab sich erst aus dem Scheitern gedächtnisloser Varianten
+(`ppo_no_bfs`, MLP-Baselines). Die Formulierung nahm damit das Ergebnis vorweg und machte aus
+einer offenen Untersuchung eine Bestätigungsfrage.
+
+**Lösung:**
+
+| | |
+|---|---|
+| **vorher** | „Kann ein RL-Agent **mit internem Gedächtnis** in prozedural generierten, nur teilweise einsehbaren 2D-Welten eine Navigationsstrategie lernen, die auch auf unbekannten Welten funktioniert, ohne dass ihm der Weg zum Ziel vorberechnet wird?" |
+| **nachher** | „Kann ein **Reinforcement-Learning-Agent** in prozedural generierten, nur teilweise einsehbaren 2D-Welten eine Navigationsstrategie lernen, die auch auf unbekannten Welten funktioniert, ohne dass ihm der Weg zum Ziel vorberechnet wird?" |
+
+Ergänzt um einen Satz, der die Offenheit explizit macht: *Wie* ein Agent das leisten könnte,
+ist selbst Teil des Untersuchungsgegenstands; das Gedächtnis war zu Projektbeginn eine
+Vermutung und ergab sich erst im Verlauf. Zusätzlich der Halbsatz „Ein Programm ohne
+Gedächtnis kann … nicht zuverlässig entscheiden" aus dem Absatz davor entfernt — er nahm
+dieselbe Antwort vorweg. Kurzfassung und Anhang waren bereits korrekt formuliert und blieben
+unverändert.
+
+#### Änderung 2 — Exposé-Rechtfertigung von 79 auf 37 Zeilen
+
+**Problem (vom Team hinterfragt):** Der Abschnitt „Revision des Erfolgskriteriums" und ein
+vorgezogener Absatz in der Einleitung verteidigten über mehr als eine Seite, warum die
+90 %-Metrik des Exposés ersetzt wurde — inklusive HARKing-Abwehr, „damit die Revision nicht
+als Ersetzen eines unbequemen Maßstabs missverstanden wird" und einem eigenen Absatz
+„Die Projektziele des Exposés sind davon unberührt". Da der Betreuer schriftlich bestätigt hat,
+dass das Exposé nicht verbindlich ist (`v2026-07-22.1`), ist dieser Aufwand unverhältnismäßig
+und liest sich defensiv.
+
+**Lösung:**
+- **Einleitung:** Der vorgezogene Rechtfertigungsabsatz (12 Zeilen) ist ersatzlos entfallen.
+  Es bleibt ein Satz: Schwellen wurden vor den Auswertungsläufen festgelegt, Herleitung folgt
+  in der Methodik.
+- **Methodik:** Abschnitt umbenannt von „Revision des Erfolgskriteriums" zu
+  **„Herleitung der Erfolgsschwellen"** — von Rechtfertigung auf Sachdarstellung gedreht.
+  Erhalten bleibt die inhaltlich wertvolle Substanz: die drei Gründe, warum 90 % in dieser
+  Aufgabe unerreichbar sind (POMDP-Charakter, Luftlinien- statt Laufwegdistanz vor v11,
+  Streuung ±12 Punkte). Entfallen sind die HARKing-Abwehr als Absatz, die Meta-Kommentare
+  zur eigenen Redlichkeit, die separate 100-Seed-Tabelle (redundant zu Tab. `tab:v12`) und der
+  Absatz zu den Muss-/Nice-to-have-Kriterien.
+- Die Vorab-Fixierung bleibt als **ein** Halbsatz mit HARKing-Beleg erhalten — Datum dabei auf
+  den tatsächlichen Stand korrigiert: **16.05.2026** statt 08.06.2026. Beide Schwellen stehen
+  bereits im Changelog-Eintrag `v2026-05-16`, die Vorab-Fixierung ist also drei Wochen älter
+  als bisher behauptet.
+
+#### Ergebnis
+
+46 Seiten, kompiliert fehlerfrei, 0 undefined references.
+
+---
+
+## v2026-07-25.6 — Fazit gestrafft, Zwischenfazits entfernt, Hardware in den Anhang
+
+#### Änderung 1 — Fazit und Ausblick von 187 auf 126 Zeilen
+
+**Problem:** Sieben `\paragraph`-Blöcke plus sieben nummerierte Ausblickspunkte, teils
+redundant (der Baseline-Befund stand in „Ergebnis", „Der wichtigste Befund ist ein negativer"
+*und* in den Einschränkungen).
+
+**Lösung:** Gliederung in vier Unterabschnitte statt einer Absatzkette:
+
+| vorher | nachher |
+|--------|---------|
+| Ergebnis · Der wichtigste Befund ist ein negativer | **8.1 Ergebnis** (beides zusammengeführt) |
+| Methodischer Beitrag · Inhaltlicher Kernbeitrag · Technische Leistung | **8.2 Beiträge** (drei kurze Absätze) |
+| Einschränkungen (Fließtext mit (1)…(5), 2b eingeschoben) | **8.3 Einschränkungen** (nummerierte Liste, nach Schwere sortiert) |
+| Ausblick: 4 + 3 Punkte in zwei Listen | **8.4 Ausblick** (eine Liste mit 4 Punkten) |
+
+**Ausblick nach Priorität neu sortiert:** Die Härtung der Umgebung war vorher Punkt 7 von 7
+und steht jetzt an Position 1 — sie ist die Voraussetzung dafür, dass alles Übrige überhaupt
+interpretierbar wird. Der Architekturwechsel (AMAGO/Transformer) rutschte von Position 1 auf 4.
+Die vier vorher separaten Kleinmaßnahmen (Grid-Kodierung, E1/E3-Replikation, Probe,
+Entropie-Annealing) sind zu einem Punkt „Billige Diagnosen" zusammengefasst.
+
+#### Änderung 2 — Zwischenfazits entfernt
+
+Die sechs am 25.07. (`v2026-07-25.2`) eingefügten `\paragraph{Zwischenfazit.}`-Absätze wurden
+wieder entfernt. Sie waren als Kapitelklammern gedacht, erwiesen sich neben den bereits
+vorhandenen Kapitel-Vorschauen aber als Dopplung: Was das Kapitel gebracht hat, stand danach
+zweimal da. Die Leserführung übernehmen jetzt allein die Vorschauen am Kapitelanfang plus
+Abschnitt 1.5 („Aufbau der Arbeit").
+
+#### Änderung 3 — Hardware aus dem Haupttext
+
+**Problem:** „Training und Evaluation laufen vollständig auf der CPU (Apple M1 Pro)" stand im
+Kapitel Technische Umsetzung. Die konkrete Maschine ist für die Argumentation der Arbeit
+irrelevant.
+**Lösung:** Im Haupttext bleibt nur die inhaltlich relevante Aussage (CPU statt GPU, kein
+Vorteil durch GPU bei diesem Netz, Durchsatz 90–190 Schritte/s) mit Verweis auf den Anhang.
+Die Gerätebeschreibung (M1 Pro, 8 Performance-Kerne, macOS arm64, MPS-Backend) steht jetzt
+im Anhang, Abschnitt „CPU schlägt Apple-GPU (MPS)", wo der zugehörige Benchmark ohnehin liegt.
+
+#### Ergebnis
+
+**46 Seiten** (vorher 48), kompiliert fehlerfrei, 0 undefined references.
+
+---
+
+## v2026-07-25.5 — Bildunterschriften gekürzt, leere Überleitungen entfernt
+
+#### Änderung 1 — Captions von bis zu 195 auf max. 46 Wörter
+
+**Problem:** 16 der 32 Bildunterschriften waren länger als 45 Wörter, die längste hatte
+**195**. Sie enthielten Argumentation, Einschränkungen und Interpretation statt einer
+Beschreibung dessen, was zu sehen ist. Eine Bildunterschrift ist kein Fließtextersatz.
+
+**Lösung:** Durchgängig auf Beschreibung reduziert (was wird gezeigt, welches Protokoll,
+welche Quelle). Der inhaltliche Teil wurde **nicht gelöscht**, sondern als Absatz in den
+Fließtext direkt vor oder nach der Tabelle verschoben:
+
+| Tabelle/Abbildung | vorher | nachher | verschobener Inhalt |
+|---|---|---|---|
+| Ablation A/B/C | 195 W. | 25 W. | Die vier Einschränkungen → neuer Absatz „Aussagekraft" |
+| Temperatur-Sweep | 114 W. | 20 W. | Konsistenznotiz zu 70,7/73,3/74,0 → Fließtext |
+| Iterationen E1–E3 | 94 W. | 27 W. | n=1 und Budget-Confound → Fließtext |
+| Endergebnis v12 (n=7) | 88 W. | 30 W. | Erläuterung `best_model.zip` + Selektionsoptimismus → Fließtext |
+| Reward-Komponenten | 62 W. | 11 W. | Policy-Invarianz gilt nur für den PBRS-Term → neuer Absatz im Reward-Abschnitt |
+| Budget-Sweep | 52 W. | 18 W. | Kernaussage „bei jedem Budget …" → Fließtext vor der Tabelle |
+| 10 weitere | 45–76 W. | 17–41 W. | Interpretation gestrichen, Beschreibung behalten |
+
+Ergebnis: **max. 46 Wörter, Median 26**, nur noch eine Caption über 45 Wörtern.
+Gegenprüfung, dass beim Kürzen nichts verlorenging: Für jede entfernte Aussage wurde
+geprüft, ob sie im Fließtext steht; zwei Lücken (Policy-Invarianz nur für PBRS;
+Kernaussage des Budget-Sweeps) wurden dabei gefunden und ergänzt.
+
+**Zitate in Captions** bleiben erhalten und stehen jetzt am Ende: Abb. 1
+„Eigene Darstellung in Anlehnung an Sutton und Barto [5, Abb. 3.1]", Abb. 4 analog zu
+Schulman et al. [12, Abb. 1], Abb. 2 und 5 „Eigene Darstellung; … nach [6]/[7]".
+
+#### Änderung 2 — Selbstverständliche Kapitelüberleitungen ersetzt
+
+**Problem (vom Team gemeldet):** Sätze wie „Dieses Kapitel führt die Begriffe ein, die für
+Methodik und Ergebnisse benötigt werden" sagen nichts — das ist die Definition eines
+Grundlagenkapitels. Dasselbe Muster in vier weiteren Überleitungen („Das folgende Kapitel
+beschreibt die Umgebung so genau, dass die späteren Ergebnisse nachvollziehbar werden",
+„Dieses Kapitel berichtet die Messergebnisse", …).
+
+**Lösung:** Fünf Überleitungen ersetzt. Statt anzukündigen, *dass* ein Kapitel kommt, sagen
+sie jetzt, *welche offene Frage* es beantwortet — z. B. Grundlagen: „Zwei Entscheidungen
+dieser Arbeit lassen sich erst vor diesem Hintergrund begründen: die Wahl einer rekurrenten
+statt einer reaktiven Politik und die Wahl der stochastischen Auswertung als Primärmetrik."
+Umgebung: „Umso genauer muss die Umgebung offengelegt werden, denn sie ist der einzige
+Maßstab, gegen den in dieser Arbeit gemessen wird."
+
+#### Ergebnis
+
+48 Seiten, kompiliert fehlerfrei, 0 undefined references. Abbildungs- und Tabellenverzeichnis
+jetzt einzeilig pro Eintrag (18 bzw. 13 Einträge).
+
+---
+
+## v2026-07-25.4 — Vier Grundlagen-Abbildungen ergänzt, Erklärung nach vorne, Kurztitel
+
+#### Änderung 1 — Eidesstattliche Erklärung an den Anfang
+
+Von hinten (nach dem Literaturverzeichnis) nach vorne verschoben: jetzt direkt nach dem
+Deckblatt, vor Kurzfassung und Inhaltsverzeichnis. Reihenfolge des Vorspanns:
+Deckblatt (o. Nr.) → Erklärung (ii) → Kurzfassung (iii) → Inhalts-, Abbildungs-,
+Tabellen-, Abkürzungsverzeichnis → Hauptteil (arabisch ab 1).
+
+#### Änderung 2 — Vier Abbildungen im Grundlagenkapitel
+
+**Problem:** Das Grundlagenkapitel war reiner Fließtext mit Formeln. Zentrale Konzepte
+(Agent-Umwelt-Schleife, partielle Beobachtbarkeit, PPO-Clipping, rekurrenter Zustand) blieben
+für Fachfremde abstrakt.
+
+**Vorgehen:** Nur Abbildungen nachgebaut, deren Originale **verifiziert** wurden — die Papers
+wurden dafür heruntergeladen und die Abbildungen samt Bildunterschrift im Volltext geprüft,
+statt sie aus Suchtreffern zu übernehmen. Umsetzung als TikZ (keine Grafikdateien, skaliert
+sauber, im Repo diffbar).
+
+| Abb. | Inhalt | Ort | Quelle (verifiziert) |
+|------|--------|-----|----------------------|
+| 1 | Agent-Umwelt-Interaktion im MDP | § RL und MDP | Sutton & Barto, **Abb. 3.1** — Bildunterschrift wörtlich geprüft: „The agent–environment interaction in a Markov decision process." |
+| 2 | MDP gegenüber POMDP (Beobachtungsfunktion + Belief) | § Partielle Beobachtbarkeit | **Eigene Darstellung**; Formalismus nach Kaelbling et al. 1998. Bewusst *nicht* als Nachbau deklariert, da die Originalabbildung nicht einsehbar war |
+| 4 | Wirkung des PPO-Clippings, $A_t>0$ und $A_t<0$ | § PPO | Schulman et al., **Abb. 1** — Verlauf, Clipping-Punkte ($1{+}\epsilon$ bzw. $1{-}\epsilon$) und roter Startpunkt bei $r=1$ aus dem Original übernommen |
+| 5 | Über die Zeit entrollte rekurrente Politik | § Rekurrente Politiken | **Eigene Darstellung**; rekurrente Politiken im RL nach Hausknecht & Stone |
+
+**Zitierweise:** Nachgebaute Abbildungen tragen „Eigene Darstellung in Anlehnung an
+\cite[Abb. X]{...}", eigene Darstellungen ohne Vorlage „Eigene Darstellung; Formalismus nach
+\cite{...}". Die Unterscheidung ist bewusst — eine Abbildung als Nachbau auszugeben, deren
+Original man nicht gesehen hat, wäre eine Falschangabe.
+
+Alle vier Abbildungen wurden nach dem Satz **visuell kontrolliert** (Seitenrendering). Abb. 1
+musste dabei neu gezeichnet werden: Der Rückkanal sah wie ein geschlossenes Rechteck aus statt
+wie ein Kreislauf. Abb. 5 hatte eine Label-Überlappung.
+
+#### Änderung 3 — Kurztitel für alle Abbildungen und Tabellen
+
+**Problem:** 27 Abbildungen/Tabellen nutzten `\caption{...}` ohne Kurzform. Dadurch landeten
+komplette Absätze im Abbildungs- und Tabellenverzeichnis (eine Bildunterschrift belegte dort
+bis zu acht Zeilen).
+**Lösung:** Durchgängig `\caption[Kurztitel]{Langtext}`. Beide Verzeichnisse sind jetzt
+einzeilig pro Eintrag lesbar.
+
+#### Ergebnis
+
+48 Seiten, kompiliert fehlerfrei (`pdflatex` → `bibtex` → `pdflatex` ×2), 0 undefined
+references/citations. Abbildungsverzeichnis: 18 Einträge, Tabellenverzeichnis: 13.
+Autor vervollständigt: **Laurin Rößler** (Deckblatt, Erklärung, `Expose.tex`).
+
+---
+
+## v2026-07-25.3 — Roter-Faden-Prüfung: drei Begriffsbrüche behoben, Budget-Sweep ergänzt
+
+**Kontext:** Systematische Prüfung, ob Begriffe eingeführt werden, *bevor* sie benutzt werden.
+Methode: Für jeden Leitbegriff die erste Nennung im Haupttext ermitteln und mit dem Ort der
+Definition abgleichen. Drei echte Vorgriffe gefunden.
+
+#### Bruch 1 — Versionsschema v11/v12 wurde nie eingeführt
+
+**Problem:** `v11` erschien erstmals in Kapitel 4 (Tab. „Observation der Umgebungsversion v11"),
+`v12` in Kapitel 5. Erklärt wurden beide erst im **Anhang**. Der Leser begegnet also über den
+gesamten Hauptteil Versionskürzeln, deren Bedeutung er nicht kennt — und weiß insbesondere
+nicht, dass Zahlen verschiedener Stände nicht vergleichbar sind.
+**Lösung:** Absatz „Zur Versionsbezeichnung" in Abschnitt 1.5 (Aufbau der Arbeit): v11 = Umgebung
+(06.07.), v12 = Trainingskonfiguration (08.07.) auf unveränderter v11-Umgebung, ältere Stände nur
+im Anhang. Inklusive Begründung, warum die Unterscheidung überhaupt nötig ist.
+
+#### Bruch 2 — Seed-Pool („Swarm") wurde als bekannt vorausgesetzt
+
+**Problem:** Kapitel 3 (Verwandte Arbeiten) verwies auf „der Seed-Pool-Mechanismus dieser Arbeit"
+mit Vorwärtsverweis auf Kapitel 6. Der Leser trifft den Begriff zwei Kapitel vor seiner Erklärung.
+**Lösung:** PLR wird an der Stelle in einem Satz erklärt (wiederholt Level mit hohem Lernpotenzial),
+und der Seed-Pool direkt danach als „stark vereinfachte Variante dieses Gedankens" eingeführt,
+inklusive Vorgriff auf die spätere Kritik (kehrt die Auswahlrichtung von PLR um).
+
+#### Bruch 3 — Der Begriff „Det/Stoch-Gap" wurde nie geprägt
+
+**Problem:** Der zentrale Untersuchungsgegenstand der Arbeit erschien als benannter Begriff
+erstmals in Kapitel 5, ohne je definiert worden zu sein. Das Konzept (Sampling vs. Argmax) war
+zwar in den Grundlagen vorbereitet, der Name aber nicht.
+**Lösung:** Begriff im PPO-Abschnitt der Grundlagen explizit geprägt und fett gesetzt, mit
+anschaulicher Erklärung („der Agent löst die Aufgabe zuverlässiger, wenn er würfelt, als wenn er
+stets seine beste Aktion wählt") und Rückverweis auf den POMDP-Abschnitt.
+
+#### Restfälle
+
+- **MLP** erschien erstmals in der Ergebnistabelle in Kapitel 7. Jetzt in den Grundlagen
+  eingeführt (gedächtnisloses vorwärtsgerichtetes Netz) als Gegenstück zum LSTM-Abschnitt.
+- **`approx_kl`** wurde in Kapitel 6 und im Anhang verwendet, aber nie erklärt. Jetzt bei
+  erster Nennung erläutert (Maß der Politikänderung pro Update; nahe null = Training steht
+  still) und ins Abkürzungsverzeichnis aufgenommen.
+
+#### Neue Messung — Erfolgsquote über das gesamte Episodenbudget
+
+**Frage:** Rettet ein engeres Episodenlimit die Leistungsaussage gegenüber der Baseline?
+**Methode:** Exakt aus je einem Lauf ableitbar — wer bei Schritt T erfolgreich ist, ist es bei
+jedem Budget ≥ T. Protokolliert wurden die Erfolgsschritte, daraus die vollständige Kurve.
+
+| Budget | Kompass ε=0,4 | Kompass ε=0,9 | v12_s1 | v12_s2 | v12_s3 |
+|--------|---------------|---------------|--------|--------|--------|
+| 120 (3× Optimum) | **4 %** | 0 % | 0 % | 2 % | 0 % |
+| 200 | **22 %** | 0 % | 0 % | 4 % | 0 % |
+| 500 | **36 %** | 10 % | 12 % | 22 % | 12 % |
+| 800 | **54 %** | 18 % | 20 % | 32 % | 30 % |
+| 1500 | **62 %** | 54 % | 40 % | 48 % | 54 % |
+| 4000 | 64 % | **88 %** | 64 % | 78 % | 74 % |
+
+**Antwort: nein.** Bei *jedem* Budget erreicht oder übertrifft mindestens eine ungelernte Politik
+alle trainierten Läufe. Damit ist belegt, dass das Problem **nicht in der Metrik allein** liegt,
+sondern in der Struktur der Umgebung: Die Welten sind so offen, dass gerichtete Zufallssuche
+Sackgassen von selbst verlässt. Als Tabelle in Abschnitt „Ungelernte Referenzpolitiken"
+aufgenommen.
+
+#### Ausblick präzisiert
+
+Der Punkt „Härtung der Umgebung" wurde vom Nebensatz zum ausformulierten nächsten Schritt:
+Wandanteil (derzeit fest pro Biom, 7 % Wald bis 25 % Bergland, plus Cellular-Automata-Glättung)
+zu einem steuerbaren Parameter machen und so weit erhöhen, bis der Kompass-Zufallslauf einbricht,
+die Lösbarkeit aber bei 100 % bleibt. **Zweistufig und in dieser Reihenfolge:** erst die
+Baseline-Politik als Kalibrierinstrument einsetzen, dann trainieren — ein Trainingslauf ohne
+diese Vorabprüfung wäre erneut nicht interpretierbar.
+
+**Bewusst nicht umgesetzt:** Die Änderung an `world.cpp` und der zugehörige Trainingslauf wurden
+erwogen und dann verworfen (Entscheidung des Teams); sie stehen als Folgearbeit im Ausblick.
+
+#### Formales
+
+Deckblatt korrigiert: **Masterstudiengang Informatik und Security (M. Sc.)** statt Bachelor.
+`Projektdokumentation.tex` kompiliert fehlerfrei, **48 Seiten**, 0 undefined references.
+
+---
+
+## v2026-07-25.2 — Doku-Umbau: Formalia, Gliederung und Leserführung
+
+**Kontext:** Prüfung, ob die Projektdokumentation einen durchgehenden roten Faden hat, ob Begriffe
+rechtzeitig eingeführt werden und ob sie ohne RL-Vorkenntnisse lesbar ist. Konventionen
+recherchiert (IMRaD, Gliederungsvorgaben Hochschule/DHBW/TU Chemnitz, Abstract-Regeln,
+Signposting-Techniken); Ergebnis als Wiki-Eintrag gesichert.
+
+**Befund:** Inhaltlich stark, formal unvollständig und in der Leserführung lückenhaft.
+Es fehlten sämtliche Verzeichnisse und ein Deckblatt; der Abstract war mit **392 Wörtern**
+rund doppelt so lang wie die Norm (150–250) und enthielt Zitate; es gab keinen Abschnitt
+„Aufbau der Arbeit"; und der Leser bekam MDP/POMDP/PPO-Theorie, **bevor** er wusste, worum es
+im Spiel überhaupt geht.
+
+#### Änderung 1 — Formalia ergänzt
+
+| Element | vorher | nachher |
+|---------|--------|---------|
+| Deckblatt | nur `\maketitle` | vollwertige `titlepage` (Hochschule, Fakultät, Studiengang, Art der Arbeit, Titel/Untertitel, Verfasser, Betreuer, Abgabedatum) |
+| Inhaltsverzeichnis | fehlt | `\tableofcontents` |
+| Abbildungsverzeichnis | fehlt | `\listoffigures` (13 Abbildungen) |
+| Tabellenverzeichnis | fehlt | `\listoftables` (12 Tabellen) |
+| Abkürzungs-/Symbolverzeichnis | fehlt | 20 Abkürzungen + 6 Symbole (`longtable`) |
+| Seitennummerierung | durchgehend arabisch | Vorspann römisch ab ii, Hauptteil arabisch ab 1 |
+| Eidesstattliche Erklärung | fehlt | ergänzt, mit Unterschriftsfeldern für beide Verfasser |
+
+#### Änderung 2 — Kurzfassung gekürzt
+
+**Problem:** 392 Wörter, mit Literaturzitat (`\cite{henderson2018matters}`), erzählte den
+Projektverlauf statt des Ergebnisses.
+**Lösung:** 192 Wörter nach dem Schema Kontext → Fragestellung → Methode → Ergebnis, ohne
+Zitate, mit Ergebniszahlen und Schlagwörtern. Als `\section*{Kurzfassung}` statt
+`abstract`-Umgebung, damit sie im Inhaltsverzeichnis erscheint.
+
+#### Änderung 3 — „Zielsetzung" → vollwertige Einleitung
+
+**Problem:** Kapitel 1 bestand aus einem Absatz Forschungsfrage plus Kriterienliste. Weder
+Motivation noch anschauliche Aufgabenbeschreibung noch Leserführung.
+
+**Lösung:** Fünf Unterabschnitte:
+
+| Abschnitt | Zweck |
+|-----------|-------|
+| 1.1 Motivation | Warum ist Generalisierung das eigentliche Problem — ohne Fachjargon |
+| 1.2 **Die Aufgabe in Kürze** | Stoneforge in Alltagssprache: Raster, Seed, Exit, 15×15-Sichtfeld, Kompass. Gibt dem Leser ein mentales Bild **vor** der Theorie |
+| 1.3 Problemstellung und Forschungsfrage | Forschungsfrage als hervorgehobener Block |
+| 1.4 Zielsetzung und Erfolgskriterien | bisheriger Inhalt |
+| 1.5 **Aufbau der Arbeit** | Kapitel für Kapitel, je ein Satz — das zentrale Signposting-Element |
+
+#### Änderung 4 — Roter Faden: Sandwich-Prinzip
+
+**Lösung:** Sechs Kapitelklammern eingefügt (Zwischenfazit am Kapitelende + Überleitung zum
+nächsten) an allen Kapitelgrenzen: Grundlagen → Verwandte Arbeiten → Umgebung → Methodik →
+Technik → Evaluation → Fazit. Zusätzlich Kapitel-Vorschauen für Grundlagen, Methodik und
+Evaluation (was kommt, in welcher Reihenfolge, warum diese Reihenfolge).
+Metakommentar ergänzt, wo etwas an ungewohnter Stelle steht (z. B. warum die
+Kriterienrevision in der Methodik steht und nicht in der Einleitung).
+
+**Bewusst nicht geändert:** die Kapitelreihenfolge. Grundlagen → Verwandte Arbeiten → Umgebung
+entspricht der Konvention für Bachelor-/Projektarbeiten; das Verständnisproblem wurde
+stattdessen über Abschnitt 1.2 gelöst — billiger und weniger fehleranfällig als eine Umstellung.
+
+#### Ergebnis
+
+`Projektdokumentation.tex` kompiliert fehlerfrei (`pdflatex` → `bibtex` → `pdflatex` ×2),
+**47 Seiten** (vorher 30), **0 undefined references/citations**. Gliederungstiefe ≤ 3,
+keine einzelne Unterüberschrift ohne Schwester.
+
+**Wiki:** Neuer Eintrag [`concepts/wissenschaftliche-doku-aufbau.md`](docs/wiki/concepts/wissenschaftliche-doku-aufbau.md)
+mit Pflicht-Reihenfolge der Bestandteile, IMRaD-Zuordnung, Signposting-Techniken,
+Abstract-Regeln, Verständlichkeitsregeln und einer Checkliste vor Abgabe. Verlinkt aus
+`docs/wiki/README.md` (Einstieg + Karte).
+
+---
+
+## v2026-07-25 — ⚠️ Kritischer Befund: ungelernte Baseline schlägt den trainierten Agenten
+
+**Kontext:** Externe Durchsicht der Projektdokumentation vor Abgabe. Geprüft wurden alle
+Zahlen der Doku gegen Rohdaten, Code und Changelog. Die Verifikation bestand größtenteils
+(siehe unten), deckte aber eine fehlende Kontrolle auf, die die Einordnung sämtlicher
+Leistungszahlen verändert.
+
+### Befund 1 — Es gab nie eine ungelernte Referenzpolitik
+
+**Problem:** Die Arbeit berichtet Success Rates (65,7 % / 66,9 %) ohne Untergrenze. Der einzige
+je gemessene Random-Wert (42 % @ exit 5–12, `v2026-06-15.C`) stammt aus der leichtesten
+Curriculum-Phase und ist seit der v11-Revision veraltet (Neumessung: 56 %). Auf Testset A
+existierte keinerlei Baseline.
+
+**Lösung:** Neues Skript `scripts/eval_baselines.py`. Zwei ungelernte Politiken auf identischem
+Protokoll (50 Seeds, exit 35–45, Cap 4000), beide mit derselben Observation wie der Agent:
+- `random` — gleichverteilte Bewegung.
+- `compass` — mit Wahrscheinlichkeit ε gleichverteilt zufällig, sonst ein Schritt in die
+  dominante Luftlinien-Kompassrichtung. Nutzt **2 von 229 Features**, ignoriert das 15×15-Grid
+  vollständig, kein Gedächtnis, kein Training. ε **ausschließlich auf den Validierungs-Seeds
+  6000–6049 gewählt** (kein Testset-Tuning).
+
+Zusätzlich neue Metrik **Pfadeffizienz** η = BFS-Optimum / benötigte Schritte (Mittel über
+erfolgreiche Episoden). BFS-Optimum auf A und B: Ø 40 Schritte — das Episodenlimit von 4000
+entspricht dem **Hundertfachen** der Optimallänge.
+
+**Ergebnis:**
+
+| Politik | A: SR | A: η | B: SR | B: η |
+|---------|-------|------|-------|------|
+| Random (gleichverteilt) | 10,0 % | 0,022 | 16,0 % | 0,030 |
+| Kompass-Zufallslauf ε=0,4 (effizienz-optimal auf Val) | 60,4 ± 4,8 % | **0,153** | 61,6 ± 5,0 % | **0,161** |
+| Kompass-Zufallslauf ε=0,9 (SR-optimal auf Val) | **92,0 ± 5,1 %** | 0,047 | **91,6 ± 4,3 %** | 0,048 |
+| RecurrentPPO v12 (n=7, stoch.) | 65,7 ± 12,4 % | 0,049 | 66,9 ± 12,8 % | 0,057 |
+
+**Die Heuristik dominiert auf beiden Achsen.** Bei vergleichbarer Effizienz (η ≈ 0,05) erreicht
+sie 92 % statt 65,7 %; bei vergleichbarer SR (≈ 60 %) ist sie dreimal wegeffizienter.
+
+**Validierung der Messkette:** Das verwendete Harness reproduziert die publizierten
+det-Werte von s1–s3 **exakt** (A: 38/26/32) und die stoch-Werte innerhalb des Sampling-Rauschens
+(60/76/78 vs. 62/84/76). Die Baseline-Zahlen sind also direkt vergleichbar.
+Ausgangsanalyse der 50 Episoden: Die Modelle scheitern überwiegend am 4000-Schritt-Timeout
+(18/11/6 von 50), nicht am Early-Stop — kein Confound.
+
+**Interpretation:** Der Befund entwertet nicht die Plattform, sondern die *Aufgabenparametrisierung*.
+Drei Eigenschaften wirken zusammen: (1) Episodenbudget = 100× Optimallänge → ungerichtete Suche
+hat genug Zeit; (2) der Luftlinien-Kompass liefert dauerhaft eine grob richtige Richtung;
+(3) die Welten sind offen genug, dass Sackgassen durch Zufall verlassen werden. Gedächtnis ist
+für die Erfolgsquote schlicht nicht erforderlich — die Metrik kann folglich nicht messen, ob es
+gelernt wurde. **Die Forschungsfrage ist mit dem vorliegenden Aufbau nicht entscheidbar.**
+
+Betroffen ist damit auch die Ablation A/B/C: Wenn eine kompassgetriebene Zufallspolitik 92 %
+erreicht, misst der Vergleich „LSTM ohne BFS" vs. „MLP mit BFS" überwiegend Kompass-Ausnutzung
+und Schleifenanfälligkeit, nicht Gedächtnisfähigkeit.
+
+**Konsequenz für Folgearbeiten:** nicht den Agenten tunen, sondern das Messregime reparieren —
+Episodenbudget an die Aufgabenlänge koppeln (≈ 3 × d_BFS), Pfadeffizienz als Primärmetrik,
+Weltgenerierung mit höherem Wandanteil / echten Labyrinthstrukturen.
+
+### Befund 2 — Weitere Korrekturen an der Doku
+
+| # | Datei | Problem | Korrektur |
+|---|-------|---------|-----------|
+| 1 | `docs/RESULTS.md`, `python/doc_logger.py` | Spalte „Beste SR (A)" war das **Maximum über bis zu 88 Eval-Punkte** (E3: 92 % dort vs. 44 % real; v12_s1: 94 % @ Step 25k). Widersprach der eigenen Repro-Checkliste („kein Best-of-Runs"). | Spalten umbenannt in „Max. Val-SR im Verlauf", Warnhinweis über der Tabelle |
+| 2 | `Projektdokumentation.tex` Tab. 7 | „finales Modell je Lauf" — das Eval-Skript lädt `best_model.zip` (bestes nach Val-SR) | Caption korrigiert, Selektionsoptimismus explizit benannt |
+| 3 | `Projektdokumentation.tex` Tab. 6 (Ablation) | A/B/C laufen auf verschiedenen Obs-Räumen und Env-Ständen; A variiert **zwei** Faktoren ggü. C; B wurde bei 720k/2M **abgebrochen** und enthielt einen später entfernten Stagnations-Penalty; alle n=1 | Alle vier Einschränkungen in der Caption; Aussage auf die belastbare schwache Form reduziert |
+| 4 | `Projektdokumentation.tex` Tab. 5 + §Gap-Experimente | „verändern jeweils **genau einen** Faktor" — E1/E2 haben zusätzlich nur 400k statt 1,0 Mio. Phase-3-Schritte. Zudem n=1 gegen eine n=3-Baseline bei σ ≈ 12 Punkten → „kein Arm schlägt die Baseline" nicht ableitbar | Faktorenzahl korrigiert; n=1 ausgewiesen; Aussagen in σ-Einheiten quantifiziert (E1 1,5σ, E3 2,5σ, E2 4σ); Replikation als offener Punkt |
+| 5 | `Projektdokumentation.tex` §Det/Stoch-Gap | Singh 1994 gilt für **gedächtnislose** Politiken und trägt das Argument für eine LSTM-Politik nicht — über einem genauen Belief-State existiert wieder eine optimale deterministische Politik | Argumentation auf Ghosh 2021 (epistemic POMDP, gilt auch mit Gedächtnis) umgestellt; Singh zur Motivation zurückgestuft; Gap explizit als teils **Belief-State-Defizit** benannt |
+| 6 | `Projektdokumentation.tex` Abstract/Fazit | „ohne globale Wegweiser-Features" — der Luftlinien-Kompass **ist** ein globales Zielsignal (und trägt laut Baseline allein 92 %) | Präzisiert zu „ohne lokale BFS-Gradientenfeatures"; Kompass explizit benannt |
+| 7 | `Projektdokumentation.tex` Tab. 9 | Technologie-Stack: „Simulationskern ca. 8.000 LOC" | Gemessen: `src/` gesamt 9.054 LOC, Kern 4.469, raylib-Client 4.585. Aufgeteilt |
+| 8 | `Projektdokumentation.tex` Tab. 4 | Reward-Tabelle unvollständig: Idle-Penalty −0,04 und Schadens-Penalty −0,5/HP fehlten | Ergänzt; zusätzlich klargestellt, dass **nur** der PBRS-Term policy-invariant ist |
+| 9 | `Projektdokumentation.tex` §7.2 | „Episode endet bei Exit oder nach 4000 Schritten" — widersprach §5.2 (Early-Stop nach 256 Schritten ohne positiven Reward) | Vereinheitlicht |
+| 10 | `Projektdokumentation.tex` Tab. 8 | Drei verschiedene Werte für dieselbe Größe (v12, n=3, A stoch): 70,7 / 73,3 / 74,0 | Als Sampling-Rauschen dreier Skripte offengelegt; skriptkonsistenter Vergleich 74,0 → 65,7 ergänzt |
+| 11 | `.claude/CLAUDE.md` | Führte `ppo_phase4` weiterhin als „aktuell bestes — 100 % SR" (Juni-Stand, altes Protokoll) | Als historisch markiert, v12 als aktueller Stand, Baseline-Warnung ergänzt |
+
+### Verifiziert und unverändert korrekt
+
+Alle Zahlen der Tab. 7 gegen `scratchpad_final_eval_n7.json`; Mittelwerte, ddof=1-Std und
+t-basierte CIs (df=6); Exposé-Tabelle (66,3 ± 12,1 über 100 Seeds); Welch-Test der beiden
+Lauf-Chargen (**t=1,764, df=4,21, p=0,1489** — Doku nennt 0,149 ✓); „±14 Punkte CI bei 50 Seeds";
+PBRS-Arithmetik gegen `simulation.cpp` (β=2,5, Φ=−d/128, γ=0,999 → netto +0,01/Tile, Φ(Exit)=0);
+alle 29 Bib-Keys zitiert und vorhanden, keine verwaisten; sämtliche Versionsangaben
+(Python 3.12.13, torch 2.12.0, numpy 2.4.4, gymnasium 1.2.3, SB3/contrib 2.8.0, raylib 5.5).
+
+**Nebenbefund zugunsten der Arbeit:** Die Kriterien 70 %/60 % stehen bereits im Eintrag
+`v2026-05-16`, nicht erst seit 08.06.2026 — die Vorab-Fixierung ist also **älter** als in der
+Doku behauptet und damit besser belegbar.
+
+**Doku-Stand:** `Projektdokumentation.tex` kompiliert fehlerfrei, 34 Seiten (vorher 30),
+keine undefinierten Referenzen. Neuer Abschnitt „Ungelernte Referenzpolitiken und die Grenzen
+der Success Rate" (§ vor dem Det/Stoch-Gap) mit Tabelle. Rohdaten:
+`logs/eval_results/baselines.json`, `logs/eval_results/baselines_and_models.json`.
+
+---
+
 ## v2026-07-22.1 — Betreuer-Bestätigung: Revision des Erfolgskriteriums abgesegnet
 
 **Kontext:** Anfrage per E-Mail an den Betreuer (Prof. Dr. Carsten Lecon, Hochschule Aalen), ob

@@ -194,6 +194,15 @@ def generate_results_md() -> str:
     # ── Abschnitt 1: Trainings-Runs ──────────────────────────────────────────
     lines.append("---\n")
     lines.append("## 1 — Trainings-Runs\n")
+    lines.append(
+        "> ⚠️ **Die SR-Spalten sind Maxima über den gesamten Eval-Verlauf, keine "
+        "Endergebnisse.** Ein Lauf kann bei Step 25k einmalig 94 % erreichen und "
+        "bei Step 1,5 Mio. auf 4 % stehen; beides steht in derselben Zeile. Diese "
+        "Werte dienen ausschließlich der Verlaufsdiagnose. Die berichtsfähigen "
+        "Endergebnisse (bestes Modell nach Validierungs-SR, ausgewertet auf "
+        "Testset A / Holdout B) stehen in `docs/Projektdokumentation.tex`, "
+        "Tabelle „Endergebnis (v12, n=7)\".\n"
+    )
 
     run_rows: list[dict] = []
     if os.path.isdir(MODELS_DIR):
@@ -215,8 +224,11 @@ def generate_results_md() -> str:
                 "n_envs":        c.get("n_envs", r.get("n_envs", "—")),
                 "Exit-Range":    c.get("exit_range", r.get("exit_range", "—")),
                 "Device":        c.get("device", r.get("device", "—")),
-                "Beste SR (A)":  _fmt_sr(r.get("best_sr_testset_a")),
-                "SR Holdout (B)":_fmt_sr(r.get("best_sr_testset_b")),
+                # ACHTUNG: Maximum über den gesamten Eval-Verlauf (Val-Seeds),
+                # NICHT das Endergebnis des Laufs. Nur zur Verlaufsdiagnose
+                # brauchbar; berichtsfähige Zahlen stehen in der Projektdoku.
+                "Max. Val-SR im Verlauf (A-Proto.)": _fmt_sr(r.get("best_sr_testset_a")),
+                "Max. Val-SR im Verlauf (B-Proto.)": _fmt_sr(r.get("best_sr_testset_b")),
                 "Training-Zeit": r.get("training_duration", "—"),
                 "Datum":         c.get("date", r.get("date", r.get("_saved_at", "—")))[:10],
             })
@@ -286,7 +298,10 @@ def generate_results_md() -> str:
                 continue
             best_entry = max(history, key=lambda e: e["sr"])
             lines.append(f"**{model_name}** — {len(history)} Eval-Punkte,")
-            lines.append(f"Beste SR: {best_entry['sr']:.1%} @ Step {best_entry['step']:,}\n")
+            lines.append(
+                f"Maximum im Verlauf (kein Endergebnis): {best_entry['sr']:.1%} "
+                f"@ Step {best_entry['step']:,}\n"
+            )
 
             rows = [
                 {

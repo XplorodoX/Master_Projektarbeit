@@ -21,9 +21,19 @@ Framework: Stable-Baselines3, Gym-API, C++ Core via Python-Binding (pybind11).
 │   ├── ppo_baseline/          # Erste PPO-Baseline
 │   ├── ppo_bfscompass/        # PPO mit BFS-Compass-Feature
 │   ├── ppo_phase3/            # Phase-3-Modell (~56% SR)
-│   ├── ppo_phase4/            # Phase-4-Modell (aktuell bestes — 100% SR, Ø 49 Schritte)
-│   ├── ppo_phase5/            # Phase-5-Modell (neu trainiert 07.06.2026, 72% SR)
+│   ├── ppo_phase4/            # HISTORISCH: MLP mit BFS-Orakel, Env vor v11.
+│   │                          #   100% det NUR unter dem damaligen Kurzdistanz-Protokoll;
+│   │                          #   unter dem Standard-Eval (exit 35-45) 32% stoch / 0% det.
+│   ├── ppo_phase5/            # HISTORISCH: 72% unter altem Protokoll, nicht vergleichbar
+│   ├── ppo_lstm_curriculum_v12_s1..s7/  # ← AKTUELLE ENDERGEBNISSE (n=7)
+│   │                          #   A 65,7% ± 12,4 stoch / B 66,9% ± 12,8 stoch
 │   └── ...                    # Weitere Experimente
+
+> ⚠️ Modellwerte aus verschiedenen Env-Versionen sind NICHT vergleichbar.
+> Berichtsfähig ist ausschließlich der v12-Stand (n=7) unter dem Standard-Eval.
+> Ungelernte Referenz (`scripts/eval_baselines.py`): Random 8% · Kompass-Zufallslauf
+> bis 89% SR auf Testset A — die SR bei Cap 4000 ist allein nicht aussagekräftig,
+> immer zusätzlich die Pfadeffizienz berichten.
 ├── OLD/                       # Veralteter Code (nicht gelöscht, nur archiviert)
 │   └── scripts/               # Alter CLI-Launcher, Shell-Skripte
 ├── python/                    # Importierbare RL-Bibliothek (PYTHONPATH)
