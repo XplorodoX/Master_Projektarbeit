@@ -2,6 +2,1056 @@
 
 ---
 
+## v2026-08-04.8 — Drittes Review: HP als totes Feature entdeckt, sieben Korrekturen
+
+**Kontext:** Drittes externes Review über das Gesamtdokument. Alle beanstandeten Punkte gegen
+Code, Changelog und Rohdaten geprüft; **alle sieben bestätigt**, keiner zurückzuweisen.
+
+### ⚠️ Befund 1 — HP ist ein totes Feature, „Tod" kann nicht eintreten
+
+**Ausgangspunkt des Reviews:** Tabelle 4 nennt „Timeout / **Tod** (terminal) −10" und einen
+Schadens-Penalty; §4.4 listet als Episodenenden aber nur Exit, Timeout und Early-Stop.
+**Code-Prüfung** (`src/core/simulation.cpp`): Es gibt genau zwei Schadensquellen:
+
+| Quelle | Zeile | Gate |
+|---|---|---|
+| Mob-Nähe (3×3-Umgebung) | 341–348 | `updateMobs()` kehrt bei `disableMobs` sofort zurück (Z. 1301) |
+| Verhungern | 351–356 | steht in `if(!cfg.gameplay.disableEnergy)` |
+
+`stoneforge_env.py:150` übergibt **beide** Flags als `True`; zusätzlich steht
+`mobSpawn.count: 0` in der Konfiguration.
+**Folge:** Die Lebenspunkte ändern sich im RL-Pfad nie. Tod ist unmöglich, der
+Schadens-Penalty feuert nie, und **HP ist eine der 229 Beobachtungsdimensionen ohne
+Informationsgehalt** — dieselbe Kategorie wie Energie und Inventar, die in v11 entfernt
+wurden. Bei der v11-Bereinigung übersehen.
+**Lösung:** In §4.4 offengelegt, mit Verweis auf die abgeschaltete Mechanik und dem Hinweis,
+dass es für die berichteten Ergebnisse folgenlos ist, bei einer Neufassung der Beobachtung
+aber zu streichen wäre. Tabelle 4 bleibt unverändert, da sie die Reward-Funktion des Kerns
+dokumentiert.
+
+### ⚠️ Befund 2 — Widerspruch in der Deutung des Det/Stoch-Gaps
+
+§7.5 begründet ausführlich, dass Singh et al. \[14] nur für *gedächtnislose* Politiken gilt
+und den Gap **nicht** erklärt. §7.6 schrieb dann: „die empirische Signatur des
+POMDP-Resultats \[14]" — und nahm damit genau die Zuschreibung zurück. §8.3 folgte wieder der
+7.5-Linie.
+**Lösung:** §7.6 verweist jetzt auf die in §7.5 diskutierten Ursachen (Ghosh et al.,
+epistemische Unsicherheit + unvollständiger Belief-State) statt auf Singh et al.
+
+### Befund 3 — „elf Prozentpunkte" in der Kurzfassung war falsch
+
+Nachgerechnet: A 74,0 → 65,7 = **8,3**; B 77,3 → 66,9 = **10,5**. Gegen die ursprünglich
+berichteten Werte (73,3 / 80,0) wären es 7,6 und 13,1. „Elf" passt zu keiner konsistenten
+Paarung. Korrigiert auf „acht bzw. zehn".
+
+### Befund 4 — Datum der Lösbarkeits-Nachmessung
+
+§4.2 nannte den 05.07.2026. Die 150/150-Messung steht im Changelog unter `v2026-07-06`
+(Z. 2614) und setzt die BFS-Exit-Platzierung voraus, die erst mit v11 am 06.07. kam.
+Korrigiert auf 06.07.2026.
+
+### Befund 5 — Abbildung 7 war zwei Läufen zugeordnet
+
+Bildunterschrift und §7.2: Lauf vom 08.06. (Bedingung C, 86 % auf Testset A). §10.3 verwies
+mit „das aktuelle Referenzmodell (Abbildung 7)" aber auf die v10-Reproduktion vom 25.06.
+(86 % auf **Validierung**) — zwei verschiedene Läufe mit zufällig gleichem Wert.
+Korrigiert: §10.3 nennt den Lauf jetzt ohne Abbildungsverweis und grenzt ihn ausdrücklich vom
+08.06.-Lauf ab.
+
+### Befund 6 — 86 % (Bedingung C) neben 65,7 % (v12) ohne Einordnung
+
+Bedingung C wurde vor der v11-Revision gemessen, als „Exit 35–45" als Luftlinie vorgegeben
+war und real 42–75 Feldern entsprach. Das ältere Modell erzielte den höheren Wert also auf
+den **längeren** Wegen; unkommentiert las sich der Absatz wie eine Regression. Zwei Sätze
+ergänzt.
+
+### Befund 7 — Fehlende Gegenrichtung bei der CI-Aussage
+
+§8.3 wies darauf hin, dass das CI auf Holdout B bis 55,0 % hinabreicht, also unter die
+erfüllte Schwelle. Die symmetrische Aussage fehlte: Das CI auf Testset A reicht bis 77,2 %
+hinauf und **schließt die 70 %-Schwelle ein**; das Kriterium ist im Punktschätzer verfehlt,
+nicht aber signifikant. Ergänzt, mit dem Zusatz, dass der Hauptbefund nicht an dieser
+Schwelle hängt.
+
+### Kleinigkeit — ε doppelt belegt
+
+PPO-Clipping nutzt `\epsilon`, die Referenzpolitik `\varepsilon`; das Symbolverzeichnis führte
+nur die zweite Bedeutung. Da es typografisch zwei verschiedene Zeichen sind (ϵ vs. ε), ist die
+Formel korrekt; ergänzt wurde der Eintrag für die Clipping-Grenze, neues Label `sec:ppo`.
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 61 Seiten, 0 Undefined References/Citations.
+
+---
+
+## v2026-08-04.7 — Motivation: jede Aussage belegt, eine Falschaussage korrigiert
+
+**Anlass:** Rückfrage, ob die Aussagen der Motivation belegbar sind. Prüfung ergab: Drei
+Aussagen standen ohne Quelle da, eine war sachlich falsch.
+
+### ⚠️ Korrektur — Aussage über Procgen war falsch
+
+**Vorher:** „Bei fertigen Forschungsumgebungen wie MiniGrid oder Procgen kommt man an den
+Generator nicht heran: Wandanteil, Struktur der Hindernisse und das Maß für die Schwierigkeit
+sind fest eingebaut."
+**Prüfung** an Paper und Quellcode-Repository:
+
+| Behauptung | Befund |
+|---|---|
+| „kommt man nicht heran" | **Falsch.** Procgen ist Open Source; `src/games/*.cpp` ist modifizierbar |
+| „Schwierigkeit fest eingebaut" | **Ungenau.** Es gibt kalibrierte Stufen `easy`/`hard` (Paper) sowie `extreme`, `memory`, `exploration` über die Python-API |
+| MiniGrid | **Nicht geprüft** → Aussage entfernt, statt sie unbelegt stehen zu lassen |
+
+**Nachher (belegbar):** Procgen bietet zwei kalibrierte Schwierigkeitsstufen und darüber
+hinaus feste Voreinstellungen; die Erzeugung von Layouts und Hindernissen liegt im
+C++-Quellcode. Eine je Welt bezifferbare und einstellbare Schwierigkeit ist nicht vorgesehen.
+Das ist die Aussage, die die Arbeit tatsächlich braucht, und sie ist belegt.
+
+### Änderung — drei bisher unbelegte Aussagen mit Quellen versehen
+
+| Aussage | Beleg |
+|---|---|
+| Videospiele als Standardumgebung für RL | `mnih2015dqn` |
+| Agenten auf festen Levels erreichen dort hohe Werte und fallen auf neuen ab | `cobbe2020procgen` (bisher nur allgemein für PCG zitiert) |
+| Generalisierungslücke als offenes Problem des Feldes | **neu:** `kirk2023survey` |
+
+**Neue Literatur:** Kirk, Zhang, Grefenstette, Rocktäschel: „A Survey of Zero-shot
+Generalisation in Deep Reinforcement Learning", JAIR 76, S. 201–264, 2023. Verifiziert über
+arXiv:2111.09794 (Titel, Autoren, Band, Seiten). Zusätzlich `procgen_repo` (OpenAI,
+GitHub-Repository) für die API- und Quellcode-Angaben. Bibliografie 34 → 36 Einträge.
+
+**Nützlicher Nebenbefund aus Kirk et al.:** Das Abstract stellt fest, „that taking a purely
+procedural content generation approach to benchmark design is not conducive to progress in
+ZSG". Damit ist der Kernbefund dieser Arbeit in der Literatur bereits angelegt. Das ist in
+die Motivation aufgenommen und **entschärft zugleich den Ton**: Die Arbeit bestätigt einen
+bekannten Kritikpunkt an einem eigenen Gegenstand, statt etwas Neuartiges zu behaupten.
+
+### Änderung — Motivation gekürzt und Ton angepasst
+
+Vier kurze Absätze. Der Schlusssatz verspricht nur noch, was die Arbeit einlöst: „Wie sich
+zeigen wird, entscheidet der Generator darüber, was das Experiment überhaupt messen kann."
+Keine Wertung als bedeutsam oder neuartig. Alle Gedankenstriche entfernt.
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 62 Seiten, 0 Undefined References/Citations.
+
+---
+
+## v2026-08-04.6 — Reihenfolge Spiel → RL überall durchgezogen
+
+**Prinzip:** Wo beide Projektteile nacheinander vorkommen, steht das Spiel zuerst. Das folgt
+der Entstehungslogik: Erst existierte die Plattform, dann wurde RL darauf angewendet.
+
+**Bereits in v2026-08-04.4 umgestellt:** Grundlagen (PCG 2.1/2.2 vor RL), Kapitel 4
+(Generator 4.1/4.2 vor Agentensicht 4.3–4.5), Evaluation (Plattform Z1 vor Agent), Fazit
+(F1 vor F2), Zielsetzung (Z1 vor Z2), Arbeitsteilungstabelle (Rößler-Zeilen zuerst).
+
+**In diesem Eintrag nachgezogen:**
+
+| Stelle | vorher | nachher |
+|---|---|---|
+| Kurzfassung, erster Satz | „untersucht, ob ein Reinforcement-Learning-Agent …" | „besteht aus zwei Teilen. Der erste ist die Entwicklung des 2D-Spiels *Stoneforge* …" |
+| §8.2 Beiträge | Methodisch → Inhaltlich → Technisch | **Technisch** (Plattform) → Inhaltlich → Methodisch |
+| Schlagwörter | Reinforcement Learning, POMDP, … | Prozedurale Weltgenerierung, Spielentwicklung, Reinforcement Learning, … |
+
+**Geprüft, keine Änderung nötig:**
+- §1.1 Motivation beginnt bereits mit Videospielen als Testumgebung.
+- §1.2 beginnt mit Stoneforge und der Weltentstehung, danach der Agent.
+- Kapitel 3: Der PCG-Absatz („Weltgenerierung und der Preis des eigenen Generators") steht
+  bereits vor den RL-Absätzen.
+- Kapitel 6: Technologie-Stack → Umgebung/Binding → Trainings-Pipeline → Monitoring; der
+  C++-Kern steht in der Stack-Tabelle an erster Stelle.
+- §8.3 Einschränkungen ist nach Schwere sortiert, nicht nach Projektteil; das bleibt so.
+- Haupttitel: „Navigation in prozedural generierten 2D-Welten mit Reinforcement Learning"
+  nennt die Welt bereits vor dem Verfahren.
+
+**Offen zur Entscheidung:** Der Untertitel („Generalisierung eines rekurrenten Agenten auf
+unbekannte Welten am Beispiel Stoneforge") ist weiterhin RL-zuerst formuliert. Eine Änderung
+sollte mit dem Betreuer abgestimmt werden und wurde deshalb nicht vorgenommen.
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 62 Seiten, 0 Undefined References/Citations.
+
+---
+
+## v2026-08-04.5 — Einleitung gestrafft: Motivation, Problemstellung, Aufbau
+
+**Anlass:** Rückmeldung, die Einleitung sei zu geschraubt, zu detailliert und nehme zu viel
+vorweg. Vorgehen: Recherche zu den Anforderungen an Einleitungsteile, dann Kürzung.
+
+### Änderung 1 — Motivation von einer Seite auf vier Absätze
+
+**Recherche-Grundlage:** Die Motivation soll Relevanz begründen und zum Thema hinführen; sie
+ist einer von rund sechs Bausteinen der Einleitung. Details gehören in Problemstellung und
+Hauptteil. Als häufigste Fehler werden zu abstrakte Formulierungen, unnötige Ausschweifungen
+und Überladung genannt.
+**Gestrichen:** Die vierteilige Anforderungsliste an den Generator (Determinismus,
+Lösbarkeit, steuerbare Schwierigkeit, Durchsatz). Kein Informationsverlust: drei davon stehen
+in §1.3, alle fünf in Z1 (§1.4).
+**Neu:** Zwei Sätze Hinführung vor dem Einstieg (warum Videospiele als Testumgebung), weil
+der Text sonst zu abrupt beginnt.
+**Gleichgewicht korrigiert:** Der RL-Teil war zugunsten des Generators untergegangen; er hat
+jetzt einen eigenen Absatz (RL erklärt + warum ein Test in fester Umgebung nichts aussagt),
+und im Schlussabsatz stehen Spiel und Agent gleichrangig.
+**Wortwahl:** „Programm" → „KI" im Einstieg, „Software-Agent" bei der Begriffseinführung.
+
+### Änderung 2 — Problemstellung: Ergebnisse entfernt
+
+Die Problemstellung hatte drei Stellen, die den Hauptteil vorwegnahmen:
+
+| Stelle | Warum raus |
+|---|---|
+| „Zuerst wurde die Luftlinie verwendet. Das war falsch: … lagen die Wege zwischen 42 und 75 Feldern" | Befund aus der Entwicklung, nimmt §10.7 vorweg → ersetzt durch die offene Frage „Woran misst man die Schwierigkeit einer erzeugten Welt überhaupt?" |
+| „Genau dort liegt auch das Hauptergebnis: Die erzeugten Welten sind so beschaffen, dass …" | Ergebnis gehört nicht in die Problemstellung → gestrichen |
+| „…war zu Beginn nur eine Vermutung; sie bestätigte sich erst, als die gedächtnislosen Varianten scheiterten" | ebenfalls Ergebnis → „Ob der Agent dafür ein Gedächtnis braucht, ist Teil der Frage und nicht ihre Voraussetzung." |
+
+**Bewusst beibehalten:** das „Orakel". Es ist keine diskutierte, sondern eine *ausgeschlossene*
+Lösung und grenzt ab, was überhaupt als Lösung zählt. Formulierung dazu geschärft: „Die
+Aufgabe ist also erst dann richtig gestellt, wenn dieser Ausweg ausgeschlossen ist."
+Der kurze Ergebnisausblick verbleibt allein in §1.4 (fehlende Schwierigkeits-Anforderung),
+wo er als Einschränkung der eigenen Zielsetzung hingehört.
+
+### Änderung 3 — „Aufbau der Arbeit" von 7.148 auf 1.867 Zeichen
+
+**Recherche:** Der Teil ist Standard und sollte nicht entfallen, aber „in wenigen Sätzen"
+gehalten werden; ausdrücklich zu vermeiden ist die bloße Wiederholung des
+Inhaltsverzeichnisses. Gefragt ist die *logische Abfolge*, nicht der Inhalt.
+**Gestrichen:** die siebenteilige Kapitel-Aufzählung mit je 2–4 Zeilen Inhaltsvorschau.
+**Ersetzt durch:** einen Absatz zur Leselogik (in jedem Kapitel zuerst die Welt, dann der
+Agent, weil das eine Voraussetzung des anderen ist) plus Hinweis auf die beiden Anhänge.
+Die Absätze „Zur Versionsbezeichnung" (von Aufzählung auf drei Sätze gekürzt) und „Zur
+Arbeitsteilung" mit Tabelle bleiben, da sie Lesehilfen und keine Inhaltsvorschau sind.
+
+### Änderung 4 — Gedankenstriche entfernt
+
+Alle 34 Em-Dashes (`---`) im Fließtext ersetzt: paarige Einschübe durch Kommas, nachgestellte
+Erklärungen je nach Satzbau durch Doppelpunkt, Semikolon oder Punkt. Die verbleibenden 40
+Vorkommen stehen ausschließlich in TikZ-Kommentaren (`% ---- MDP ----`) und werden nie
+gesetzt. Die 84 Zahlenbereiche (`35--45`, En-Dash) sind unverändert, das ist korrekte
+Typografie.
+
+**Zwei Fehler beim Umbau gefunden und behoben:** „Zur Versionsbezeichnung" stand nach der
+Kürzung doppelt im Dokument; ein `\noindent` ließ zwei Absätze ineinanderlaufen, nachdem die
+Arbeitsteilungs-Tabelle als Float weggeflossen war.
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 62 Seiten (vorher 63), 0 Undefined
+References/Citations.
+
+---
+
+## v2026-08-04.4 — Struktur: Weltgenerator und RL als ein Projekt statt zwei nebeneinander
+
+**Kontext:** Die Aufnahme des Generator-Teils (v2026-08-03.2) hatte ihn zwar ergänzt, aber
+sichtbar *danebengestellt* — eigene Absatzüberschriften „Der erste Teil / Der zweite Teil",
+getrennte Problemstellungen, Z1/Z2 als Blöcke. Die Gliederung benannte damit die Trennung,
+statt sie aufzulösen. Dieser Eintrag stellt die Arbeit auf ein durchgehendes Prinzip um:
+**erst die Welt, dann der Agent — in jedem Kapitel.**
+
+### Nachtrag — §1.1–1.4 sprachlich neu gefasst (zweiter Durchgang)
+
+Die erste Fassung war inhaltlich richtig, aber zu abstrakt und zu lang im Satzbau
+(„Damit verschiebt sich die Aufgabe an eine Stelle, die leicht unterschätzt wird",
+„Messinstrument", „die inhaltlich folgenreichste"). Ziel des zweiten Durchgangs: verständlich
+für jemanden ohne RL-Hintergrund, kurze Sätze, konkrete Zahlen statt Umschreibungen.
+
+| vorher | nachher |
+|---|---|
+| „Ein Computerprogramm, das ein Videospiel-Level fehlerfrei durchspielt, hat zunächst nur eines bewiesen …" | „Wenn ein Programm ein Spiel-Level fehlerfrei durchspielt, kann das zweierlei heißen: Es hat verstanden, wie man spielt — oder es hat dieses eine Level auswendig gelernt. Von außen sieht beides gleich aus." |
+| Vier Anforderungen als Fließtextabsatz | Vier Anforderungen als Aufzählung mit fettem Vorspann (scanbar) |
+| „schon die Frage, welches Maß die Schwierigkeit überhaupt richtig abbildet, ist nicht trivial" | „Zuerst wurde die Luftlinie verwendet. Das war falsch — bei der Vorgabe ,35–45' lagen die tatsächlichen Wege zwischen 42 und 75 Feldern." |
+| „Gelernt wird durch Belohnung: Erreicht der Agent den Ausgang, erhält er einen großen positiven Wert; jeder Schritt kostet ein wenig." | „Gelernt wird über Belohnung. Ausgang erreicht: großer Pluspunkt. Jeder Schritt: kleiner Abzug." |
+| „Die Reihenfolge der beiden Hälften ist keine Rangfolge. F1 ist nicht Vorarbeit für F2, sondern die Bedingung, unter der …" | „F1 steht nicht deshalb zuerst, weil es weniger wichtig wäre, sondern weil F2 ohne F1 nicht zu beantworten ist." |
+
+Gestrichene Vokabeln: Messinstrument, Beiwerk, Nahtstelle, folgenreichste, gegenläufige
+Forderungen, zwingend. Alle Inhalte, Zitate, Querverweise, F1/F2 und Z1/Z2 unverändert
+erhalten; die Vorab-Festlegung der Z2-Schwellen (Anti-HARKing) steht jetzt als klarer Satz
+(„sie wurden also nicht nachträglich passend gemacht") statt als Nebensatz.
+
+### Änderung 1 — §1.1–1.4 vollständig neu geschrieben
+
+Die Einleitung ist jetzt ein durchlaufender Text ohne Teil-Überschriften. Argumentationslinie:
+Generalisierung prüfen → dafür braucht es prozedurale Welten → aber nicht irgendeine Welt,
+sondern eine, die als *Messinstrument* taugt (vier Anforderungen) → fertige Benchmarks geben
+den Generator als Blackbox vor → deshalb eigenes Spiel → und genau diese Zugänglichkeit macht
+das Hauptergebnis erst auffindbar.
+- §1.2 erzählt Weltentstehung und Lernaufgabe als eine Geschichte; der Satz „Spiel und
+  Versuchsaufbau sind dasselbe Programm" ersetzt die frühere Zweiteilung.
+- §1.3 stellt die beiden Schwierigkeiten (Agent sieht zu wenig / Generator muss drei
+  gegenläufige Forderungen erfüllen) nebeneinander und leitet daraus **eine Frage in zwei
+  Hälften** ab. F1/F2 bleiben erhalten, aber mit dem Zusatz: „Die Reihenfolge ist keine
+  Rangfolge" — F1 ist Bedingung, nicht Vorarbeit.
+- §1.4 führt Z1/Z2 als zwei aufeinander aufbauende *Ebenen* ein („wann die Umgebung als
+  Messinstrument taugt" / „wann der Agent als erfolgreich gilt") statt als zwei Blöcke.
+
+### Änderung 2 — Kapitel 2 (Grundlagen) umgestellt
+
+PCG-Grundlagen von 2.9/2.10 an den Anfang (jetzt 2.1/2.2), RL folgt. Kapiteleinleitung
+begründet die Reihenfolge sachlich statt didaktisch: Ob eine Lernaufgabe die zu messende
+Fähigkeit überhaupt erfordert, entscheidet sich in der Weltgenerierung.
+
+### Änderung 3 — Kapitel 3: PCG-Literatur ergänzt
+
+Bisher ausschließlich RL-Benchmarks und -Verfahren. Neuer Absatz „Weltgenerierung und der
+Preis des eigenen Generators": Die Verfahren sind Stand der Technik (`shaker2016pcg`,
+`johnson2010cellular`), der Beitrag liegt in der Kombination zu einer zugleich *spielbaren*
+und *kontrollierbaren* Umgebung. Enthält die Begründung, warum kein fremder Benchmark
+verwendet wurde — und was das kostet (fehlende Einbettung in publizierte Vergleichswerte).
+
+### Änderung 4 — Kapitel 4 umbenannt und umgestellt
+
+„Die Umgebung Stoneforge" → **„Stoneforge: Spiel, Weltgenerator und Lernumgebung"**.
+Reihenfolge der Unterabschnitte gedreht:
+
+| vorher | nachher |
+|---|---|
+| 4.1 POMDP-Charakter | 4.1 Aufbau des Weltgenerators |
+| 4.2 Beobachtung/Aktionen | 4.2 Garantierte Lösbarkeit |
+| 4.3 Reward-Design | 4.3 Was der Agent davon sieht: POMDP-Charakter |
+| 4.4 Aufbau des Weltgenerators | 4.4 Beobachtung, Aktionen, Episodenende |
+| 4.5 Garantierte Lösbarkeit | 4.5 Reward-Design |
+
+Neue Kapiteleinleitung begründet die Reihenfolge und benennt die Doppelrolle (dieselbe
+Simulation für Mensch und Agent) als Entwurfsentscheidung. Neue Labels `sec:pomdpchar`,
+`sec:rewarddesign`.
+
+### Änderung 5 — Neuer Evaluationsabschnitt §7.1 „Bewertung der Plattform (Z1)"
+
+**Lücke geschlossen:** Die Einleitung führte fünf Z1-Kriterien ein, die nirgends
+zusammengeführt nachgewiesen wurden — die Evaluation bewertete ausschließlich den Agenten.
+Neue Tabelle `tab:z1` mit Anforderung · Nachweis · Status; alle fünf erfüllt, jeweils mit
+Verweis auf die Messung (bit-identische Trainingspfade, 3.150 Seeds Lösbarkeit, 150/150 im
+Distanzband, 88–190 FPS, spielbarer Client).
+**Inhaltlicher Zusatz:** Drei der fünf Nachweise entstanden erst als Korrektur eines vorher
+unbemerkten Fehlers (Config-Leck, Luftlinienmaß, Carving-Fundament) — und keiner war am
+Verhalten des Agenten ablesbar. Sie wurden sichtbar, weil das RL-Experiment unerklärliche
+Zahlen lieferte. Das ist die erste dokumentierte Verzahnung beider Teile.
+
+### Änderung 6 — Fazit beantwortet F1 und F2 getrennt und setzt sie ins Verhältnis
+
+§8.1 gliedert in „F1 — beantwortet", „F2 — nicht entscheidbar" und einen dritten Absatz zum
+Verhältnis beider Antworten. Kernaussage neu formuliert, gehört keinem der beiden Teile
+allein:
+
+> Die Schwierigkeit einer Lernaufgabe ist eine Eigenschaft der Weltgenerierung und muss dort
+> spezifiziert und geprüft werden, bevor ein Lernverfahren darauf angesetzt wird.
+
+Mit dem Zusatz, dass der Befund beide Projektteile voraussetzte: ohne eigenen Generator nicht
+lokalisierbar, ohne RL-Experiment nicht auffindbar. §8.2 „Technisch" um die
+Generator-Bestandteile und den Punkt erweitert, dass die Härtung ohne Neuentwicklung möglich
+ist, weil der wirksamste Hebel bereits implementiert ist.
+
+### Änderung 7 — §1.5 Lesepfad
+
+Ergänzt, dass die beiden Stränge nicht nacheinander, sondern in jedem Kapitel nebeneinander
+laufen, und benennt die zwei Stellen, an denen sie aufeinandertreffen (§7.4 und §8.4).
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 63 Seiten, 0 Undefined References/Citations,
+Overfull-Boxen 30 → 29.
+
+---
+
+## v2026-08-04.3 — Nachlauf zum zweiten Review: drei offene Punkte geschlossen
+
+### Änderung 1 — §8.4 trug noch die Werte der alten Reward-Bilanz
+
+**Problem:** Bei der PBRS-Korrektur (v2026-08-04.1) wurden Tabelle 13 und §7.3 aktualisiert,
+der Ausblick aber nicht. Dort standen weiterhin „rund 3 % der dichten Reward-Masse" (jetzt
+5 %) und Revisit-Penalty „−6,8 je Episode" (jetzt −6,2).
+**Lösung:** Beide Werte nachgezogen. Zusätzlich ergänzt, dass der Revisit-Penalty den
+Explorations-Bonus (+4,1) betragsmäßig übersteigt und ihn damit faktisch neutralisiert — das
+schärft den Reparaturvorschlag.
+
+### Änderung 2 — Diskontierungs-Absatz: Formulierung korrigiert, Zahlen bestätigt
+
+**Review-Vorwurf:** +37,7 und −5,3 implizierten denselben Faktor 0,377, es sei „offenbar ein
+Skalar auf beide Seiten angewandt" worden; richtig seien +26,5 und −7,8.
+**Prüfung — der Vorwurf trifft nicht zu.** Beide Größen sind je Episode gemessen. Beleg über
+die per-Lauf-Werte, die bei einem gemeinsamen Skalar identisch sein müssten:
+
+| Lauf | E[γ^T] (Terminal) | impliziter Diskont der dichten Terme |
+|---|---|---|
+| s1 | 0,358 | 0,354 |
+| s2 | 0,408 | 0,387 |
+| s3 | 0,365 | 0,379 |
+
+Sie weichen je Lauf voneinander ab — kein gemeinsamer Skalar, sondern zwei unabhängige
+Messungen, die im Mittel zufällig nahe beieinanderliegen.
+**Zur vorgeschlagenen Korrektur +26,5:** Das ist γ^E[T], also γ^T an der mittleren
+Episodenlänge. Für den *erwarteten* diskontierten Terminal-Reward ist E[γ^T] maßgeblich, und
+weil γ^T konvex in T ist, unterschätzt γ^E[T] den Wert systematisch (Jensen — dieselbe
+Ungleichung, die im Dokument bereits für η diskutiert wird). Gemessen: E[γ^T] = 0,377 gegen
+γ^E[T] = 0,266. **+37,7 ist korrekt, +26,5 wäre der verzerrte Schätzer.**
+**Berechtigt war die Formulierungskritik:** „über die mittlere Episodenlänge diskontiert"
+beschrieb tatsächlich γ^E[T] und nicht das Gemessene.
+**Lösung:** Absatz neu gefasst als Aufzählung, die beide Größen explizit benennt
+(100·E[γ^T] bzw. Σγ^t·r_t über den tatsächlichen Verlauf), den Jensen-Punkt mit dem
+Gegenwert +26,6 ausweist und erklärt, warum der gemessene mittlere Diskont der dichten Terme
+(0,37) unter dem Wert bei gleichmäßiger Verteilung (0,55) liegt: Der Revisit-Penalty fällt
+spät in der Episode an und wird deshalb stärker diskontiert.
+**Skript erweitert:** `scripts/reward_bilanz.py` gibt jetzt E[γ^T], γ^E[T] und den implizit
+gemessenen Diskontfaktor der dichten Terme getrennt aus, damit die Unterscheidung
+reproduzierbar belegt ist.
+
+### Änderung 3 — Platzhalterzeile aus der KI-Erklärung entfernt
+
+Die Zeile „(weiteres Werkzeug eintragen)" stand auf Seite iii und ließ die Erklärung
+unfertig wirken. Entfernt; die Tabelle listet jetzt nur das Werkzeug, dessen Einsatz belegbar
+ist. Der `TODO`-Kommentar im Quelltext wurde entsprechend umformuliert: Falls weitere
+Werkzeuge verwendet wurden, **muss** je Werkzeug eine Zeile ergänzt werden (Produktname,
+Einsatzform, betroffene Teile, Art der eigenen Prüfung).
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 60 Seiten, 0 Undefined References/Citations.
+Grep über das Dokument bestätigt: keine Restvorkommen der alten Werte (3 %, −6,8).
+
+---
+
+## v2026-08-04.2 — Einleitung um den Plattform-Teil erweitert, Arbeitsteilung als Tabelle
+
+**Anlass:** Einleitung und Zielsetzung deckten bisher nur den RL-Teil ab, obwohl die
+Spielentwicklung und der prozedurale Weltgenerator (L. Rößler) ein gleichwertiger Teil des
+Projekts sind.
+
+### Änderung 1 — §1.1 Motivation: Plattform als eigener Projektteil begründet
+
+Zwei Absätze ergänzt: (a) welche Anforderungen eine RL-taugliche Umgebung erfüllen muss
+(Reproduzierbarkeit, garantierte Lösbarkeit, steuerbare Schwierigkeit, Durchsatz) und warum
+fertige Benchmarks (MiniGrid, Procgen) sie nur teilweise erfüllen — sie geben den Generator
+als Blackbox vor, was sich hier gerade als entscheidend erwies; (b) explizite Feststellung,
+dass das Projekt aus zwei gleichgewichtigen Teilen besteht.
+
+### Änderung 2 — §1.2 in zwei Teile gegliedert
+
+Neue Absatzüberschriften „Der erste Teil: das Spiel" (C++-Kern, spielbarer Client,
+Python-Anbindung, chunkweise Generierung ohne gespeicherten Weltzustand) und „Der zweite
+Teil: die Lernaufgabe". Verweise auf §2.10 und §4.4.
+
+### Änderung 3 — §1.3: zwei Forschungsfragen statt einer
+
+Bisher nur die RL-Frage. Ergänzt um die konstruktive Problemstellung (Abwechslung vs.
+garantierte Lösbarkeit vs. quantifizierbare Schwierigkeit als Spannungsfeld) und um **F1**:
+
+> F1 — Wie lässt sich ein prozeduraler Weltgenerator so konstruieren, dass er
+> abwechslungsreiche, nachweislich lösbare Welten mit präzise steuerbarer Schwierigkeit
+> erzeugt und dabei als reproduzierbare Versuchsumgebung für RL taugt?
+
+Die bisherige Frage wird zu **F2**. Ergänzt ist der Hinweis, dass F1 nicht Vorarbeit für F2
+ist, sondern dessen Voraussetzung — das Hauptergebnis der Arbeit betrifft den Generator,
+nicht den Agenten.
+
+### Änderung 4 — §1.4 Zielsetzung: Kriteriengruppe Z1 ergänzt
+
+Bisher nur die drei RL-Schwellen. Neu **Z1 (Plattform/Generator)** mit fünf funktionalen
+Kriterien, jeweils mit Nachweisstelle: Determinismus (§4.4), garantierte Lösbarkeit (§4.5),
+steuerbare Schwierigkeit (§10.7), RL-Tauglichkeit (§6), Spielbarkeit (§6). Die RL-Schwellen
+werden zu **Z2**.
+**Wichtig für die Redlichkeit:** Es steht ausdrücklich dabei, dass nur die Z2-Schwellen vorab
+festgelegt wurden (belegt über das Changelog-Datum, Anti-HARKing), während Z1
+Konstruktionsziele sind, die im Verlauf präzisiert wurden. Zusätzlich benannt: **Z1 verlangt
+lösbare, aber keine hinreichend schwierigen Welten** — genau diese fehlende Anforderung ist
+der Grund, aus dem F2 unbeantwortet bleibt.
+
+### Änderung 5 — Arbeitsteilung als Tabelle (`tab:arbeitsteilung`)
+
+Der Fließtext-Absatz aus v2026-08-03.2 ersetzt durch eine neunzeilige Tabelle
+(Beitrag · Schwerpunkt · Kapitel), gegliedert in Plattform (L. Rößler), RL (F. Merlau) und
+gemeinsame Teile. `TODO`-Kommentar zur Gegenprüfung bleibt bestehen.
+
+### Änderung 6 — Jedes Hauptkapitel beginnt auf einer neuen Seite
+
+`\let\sfOldSection\section` + `\renewcommand{\section}{\clearpage\sfOldSection}` in der
+Präambel. Wirkt auch auf die gesternten Abschnitte des Vorspanns; dort ist `\clearpage` ein
+No-Op, es entstehen also keine Leerseiten. Verifiziert: Inhaltsverzeichnis zeigt weiterhin
+nur Sections/Subsections (die `\paragraph`-Einträge in der `.toc` werden über `tocdepth`
+gefiltert und waren auch vorher schon enthalten).
+
+### Änderung 7 — Kurzfassung und Kapitelübersicht nachgezogen
+
+Kurzfassung nennt die Plattform jetzt als eigenen Teil (Generator: reproduzierbar,
+nachweislich lösbar, steuerbare Zielentfernung) statt als Nebensatz. Die Kapitel-Bullets zu
+Grundlagen und Umgebung erwähnen die PCG-Verfahren bzw. den Weltgenerator.
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 60 Seiten (vorher 55), 0 Undefined
+References/Citations, Overfull-Boxen unverändert 30.
+
+---
+
+## v2026-08-04.1 — Zweites Fakten-Review: PBRS-Rechnung korrigiert, Abb. 10 neu erzeugt
+
+**Kontext:** Zweite externe Prüfung der Projektdokumentation. Erneut wurde jede Behauptung
+gegen Code, `eval_history.json` und `CHANGELOG.md` verifiziert. Zwei Befunde waren
+substanziell (ein rechnerisch falscher Satz über PBRS, ein Protokoll-Widerspruch in einer
+Abbildung), einer war eine Fehlmessung im eigenen Diagnoseskript.
+
+### ⚠️ Änderung 1 — PBRS-Summe: Teleskopierungsaussage war für γ < 1 falsch
+
+**Datei:** `docs/Projektdokumentation.tex` (§7.3), `scripts/reward_bilanz.py`
+**Problem:** Tabelle 11 und der zugehörige Text behaupteten, die PBRS-Episodensumme sei
+„wegen der Teleskopierung unabhängig vom gewählten Weg auf β·d₀/128 festgelegt" (+0,8).
+Das gilt nur für γ = 1. Korrekt ist
+
+```
+Σ F = β/128 · [ d₀ + (1−γ)·Σ_t d_t ]
+```
+
+Der Restterm verschwindet bei γ = 0,999 nicht. **Ursache im eigenen Code:** Die erste Fassung
+von `reward_bilanz.py` hat den PBRS-Beitrag gar nicht gemessen, sondern als `BETA*d0/128`
+*berechnet* — also genau die falsche Formel eingesetzt. Alle übrigen Terme der Tabelle waren
+gemessen.
+**Lösung:** Skript misst den PBRS-Beitrag jetzt schrittweise aus der tatsächlichen
+BFS-Distanz (`current_bfs_distance_to_exit()` je Schritt). Zusätzlich fester Politik-RNG
+(`torch.manual_seed(0)`), weil die Messung ohne ihn von Lauf zu Lauf um mehrere Punkte
+schwankte. Neu gemessen über die Läufe 1–3, Testset A:
+
+| Term | vorher (Tab. 11) | nachher (gemessen) |
+|---|---|---|
+| Explorations-Bonus | +4,2 (17 %) | **+4,1 (16 %)** |
+| Schritt-Malus | −13,5 (53 %) | **−13,3 (53 %)** |
+| Revisit-Penalty | −6,8 (27 %) | **−6,2 (25 %)** |
+| **PBRS gesamt** | **+0,8 (3 %)** | **+1,3 (5 %)** |
+| — davon teleskopiert | — | +0,8 |
+| — davon Restterm | — | +0,5 |
+| Summe dichte Terme | −15,3 | **−14,1** |
+
+Der teleskopierte Anteil ist also um **Faktor 1,7** zu niedrig gewesen; der PBRS-Anteil an
+der dichten Reward-Masse liegt bei 5 %, nicht 3 %. Die qualitative Aussage („Richtungssignal
+ist ein kleiner Teil der dichten Reward-Masse") bleibt unverändert gültig.
+**Neuer Absatz** in §7.3 mit Herleitung des Restterms als eigene Gleichung.
+
+**Wichtige Einschränkung gegenüber dem Review:** Das Review folgert, der Restterm sei „genau
+die Sorte Nebenwirkung, vor der PBRS eigentlich schützen soll". **Das trifft nicht zu.** Die
+Garantie von Ng et al. gilt für das *diskontierte* Optimierungsziel bei identischem γ — und
+genau diese Bedingung ist hier erfüllt (γ_Shaping = γ_RL = 0,999). Der Restterm tritt nur in
+der *un*diskontierten Episodensumme auf, die kein Optimierungsziel ist; die optimale Politik
+bleibt unverändert. Das steht jetzt explizit in §7.3, damit der Punkt nicht als
+Invarianzverletzung missverstanden wird.
+Auch die Größenordnung des Reviews war zu hoch gegriffen (dort +0,79 Restterm bei
+angenommenem d̄ ≈ 30); die tatsächlich gemessene mittlere Distanz während der Episode
+beträgt **d̄ ≈ 20**, der Restterm entsprechend +0,5.
+
+### ⚠️ Änderung 2 — Abbildung 10 mischte zwei Eval-Protokolle unter einer Bildunterschrift
+
+**Dateien:** `docs/figures/fig_entwicklung.pdf`, `scripts/plot_entwicklung.py` (neu), §7.1
+**Problem:** Die Abbildung zeigte vier Balken unter der Bildunterschrift „Testset A,
+Exit 35–45": Phase 3 (86/2), Phase 4 (98/2), Delta-BFS (100/42), LSTM-Curriculum (86/36).
+Tabelle 6 gibt für dasselbe Phase-4-Modell aber **32 % stoch / 0 % det** an. Nur der letzte
+Balken war tatsächlich unter Exit 35–45 gemessen, die drei Mai-Balken unter dem
+Kurzdistanz-Protokoll auf der Umgebung vor v11.
+**Relevanz:** Der inhaltliche Beitrag in §8.2 („LSTM ohne BFS erreicht mindestens dieselbe
+stochastische Leistung wie MLP mit BFS") beruht auf 86 % gegen 32 %. Stünde 98 % daneben,
+kehrte sich die Aussage scheinbar um.
+**Lösung:** Abbildung neu erzeugt (`scripts/plot_entwicklung.py`, Daten per `pdftotext` aus
+der Altfassung übernommen). Zwei sichtbar getrennte Protokollgruppen mit Kopfzeilen; als
+Brücke ein **fünfter Balken „Phase 4 nachgemessen" (32/0)**, der den Protokolleffekt am
+selben Modell zeigt. Bildunterschrift und §7.1 benennen jetzt beide Betriebsarten — bisher
+erklärte der Text nur den det-Abfall (2 → 0), nicht den stoch-Abfall (98 → 32).
+
+### Änderung 3 — Drei Zahlen für Seed 0/1 Phase 1 aufgelöst
+
+**Problem:** §10.5 nannte 42 %, §10.6 „12–16 % (wie Seed 0)", Tab. 16 „16–28 %".
+**Prüfung** an `eval_history.json` der drei v11-Läufe:
+
+| Lauf | Phase-1-Verlauf (stoch) |
+|---|---|
+| Seed 0 | 12,16,18,14,16,12,24,16,32,18,34,18,12,18,16,16,34,36,24,**42** |
+| Seed 1 (vor Cap-Fix) | 14,16,10,12,14,12,12,12,8,10,14 → **8–16 %** |
+| Seed 1 (nach Cap-Fix) | 16,16,10,20,16,20,24,28,24,34,14,22 → **10–34 %** |
+
+Alle drei Angaben waren echt, beschrieben aber verschiedene Zeitfenster. Präzisiert:
+Seed 0 lag „über weite Strecken bei 12–18 % und stieg erst gegen Ende auf 42 %";
+§10.6 auf 8–16 % korrigiert; Tab. 16 auf 10–34 % korrigiert.
+
+### Änderung 4 — Energie-Drosselung als vierte Alternativerklärung in §7.2
+
+Die Drosselung (Läufe 4–7, 29–36 h statt 8 h) fällt exakt mit der Chargengrenze zusammen und
+war bisher nur im Anhang erwähnt. Als Punkt 4 in die Ausschlussliste aufgenommen, mit dem
+Argument: Training ist schrittbasiert, Evaluationen liegen auf festem 25k-Raster, Phasen
+enden am Schrittbudget. **Nebenkorrektur:** Die Begründung im Anhang lautete „das Curriculum
+ist leistungsbasiert" — nach Änderung 2 vom 03.08. ist es das faktisch nicht; das Argument
+läuft jetzt über das Schrittbudget und ist damit sogar stärker.
+
+### Änderung 5 — Sechs Präzisierungen
+
+1. **η-Definition** (§7.3): ergänzt, dass über die *Quotienten* gemittelt wird. Dieselben
+   Läufe ergeben 0,05 als Mittel der Quotienten, aber 0,03 als Quotient der Mittel
+   (40/1329) — Jensen-Ungleichung, jetzt benannt, damit es nicht als Fehler gelesen wird.
+2. **Diskontierung** (§7.3): Terminal-Reward wurde diskontiert (+26) gegen undiskontierte
+   dichte Terme (−15,3) gestellt. Jetzt auf beiden Seiten diskontiert: +37,7 gegen −5,3.
+3. **Seed-Trennung** (§5.4): Formulierung war selbstwidersprüchlich („der übrige Bereich" für
+   Diagnosen, dann 6000–6119 genannt, was die Selektions-Seeds enthält). Umformuliert:
+   Diagnosemessungen nutzen den Validierungsbereich als Ganzes, Begründung ergänzt.
+4. **Tab. 12 Baseline** skriptinkonsistent zur n=7-Auswertung (73/80 vs. 74,0/77,3);
+   in der Caption offengelegt.
+5. **Kurzfassung:** „rund acht Prozentpunkte" galt nur für Testset A (B: 10,4). Jetzt „acht
+   (Testset) bzw. elf (Holdout)". „führen **systematisch** zu optimistischen Aussagen" →
+   „können leicht zu optimistischen Aussagen führen" (belegt ist ein Varianz-, kein
+   Bias-Problem; p = 0,149). Zusätzlich ε = 0,9 benannt, damit die 92 % nicht als
+   Greedy-Kompass missverstanden werden — die Aussage „ein Zufallslauf mit 10 %
+   Richtungsbias schlägt den Agenten" ist die härtere.
+6. **Phase-1-Ziel 85 %** (§7.2): Herkunft ergänzt (nackter Lauf nach Batch-Fix, 84–88 %).
+   Nicht das Niveau, sondern die Stabilität unterscheidet nackten Lauf und Curriculum-Stack.
+
+### Änderung 6 — Kleinkram
+
+- Durchsatz „ca. 90–190 FPS" → **88–190**, mit Hinweis, dass die finale Konfiguration
+  (batch=8) am unteren Ende liegt.
+- Tab. 5: Simulationskern von „ca. 4500" auf **ca. 4300 LOC** präzisiert (gemessen: Kern 3575
+  + Nicht-Client-Header 732 = 4307; Client 4326 + 178 = 4504). Beide Angaben waren korrekt,
+  die identische Rundung wirkte aber wie ein Copy-Paste.
+- KI-Erklärung: „Nicht eingesetzt zur Erzeugung von Messergebnissen" um den Halbsatz ergänzt,
+  dass Auswertungsskripte KI-gestützt erstellt und gegen den Rohdatenbestand verifiziert
+  wurden (sonst Reibung mit der Nennung von `reward_bilanz.py` in derselben Tabelle).
+- Abb. 8: Caption erklärt, warum das Phase-4-Panel bei 175k endet (Evalraster ab null),
+  obwohl das Budget 200k beträgt und ausgeschöpft wurde.
+
+### Geprüft und ZURÜCKGEWIESEN bzw. relativiert
+
+| Review-Punkt | Prüfung | Ergebnis |
+|---|---|---|
+| PBRS-Restterm sei „Nebenwirkung, vor der PBRS schützen soll" | Ng et al. garantieren Invarianz für das diskontierte Ziel bei identischem γ — hier erfüllt | **Keine Invarianzverletzung**; Restterm nur in der undiskontierten Summe |
+| Restterm ≈ +0,79, Summe ≈ 1,55 | gemessen: d̄ ≈ 20 statt angenommener 30 | Restterm **+0,5**, Summe **+1,3** |
+| Fußnote Tab. 9 nenne „10,4 ± 4,2" | Dokument nennt ± 4,6, belegt in `CHANGELOG.md:522` | **Review-Zitat falsch**; das „± 1,7" war dagegen unbelegt und wurde entfernt |
+| Tab. 5: „4500/4500 sieht kopiert aus" | nachgemessen (s. o.) | Beide Werte korrekt, dennoch präzisiert |
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 55 Seiten, 0 Undefined References/Citations.
+
+---
+
+## v2026-08-03.2 — Prozedurale Weltgenerierung als eigener Beitrag aufgenommen (Zuarbeit L. Rößler)
+
+**Kontext:** Die Dokumentation war bislang fast rein RL-seitig; der Weltgenerator kam nur als
+Randnotiz vor, obwohl er der zweite Hauptteil des Projekts ist. Zuarbeit von Laurin Rößler
+(Grundlagen PCG + Konzeptbeschreibung) eingearbeitet. **Jede darin enthaltene Aussage wurde
+gegen `src/core/world.cpp`, `assets/base/game_config.json` und `python/stoneforge_env.py`
+geprüft; zwei Aussagen waren nicht haltbar und wurden korrigiert (siehe unten).**
+
+### Änderung 1 — Neuer Grundlagen-Abschnitt §2.10 „Algorithmen der prozeduralen Weltgenerierung"
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Inhalt:** Vier Absätze — rauschbasierte Basisbelegung (Hash- vs. interpoliertes Wertrauschen),
+zelluläre Automaten als Formgebung (Moore-Nachbarschaft, Birth/Survival), graphentheoretische
+Erreichbarkeitsanalyse (BFS), heuristische Sicherheitsnetze (Manhattan-Distanz als Gleichung,
+Carving).
+**Fachliche Ergänzung gegenüber der Zuarbeit:** Die Zuarbeit ließ offen, welche Nachbarschaft
+für die Konnektivitätsanalyse anzusetzen ist. Ergänzt, dass hier die **Vierer-Nachbarschaft
+(von Neumann)** korrekt ist und nicht die für die Glättung verwendete Moore-Nachbarschaft —
+eine diagonal hergestellte Verbindung wäre bei `Discrete(4)` nicht begehbar. Der Code macht
+das richtig (`validateReachabilityWindow`, `chooseExitPoint`: beide 4-Nachbarschaft).
+**Neue Literatur:** `johnson2010cellular`, `shaker2016pcg`, `cormen2009algorithms`,
+`perlin1985image` (Bibliografie 30 → 34 Einträge).
+
+### Änderung 2 — Neuer Abschnitt §4.4 „Aufbau des Weltgenerators"
+
+Dreistufige Pipeline je Chunk dokumentiert, verifiziert gegen `World::generateChunk()`:
+
+| Stufe | Inhalt | Verifiziert an |
+|---|---|---|
+| 0 Biomfeld | interpoliertes Wertrauschen, Domain Warping, 7 gleich breite Intervalle | `biomeFieldForChunk`, `biomeTagForChunk` |
+| 1 Basisbelegung | Hash-Rauschen je Tile, biomabhängige Schwellen (Wald 7 % … Bergland 25 %); vorgelagerte Seenmaske `0,75a + 0,25b > 0,86` | `sampleBaseTile`, `lakeMaskAt` |
+| 2 Zelluläre Glättung | Moore-Nachbarschaft, Halo in Breite der Iterationszahl (reihenfolgeunabhängig) | `runCellularSmoothingStage` |
+| 3 Landmarken | P = 0,10 je Chunk, 5×5-ASCII-Matrizen je Biom, Spawn-/Exit-Chunks ausgenommen | `placeBiomeStructure` |
+
+### ⚠️ Änderung 3 — ZWEI KORREKTUREN an der Zuarbeit
+
+**Korrektur A — „Garantierter Pfad (Manhattan): AKTIVIERT" ist falsch.**
+Die Zuarbeit (Tabelle 5.1) führt den Manhattan-Carve als aktiv und folgert, das System
+arbeite „in der Produktion primär über den schnellen Manhattan-Fallback". Tatsächlich:
+
+```
+assets/base/game_config.json, Z. 8–9:
+  "forceGuaranteedPath": false,
+  "guaranteedPathFallback": false,
+```
+Zusätzlich übergibt `stoneforge_env.py:152` explizit `force_guaranteed_path=False`.
+**Es findet in der berichteten Konfiguration kein Carving statt.** Die Lösbarkeit stammt
+allein aus der BFS-Exit-Platzierung (`chooseExitPoint` wählt Kandidaten ausschließlich aus
+begehbar erreichbaren Zellen). Die Zeilenreferenz „Z. 7" zeigt auf `exitMaxDistance`.
+Vermutliche Quelle des Irrtums: der veraltete Kommentar in `game_config.hpp:21`
+(„always carve a deterministic safe path") oder die Altdatei `game_config.json.bak`.
+**Relevanz:** unkorrigiert hätte das §4.5 („Lösbarkeit per Konstruktion") direkt
+widersprochen — genau die Art innerer Widerspruch, die das Review vom 03.08. gerügt hat.
+
+**Korrektur B — Legacy-Parameter existieren nicht mehr.**
+Die Zuarbeit nennt `coldBiomeMax`/`warmBiomeMax` als „werden eingelesen, sind aber funktional
+obsolet". Sie wurden beim v11-Audit **vollständig entfernt** (Parser, Struct-Felder, JSON);
+sie überleben nur in `game_config.json.bak`. Der Befund selbst war richtig und ist in
+korrigierter Form aufgenommen: als abgeschlossene Bereinigung, nicht als offene Schuld.
+
+### Änderung 4 — Statustabelle „Aktive Mechanismen der Weltgenerierung"
+
+Neue Tabelle `tab:worldgen_aktiv`: BFS-Exit-Platzierung **aktiv**; zelluläre Glättung,
+Flood-Fill-Validierung und Carving **inaktiv**, je mit Begründung. Quelle:
+`assets/base/game_config.json`, Abschnitt `worldgen`.
+
+### Änderung 5 — INHALTLICHER BEFUND: warum die Welten zu offen sind
+
+Aus der Statustabelle folgt eine Erklärung für den Kernbefund aus §7.3, die bisher fehlte:
+**Da die zelluläre Glättung abgeschaltet ist, stammt die Hindernisverteilung ausschließlich
+aus unkorreliertem Hash-Rauschen.** Die Wandtiles sind statistisch unabhängig verteilt und
+bilden verstreute Einzelhindernisse statt zusammenhängender Barrieren. Genau das macht die
+Welten „offen" im Sinne des Baseline-Befunds: Sackgassen entstehen selten, ungerichtete
+Zufallsbewegung verlässt sie zuverlässig. Damit hat der bisher nur phänomenologisch
+beschriebene Befund („die Welten sind hinreichend offen") eine mechanistische Ursache.
+
+### Änderung 6 — §8.4 Ausblick korrigiert und geschärft
+
+**Problem:** Der Ausblick behauptete, der Wandanteil werde „durch einen zellulären Automaten
+geglättet". Das ist falsch — `enableCellularSmoothing: false`.
+**Lösung:** Korrigiert; zugleich der Hebel präzisiert. Nicht der Wandanteil allein ist
+entscheidend, sondern die **Korreliertheit** der Verteilung. Die Glättungsstufe ist bereits
+implementiert und muss nur aktiviert und kalibriert werden — der billigste verfügbare Weg zu
+Welten mit echten Sackgassen.
+
+### Änderung 7 — Absatz „Zur Arbeitsteilung" in der Einleitung
+
+Bislang war nirgends benannt, wer was gemacht hat. Ergänzt: Plattform/Generator/Client
+schwerpunktmäßig L. Rößler, RL-Aufbau/Evaluation schwerpunktmäßig F. Merlau — mit dem
+Hinweis, dass die zentralen Befunde genau an der Schnittstelle liegen.
+⚠️ `TODO`-Kommentar im Quelltext: **Arbeitsteilung vor Abgabe gegenprüfen.**
+
+**Verifikation:** `latexmk -pdf` fehlerfrei, 53 Seiten (vorher 50), 0 Undefined
+References/Citations.
+
+---
+
+## v2026-08-03.1 — Fakten-Review der Projektdokumentation: 13 Korrekturen, 1 neue Messung
+
+**Kontext:** Externes Review der Projektdokumentation (Prüfschwerpunkt Zahlen und innere
+Konsistenz). Alle Behauptungen wurden gegen Code, `eval_history.json`, `CHANGELOG.md` und
+die C++-Quellen nachgeprüft. Der Zahlenkern (Tab. Endergebnis, CIs, Welch-Test, PBRS,
+5.120 Gradient-Updates) reproduziert exakt; die folgenden Punkte wurden korrigiert.
+Drei Review-Punkte wurden nach Prüfung **zurückgewiesen** (siehe unten).
+
+### Änderung 1 — Temperatur-Sweep-Tabelle auf ddof=1 umgestellt
+
+**Datei:** `docs/Projektdokumentation.tex` (`tab:temperatur`)
+**Problem:** Die Tabelle rechnete durchgehend mit `np.std(...)` (ddof=0), während §5.4 für
+die Arbeit ausdrücklich die Stichproben-Standardabweichung (ddof=1) festlegt. Nachweis: Die
+Argmax-Zeile misst dieselbe Größe wie die det-Spalten der Läufe 1–3 (A: 38/26/32 → ddof1 =
+6,0, ddof0 = 4,9 — die Tabelle zeigte 4,9). Zusätzlich ist ±4,9 bei drei Messwerten aus
+50 Seeds mit ddof=1 arithmetisch unmöglich (Brute-Force über alle Tripel: 0 Treffer).
+Betroffen waren **alle fünf Zeilen**, nicht nur die Argmax-Zeile.
+**Lösung:** Zugrundeliegende Tripel aus Mittelwert + ddof0-Std rekonstruiert (eindeutig; die
+zwei mehrdeutigen Zeilen liefern dieselbe ddof1-Std) und auf ddof=1 umgerechnet.
+
+| Zeile | vorher (ddof=0) | nachher (ddof=1) |
+|---|---|---|
+| Argmax T=0 | 32,0 ± 4,9 / 42,0 ± 4,3 | **32,0 ± 6,0 / 42,0 ± 5,3** |
+| T=0,25 | 52,0 ± 0,0 / 52,7 ± 1,9 | **52,0 ± 0,0 / 52,7 ± 2,3** |
+| T=0,5 | 63,3 ± 4,1 / 71,3 ± 6,6 | **63,3 ± 5,0 / 71,3 ± 8,1** |
+| T=0,75 | 63,3 ± 7,5 / 72,0 ± 6,5 | **63,3 ± 9,2 / 72,0 ± 8,0** |
+| T=1 | 70,7 ± 8,2 / 79,3 ± 6,6 | **70,7 ± 10,1 / 79,3 ± 8,1** |
+
+Alle Mittelwerte und damit die Monotonie-Aussage sowie „+31/+29 Punkte bei T=0,5" bleiben
+unverändert. `scripts/eval_baselines.py` nutzt bereits korrekt ddof=1 — der Fehler saß
+allein im Temperatur-Auswertungspfad.
+
+### Änderung 2 — Gating-Aussage korrigiert: „Ziel berührt" ≠ „Phase bestanden"
+
+**Datei:** `docs/Projektdokumentation.tex` (§7.2), neue Tabelle `tab:gating`
+**Problem:** Der Text behauptete „Phase 1 erreichte ihr Ziel von 85 % in fünf der sieben
+Läufe, Phase 2 ihr Ziel von 70 % in allen sieben" und legte damit nahe, diese Phasen seien
+per Gating beendet worden. Das Gate verlangt aber die Ziel-SR in **zwei aufeinanderfolgenden**
+Evaluationen. Auswertung der sieben `eval_history.json`:
+
+| Phase | Ziel-SR | Ziel berührt | Phase bestanden | Budget erschöpft |
+|---|---|---|---|---|
+| 1 | 85 % stoch | 5 / 7 (s5 max 72, s6 max 82) | **1 / 7** (nur s1 @50k) | 6 / 7 |
+| 2 | 70 % stoch | 7 / 7 | **3 / 7** (s2, s3, s6) | 4 / 7 |
+| 3 | 70 % det | 0 / 7 | 0 / 7 | 7 / 7 |
+| 4 | 60 % det | 0 / 7 | 0 / 7 | 7 / 7 |
+
+**Lösung:** Absatz neu gefasst, Unterscheidung explizit gemacht, Bilanztabelle ergänzt.
+Die Korrektur **stärkt** die eigene Aussage: Das Curriculum war nicht nur in den Phasen 3/4,
+sondern in fast allen Phasen budget- statt leistungsgesteuert.
+**Nebenbefund:** Die Phase-3/4-Angaben (26–54 % bzw. 26–42 %) stimmen exakt mit den
+Maxima aus `eval_history.json` — dort war die Methodik korrekt.
+
+### Änderung 3 — Unbelegte Laufzeitangabe entfernt (v10-Referenzlauf)
+
+**Datei:** `docs/Projektdokumentation.tex` (§B.3)
+**Problem:** „erreichte 86 % nach 2,2 Mio. Steps in 3 h 12 m" ⇒ 191 FPS. Dieser Wert liegt
+über jedem im Projekt protokollierten Durchsatz und ist nirgends belegt: Es existiert **kein
+Changelog-Eintrag zum 25.06.**; die eigene ETA für dieselbe Konfiguration lautete ~5,5 h
+@110 FPS; der gemessene batch=8-Durchsatz beträgt 88 FPS; dieselben 2,2 Mio. Steps brauchten
+in v12 gemessen 7,7–8,5 h.
+**Lösung:** Zeitangabe gestrichen, stattdessen offengelegt, dass keine protokollierte Messung
+vorliegt, mit Nennung der beiden belastbaren Vergleichswerte.
+
+### Änderung 4 — Undokumentierter Reward-Term ergänzt (Revisit-Penalty)
+
+**Datei:** `docs/Projektdokumentation.tex` (`tab:reward`, §4.3, §6.2)
+**Problem:** `python/stoneforge_env.py:334` zieht ab dem 26. Besuch eines Tiles bis zu
+−0,06 pro Schritt ab (`reward -= 0.03 * min(visit_count/25, 2)`). Tabelle 2 war mit
+„**Vollständige** Reward-Komponenten" überschrieben, §4.3 zählte die Nicht-PBRS-Terme als
+abgeschlossene Liste auf und §6.2 wiederholte die Liste — der Term fehlte an allen drei
+Stellen. Es ist zudem der letzte verbliebene Term des in §B.7 als entfernt beschriebenen
+„Straf-Stackings".
+**Lösung:** Als eigene Zeile in Tabelle 2 aufgenommen (mit Kennzeichnung, dass er im
+Python-Wrapper und nicht in `computeReward()` gebildet wird), in §4.3 und §6.2 ergänzt.
+**Verifikation:** Alle übrigen Werte der Tabelle 2 wurden gegen
+`src/core/simulation.cpp:1463–1521` geprüft — stimmen exakt.
+
+### Änderung 5 — NEUE MESSUNG: Bilanz der dichten Reward-Terme
+
+**Datei:** `docs/Projektdokumentation.tex` (§7.3, neue Tabelle `tab:rewardbilanz`)
+**Fragestellung:** Wie verteilt sich die dichte Reward-Masse über eine erfolgreiche Episode?
+Insbesondere: Wie groß ist der Anteil, der überhaupt *Richtungsinformation* trägt?
+**Methode:** Läufe 1–3, Testset A (7000–7049), stochastisch, Cap 4000; je Episode wurden
+Schritte, neu betretene Tiles und Revisit-Strafen mitgezählt.
+
+| Lauf | SR | Ø Schritte | neue Tiles | Explor. | Schritt | Revisit | PBRS | Verhältnis Expl:PBRS |
+|---|---|---|---|---|---|---|---|---|
+| s1 | 33/50 | 1199 | 195 | +3,89 | −11,99 | −4,73 | +0,79 | 4,9 : 1 |
+| s2 | 38/50 | 1490 | 229 | +4,57 | −14,91 | −5,80 | +0,78 | 5,8 : 1 |
+| s3 | 41/50 | 1346 | 202 | +4,04 | −13,46 | −9,81 | +0,79 | 5,1 : 1 |
+| **Ø** | | **1345** | **209** | **+4,2** | **−13,5** | **−6,8** | **+0,8** | **≈ 5 : 1** |
+
+**Befund:** Der PBRS-Term ist wegen der Teleskopierung fest auf β·d₀/128 ≈ 0,8 begrenzt und
+macht damit nur **3 % der dichten Reward-Masse** aus; 97 % hängen ausschließlich von
+Weglänge und Flächendeckung ab. Der Explorations-Bonus wiegt rund **fünfmal** so schwer wie
+die gesamte Zielinformation.
+**Wichtige Einschränkung gegenüber der Review-Hypothese:** Herumlaufen ist **nicht**
+kostenlos — Schritt- und Revisit-Penalty (−20,3) übersteigen den Explorations-Bonus (+4,2)
+deutlich, die dichte Bilanz ist mit −15,3 klar negativ, und der Terminal-Reward (+100;
+diskontiert ≈ +26) bleibt das dominierende Zielsignal. Die Schwäche liegt also nicht darin,
+dass Umherirren belohnt würde, sondern darin, dass aus dem dichten Signal kaum lernbar ist,
+*wohin* zu gehen ist. Konsequenz im Ausblick als eigener Punkt aufgenommen.
+**Nebenbefund:** Early-Stop-Truncation greift bei den trainierten Läufen in nur 4/150
+Episoden (< 3 %). Skript: `scripts/reward_bilanz.py` (neu).
+
+### Änderung 6 — Early-Stop-Truncation im Evaluationsprotokoll offengelegt
+
+**Datei:** `docs/Projektdokumentation.tex` (§5.4, `tab:capsweep`-Caption, Ausblick)
+**Problem:** §5.4 sagte „Gemessen wird stets mit dem vollen Limit von 4.000 Schritten".
+Tatsächlich ist die Truncation nach 256 Schritten ohne positiven Reward
+(`python/stoneforge_env.py:341–348`) in der Evaluation aktiv, auch für die Baselines
+(`scripts/eval_baselines.py:119` bricht auf `truncated` ab). Das ist relevant, weil die
+Bedingung von der Explorationsrate der jeweiligen Politik abhängt — und der
+Baseline-Vergleich ist der Kernbeitrag der Arbeit.
+**Lösung:** Absatz in §5.4 ergänzt (Bedingung, Wirkungsrichtung, Konsequenz für die
+Vergleichbarkeit), Caption der Budget-Tabelle entsprechend eingeschränkt, Gegenprobe mit
+abgeschalteter Truncation als Diagnoseschritt (e) im Ausblick aufgenommen.
+
+### Änderung 7 — Validierungsumfang vereinheitlicht (50 vs. 120)
+
+**Datei:** `docs/Projektdokumentation.tex` (§5.4, §7.4, `fig:detgap`-Caption, §5.2)
+**Problem:** §5.4 definierte die Validierung als 6000–6049 (50 Seeds); die Det-Gap-Abbildung
+nutzt laut `scripts/plot_det_gap_distanz.py:76` aber 6000–6119 (120 Seeds), also 70 Seeds
+außerhalb der definierten Menge. Kein Leck Richtung Test/Holdout, aber eine Lücke in der
+Datentrennungs-Beschreibung.
+**Lösung:** Validierungs**bereich** 6000–6199 definiert; davon 6000–6049 für Gating und
+Modellauswahl, der Rest ausschließlich für Diagnosemessungen mit mehr als 50 Welten.
+Herkunft an allen drei Fundstellen genannt.
+**Nicht geändert:** Die „200 Welten pro Phase" in §5.2 sind eine Generator-Eigenschaft
+(Exit-Sichtbarkeit beim Start), keine Validierungsmessung — nur als solche klargestellt.
+
+### Änderung 8 — FPS-Angaben als Messspanne statt als Punktwert
+
+**Datei:** `docs/Projektdokumentation.tex` (§B.8.2, §B.6)
+**Problem:** Der Fließtext nannte „187 statt 88 FPS" und „Faktor 2,1". Der zugrundeliegende
+Benchmark misst für batch=64/CPU eine **Spanne von 163–187 FPS** (Faktor 1,9–2,1); zitiert
+wurde zweimal nur das obere Ende.
+**Lösung:** Beide Stellen auf die gemessene Spanne umgestellt.
+
+### Änderung 9 — Konsistenz-Passage um den vierten Messwert ergänzt
+
+**Datei:** `docs/Projektdokumentation.tex` (§7.5)
+**Problem:** Die Passage stellte 70,7 / 73,3 / 74,0 nebeneinander und erklärte sie als
+Sampling-Rauschen; die Budget-Tabelle misst bei Cap 4000 dieselbe Größe an denselben drei
+Läufen (64/78/74 → 72,0) und fehlte in der Aufzählung.
+**Lösung:** 72,0 aufgenommen, zusätzlich die Abweichung auf Einzellauf-Ebene (62/84/76 vs.
+64/78/74) offengelegt.
+
+### Änderung 10 — Tabellennummerierung korrigiert
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Das Tabellenverzeichnis begann bei Tabelle 2 — das captionlose
+`longtable` des Abkürzungsverzeichnisses zählte den `table`-Zähler hoch.
+**Lösung:** `\addtocounter{table}{-1}` nach dem Verzeichnis. Verifiziert: `.lot` beginnt
+jetzt bei `table.1`.
+
+### Änderung 11 — Konstanten der PBRS-Gleichung begründet
+
+**Datei:** `docs/Projektdokumentation.tex` (§4.3)
+**Problem:** Normierung 128 und Gewicht β = 2,5 standen unbegründet in Gleichung (1).
+**Lösung:** Herleitung ergänzt (Quelle: Kommentare in `src/core/simulation.cpp:1504–1509`):
+128 normiert auf die Größenordnung der übrigen Terme und entspricht der BFS-Puffer-Skalierung;
+β = 2,5 ist rückwärts aus der Netto-Vorgabe +0,01 pro Fortschritts-Tile bei d ≈ 40 bestimmt
+und wurde nach dem BFS-Puffer-Fix von 5,0 halbiert.
+
+### Änderung 12 — σ-Rechnung in §7.5 korrigiert
+
+**Problem:** „Beide Differenzen liegen innerhalb bzw. knapp **oberhalb** von 1,5 σ" — falsch.
+Der det-Abstand (10 Pkt.) entspricht bei σ_det = 8,0 rund 1,25 σ, der stoch-Abstand (17 Pkt.)
+bei σ_stoch = 12,4 rund 1,37 σ; beide liegen **unter** 1,5 σ. Zudem war für die det-Achse
+σ = 12 statt des korrekten σ = 8,0 unterstellt.
+**Lösung:** Beide Werte einzeln ausgewiesen; ergänzt, dass bei Einzellauf gegen Dreier-Mittel
+σ_diff = σ·√(1+1/3) ≈ 1,15 σ das richtige Maß ist (⇒ 1,08 bzw. 1,19 σ).
+
+### Änderung 13 — Vier Transparenz-Ergänzungen
+
+1. **Hilfsmittel-Erklärung** (`sec:hilfsmittel`): Die Eidesstattliche Erklärung verwies auf
+   Anhang A, der aber nur eine Reproduzierbarkeits-Checkliste enthielt. Neuer Unterabschnitt
+   mit Software und Literatur; die KI-Werkzeuge stehen seit Änderung 14 im Vorspann.
+2. **Det/Stoch-Selektionsasymmetrie** als Einschränkung Nr. 6 in §8.3 benannt: Selektion auf
+   deterministischer, Berichterstattung auf stochastischer SR.
+3. **Fehlerbalken und η**: Caption der Baseline-Tabelle stellt klar, dass die ±-Werte
+   verschiedene Größen messen (5 Politik-RNGs ohne Trainingsvarianz vs. 7 Trainingsläufe);
+   bei η ergänzt, dass die Mittelung über *erfolgreiche* Episoden zugunsten des Agenten
+   verzerrt und den Befund damit verstärkt.
+4. **Curriculum-Tabelle** um die Eval-Distanz aller vier Phasen ergänzt (Quelle: `PHASES`
+   in `scripts/train_curriculum.py`: 5–12 / 12–25 / 35–45 / 35–45). Daraus folgt ein
+   ergänzter Hinweis in §B.6: Der Median von 477 Schritten des besten Phase-1-Checkpoints
+   bezieht sich auf Exit-Distanz 5–12, entspricht also η ≈ 0,02 — ein früher Hinweis auf den
+   Baseline-Befund. Ferner: E1–E3 unterschreiten das Vorab-Kriterium „≥ 3 Läufe je
+   Konfiguration" bewusst; das steht jetzt explizit da.
+
+### Änderung 14 — Erklärung zur Nutzung generativer KI (Vorspann, vor der Kurzfassung)
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Anlass:** Die Arbeit wies den KI-Einsatz bisher nur als Nebensatz im Anhang aus. Übliche
+Praxis an deutschen Hochschulen ist eine eigenständige, unterschriebene Erklärung im
+Vorspann plus ein KI-Verzeichnis.
+**Recherchegrundlage:**
+- Hochschule Aalen stellt eine eigene **„Eigenständigkeitserklärung KI"** in **drei
+  Varianten** bereit (KI nicht erwünscht / erlaubt / erforderlich); **welche gilt, legt der
+  Betreuer fest.** Zusätzlich existiert ein „Fragebogen zur Dokumentation der KI-Nutzung in
+  Abschlussarbeiten". Der 2024er Direktlink (`Hilfestellung_Studierende_KI.pdf`) ist
+  inzwischen tot; die Vorlagen liegen studiengangsweise unter den Downloads.
+- HWR Berlin, „Formulierungsvorschläge für Eigenständigkeitserklärungen bei Nutzung von KI"
+  (Stand 19.03.2024, CC BY-SA): Variante **„Lernziel 2 — KI-Tools professionell nutzen,
+  u.a. zum wissenschaftlichen Schreiben von Master- und Doktorarbeiten"** ist die für diese
+  Arbeitsstufe einschlägige; sie verlangt (a) Eigenverantwortung für Auswahl, Übernahme und
+  Ergebnisse des KI-Outputs, (b) ein Verzeichnis der Tools mit Produktnamen, (c) im Anhang
+  Prompts und/oder Outputs. Ebenda das Muster für das KI-Verzeichnis in Tabellenform
+  (Hilfsmittel · Einsatzform · betroffene Teile · Bemerkungen).
+
+**Lösung:** Neuer Abschnitt „Erklärung zur Nutzung generativer KI" **nach der
+Eidesstattlichen Erklärung und vor der Kurzfassung**, mit eigenem Eintrag im
+Inhaltsverzeichnis und Unterschriftenfeld. Inhalt: Eigenverantwortungs-Klausel, Hinweis auf
+fehlende Richtigkeitsgewähr generativer Systeme, ausdrückliche Feststellung, dass **keine
+Messergebnisse KI-generiert** sind, sowie das KI-Verzeichnis in Tabellenform. Der Verweis in
+der Eidesstattlichen Erklärung wurde angepasst, der KI-Absatz im Anhang auf einen
+Querverweis reduziert (keine Dopplung).
+**Vorausgefüllt:** die in dieser Session belegbare Nutzung (Claude Opus 5 — Konsistenzprüfung,
+Umsetzung der Korrekturen, Diagnoseskript; inkl. des Hinweises, dass drei KI-Beanstandungen
+nach eigener Prüfung verworfen wurden).
+⚠️ **Vor Abgabe zu erledigen** (als `TODO`-Kommentar im Quelltext hinterlegt): Variante mit
+Prof. Lecon abstimmen und ggf. den Wortlaut der Hochschulvorlage übernehmen; zweite
+Tabellenzeile mit den tatsächlich zusätzlich genutzten Werkzeugen füllen oder löschen.
+**Nebenänderung:** `array`-Paket + Spaltentyp `L{}` (linksbündige `p`-Spalte) in die
+Präambel, weil Blocksatz in schmalen Tabellenspalten unleserliche Wortabstände erzeugt.
+
+### Geprüft und ZURÜCKGEWIESEN
+
+| Review-Punkt | Prüfung | Ergebnis |
+|---|---|---|
+| „Delta-BFS: §B.1 widerspricht Abb. 10/Tab. 16" | Quelldaten in `CHANGELOG.md:2696` gefunden: Standard-Welt det 42 % / stoch 100 %; Hard-World det 100 %; τ=0,2 → 100 % @ Ø 90 Schritte | **Kein Widerspruch** — beide Stellen geben die Quelldaten korrekt wieder |
+| „C++-Kern und Client beide ca. 4500 LOC sieht nach Copy-Paste aus" | Gemessen: Kern 3.575 + Nicht-Client-Header 732 = 4.307; Client 4.326 + Client-Header 178 = 4.504 | **Beide Angaben korrekt** |
+| „Abb. 3 wirkt dichter als 7–25 % Wandanteil" | Abbildung ausgezählt: ≈ 20 % Wandanteil, verstreute Einzeltiles | **Innerhalb des angegebenen Bereichs**; stützt sogar das „zu offen"-Argument |
+
+**Verifikation gesamt:** `latexmk -pdf` fehlerfrei, 50 Seiten, 0 Undefined References.
+Tabellenverzeichnis beginnt bei 1. Overfull-Boxen 29 → 28, größte 69,3 pt → 39,5 pt
+(die schlimmste lag in der Curriculum-Tabelle und ist mit deren Umbau verschwunden).
+
+---
+
+## v2026-07-29.1 — Methodik entchronologisiert: Kapitel 5 umstrukturiert, Curriculum-Budget offengelegt
+
+**Kontext:** Kapitel 5 (Methodik) las sich stellenweise als Projekttagebuch statt als
+Verfahrensbeschreibung: Datumsangaben („Mai 2026", „bis am 11.06."), Erzählungen einzelner
+Testläufe und Ergebnistabellen standen im Aufbau-Kapitel, während dieselben Sachverhalte in
+Anhang B bereits vollständig chronologisch dokumentiert waren. Ziel des Umbaus: Kapitel 5
+beschreibt ausschließlich **was** gemacht wurde und **warum**; **wann** und **woraus
+gelernt** steht in Anhang B, **wie es ausging** in Kapitel 7.
+
+### Änderung 1 — Abschnitt „Iterative Modellverbesserung" (§5.3) aufgelöst
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Der Abschnitt erzählte drei Befunde mit Datumsangaben und Versionsverläufen
+(v6–v9-Fehlserie, batch=64-Widerlegung, Eval-Cap-Artefakt). Alle drei sind in Anhang B
+(Etappe 3, `sec:etappe6`, `sec:batchsize`) bereits vollständig und mit Abbildungen belegt —
+§5.3 war reine Duplikation mit Chronologie.
+**Lösung:** Abschnitt ersatzlos entfernt. Die *methodischen Regeln*, die daraus folgen,
+stehen jetzt atemporal im Evaluationsprotokoll; die *Historie* nur noch in Anhang B.
+Label `sec:iteration` war nirgends referenziert, keine gebrochenen Verweise.
+
+### Änderung 2 — §5.1 Algorithmenwahl: Chronologie → Begründung
+
+**Problem:** „Ein früher DQN-Anlauf (Mai 2026) wurde nach Diagnose verworfen: Die Q-Werte
+kollabierten […]" — eine Verlaufsbeschreibung an der Stelle, an der eine Begründung stehen muss.
+**Lösung:** Ersetzt durch „Begründung der Verfahrenswahl" mit drei sachlichen Kriterien
+(diskreter Aktionsraum → entscheidet nichts; POMDP → rekurrent statt reaktiv; Umgebung während
+der Entwicklung noch fehlerbehaftet → on-policy, weil ein Replay-Buffer Reward-Fehler über
+ihre Korrektur hinaus konserviert). Die DQN-Diagnose selbst wurde nach Anhang B, Etappe 1
+verschoben und dort um das Q-Wert-Detail ergänzt. Neuer Absatz „Zustandekommen der
+Konfiguration" verweist einmalig auf Anhang B, ohne Daten zu nennen.
+
+### Änderung 3 — §5.4 Evaluationsprotokoll als Spezifikation neu gefasst
+
+**Problem:** Fließtext mit eingestreuter Historie („wurde identifiziert und behoben", „seit v11",
+„bis am 11.06."). Als Protokoll nicht nachvollziehbar abarbeitbar.
+**Lösung:** Sechs benannte Absätze: Metrik · Episodenlimit · Seed-Trennung · Betriebsarten ·
+Aggregation über Läufe · Entscheidungen auf Kurven statt Endpunkten. Neues Label
+`sec:evalprotokoll`. Ergänzt: Pfadeffizienz η als Nebenmetrik benannt (bisher erst in §7.3
+eingeführt), `approx_kl` als Diagnosemetrik, R2D2-Zitat beim LSTM-State-Handling,
+„kein Best-of-Runs" mit Henderson-Beleg.
+
+### Änderung 4 — E1–E3-Ergebnistabelle aus der Methodik in die Evaluation verschoben
+
+**Problem:** `tab:iterationen` (Setup **und** SR-Ergebnisse der drei Gap-Varianten) stand in
+§5.6, diskutiert wurde sie 400 Zeilen später in §7.5. Ergebnisse gehören nicht ins
+Aufbau-Kapitel.
+**Lösung:** Tabelle nach §7.5 (`sec:gapexperimente`) verschoben, direkt vor den Absatz, der sie
+auswertet. Die Einschränkung zum reduzierten Phase-3-Budget von E1/E2 stand doppelt (§5.6 und
+§7.5) — zusammengeführt in den Absatz „Aussagekraft". §5.6 heißt jetzt „Versuchsaufbau" und
+enthält nur noch die Basiskonfiguration.
+
+### Änderung 5 — §5.5 Erfolgsschwellen: Datumsangaben als Beleg gekennzeichnet
+
+**Problem:** Die drei Daten (16.05. / 08.07. / 17.07.) lasen sich wie der übrige
+Chronologie-Ballast, tragen hier aber das gesamte Anti-HARKing-Argument.
+**Lösung:** In einen eigenen Absatz „Zur Vorab-Festlegung" gefasst, der einleitend sagt,
+*warum* der Zeitpunkt hier zählt („Eine nachträglich abgesenkte Schwelle wäre wertlos, weshalb
+der Zeitpunkt der Festlegung hier als Beleg und nicht als Chronik angeführt wird").
+
+### ⚠️ Änderung 6 — Curriculum: Schrittbudget offengelegt (inhaltliche Korrektur)
+
+**Datei:** `docs/Projektdokumentation.tex`, Tab. 5 (`tab:curriculum`) und §7.2
+**Problem:** §5.2 beschrieb das Curriculum rein leistungsbasiert („eine Phase endet, wenn die
+Ziel-SR in zwei aufeinanderfolgenden Evaluationen erreicht wird"). Das feste Schrittbudget je
+Phase aus `scripts/train_curriculum.py` (PHASES, Z. 52–66) wurde nirgends genannt. Gegenprobe an
+den `results.json` aller sieben Läufe zeigt, dass die zweite Abbruchbedingung die faktisch
+wirksame war:
+
+| Phase | Ziel-SR | erreichte Werte (7 Läufe) | Gate erreicht |
+|-------|---------|---------------------------|---------------|
+| 1 | 85 % stoch | 0,72 – 0,94 | 5 / 7 |
+| 2 | 70 % stoch | 0,70 – 0,88 | 7 / 7 |
+| 3 | 70 % det | **0,26 – 0,54** | **0 / 7** |
+| 4 | 60 % det | **0,26 – 0,42** | **0 / 7** |
+
+**Lösung:** Spalte „Budget" (500k / 500k / 1,0M / 200k) in Tab. 5 ergänzt, beide
+Abbruchbedingungen im Text benannt, Caption um die Doppelrolle der Gating-Metrik
+(Phasenende **und** Bestmodell-Auswahl) erweitert. In §7.2 neuer Absatz „Die
+Ziel-Erfolgsquoten der späten Phasen wurden nicht erreicht" mit den Zahlen oben. Zusätzlich
+präzisiert, dass das Ausgabemodell nach der **deterministischen** Validierungs-SR ausgewählt
+wurde (Gating-Metrik der Phase 4), während die Kernzahl stochastisch berichtet wird.
+
+**Warum das zählt:** Die `results.json` liegen dem Projekt bei; die Diskrepanz zwischen
+„leistungsbasiert" und den nie erreichten Phasenzielen wäre im Kolloquium nachprüfbar gewesen.
+
+#### Ergebnis
+
+46 Seiten (unverändert), kompiliert fehlerfrei, **0 undefinierte Referenzen**, keine mehrfach
+definierten Labels. Verbleibende Warnungen: ausschließlich 18× „`h' float specifier changed to
+`ht'". Datumsangaben in Kapitel 5: von 6 auf 3 reduziert, die verbleibenden drei sind das
+Anti-HARKing-Argument.
+
+**Offen aus der Prüfrunde v2026-07-29 (nicht in diesem Eintrag behandelt):** ε-Auswahl der
+Baseline (Doku behauptet Wahl auf Val-Seeds 6000–6049, `scripts/eval_baselines.py` kennt nur
+A/B), Singh-Widerspruch zwischen §7.4 und §7.5, ddof-Konvention in Tab. 8 vs. Tab. 7,
+„dreimal wegeffizienter" in Kurzfassung/Fazit, pybind11-Version in Tab. 9.
+
+---
+
 ## v2026-07-26.1 — Externe Durchsicht: Abstract neu gewichtet, Meta-Prosa entfernt, neun Korrekturen
 
 **Kontext:** Vollständige Durchsicht von Deckblatt bis Fazit mit Nachrechnen aller Zahlen

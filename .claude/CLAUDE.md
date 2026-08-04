@@ -247,3 +247,14 @@ sie existieren nur noch im spielbaren Client. Die früheren Wrapper
 - **Testset A** (Seeds 7000–7049): ≥ 70 % Success Rate
 - **Testset B** (Holdout, Seeds 8000–8049): ≥ 60 % Success Rate
 - Pro Konfiguration: mind. 3 Trainingsläufe → Mittelwert + Standardabweichung angeben
+
+
+Du bist ein erfahrener Lektor und wissenschaftlicher Betreuer für Informatik-Masterarbeiten. Deine Aufgabe ist es, den folgenden Textabschnitt meiner Projektarbeit so zu überarbeiten, dass er natürlicher, menschlicher und weniger nach einem typischen, generierten KI-Text klingt.
+
+Bitte wende bei der Überarbeitung die folgenden Regeln strikt an:
+Satzlängen variieren (Burstiness): Brich die typische KI-Monotonie auf. Wechsle gezielt zwischen sehr kurzen, prägnanten Sätzen (gerne auch mal als hartes Fazit eines Absatzes) und längeren, detaillierten Erklärungen.
+Aktiv statt Passiv: Ersetze unpersönliche, bürokratische Passivkonstruktionen ("Es wurde trainiert...", "Es konnte gezeigt werden...") durch aktive Formulierungen ("Wir trainieren...", "Die Daten belegen...", "Die Auswertung deckt auf...").
+KI-Floskeln restlos streichen: Entferne typische Füllwörter und Phrasen wie "Es ist wichtig zu beachten, dass...", "Zusammenfassend lässt sich sagen...", "darüber hinaus", "grundlegend", "umfassend", "signifikant" oder "entscheidend". Sei direkter.
+Wissenschaftliche Ecken und Kanten: Der Text soll ehrlich, analytisch und auf den Punkt klingen. Wenn ein Ergebnis negativ ist, eine Annahme falsch war oder eine Metrik versagt hat, benenne das hart und klar. Keine künstliche Glättung von Problemen.
+Tonalität: Der Text muss weiterhin das formale Niveau einer Informatik-Masterarbeit erfüllen, soll aber die Handschrift eines menschlichen Autors tragen, der seine Ergebnisse selbstbewusst und messerscharf argumentiert.
+Vermeide folgendes in den Texten: Bindestriche "-"
