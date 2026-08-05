@@ -53,84 +53,83 @@
 \contentsline {paragraph}{Gedächtnis in teilbeobachtbaren Umgebungen.}{16}{section*.27}%
 \contentsline {paragraph}{Curriculum und Exploration.}{16}{section*.28}%
 \contentsline {paragraph}{Zur Vergleichbarkeit der absoluten Zahlen.}{16}{section*.29}%
-\contentsline {section}{\numberline {4}Stoneforge: Spiel, Weltgenerator und Lernumgebung}{17}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Aufbau des Weltgenerators}{17}{subsection.4.1}%
+\contentsline {section}{\numberline {4}Stoneforge: Implementierung von Spiel und Lernumgebung}{17}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Technologie-Stack}{17}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Aufbau des Weltgenerators}{17}{subsection.4.2}%
 \contentsline {paragraph}{Eine Konsequenz für die Ergebnisse.}{18}{section*.30}%
-\contentsline {subsection}{\numberline {4.2}Garantierte Lösbarkeit}{19}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Was der Agent davon sieht: POMDP-Charakter}{19}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Beobachtung, Aktionen, Episodenende}{19}{subsection.4.4}%
-\contentsline {subsection}{\numberline {4.5}Reward-Design}{20}{subsection.4.5}%
-\contentsline {section}{\numberline {5}Methodik}{21}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Algorithmus}{21}{subsection.5.1}%
-\contentsline {paragraph}{Begründung der Verfahrenswahl.}{21}{section*.31}%
-\contentsline {paragraph}{Zustandekommen der Konfiguration.}{21}{section*.32}%
-\contentsline {subsection}{\numberline {5.2}Curriculum}{21}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Evaluationsprotokoll}{22}{subsection.5.3}%
-\contentsline {paragraph}{Metrik.}{22}{section*.33}%
-\contentsline {paragraph}{Episodenlimit.}{22}{section*.34}%
-\contentsline {paragraph}{Seed-Trennung.}{22}{section*.35}%
-\contentsline {paragraph}{Betriebsarten.}{23}{section*.36}%
-\contentsline {paragraph}{Aggregation über Läufe.}{23}{section*.37}%
-\contentsline {paragraph}{Entscheidungen auf Kurven, nicht auf Endpunkten.}{23}{section*.38}%
-\contentsline {subsection}{\numberline {5.4}Methodische Fallstricke der Evaluation}{23}{subsection.5.4}%
-\contentsline {paragraph}{Das Episodenlimit ist Teil der Metrik, nicht ihres Umfelds.}{23}{section*.39}%
-\contentsline {paragraph}{Ein einzelner Eval-Snapshot ist keine Validierung.}{23}{section*.40}%
-\contentsline {paragraph}{Eine hohe Erfolgsquote ist nicht automatisch aussagekräftig.}{23}{section*.41}%
-\contentsline {subsection}{\numberline {5.5}Herleitung der Erfolgsschwellen}{24}{subsection.5.5}%
-\contentsline {paragraph}{Zur Vorab-Festlegung.}{24}{section*.42}%
-\contentsline {subsection}{\numberline {5.6}Versuchsaufbau}{24}{subsection.5.6}%
-\contentsline {section}{\numberline {6}Technische Umsetzung und Implementierung}{26}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Technologie-Stack}{26}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Umgebung und Binding}{26}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Trainings-Pipeline}{26}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Monitoring und Werkzeuge}{27}{subsection.6.4}%
-\contentsline {section}{\numberline {7}Evaluation}{28}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Bewertung der Plattform (Z1)}{28}{subsection.7.1}%
-\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{28}{section*.43}%
-\contentsline {subsection}{\numberline {7.2}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{29}{subsection.7.2}%
-\contentsline {paragraph}{Aussagekraft.}{29}{section*.44}%
-\contentsline {subsection}{\numberline {7.3}Endergebnis (v12, $n=7$)}{29}{subsection.7.3}%
-\contentsline {paragraph}{Das Curriculum war faktisch budget- und nicht leistungsgesteuert.}{30}{section*.45}%
+\contentsline {subsection}{\numberline {4.3}Garantierte Lösbarkeit}{19}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Grafischer Client und Zuschaumodus}{19}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Was der Agent davon sieht: POMDP-Charakter}{20}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Umgebung, Beobachtung und Aktionen}{20}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Reward-Design}{21}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}Trainings-Pipeline}{22}{subsection.4.8}%
+\contentsline {subsection}{\numberline {4.9}Monitoring und Werkzeuge}{22}{subsection.4.9}%
+\contentsline {section}{\numberline {5}Methodik}{24}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Algorithmus}{24}{subsection.5.1}%
+\contentsline {paragraph}{Begründung der Verfahrenswahl.}{24}{section*.31}%
+\contentsline {paragraph}{Zustandekommen der Konfiguration.}{24}{section*.32}%
+\contentsline {subsection}{\numberline {5.2}Curriculum}{24}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Evaluationsprotokoll}{25}{subsection.5.3}%
+\contentsline {paragraph}{Metrik.}{25}{section*.33}%
+\contentsline {paragraph}{Episodenlimit.}{25}{section*.34}%
+\contentsline {paragraph}{Seed-Trennung.}{25}{section*.35}%
+\contentsline {paragraph}{Betriebsarten.}{26}{section*.36}%
+\contentsline {paragraph}{Aggregation über Läufe.}{26}{section*.37}%
+\contentsline {paragraph}{Entscheidungen auf Kurven, nicht auf Endpunkten.}{26}{section*.38}%
+\contentsline {subsection}{\numberline {5.4}Methodische Fallstricke der Evaluation}{26}{subsection.5.4}%
+\contentsline {paragraph}{Das Episodenlimit ist Teil der Metrik, nicht ihres Umfelds.}{26}{section*.39}%
+\contentsline {paragraph}{Ein einzelner Eval-Snapshot ist keine Validierung.}{26}{section*.40}%
+\contentsline {paragraph}{Eine hohe Erfolgsquote ist nicht automatisch aussagekräftig.}{26}{section*.41}%
+\contentsline {subsection}{\numberline {5.5}Herleitung der Erfolgsschwellen}{27}{subsection.5.5}%
+\contentsline {paragraph}{Zur Vorab-Festlegung.}{27}{section*.42}%
+\contentsline {subsection}{\numberline {5.6}Versuchsaufbau}{27}{subsection.5.6}%
+\contentsline {section}{\numberline {6}Evaluation}{29}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Bewertung der Plattform (Z1)}{29}{subsection.6.1}%
+\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{29}{section*.43}%
+\contentsline {subsection}{\numberline {6.2}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{30}{subsection.6.2}%
+\contentsline {paragraph}{Aussagekraft.}{30}{section*.44}%
+\contentsline {subsection}{\numberline {6.3}Endergebnis (v12, $n=7$)}{30}{subsection.6.3}%
+\contentsline {paragraph}{Das Curriculum war faktisch budget- und nicht leistungsgesteuert.}{31}{section*.45}%
 \contentsline {paragraph}{Der Weg von $n=3$ zu $n=7$ ist selbst ein Ergebnis.}{32}{section*.46}%
-\contentsline {paragraph}{Drei Alternativerklärungen wurden geprüft und ausgeschlossen.}{32}{section*.47}%
-\contentsline {paragraph}{Weitere Beobachtungen.}{33}{section*.48}%
-\contentsline {subsection}{\numberline {7.4}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{33}{subsection.7.4}%
-\contentsline {paragraph}{Befund.}{33}{section*.49}%
-\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{33}{section*.50}%
-\contentsline {paragraph}{Was daraus folgt und was nicht.}{34}{section*.51}%
-\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{35}{section*.52}%
-\contentsline {paragraph}{Warum die PBRS-Summe nicht wegunabhängig ist.}{35}{section*.53}%
-\contentsline {paragraph}{Zwei Einschränkungen.}{35}{section*.54}%
-\contentsline {paragraph}{Konsequenz für Folgearbeiten.}{36}{section*.55}%
-\contentsline {subsection}{\numberline {7.5}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{36}{subsection.7.5}%
-\contentsline {subsection}{\numberline {7.6}Versuche zur Schließung des Det/Stoch-Gaps}{38}{subsection.7.6}%
-\contentsline {paragraph}{Aussagekraft.}{38}{section*.56}%
-\contentsline {section}{\numberline {8}Fazit und Ausblick}{40}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Ergebnis}{40}{subsection.8.1}%
-\contentsline {paragraph}{F1 (Weltgenerator): beantwortet.}{40}{section*.57}%
-\contentsline {paragraph}{F2 (Navigation ohne Orakel): nicht entscheidbar.}{40}{section*.58}%
-\contentsline {paragraph}{Das Verhältnis beider Antworten.}{40}{section*.59}%
-\contentsline {subsection}{\numberline {8.2}Beiträge}{40}{subsection.8.2}%
-\contentsline {paragraph}{Technisch.}{40}{section*.60}%
-\contentsline {paragraph}{Inhaltlich.}{41}{section*.61}%
-\contentsline {paragraph}{Methodisch.}{41}{section*.62}%
-\contentsline {subsection}{\numberline {8.3}Einschränkungen}{41}{subsection.8.3}%
-\contentsline {subsection}{\numberline {8.4}Ausblick}{42}{subsection.8.4}%
-\contentsline {section}{\numberline {9}Anhang: Reproduzierbarkeit}{44}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Eingesetzte Hilfsmittel}{45}{subsection.9.1}%
-\contentsline {paragraph}{Software und Bibliotheken.}{45}{section*.63}%
-\contentsline {paragraph}{Literatur und Recherche.}{45}{section*.64}%
-\contentsline {paragraph}{Generative KI-Werkzeuge.}{45}{section*.65}%
-\contentsline {section}{\numberline {10}Anhang: Entwicklungsverlauf von der Baseline zum LSTM-Agenten}{46}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Etappe 1 (Mai 2026): Baselines mit BFS-Orakel}{46}{subsection.10.1}%
-\contentsline {subsection}{\numberline {10.2}Etappe 2 (Juni 2026): Kernbeitrag, Navigation ohne Orakel}{46}{subsection.10.2}%
-\contentsline {subsection}{\numberline {10.3}Etappe 3 (13.--25.06.): Fehlkonfigurierte Hyperparameter und Root-Cause-Analyse}{47}{subsection.10.3}%
-\contentsline {subsection}{\numberline {10.4}Etappe 4 (06.07.2026): Umgebungsrevision v11 und Performance}{47}{subsection.10.4}%
-\contentsline {subsection}{\numberline {10.5}Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{48}{subsection.10.5}%
-\contentsline {subsection}{\numberline {10.6}Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche vom Eval-Artefakt zur Batch-Größen-Korrektur}{49}{subsection.10.6}%
-\contentsline {subsection}{\numberline {10.7}Umgebungsrevision v11 (06.07.2026)}{51}{subsection.10.7}%
-\contentsline {subsection}{\numberline {10.8}Performance-Analyse: Training beschleunigen}{52}{subsection.10.8}%
-\contentsline {subsubsection}{\numberline {10.8.1}CPU schlägt Apple-GPU (MPS)}{52}{subsubsection.10.8.1}%
-\contentsline {subsubsection}{\numberline {10.8.2}Batch-Größe: vermeintliche Validierung (06.07.), am Folgetag widerlegt}{53}{subsubsection.10.8.2}%
-\contentsline {subsection}{\numberline {10.9}Zeitleiste und Lessons Learned}{54}{subsection.10.9}%
-\contentsline {section}{Literaturverzeichnis}{56}{table.19}%
+\contentsline {paragraph}{Drei Alternativerklärungen wurden geprüft und ausgeschlossen.}{33}{section*.47}%
+\contentsline {paragraph}{Weitere Beobachtungen.}{34}{section*.48}%
+\contentsline {subsection}{\numberline {6.4}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{34}{subsection.6.4}%
+\contentsline {paragraph}{Befund.}{35}{section*.49}%
+\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{35}{section*.50}%
+\contentsline {paragraph}{Was daraus folgt und was nicht.}{35}{section*.51}%
+\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{36}{section*.52}%
+\contentsline {paragraph}{Warum die PBRS-Summe nicht wegunabhängig ist.}{37}{section*.53}%
+\contentsline {paragraph}{Zwei Einschränkungen.}{37}{section*.54}%
+\contentsline {paragraph}{Konsequenz für Folgearbeiten.}{38}{section*.55}%
+\contentsline {subsection}{\numberline {6.5}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{38}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}Versuche zur Schließung des Det/Stoch-Gaps}{39}{subsection.6.6}%
+\contentsline {paragraph}{Aussagekraft.}{39}{section*.56}%
+\contentsline {section}{\numberline {7}Fazit und Ausblick}{42}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Ergebnis}{42}{subsection.7.1}%
+\contentsline {paragraph}{F1 (Weltgenerator): beantwortet.}{42}{section*.57}%
+\contentsline {paragraph}{F2 (Navigation ohne Orakel): nicht entscheidbar.}{42}{section*.58}%
+\contentsline {paragraph}{Das Verhältnis beider Antworten.}{42}{section*.59}%
+\contentsline {subsection}{\numberline {7.2}Beiträge}{42}{subsection.7.2}%
+\contentsline {paragraph}{Technisch.}{42}{section*.60}%
+\contentsline {paragraph}{Inhaltlich.}{43}{section*.61}%
+\contentsline {paragraph}{Methodisch.}{43}{section*.62}%
+\contentsline {subsection}{\numberline {7.3}Einschränkungen}{43}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Ausblick}{44}{subsection.7.4}%
+\contentsline {section}{\numberline {8}Anhang: Reproduzierbarkeit}{46}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Eingesetzte Hilfsmittel}{47}{subsection.8.1}%
+\contentsline {paragraph}{Software und Bibliotheken.}{47}{section*.63}%
+\contentsline {paragraph}{Literatur und Recherche.}{47}{section*.64}%
+\contentsline {paragraph}{Generative KI-Werkzeuge.}{47}{section*.65}%
+\contentsline {section}{\numberline {9}Anhang: Entwicklungsverlauf von der Baseline zum LSTM-Agenten}{48}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Etappe 1 (Mai 2026): Baselines mit BFS-Orakel}{48}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Etappe 2 (Juni 2026): Kernbeitrag, Navigation ohne Orakel}{48}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Etappe 3 (13.--25.06.): Fehlkonfigurierte Hyperparameter und Root-Cause-Analyse}{49}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Etappe 4 (06.07.2026): Umgebungsrevision v11 und Performance}{49}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{50}{subsection.9.5}%
+\contentsline {subsection}{\numberline {9.6}Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche vom Eval-Artefakt zur Batch-Größen-Korrektur}{52}{subsection.9.6}%
+\contentsline {subsection}{\numberline {9.7}Umgebungsrevision v11 (06.07.2026)}{53}{subsection.9.7}%
+\contentsline {subsection}{\numberline {9.8}Performance-Analyse: Training beschleunigen}{55}{subsection.9.8}%
+\contentsline {subsubsection}{\numberline {9.8.1}CPU schlägt Apple-GPU (MPS)}{55}{subsubsection.9.8.1}%
+\contentsline {subsubsection}{\numberline {9.8.2}Batch-Größe: vermeintliche Validierung (06.07.), am Folgetag widerlegt}{56}{subsubsection.9.8.2}%
+\contentsline {subsection}{\numberline {9.9}Zeitleiste und Lessons Learned}{56}{subsection.9.9}%
+\contentsline {section}{Literaturverzeichnis}{58}{table.19}%

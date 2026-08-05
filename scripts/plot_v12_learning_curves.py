@@ -98,7 +98,7 @@ def main() -> None:
     for ax, (phase, title) in zip(axes.flat, PHASES):
         data = [r[phase] for r in runs if phase in r]
         for s, stoch, _ in data:
-            ax.plot(s / 1e3, stoch, color=C_RUN, lw=0.8, alpha=0.35, zorder=2)
+            ax.plot(s / 1e3, stoch, color=C_RUN, lw=0.8, alpha=0.3, zorder=2)
         grid = np.arange(0, max(s[-1] for s, _, _ in data) + 1, 25_000, float)
         mean_stoch = ensemble_mean([(s, y) for s, y, _ in data], grid)
         mean_det = ensemble_mean([(s, y) for s, _, y in data], grid)

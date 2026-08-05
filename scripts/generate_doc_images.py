@@ -74,8 +74,9 @@ def main():
     ax.set_xticks(range(-radius, radius + 2, 5))
     ax.set_yticks(range(-radius, radius + 2, 5))
     ax.grid(True, which='both', color='#cccccc', linestyle='--', linewidth=0.5)
-    ax.set_title("Stoneforge: Originales Spiel (31x31)", fontsize=12, fontweight='bold')
-    
+    ax.set_title("Stoneforge: Originales Spiel (31x31)", fontsize=14, fontweight='bold')
+    ax.tick_params(axis='both', labelsize=11)
+
     legend_elements = [
         patches.Patch(facecolor="#e6ecd8", label="Boden (Empty)"),
         patches.Patch(facecolor="#70766d", label="Wand (Wall)"),
@@ -84,7 +85,7 @@ def main():
         patches.Patch(facecolor="#ff4d4d", label="Ausgang (Exit)"),
         patches.Patch(facecolor="#4d79ff", label="Agent"),
     ]
-    ax.legend(handles=legend_elements, loc="upper right", fontsize=8)
+    ax.legend(handles=legend_elements, loc="upper right", fontsize=10.5)
     
     plt.tight_layout()
     os.makedirs("docs/figures", exist_ok=True)
@@ -138,8 +139,9 @@ def main():
     ax.set_xticks(range(-radius, radius + 2, 5))
     ax.set_yticks(range(-radius, radius + 2, 5))
     ax.grid(True, which='both', color='#333333', linestyle='--', linewidth=0.5)
-    ax.set_title("Sichtweise der KI (15x15 Obs + Kompass)", fontsize=12, fontweight='bold')
-    
+    ax.set_title("Sichtweise der KI (15x15 Obs + Kompass)", fontsize=14, fontweight='bold')
+    ax.tick_params(axis='both', labelsize=11)
+
     legend_elements_ai = [
         patches.Patch(facecolor="#e6ecd8", label="Sichtbarer Boden"),
         patches.Patch(facecolor="#70766d", label="Sichtbare Wand"),
@@ -148,7 +150,7 @@ def main():
         Line2D([0], [0], color='#ffff00', marker='>', markersize=8, markeredgecolor='black', label="Exit-Kompassrichtung", linestyle=''),
         patches.Patch(facecolor="#4d79ff", label="Agent"),
     ]
-    ax.legend(handles=legend_elements_ai, loc="upper right", fontsize=8)
+    ax.legend(handles=legend_elements_ai, loc="upper right", fontsize=10.5)
     
     plt.tight_layout()
     plt.savefig("docs/figures/fig_ai_observation.png", dpi=150)

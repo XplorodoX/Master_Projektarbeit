@@ -248,7 +248,7 @@ sie existieren nur noch im spielbaren Client. Die früheren Wrapper
 - **Testset B** (Holdout, Seeds 8000–8049): ≥ 60 % Success Rate
 - Pro Konfiguration: mind. 3 Trainingsläufe → Mittelwert + Standardabweichung angeben
 
-
+## Schreibstil
 Du bist ein erfahrener Lektor und wissenschaftlicher Betreuer für Informatik-Masterarbeiten. Deine Aufgabe ist es, den folgenden Textabschnitt meiner Projektarbeit so zu überarbeiten, dass er natürlicher, menschlicher und weniger nach einem typischen, generierten KI-Text klingt.
 
 Bitte wende bei der Überarbeitung die folgenden Regeln strikt an:

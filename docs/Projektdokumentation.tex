@@ -185,7 +185,7 @@ Claude (Opus 5), Anthropic
   & Vorschläge zur Prüfung des Manuskripts auf Rechen-, Zahlen- und
     Konsistenzfehler sowie zur Formulierung des Diagnoseskripts
     \texttt{reward\_bilanz.py}
-  & Kapitel 4--8, Anhänge A und B
+  & Kapitel 4--7, Anhänge A und B
   & Jeder Vorschlag wurde von uns gegen Quellcode, \texttt{eval\_history.json}
     und \texttt{CHANGELOG.md} geprüft und erst nach eigener Verifikation
     übernommen; drei Beanstandungen erwiesen sich dabei als unzutreffend und
@@ -464,11 +464,14 @@ Folgearbeiten steht in Abschnitt~\ref{sec:ausblick}.
 
 Die Arbeit folgt dem üblichen Ablauf: erst die Begriffe, dann der Versuchsaufbau,
 dann die Messungen, zuletzt deren Bewertung. Innerhalb jedes Kapitels steht
-dabei zuerst die Welt und dann der Agent, weil die eine die Voraussetzung des
-anderen ist. Kapitel~\ref{sec:umgebung} beschreibt entsprechend erst, wie eine
-Welt entsteht und was der Generator garantiert, und danach, was ein Agent davon
-sieht; Kapitel~\ref{sec:evaluation} bewertet erst die Plattform und dann den
-Agenten. Zwei Anhänge ergänzen den Hauptteil: einer zur Reproduzierbarkeit, einer
+dabei zuerst das Spiel und dann der Agent, weil die eine die Voraussetzung des
+anderen ist. Kapitel~\ref{sec:umgebung} behandelt entsprechend erst
+Weltgenerator, Lösbarkeitsgarantie und Client (Spielteil), dann POMDP-Charakter,
+Beobachtungsraum und Reward-Design sowie Trainings-Pipeline und Monitoring
+(RL-Teil) -- beide Teile sind Bestandteile derselben Implementierung, nicht
+getrennte Vorhaben; Kapitel~\ref{sec:evaluation} bewertet in gleicher
+Reihenfolge erst die Plattform und dann den Agenten. Zwei Anhänge ergänzen den
+Hauptteil: einer zur Reproduzierbarkeit, einer
 zum chronologischen Entwicklungsverlauf mit den gescheiterten Versuchen. Dass
 dieser zweite Anhang existiert, ist kein Nebenschauplatz, denn mehrere zentrale
 Erkenntnisse ergaben sich erst aus dem Vergleich fehlgeschlagener mit
@@ -1316,29 +1319,60 @@ Kriterien (Abschnitt~\ref{sec:kriterienrevision}). Alle Vergleichsbedingungen
 laufen dort auf demselben Generator, mit derselben Metrik und demselben
 Eval-Protokoll.
 
-\section{Stoneforge: Spiel, Weltgenerator und Lernumgebung}
+\section{Stoneforge: Implementierung von Spiel und Lernumgebung}
 \label{sec:umgebung}
 
 Stoneforge ist ein selbst entwickeltes, rundenbasiertes 2D-Spiel: ein
 C++-Simulationskern, ein grafischer Client, in dem ein Mensch das Spiel
 tatsächlich spielen kann, und eine Python-Anbindung über pybind11, über die ein
 Lernverfahren \emph{dieselbe} Simulation ansteuert. Was der Agent erlebt, ist
-damit bis auf die Wahrnehmung identisch mit dem, was ein Spieler erlebt, und
-jede Episode lässt sich im Client nachspielen. Abbildung~\ref{fig:player_client}
-zeigt die Oberfläche aus Sicht eines menschlichen Spielers.
+damit bis auf die Wahrnehmung identisch mit dem, was ein Spieler erlebt.
 
-Beschrieben werden zuerst die Entstehung einer Welt
-(Abschnitt~\ref{sec:weltgenerator}) und die Garantien des Generators
-(Abschnitt~\ref{sec:loesbarkeit}), danach die Beobachtung des Agenten
-(Abschnitt~\ref{sec:pomdpchar}) und das Reward-Design
-(Abschnitt~\ref{sec:rewarddesign}).
+Dieses Kapitel behandelt beide Hälften der Implementierung in der Reihenfolge,
+in der sie aufeinander aufbauen: zuerst das Spiel und seinen Weltgenerator
+(Abschnitte~\ref{sec:weltgenerator}--\ref{sec:client}), danach die
+Reinforcement-Learning-Umgebung, die darauf aufsetzt, samt Trainings-Pipeline
+und Monitoring. Beide Teile sind technische Ingenieursleistungen gleichen
+Gewichts und Bestandteil derselben Arbeit; die Trennung in \glqq Spiel\grqq{}
+und \glqq RL-Umgebung\grqq{} beschreibt die Zuständigkeit (Tabelle~\ref{tab:arbeitsteilung}),
+nicht eine Rangfolge.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.72\textwidth]{figures/fig_game_real.png}
-  \caption[Benutzeroberfläche des spielbaren C++-Clients]{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}
-  \label{fig:player_client}
-\end{figure}
+\subsection{Technologie-Stack}
+\label{sec:technik}
+
+Das System besteht aus drei Schichten: einem C++-Kern für Simulation und
+Weltgenerierung, einem Python-Binding und dem Python-Trainingsstack.
+Tabelle~\ref{tab:stack} listet die verwendeten Komponenten.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Komponente} & \textbf{Technologie} & \textbf{Zweck} \\
+\midrule
+Simulationskern & C++20 (ca.\ 4\,300 LOC) & Weltgenerierung, Spiellogik, Reward, BFS \\
+Binding & pybind11 2.13 & C++-Kern als Python-Modul (\texttt{stoneforge\_sim}) \\
+Build & CMake & Kern, Binding, Clients \\
+RL-Umgebung & Python 3.12, Gymnasium 1.2 & \texttt{StoneforgeWorldEnv} (Gym-API) \\
+RL-Algorithmen & Stable-Baselines3 / sb3-contrib 2.8 & PPO, DQN, A2C, RecurrentPPO \\
+Deep Learning & PyTorch 2.12 (CPU) & Netz- und LSTM-Training \\
+Spiel-Client & raylib 5.5 (C++, ca.\ 4\,500 LOC) & spielbarer Client, KI-Zuschaumodus \\
+Monitoring & TensorBoard, WebSockets & Trainingsmetriken, Live-Visualisierung \\
+Auswertung & NumPy, Matplotlib & Evaluation, Abbildungen \\
+\bottomrule
+\end{tabular}
+\caption{Technologie-Stack.}
+\label{tab:stack}
+\end{table}
+
+Die Simulation ist deterministisch pro Seed. Training und Evaluation laufen
+vollständig auf der CPU; ein Vergleich mit der GPU ergab für dieses kleine Netz
+keine Beschleunigung. Der Durchsatz liegt je nach Konfiguration bei ca.\
+88--190 Umgebungsschritten pro Sekunde; die für die Endergebnisse verwendete
+Konfiguration (\texttt{batch\_size}=8) liegt am unteren Ende dieser Spanne. Die
+verwendete Hardware und der zugehörige Benchmark sind in
+Anhang~\ref{sec:performance} dokumentiert.
 
 \subsection{Aufbau des Weltgenerators}
 \label{sec:weltgenerator}
@@ -1381,6 +1415,44 @@ unbegrenzt und benötigt keinen gespeicherten Weltzustand.
     werden dabei übersprungen, damit die Strukturen weder den Start noch das
     Ziel verbauen.
 \end{description}
+
+\begin{figure}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  stage/.style={draw, rounded corners=2pt, minimum width=2.9cm, minimum height=1.9cm,
+                align=center, font=\scriptsize, fill=black!5, text width=2.7cm},
+  off/.style={draw, dashed, rounded corners=2pt, minimum width=2.9cm, minimum height=1.9cm,
+              align=center, font=\scriptsize, fill=black!2, text width=2.7cm},
+  io/.style={font=\scriptsize, align=center, text width=2.1cm},
+  >={Stealth[length=2.2mm]}, node distance=0.45cm
+]
+  \node[stage] (s0) {\textbf{Stufe 0}\\[1pt]Biomfeld\\[2pt]
+    interpoliertes Wertrauschen + Domain Warping $\to$ 7 Biome};
+  \node[stage, right=of s0] (s1) {\textbf{Stufe 1}\\[1pt]Basisbelegung\\[2pt]
+    Hash-Rauschen je Tile, biomabh. Schwellen; Seenmaske};
+  \node[off, right=of s1] (s2) {\textbf{Stufe 2}\\[1pt]Zelluläre Glättung\\[2pt]
+    optional, \emph{in dieser Arbeit deaktiviert}};
+  \node[stage, right=of s2] (s3) {\textbf{Stufe 3}\\[1pt]Landmarken\\[2pt]
+    POI-Struktur mit $P=0{,}10$ je Chunk};
+
+  \node[io, left=0.4cm of s0] (in) {Seed +\\Chunk-Koord.};
+  \node[io, right=0.4cm of s3] (out) {Exit-\\Platzierung\\(BFS)};
+
+  \draw[->, thick] (in) -- (s0);
+  \draw[->, thick] (s0) -- (s1);
+  \draw[->, thick] (s1) -- (s2);
+  \draw[->, thick] (s2) -- (s3);
+  \draw[->, thick] (s3) -- (out);
+\end{tikzpicture}%
+}
+\caption[Pipeline der Weltgenerierung je Chunk]{Die vierstufige Pipeline der
+Weltgenerierung, je Chunk ($16{\times}16$ Tiles) deterministisch aus Seed und
+Koordinaten berechnet. Stufe 2 ist in der berichteten Konfiguration
+abgeschaltet (gestrichelt, Tabelle~\ref{tab:worldgen_aktiv}); die Welten
+entstehen also allein aus den Stufen 0, 1 und 3.}
+\label{fig:pcgpipeline}
+\end{figure}
 
 \noindent
 Ergänzend erzwingt der Generator freie Radien um Spawn und Exit
@@ -1448,6 +1520,30 @@ aller Eval-Sets und Trainingsbereiche) sowie eine erneute Messung am 06.07.2026
 Exit auf allen Test-Seeds in exakt der BFS-Distanz und bestätigt damit die
 gesamte Kette aus Weltgenerierung, Bewegungsmechanik und Reward-Signal.
 
+\subsection{Grafischer Client und Zuschaumodus}
+\label{sec:client}
+
+Der raylib-Client (ca.\ 4\,500 LOC) macht Stoneforge zu einem tatsächlich
+spielbaren 2D-Spiel: Ein Mensch steuert dieselbe Simulation, die auch das
+Training ansteuert, in Echtzeit über Tastatur und Maus. Jede Episode lässt
+sich damit nachspielen. Abbildung~\ref{fig:player_client} zeigt die Oberfläche
+aus Sicht eines menschlichen Spielers.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\textwidth]{figures/fig_game_real.png}
+  \caption[Benutzeroberfläche des spielbaren C++-Clients]{Benutzeroberfläche des spielbaren C++-Clients (Stoneforge 2D, echter Screenshot): Gezeigt ist die Spielumgebung aus Sichtweise eines menschlichen Spielers mit vollem Sichtbereich, dem Status-Header (Lebenspunkte, Energie, Schritte) und der Spielfigur im Zentrum.}
+  \label{fig:player_client}
+\end{figure}
+
+Neben dem Spieler-Modus besitzt der Client einen KI-Zuschaumodus:
+\texttt{demo\_agent.py} lädt einen trainierten Checkpoint und reicht dessen
+Aktionen über die Standardeingabe an den Client weiter, der dabei denselben
+Seed wie die Trainings-Umgebung verwendet und so dieselbe Welt erzeugt. Ein
+Mensch kann dem Agenten auf diese Weise beim Navigieren zusehen. Eine
+Launcher-GUI (Tkinter) bündelt Training, Evaluation und Abspielen zu einer
+gemeinsamen Oberfläche.
+
 \subsection{Was der Agent davon sieht: POMDP-Charakter}
 \label{sec:pomdpchar}
 
@@ -1464,7 +1560,11 @@ gegenüber: links die Welt, wie sie tatsächlich aussieht, rechts das, was der
 Agent davon sieht. Für eine gedächtnislose Politik sind dabei verschiedene
 Weltpositionen ununterscheidbar (Abschnitt~\ref{sec:ablation}).
 
-\subsection{Beobachtung, Aktionen, Episodenende}
+\subsection{Umgebung, Beobachtung und Aktionen}
+\label{sec:envobs}
+
+\texttt{StoneforgeWorldEnv} (Python) kapselt den C++-Kern hinter der
+Gymnasium-API. Tabelle~\ref{tab:obs} listet die Beobachtung.
 
 \begin{table}[h]
 \centering
@@ -1487,11 +1587,12 @@ und wurden am 06.07.2026 entfernt (vorher 231 Dimensionen).}
 \label{tab:obs}
 \end{table}
 
-Der Aktionsraum ist \texttt{Discrete(4)}: hoch, runter, links, rechts. Mining,
-Bauen und Kampf existieren nur im spielbaren Client und sind aus dem RL-Pfad
-vollständig entfernt. Eine Episode endet bei Erreichen des Exits (Sieg), nach
-4000 Schritten (Timeout) oder als Truncation nach 256 Schritten ohne positiven
-Reward (Early-Stop).
+Der Aktionsraum ist \texttt{Discrete(4)} (hoch, runter, links, rechts). Die im
+Spiel vorhandenen Aktionen Mining, Bauen und Kampf sind im RL-Binding
+deaktiviert und werfen bei Aufruf einen Fehler; sie existieren nur im
+spielbaren Client (Abschnitt~\ref{sec:client}). Eine Episode endet bei
+Erreichen des Exits (Sieg), nach 4\,000 Schritten (Timeout) oder als
+Early-Stop-Truncation nach 256 Schritten ohne positiven Reward.
 
 Tabelle~\ref{tab:reward} führt daneben \glqq Tod\grqq{} als terminales Ereignis
 und einen Schadens-Penalty auf. Beide können im RL-Pfad nicht eintreten: Die
@@ -1504,6 +1605,14 @@ wurde dort übersehen und ist eine der 229 Dimensionen ohne Informationsgehalt.
 Der Schadens-Penalty ist entsprechend inert. Beides ist folgenlos für die
 berichteten Ergebnisse, aber bei einer Neufassung der Beobachtung zu
 streichen.
+
+Zwei Implementierungsdetails waren dabei fehlerkritisch: (1)~Die
+Weltgenerierungs-Konfiguration ist im C++-Kern prozessglobal; jede Env-Instanz
+stempelt sie deshalb bei jedem \texttt{reset()} neu, da sonst parallel erzeugte
+Evaluations-Umgebungen die Trainingsverteilung verändern
+(Abschnitt~\ref{sec:v11}). (2)~Der Exit wird seit v11 nach realer
+BFS-Laufwegdistanz platziert statt nach Luftlinie; alle erzeugten Welten sind
+nachweislich lösbar (150/150 im Test, Abschnitt~\ref{sec:loesbarkeit}).
 
 \subsection{Reward-Design}
 \label{sec:rewarddesign}
@@ -1535,7 +1644,60 @@ und damit ein falsches Lernziel gesetzt hatte
 Politik zu verändern \cite{ng1999policy}. Entscheidend ist, dass das Potential
 die \emph{echte} Pfaddistanz (BFS durch Wände gerechnet) verwendet, nicht die
 Luftlinie: Ein Luftlinien-Potential würde den Agenten systematisch in Sackgassen
-führen.
+führen. Abbildung~\ref{fig:potentialvergleich} zeigt den Unterschied an einem
+minimalen Beispiel.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize},
+  wall/.style={fill=black!55, draw=black},
+  marker/.style={circle, fill, minimum size=3.2mm, inner sep=0pt}
+]
+  % ---------- Panel A: Luftlinien-Potential ----------
+  \begin{scope}
+    \draw[step=0.7cm, gray!45, thin] (0,0) grid (3.5,2.8);
+    \draw[thick] (0,0) rectangle (3.5,2.8);
+    \filldraw[wall] (1.4,0)   rectangle (2.1,0.7);
+    \filldraw[wall] (1.4,1.4) rectangle (2.1,2.1);
+    \filldraw[wall] (2.1,0.7) rectangle (2.8,1.4);
+    \node[marker, fill=blue!70!black] (sA) at (0.35,1.05) {};
+    \node[below=1pt of sA] {S};
+    \node[marker, fill=yellow!85!black, star, star points=5] (zA) at (3.15,1.05) {};
+    \node[below=1pt of zA] {Z};
+    \draw[->, thick, red, dashed] (0.35,1.05) -- (1.05,1.05) -- (1.75,1.05);
+    \node[red, font=\scriptsize\bfseries] at (1.75,1.05) {$\times$};
+    \node[align=center, below=0.35cm] at (1.75,-0.1)
+      {\textbf{Luftlinien-Potential}\\[1pt]zieht direkt in die Sackgasse};
+  \end{scope}
+  % ---------- Panel B: BFS-Potential ----------
+  \begin{scope}[xshift=4.7cm]
+    \draw[step=0.7cm, gray!45, thin] (0,0) grid (3.5,2.8);
+    \draw[thick] (0,0) rectangle (3.5,2.8);
+    \filldraw[wall] (1.4,0)   rectangle (2.1,0.7);
+    \filldraw[wall] (1.4,1.4) rectangle (2.1,2.1);
+    \filldraw[wall] (2.1,0.7) rectangle (2.8,1.4);
+    \node[marker, fill=blue!70!black] (sB) at (0.35,1.05) {};
+    \node[below=1pt of sB] {S};
+    \node[marker, fill=yellow!85!black, star, star points=5] (zB) at (3.15,1.05) {};
+    \node[below=1pt of zB] {Z};
+    \draw[->, thick, blue!70!black, rounded corners=3pt]
+      (0.35,1.05) -- (1.05,1.05) -- (1.05,2.45) -- (2.45,2.45) --
+      (2.45,1.75) -- (3.15,1.75) -- (3.15,1.05);
+    \node[align=center, below=0.35cm] at (1.75,-0.1)
+      {\textbf{BFS-Potential}\\[1pt]führt um die Wand herum};
+  \end{scope}
+\end{tikzpicture}
+\caption[Luftlinien- gegenüber BFS-Potential an einer Sackgasse]{Minimalbeispiel
+einer dreiseitig umschlossenen Sackgasse (grau) zwischen Start S und Ziel Z.
+Links: Ein Potential auf Luftlinien-Distanz nimmt an jeder Position den
+kürzesten geometrischen Abstand zum Ziel und zieht den Agenten geradewegs in
+die Sackgasse, wo er endet (\emph{$\times$}), ohne die Wand einzurechnen.
+Rechts: Das in dieser Arbeit verwendete Potential auf BFS-Pfaddistanz kennt nur
+begehbare Wege und führt korrekt um die Wand herum. Schematische Darstellung,
+kein realer Weltausschnitt.}
+\label{fig:potentialvergleich}
+\end{figure}
 
 Diese Garantie gilt allerdings nur für den PBRS-Term selbst. Die übrigen
 Komponenten in Tabelle~\ref{tab:reward} (Explorations-Bonus, Schritt-, Loop-,
@@ -1576,6 +1738,93 @@ $-0{,}03$ (26.\ Besuch) bis zur Deckelung bei $-0{,}06$ (ab dem 50.\ Besuch
 desselben Tiles).}
 \label{tab:reward}
 \end{table}
+
+\subsection{Trainings-Pipeline}
+
+Das Curriculum-Training (\texttt{train\_curriculum.py}) orchestriert die vier
+Phasen aus Tabelle~\ref{tab:curriculum}. Je Lauf arbeiten 16 parallele
+Umgebungen (\texttt{DummyVecEnv}). Alle 25\,000 Schritte evaluiert ein Callback
+das aktuelle Modell auf den 50 Validierungs-Seeds in beiden Betriebsarten;
+die Phasen-Metrik steuert Gating (Ziel-SR in zwei aufeinanderfolgenden
+Evaluationen) und die Auswahl des besten Modells der Phase. Beim Phasenwechsel
+wird das beste Modell der Vorphase geladen. In Phase~3 senkt ein Callback den
+Entropie-Koeffizienten linear von 0{,}05 auf 0{,}001 über 500\,000 Schritte;
+Phase~4 trainiert mit 0{,}0001 (Greedy Fine-Tune). Optional ergänzt ein
+Seed-Pool (\glqq Swarm\grqq) 30\,\% der Episodenstarts durch Wiederholung
+bereits gelöster Seeds; der Pool wird bei jedem Phasenwechsel geleert. Jeder
+Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json} und
+\texttt{config.json} ab; alle Experimente sind zusätzlich im
+\texttt{CHANGELOG.md} des Repositories dokumentiert.
+
+\subsection{Monitoring und Werkzeuge}
+
+Trainingsmetriken werden nach TensorBoard geschrieben. Neben der bereits
+eingeführten \texttt{explained\_variance} (Güte der Wertfunktion,
+Abschnitt~\ref{sec:grundlagen}) und der Entropie der Politik ist dabei
+\texttt{approx\_kl} von Bedeutung: ein Schätzwert dafür, wie stark sich die
+Politik durch ein Update verändert hat. Werte nahe null zeigen an, dass das
+Training faktisch stillsteht; sehr große Werte deuten auf zu grobe Schritte
+hin. Die Größe dient in dieser Arbeit als schneller Test, ob ein Lauf
+überhaupt lernt (Anhang~\ref{sec:entwicklung}). Zusätzlich streamt
+ein WebSocket-Server den Trainingszustand in eine Browser-Ansicht:
+Erfolgsquoten-Kurven (deterministisch und stochastisch), Minimaps der 16
+parallelen Agenten und eine Explorations-Heatmap.
+
+Abbildung~\ref{fig:architektur} fasst die Implementierung dieses Kapitels
+zusammen: Ein einziger C++-Simulationskern wird auf zwei unabhängigen Wegen
+angesteuert, einmal über das Python-Binding zum Training, einmal direkt vom
+grafischen Client. Beide Pfade erzeugen bei gleichem Seed dieselbe Welt, was
+den KI-Zuschaumodus (Abschnitt~\ref{sec:client}) überhaupt erst sinnvoll
+macht.
+
+\begin{figure}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  comp/.style={draw, rounded corners=2pt, minimum width=3.4cm, minimum height=1.1cm,
+               align=center, font=\scriptsize},
+  small/.style={draw, rounded corners=2pt, minimum width=2.4cm, minimum height=0.8cm,
+                align=center, font=\scriptsize, fill=black!4},
+  core/.style={draw, rounded corners=2pt, minimum width=9.6cm, minimum height=1.1cm,
+               align=center, font=\small, fill=black!8},
+  >={Stealth[length=2.2mm]}, node distance=0.5cm
+]
+  \node[core] (core) {\textbf{C++-Simulationskern}\\Weltgenerierung
+    $\cdot$ Spiellogik $\cdot$ Reward $\cdot$ BFS};
+
+  \node[comp, above left=0.9cm and 1.6cm of core.north] (bind) {\textbf{pybind11-Binding}\\\texttt{stoneforge\_sim}};
+  \node[comp, above right=0.9cm and 1.6cm of core.north] (client) {\textbf{raylib-Client (C++)}\\Spieler-Modus / KI-Zuschaumodus};
+
+  \node[comp, above=of bind] (env) {\textbf{StoneforgeWorldEnv}\\Python, Gymnasium-API};
+  \node[comp, above=of env] (sb3) {\textbf{Stable-Baselines3}\\PPO, RecurrentPPO};
+
+  \node[small, left=0.6cm of sb3] (tb) {TensorBoard};
+  \node[small, above=0.35cm of tb] (ws) {WebSocket $\to$ Browser};
+
+  \draw[->, thick] (core.north -| bind) -- (bind);
+  \draw[->, thick] (core.north -| client) -- (client);
+  \draw[->, thick] (bind) -- (env);
+  \draw[->, thick] (env) -- (sb3);
+  \draw[->, thick] (sb3) -- (tb);
+  \draw[->, thick] (sb3) -- (ws);
+
+  \node[font=\scriptsize, align=center, above=0.15cm of client, text width=2.6cm]
+       (launcher) {\textit{orchestriert von Launcher-GUI (Tkinter)}};
+
+  \draw[->, thick, dashed] (sb3.east) to[out=15, in=165]
+       node[below, font=\scriptsize, pos=0.8, yshift=-3pt] {\texttt{demo\_agent.py}}
+       (client.west);
+\end{tikzpicture}%
+}
+\caption[Architektur: gemeinsamer Simulationskern für Training und Client]{Ein
+C++-Simulationskern, zwei Ansteuerungswege: Training über
+pybind11/Gymnasium/Stable-Baselines3 (links) und der interaktive raylib-Client
+(rechts), der denselben Kern direkt einbindet. \texttt{demo\_agent.py}
+verbindet beide Pfade für den KI-Zuschaumodus, indem es die Aktionen eines
+geladenen Checkpoints über Standardeingabe an den Client weiterreicht; da
+beide Pfade denselben Seed verwenden, entsteht dieselbe Welt.}
+\label{fig:architektur}
+\end{figure}
 
 \section{Methodik}
 \label{sec:methodik}
@@ -1884,105 +2133,6 @@ Eval & Testset A 7000--7049, Holdout B 8000--8049, Cap 4000, det + stoch \\
 \label{tab:basiskonfig}
 \end{table}
 
-\section{Technische Umsetzung und Implementierung}
-\label{sec:technik}
-
-\subsection{Technologie-Stack}
-
-Das System besteht aus drei Schichten: einem C++-Kern für Simulation und
-Weltgenerierung, einem Python-Binding und dem Python-Trainingsstack.
-Tabelle~\ref{tab:stack} listet die verwendeten Komponenten.
-
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{Komponente} & \textbf{Technologie} & \textbf{Zweck} \\
-\midrule
-Simulationskern & C++20 (ca.\ 4\,300 LOC) & Weltgenerierung, Spiellogik, Reward, BFS \\
-Binding & pybind11 2.13 & C++-Kern als Python-Modul (\texttt{stoneforge\_sim}) \\
-Build & CMake & Kern, Binding, Clients \\
-RL-Umgebung & Python 3.12, Gymnasium 1.2 & \texttt{StoneforgeWorldEnv} (Gym-API) \\
-RL-Algorithmen & Stable-Baselines3 / sb3-contrib 2.8 & PPO, DQN, A2C, RecurrentPPO \\
-Deep Learning & PyTorch 2.12 (CPU) & Netz- und LSTM-Training \\
-Spiel-Client & raylib 5.5 (C++, ca.\ 4\,500 LOC) & spielbarer Client, KI-Zuschaumodus \\
-Monitoring & TensorBoard, WebSockets & Trainingsmetriken, Live-Visualisierung \\
-Auswertung & NumPy, Matplotlib & Evaluation, Abbildungen \\
-\bottomrule
-\end{tabular}
-\caption{Technologie-Stack.}
-\label{tab:stack}
-\end{table}
-
-Die Simulation ist deterministisch pro Seed. Training und Evaluation laufen
-vollständig auf der CPU; ein Vergleich mit der GPU ergab für dieses kleine Netz
-keine Beschleunigung. Der Durchsatz liegt je nach Konfiguration bei ca.\
-88--190 Umgebungsschritten pro Sekunde; die für die Endergebnisse verwendete
-Konfiguration (\texttt{batch\_size}=8) liegt am unteren Ende dieser Spanne. Die verwendete Hardware und der
-zugehörige Benchmark sind in Anhang~\ref{sec:performance} dokumentiert.
-
-\subsection{Umgebung und Binding}
-
-\texttt{StoneforgeWorldEnv} (Python) kapselt den C++-Kern hinter der
-Gymnasium-API. Die Beobachtung umfasst 229 Merkmale (Grid $15{\times}15$ als
-Tile-Typen, HP, Exit-Kompass $dx/dy$, Schrittanteil); der Aktionsraum ist
-\texttt{Discrete(4)} (vier Bewegungsrichtungen). Die im Spiel vorhandenen
-Aktionen Mining, Bauen und Kampf sind im RL-Binding deaktiviert und werfen bei
-Aufruf einen Fehler; sie existieren nur im spielbaren Client. Eine Episode endet
-bei Erreichen des Exits, nach 4\,000 Schritten oder als Early-Stop-Truncation
-nach 256 Schritten ohne positiven Reward (Abschnitt~\ref{sec:umgebung}).
-
-Zwei Implementierungsdetails waren fehlerkritisch: (1)~Die
-Weltgenerierungs-Konfiguration ist im C++-Kern prozessglobal; jede Env-Instanz
-stempelt sie deshalb bei jedem \texttt{reset()} neu, da sonst parallel erzeugte
-Evaluations-Umgebungen die Trainingsverteilung verändern (Abschnitt~\ref{sec:v11}).
-(2)~Der Exit wird seit v11 nach realer BFS-Laufwegdistanz platziert statt nach
-Luftlinie; alle erzeugten Welten sind nachweislich lösbar (150/150 im Test).
-
-Der Reward setzt sich zusammen aus Schritt-Malus ($-0{,}01$), Explorations-Bonus
-($+0{,}02$ pro neuem Tile), Loop-Malus ($-0{,}05$), Idle-Malus ($-0{,}04$),
-Schadens-Malus, dem PBRS-Term auf der BFS-Distanz
-(Abschnitt~\ref{sec:grundlagen}) und dem Terminal-Reward; hinzu kommt der im
-Python-Wrapper gebildete Revisit-Penalty. Die vollständige Aufstellung mit
-allen Werten steht in Tabelle~\ref{tab:reward}.
-
-\subsection{Trainings-Pipeline}
-
-Das Curriculum-Training (\texttt{train\_curriculum.py}) orchestriert die vier
-Phasen aus Tabelle~\ref{tab:curriculum}. Je Lauf arbeiten 16 parallele
-Umgebungen (\texttt{DummyVecEnv}). Alle 25\,000 Schritte evaluiert ein Callback
-das aktuelle Modell auf den 50 Validierungs-Seeds in beiden Betriebsarten;
-die Phasen-Metrik steuert Gating (Ziel-SR in zwei aufeinanderfolgenden
-Evaluationen) und die Auswahl des besten Modells der Phase. Beim Phasenwechsel
-wird das beste Modell der Vorphase geladen. In Phase~3 senkt ein Callback den
-Entropie-Koeffizienten linear von 0{,}05 auf 0{,}001 über 500\,000 Schritte;
-Phase~4 trainiert mit 0{,}0001 (Greedy Fine-Tune). Optional ergänzt ein
-Seed-Pool (\glqq Swarm\grqq) 30\,\% der Episodenstarts durch Wiederholung
-bereits gelöster Seeds; der Pool wird bei jedem Phasenwechsel geleert. Jeder
-Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json} und
-\texttt{config.json} ab; alle Experimente sind zusätzlich im
-\texttt{CHANGELOG.md} des Repositories dokumentiert.
-
-\subsection{Monitoring und Werkzeuge}
-
-Trainingsmetriken werden nach TensorBoard geschrieben. Neben der bereits
-eingeführten \texttt{explained\_variance} (Güte der Wertfunktion,
-Abschnitt~\ref{sec:grundlagen}) und der Entropie der Politik ist dabei
-\texttt{approx\_kl} von Bedeutung: ein Schätzwert dafür, wie stark sich die
-Politik durch ein Update verändert hat. Werte nahe null zeigen an, dass das
-Training faktisch stillsteht; sehr große Werte deuten auf zu grobe Schritte
-hin. Die Größe dient in dieser Arbeit als schneller Test, ob ein Lauf
-überhaupt lernt (Anhang~\ref{sec:entwicklung}). Zusätzlich streamt
-ein WebSocket-Server den Trainingszustand in eine Browser-Ansicht:
-Erfolgsquoten-Kurven (deterministisch und stochastisch), Minimaps der 16
-parallelen Agenten und eine Explorations-Heatmap. Eine Launcher-GUI (Tkinter)
-bündelt Training, Evaluation und Abspielen. Zum Vorführen steuert
-\texttt{demo\_agent.py} den grafischen Client: Der Client läuft im
-KI-Modus und erhält die Aktionen des geladenen Modells über die
-Standardeingabe; Client und Trainings-Umgebung erzeugen dieselbe Welt aus
-demselben Seed.
-
 \section{Evaluation}
 \label{sec:evaluation}
 
@@ -2163,6 +2313,17 @@ Stichproben-Std ($\mathrm{ddof}=1$), Konfidenzintervall über die
 $t$-Verteilung ($\mathrm{df}=6$).}
 \label{tab:v12}
 \end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{figures/fig_v12_endergebnis.pdf}
+\caption[Endergebnis v12 mit Streuung über sieben Läufe]{Dieselben Daten wie
+Tabelle~\ref{tab:v12} als Balken mit Stichproben-Std-Fehlerbalken; die sieben
+Einzelläufe sind als Punkte überlagert, die gestrichelten Linien markieren die
+vorab festgelegten Erfolgsschwellen aus Abschnitt~\ref{sec:ziele}. Erzeugt mit
+\texttt{scripts/plot\_v12\_endergebnis.py}.}
+\label{fig:v12endergebnis}
+\end{figure}
 
 \noindent
 Ausgewertet wird je Lauf nicht der letzte Checkpoint, sondern das nach
@@ -2866,7 +3027,7 @@ Basisbelegung, zelluläre Glättungsstufe, BFS-basierte Exit-Platzierung mit
 Lösbarkeitsgarantie), ein spielbarer raylib-Client mit KI-Zuschaumodus und eine
 \texttt{pybind11}-Kapselung als Gymnasium-Umgebung, dazu
 Curriculum-Trainingspipeline, standardisierte Evaluationsskripte und
-Live-Monitoring (Kapitel~\ref{sec:umgebung} und~\ref{sec:technik}). Die
+Live-Monitoring (Kapitel~\ref{sec:umgebung}). Die
 deterministische Reproduzierbarkeit pro Seed
 und die durchgängige Experiment-Protokollierung waren die Voraussetzung für die
 Root-Cause-Analysen im Anhang~\ref{sec:entwicklung} und sind für Folgearbeiten
