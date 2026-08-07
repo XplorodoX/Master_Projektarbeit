@@ -9,8 +9,14 @@ Gemessen werden zwei Politiken, die *dieselbe* Observation sehen wie der Agent:
                   ausschliesslich 2 der 229 Features; das lokale 15x15-Grid wird
                   ignoriert. Kein Training, kein Gedaechtnis.
 
-Protokoll identisch zu ``scripts/eval_final.py`` / docs/wiki/components/eval-protokoll.md:
+Protokoll: docs/wiki/components/eval-protokoll.md —
 Testset A 7000-7049, Holdout B 8000-8049, exit 35-45, Cap 4000.
+
+Dieses Skript ist das **kanonische** Eval-Protokoll (siehe CLAUDE.md). Kein eigenes
+Eval nachbauen: RecurrentPPO braucht korrekt mitgefuehrten LSTM-Zustand, sonst misst
+man ein Gedaechtnismodell ohne Gedaechtnis (``ModelPolicy`` macht es richtig).
+(Der frueher hier genannte ``scripts/eval_final.py`` existiert nicht — Verweis
+entfernt 05.08.2026.)
 
 Zusaetzlich zur Success Rate wird die **Pfadeffizienz** berichtet
 (BFS-Optimum / tatsaechliche Schritte, gemittelt ueber die *erfolgreichen* Episoden).

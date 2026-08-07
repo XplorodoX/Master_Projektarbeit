@@ -47,6 +47,14 @@ EVAL_SEEDS_B = list(range(8000, 8050))
 
 # Nur die Felder, die sich gegenüber der Standard-Config ändern.
 # Tiefes Dict-Merge: alle anderen Keys bleiben unberührt.
+#
+# ⚠️ WARNUNG (05.08.2026): Die *WallThreshold/*OreThreshold/*TreeThreshold-Keys sind
+# TOT. Die Biom-Schwellwerte stehen hartkodiert in World::sampleBaseTile() (world.cpp)
+# und sind nicht über game_config.json tunebar. Von diesem Override wirkt faktisch nur
+# der procedural-Block. Und der macht die Welt nicht schwerer, sondern LEERER:
+# enableCellularSmoothing senkt die Wanddichte von 0,238 auf 0,037 und den Umwegfaktor
+# auf 1,001 (Messung: scripts/probe_world_geometry.py, CHANGELOG v2026-08-05.1).
+# Dieses Skript misst also keine "harte" Welt. Vor Weiterverwendung reparieren.
 HARD_WORLD_OVERRIDES: dict = {
     "worldgen": {
         "coldWallThreshold": 0.15,

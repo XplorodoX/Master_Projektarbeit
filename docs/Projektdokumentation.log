@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  4 AUG 2026 23:06
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  6 AUG 2026 22:09
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -604,6 +604,40 @@ s.code.tex
 )
 (/usr/local/texlive/2026/texmf-dist/tex/generic/pgf/libraries/decorations/pgfli
 brarydecorations.pathreplacing.code.tex))
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count326
+\lst@gtempboxa=\box71
+\lst@token=\toks39
+\lst@length=\count327
+\lst@currlwidth=\dimen301
+\lst@column=\count328
+\lst@pos=\count329
+\lst@lostspace=\dimen302
+\lst@width=\dimen303
+\lst@newlines=\count330
+\lst@lineno=\count331
+\lst@maxwidth=\dimen304
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstpatch.sty
+File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+\c@lstnumber=\count332
+\lst@skipnumbers=\count333
+\lst@framebox=\box72
+)
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2025/11/14 1.11b listings configuration
+))
+Package: listings 2025/11/14 1.11b (Carsten Heinz)
+
+==> First Aid for listings.sty no longer applied!
+    Expected:
+        2024/09/23 1.10c (Carsten Heinz)
+    but found:
+        2025/11/14 1.11b (Carsten Heinz)
+    so I'm assuming it got fixed.
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
 
@@ -645,19 +679,19 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
  (/usr/local/texlive/2026/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count326
+\c@section@level=\count334
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/etoolbox/etoolbox.sty
 Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count327
+\etb@tempcnta=\count335
 )
 (/usr/local/texlive/2026/texmf-dist/tex/generic/stringenc/stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen301
-\Hy@linkcounter=\count328
-\Hy@pagecounter=\count329
+\@linkdim=\dimen305
+\Hy@linkcounter=\count336
+\Hy@pagecounter=\count337
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
@@ -667,7 +701,7 @@ Now handling font encoding PD1 ...
 (/usr/local/texlive/2026/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count330
+\Hy@SavedSpaceFactor=\count338
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
@@ -682,14 +716,14 @@ Package hyperref Info: Plain pages OFF on input line 4216.
 Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
-\c@Hy@tempcnt=\count331
+\c@Hy@tempcnt=\count339
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 4807.
-\XeTeXLinkMargin=\dimen302
+\XeTeXLinkMargin=\dimen306
 
 (/usr/local/texlive/2026/texmf-dist/tex/generic/bitset/bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
@@ -698,9 +732,9 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count332
-\Field@Width=\dimen303
-\Fld@charsize=\dimen304
+\Fld@menulength=\count340
+\Field@Width=\dimen307
+\Fld@charsize=\dimen308
 Package hyperref Info: Hyper figures OFF on input line 6084.
 Package hyperref Info: Link nesting OFF on input line 6089.
 Package hyperref Info: Hyper index ON on input line 6092.
@@ -708,16 +742,16 @@ Package hyperref Info: backreferencing OFF on input line 6099.
 Package hyperref Info: Link coloring ON on input line 6102.
 Package hyperref Info: Link coloring with OCG OFF on input line 6109.
 Package hyperref Info: PDF/A mode OFF on input line 6114.
-\Hy@abspage=\count333
-\c@Item=\count334
-\c@Hfootnote=\count335
+\Hy@abspage=\count341
+\c@Item=\count342
+\c@Hfootnote=\count343
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
-\Fld@listcount=\count336
-\c@bookmark@seq@number=\count337
+\Fld@listcount=\count344
+\c@bookmark@seq@number=\count345
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
 Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
@@ -735,18 +769,18 @@ Package: longtable 2025-10-13 v4.24 Multi-page Table package (DPC)
 \LTright=\skip58
 \LTpre=\skip59
 \LTpost=\skip60
-\LTchunksize=\count338
-\LTcapwidth=\dimen305
-\LT@head=\box71
-\LT@firsthead=\box72
-\LT@foot=\box73
-\LT@lastfoot=\box74
-\LT@gbox=\box75
-\LT@cols=\count339
-\LT@rows=\count340
-\c@LT@tables=\count341
-\c@LT@chunks=\count342
-\LT@p@ftn=\toks39
+\LTchunksize=\count346
+\LTcapwidth=\dimen309
+\LT@head=\box73
+\LT@firsthead=\box74
+\LT@foot=\box75
+\LT@lastfoot=\box76
+\LT@gbox=\box77
+\LT@cols=\count347
+\LT@rows=\count348
+\c@LT@tables=\count349
+\c@LT@chunks=\count350
+\LT@p@ftn=\toks40
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/tocloft/tocloft.sty
 Package: tocloft 2017/08/31 v2.3i parameterised ToC, etc., typesetting
@@ -777,15 +811,15 @@ Package tocloft Info: The document has section divisions on input line 51.
 \cftbeforefigskip=\skip84
 \cftfigindent=\skip85
 \cftfignumwidth=\skip86
-\c@lofdepth=\count343
-\c@lotdepth=\count344
+\c@lofdepth=\count351
+\c@lotdepth=\count352
 \cftbeforelottitleskip=\skip87
 \cftafterlottitleskip=\skip88
 \cftbeforetabskip=\skip89
 \cfttabindent=\skip90
 \cfttabnumwidth=\skip91
 )
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 30
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 54
 .
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmr.fd
@@ -793,7 +827,7 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count345
+\l__color_backend_stack_int=\count353
 )
 (./Projektdokumentation.aux
 Package babel Info: 'ngerman' activates 'german' shorthands.
@@ -801,24 +835,24 @@ Package babel Info: 'ngerman' activates 'german' shorthands.
 )
 \openout1 = `Projektdokumentation.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 30.
-LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -856,17 +890,17 @@ LaTeX Font Info:    ... okay on input line 30.
 
 (/usr/local/texlive/2026/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count346
-\scratchdimen=\dimen306
-\scratchbox=\box76
-\nofMPsegments=\count347
-\nofMParguments=\count348
-\everyMPshowfont=\toks40
-\MPscratchCnt=\count349
-\MPscratchDim=\dimen307
-\MPnumerator=\count350
-\makeMPintoPDFobject=\count351
-\everyMPtoPDFconversion=\toks41
+\scratchcounter=\count354
+\scratchdimen=\dimen310
+\scratchbox=\box78
+\nofMPsegments=\count355
+\nofMParguments=\count356
+\everyMPshowfont=\toks41
+\MPscratchCnt=\count357
+\MPscratchDim=\dimen311
+\MPnumerator=\count358
+\makeMPintoPDFobject=\count359
+\everyMPtoPDFconversion=\toks42
 ) (/usr/local/texlive/2026/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 
@@ -884,54 +918,55 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring ON on input line 30.
+\c@lstlisting=\count360
+Package hyperref Info: Link coloring ON on input line 54.
 
 (./Projektdokumentation.out) (./Projektdokumentation.out)
 \@outlinefile=\write4
 \openout4 = `Projektdokumentation.out'.
 
-<figures/hs_aalen_logo.pdf, id=312, 303.02206pt x 174.9845pt>
+<figures/hs_aalen_logo.pdf, id=324, 303.02206pt x 174.9845pt>
 File: figures/hs_aalen_logo.pdf Graphic file (type pdf)
 <use figures/hs_aalen_logo.pdf>
-Package pdftex.def Info: figures/hs_aalen_logo.pdf  used on input line 39.
+Package pdftex.def Info: figures/hs_aalen_logo.pdf  used on input line 63.
 (pdftex.def)             Requested size: 142.26378pt x 82.15193pt.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 6
-3.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 8
+7.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 6
-3.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 8
+7.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-63.
+87.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-63.
+87.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 63.
+(Font)              <10.95> on input line 87.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 63.
+(Font)              <8> on input line 87.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 63.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 63.
+(Font)              <6> on input line 87.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 87.
 
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 63.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 87.
 
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -941,26 +976,24 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 {/usr/local/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
 al/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc} <./figures/hs_aalen_lo
 go.pdf>]
-Overfull \hbox (26.88887pt too wide) in paragraph at lines 105--108
-\T1/lmr/bx/n/10.95 Schlagwörter: \T1/lmr/m/n/10.95 Pro-ze-du-ra-le Welt-ge-ne-r
-ie-rung, Spiel-ent-wick-lung, Re-in-for-ce-ment Lear-ning, POMDP,
- []
-
 [2
 
-] [3
+{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/te
+xlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2026
+/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}] [3
 
 
 ]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 180.
+(Font)              <10> on input line 220.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 180.
+(Font)              <7> on input line 220.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 180.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-87.
- (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
+(Font)              <5> on input line 220.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
+27.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [4
 
@@ -969,26 +1002,19 @@ File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 (./Projektdokumentation.toc [5
 
 
-]
-Overfull \hbox (5.26657pt too wide) in paragraph at lines 126--126
- [][] [][][]\T1/lmr/m/n/10.95 Etappe 3 (13.--25.06.): Fehl-kon-fi-gu-rier-te Hy
--per-pa-ra-me-ter und Root-Cause-Analyse[][] []  
- []
-
-)
+])
 \tf@toc=\write5
 \openout5 = `Projektdokumentation.toc'.
 
- [6{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/l
-ocal/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
-(./Projektdokumentation.lof)
+ [6] (./Projektdokumentation.lof)
 \tf@lof=\write6
 \openout6 = `Projektdokumentation.lof'.
 
  [7
 
 
-] (./Projektdokumentation.lot)
+]
+(./Projektdokumentation.lot)
 \tf@lot=\write7
 \openout7 = `Projektdokumentation.lot'.
 
@@ -998,18 +1024,18 @@ ocal/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
 ] [9
 
 
-{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}]
+]
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.365 
+l.405 
        [1
 
 
 ]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
-00.
+40.
  (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [2{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
@@ -1017,460 +1043,445 @@ pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
  been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.515 ...itsteilung nach BeitrÃ¤gen und Kapiteln.}
+l.556 ...itsteilung nach BeitrÃ¤gen und Kapiteln.}
                                                   
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 [3] [4] [5
 
-]
-Overfull \hbox (3.81445pt too wide) in paragraph at lines 615--633
- []\T1/lmr/bx/n/10.95 Graphentheoretische Er-reich-bar-keits-ana-ly-se.[] \T1/l
-mr/m/n/10.95 Ein zen-tra-les Pro-blem pro-ze-du-ra-ler Wel-
- []
-
-
-Overfull \hbox (22.55586pt too wide) in paragraph at lines 635--641
-\T1/lmr/m/n/10.95 wer-den da-bei häu-fig kom-bi-nier-te An-sät-ze ge-wählt. Als
- bil-li-ge Vor-ab-schät-zung dient die \T1/lmr/m/it/10.95 Manhattan-
- []
-
-[6]
+] [6]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[7{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
-<figures/fig_game_world.png, id=675, 433.62pt x 433.62pt>
+<figures/fig_game_world.png, id=691, 433.62pt x 433.62pt>
 File: figures/fig_game_world.png Graphic file (type png)
 <use figures/fig_game_world.png>
-Package pdftex.def Info: figures/fig_game_world.png  used on input line 796.
+Package pdftex.def Info: figures/fig_game_world.png  used on input line 827.
 (pdftex.def)             Requested size: 207.27887pt x 207.28171pt.
-<figures/fig_ai_observation.png, id=677, 433.62pt x 433.62pt>
+<figures/fig_ai_observation.png, id=693, 433.62pt x 433.62pt>
 File: figures/fig_ai_observation.png Graphic file (type png)
 <use figures/fig_ai_observation.png>
-Package pdftex.def Info: figures/fig_ai_observation.png  used on input line 798
+Package pdftex.def Info: figures/fig_ai_observation.png  used on input line 829
 .
 (pdftex.def)             Requested size: 207.27887pt x 207.28171pt.
-
-[8 <./figures/fig_game_world.png> <./figures/fig_ai_observation.png>]
-Overfull \hbox (10.5321pt too wide) in paragraph at lines 893--899
-[]\T1/lmr/m/n/10.95 Zusätzlich wird ein Entropie-Term ad-diert, der Ex-plo-ra-t
-i-on för-dert; sein Ge-wicht (\T1/lmtt/m/n/10.95 ent_coef\T1/lmr/m/n/10.95 )
- []
-
-[9] [10]
-Overfull \hbox (5.4987pt too wide) in paragraph at lines 1045--1055
-\T1/lmr/m/n/10.95 Über-gang zwi-schen den Stu-fen er-folgt leis-tungs-ba-siert 
-(ei-ne Stu-fe gilt ab ei-ner Ziel-Erfolgsquote
- []
-
-[11] [12] [13] [14] [15
+[7{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
+[8 <./figures/fig_game_world.png> <./figures/fig_ai_observation.png>] [9]
+[10] [11] [12] [13] [14] [15
 
 ] [16]
-Overfull \hbox (21.2324pt too wide) in paragraph at lines 1350--1365
- [][] 
- []
-
-[17
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 1385.
+ [17
 
 ]
-Overfull \hbox (5.11179pt too wide) in paragraph at lines 1405--1411
-[]\T1/lmr/m/n/10.95 Optionaler zel-lu-lä-rer Au-to-mat über der Moore-Nachbarsc
-haft
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
+nput line 1486.
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <9> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 1487.
+ [18]
+<figures/fig_noise_vergleich.pdf, id=904, 505.8057pt x 513.90431pt>
+File: figures/fig_noise_vergleich.pdf Graphic file (type pdf)
+<use figures/fig_noise_vergleich.pdf>
+Package pdftex.def Info: figures/fig_noise_vergleich.pdf  used on input line 15
+59.
+(pdftex.def)             Requested size: 343.99329pt x 349.51303pt.
+
+[19] [20 <./figures/fig_noise_vergleich.pdf>] [21] [22]
+<figures/fig_worldgen_pipeline.pdf, id=1047, 936.25786pt x 354.19528pt>
+File: figures/fig_worldgen_pipeline.pdf Graphic file (type pdf)
+<use figures/fig_worldgen_pipeline.pdf>
+Package pdftex.def Info: figures/fig_worldgen_pipeline.pdf  used on input line 
+1761.
+(pdftex.def)             Requested size: 441.01773pt x 166.83931pt.
+ [23]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[24 <./figures/fig_worldgen_pipeline.pdf>] [25] [26]
+Underfull \hbox (badness 5302) in paragraph at lines 2046--2051
+[]\T1/lmr/bx/n/10.95 Kandidatenmenge bil-den. \T1/lmr/m/n/10.95 Je-des be-such-
+te Ti-le mit ei-ner Tie-fe zwi-schen
  []
 
-[18]
-<figures/fig_game_real.png, id=862, 2537.48pt x 1426.32875pt>
+
+Underfull \hbox (badness 2443) in paragraph at lines 2046--2051
+\T1/lmtt/m/n/10.95 exitMinDistance \T1/lmr/m/n/10.95 und \T1/lmtt/m/n/10.95 exi
+tMaxDistance \T1/lmr/m/n/10.95 kommt in die Kan-di-da-ten-lis-te. Die-se
+ []
+
+[27]
+<figures/fig_game_real.png, id=1178, 2537.48pt x 1426.32875pt>
 File: figures/fig_game_real.png Graphic file (type png)
 <use figures/fig_game_real.png>
-Package pdftex.def Info: figures/fig_game_real.png  used on input line 1534.
+Package pdftex.def Info: figures/fig_game_real.png  used on input line 2144.
 (pdftex.def)             Requested size: 317.5333pt x 178.48653pt.
- [19 <./figures/fig_game_real.png (PNG copy)>]
-Overfull \hbox (32.84343pt too wide) in paragraph at lines 1609--1616
-[]\T1/lmr/m/n/10.95 Zwei Im-ple-men-tie-rungs-de-tails wa-ren da-bei feh-ler-kr
-i-tisch: (1) Die Weltgenerierungs-Konfiguration
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[28] [29 <./figures/fig_game_real.png (PNG copy)>]
+Underfull \hbox (badness 1173) in paragraph at lines 2186--2194
+\T1/lmr/m/n/10.95 Damit ein Lern-ver-fah-ren die Si-mu-la-ti-on an-steu-ern kan
+n, muss sie sich als \T1/lmr/m/it/10.95 Markov-
  []
 
-[20]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[21]
-Underfull \hbox (badness 10000) in paragraph at lines 1825--1825
-[]\T1/lmr/m/n/10.95 Abbildung 9: []Ein C++-Simulationskern, zwei An-steue-rungs
--we-ge: Trai-ning über
- []
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[22] [23]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[24
-
-] [25] [26]
-Overfull \hbox (3.38745pt too wide) in paragraph at lines 2114--2132
- [][] 
- []
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[27] [28] [29
+[30
 
 ]
-Overfull \hbox (10.237pt too wide) in paragraph at lines 2225--2236
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2236.
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2251.
+
+Underfull \hbox (badness 1242) in paragraph at lines 2271--2282
+\T1/lmr/m/n/10.95 Konfiguration liegt im C++-Kern als \T1/lmr/m/it/10.95 pro-ze
+ss-glo-ba-le \T1/lmr/m/n/10.95 Struk-tur. Das ist für ein Spiel
+ []
+
+[31] [32] [33]
+Underfull \hbox (badness 3872) in paragraph at lines 2494--2497
+[]\T1/lmr/m/n/10.95 Jeder Lauf legt pro Pha-se Modell-Checkpoints so-wie \T1/lm
+tt/m/n/10.95 eval_history.json \T1/lmr/m/n/10.95 und
+ []
+
+
+Underfull \hbox (badness 7256) in paragraph at lines 2564--2564
+[]\T1/lmr/m/n/10.95 Abbildung 11: []Ein C++-Simulationskern, zwei An-steue-rung
+s-we-ge: Trai-ning über
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[34] [35]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[36
+
+] [37] (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+[38] [39]
+Overfull \hbox (3.38745pt too wide) in paragraph at lines 2874--2892
  [][] 
  []
 
-<figures/fig_lernkurve.pdf, id=1011, 375.804pt x 216.81pt>
+[40] [41
+
+]
+Overfull \hbox (10.237pt too wide) in paragraph at lines 2985--2996
+ [][] 
+ []
+
+<figures/fig_lernkurve.pdf, id=1393, 375.804pt x 216.81pt>
 File: figures/fig_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 2278.
+Package pdftex.def Info: figures/fig_lernkurve.pdf  used on input line 3038.
 (pdftex.def)             Requested size: 317.5333pt x 183.20094pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 2285.
+(Font)              <12> on input line 3045.
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2285.
+(hyperref)                removing `math shift' on input line 3045.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2285.
+(hyperref)                removing `math shift' on input line 3045.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/fig_v12_endergebnis.pdf, id=1012, 534.79799pt x 332.44202pt>
+<figures/fig_v12_endergebnis.pdf, id=1394, 534.79799pt x 332.44202pt>
 File: figures/fig_v12_endergebnis.pdf Graphic file (type pdf)
 <use figures/fig_v12_endergebnis.pdf>
-Package pdftex.def Info: figures/fig_v12_endergebnis.pdf  used on input line 23
-19.
+Package pdftex.def Info: figures/fig_v12_endergebnis.pdf  used on input line 30
+79.
 (pdftex.def)             Requested size: 343.99329pt x 213.83755pt.
 
-Underfull \hbox (badness 3746) in paragraph at lines 2324--2324
-[]\T1/lmr/m/n/10.95 Abbildung 11: []Dieselben Da-ten wie Ta-bel-le [][]10[][] a
+Underfull \hbox (badness 3746) in paragraph at lines 3084--3084
+[]\T1/lmr/m/n/10.95 Abbildung 13: []Dieselben Da-ten wie Ta-bel-le [][]14[][] a
 ls Bal-ken mit Stichproben-Std-
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-Overfull \hbox (16.02371pt too wide) in paragraph at lines 2328--2336
-\T1/lmr/m/n/10.95 Ausgewertet wird je Lauf nicht der letz-te Check-point, son-d
-ern das nach Validierungs-Erfolgsquote
- []
-
-[30]
+[42]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[31 <./figures/fig_lernkurve.pdf>]
-<figures/fig_v12_lernkurven.pdf, id=1073, 541.46982pt x 370.8481pt>
+[43 <./figures/fig_lernkurve.pdf>]
+<figures/fig_v12_lernkurven.pdf, id=1457, 541.46982pt x 370.8481pt>
 File: figures/fig_v12_lernkurven.pdf Graphic file (type pdf)
 <use figures/fig_v12_lernkurven.pdf>
-Package pdftex.def Info: figures/fig_v12_lernkurven.pdf  used on input line 239
-6.
+Package pdftex.def Info: figures/fig_v12_lernkurven.pdf  used on input line 316
+1.
 (pdftex.def)             Requested size: 441.01773pt x 302.06593pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[32 <./figures/fig_v12_endergebnis.pdf>]
-Overfull \hbox (39.49248pt too wide) in paragraph at lines 2439--2448
-\T1/lmr/m/n/10.95 die üb-ri-gen Än-de-run-gen be-tref-fen aus-schlieÿ-lich Clie
-nt-Dateien, die nicht in \T1/lmtt/m/n/10.95 stoneforge_sim.so
- []
-
-[33 <./figures/fig_v12_lernkurven.pdf>]
-Overfull \hbox (29.41318pt too wide) in paragraph at lines 2448--2451
+[44 <./figures/fig_v12_endergebnis.pdf>] [45 <./figures/fig_v12_lernkurven.pdf>
+]
+Underfull \hbox (badness 1019) in paragraph at lines 3213--3216
 []\T1/lmr/bx/n/10.95 Laufzeitumgebung: \T1/lmr/m/n/10.95 aus-ge-schlos-sen. Die
  in-stal-lier-ten Ver-sio-nen von \T1/lmtt/m/n/10.95 torch \T1/lmr/m/n/10.95 un
-d \T1/lmtt/m/n/10.95 sb3-contrib
+d
  []
 
 
-Overfull \hbox (0.31854pt too wide) in paragraph at lines 2491--2500
-[]\T1/lmr/bx/n/10.95 Kompass-Zufallslauf: \T1/lmr/m/n/10.95 mit Wahr-schein-lic
-h-keit $\OML/lmm/m/it/10.95 "$ \T1/lmr/m/n/10.95 gleich-ver-teilt zu-fäl-lig, s
-onst ein Schritt
+Underfull \hbox (badness 2065) in paragraph at lines 3213--3216
+\T1/lmtt/m/n/10.95 sb3-contrib \T1/lmr/m/n/10.95 sind äl-ter als bei-de Lauf-Ch
+argen; die Versions-Pinnung er-folg-te
  []
 
-[34]
+[46]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[35] [36] [37]
-<figures/fig_det_gap_distanz.pdf, id=1272, 520.34402pt x 303.534pt>
+[47] [48] [49]
+<figures/fig_det_gap_distanz.pdf, id=1656, 520.34402pt x 303.534pt>
 File: figures/fig_det_gap_distanz.pdf Graphic file (type pdf)
 <use figures/fig_det_gap_distanz.pdf>
-Package pdftex.def Info: figures/fig_det_gap_distanz.pdf  used on input line 27
-73.
+Package pdftex.def Info: figures/fig_det_gap_distanz.pdf  used on input line 35
+38.
 (pdftex.def)             Requested size: 352.81552pt x 205.8168pt.
 
-Underfull \hbox (badness 2478) in paragraph at lines 2778--2778
-[]\T1/lmr/m/n/10.95 Abbildung 13: []Erfolgsquote nach Start-di-stanz zum Exit (
+Underfull \hbox (badness 2478) in paragraph at lines 3543--3543
+[]\T1/lmr/m/n/10.95 Abbildung 15: []Erfolgsquote nach Start-di-stanz zum Exit (
 120 Wel-ten des Va-li-die-
  []
 
-[38 <./figures/fig_det_gap_distanz.pdf>]
-Overfull \hbox (0.96825pt too wide) in paragraph at lines 2796--2809
+[50 <./figures/fig_det_gap_distanz.pdf>]
+Overfull \hbox (0.96825pt too wide) in paragraph at lines 3561--3574
 []\T1/lmr/m/n/10.95 Der Teil der Be-grün-dung, der auch \T1/lmr/m/it/10.95 mit 
 \T1/lmr/m/n/10.95 Ge-dächt-nis trägt, stammt aus der Generalisierungs-
  []
 
-[39] [40] [41]
-Overfull \hbox (11.21631pt too wide) in paragraph at lines 3023--3035
-\T1/lmr/m/n/10.95 de-ter-mi-nis-ti-sche Re-pro-du-zier-bar-keit pro Seed und di
-e durch-gän-gi-ge Experiment-Protokollierung
- []
+[51]
 
-[42
+LaTeX Warning: `h' float specifier changed to `ht'.
 
-] [43]
-Overfull \hbox (4.19081pt too wide) in paragraph at lines 3135--3142
-\T1/lmr/m/n/10.95 Punk-ten über Läu-fe über-lappt das Kon-fi-den-z-in-ter-vall 
-die Er-folgs-schwel-le (Ab-schnitt [][]6.3[][]).
- []
-
-[44] [45]
-Overfull \hbox (29.56424pt too wide) in paragraph at lines 3227--3230
-[]\T1/lmr/bx/n/10.95 Code & Kon-fi-gu-ra-ti-on: \T1/lmr/m/n/10.95 Re-po-si-to-r
-y mit Trainings-/Eval-Skripten; je Lauf ei-ne \T1/lmtt/m/n/10.95 config.json
+[52] [53]
+Underfull \hbox (badness 5652) in paragraph at lines 3792--3804
+\T1/lmr/m/n/10.95 Curriculum-Trainingspipeline, stan-dar-di-sier-te Eva-lua-ti-
+ons-s-krip-te und Live-Monitoring
  []
 
 
-Overfull \hbox (19.77916pt too wide) in paragraph at lines 3261--3265
-\T1/lmr/m/n/10.95 die sto-chas-ti-sche Po-li-tik sam-plet Ak-tio-nen (torch-RNG
-). Restnicht-Determinismus (Thread-
+Underfull \hbox (badness 1014) in paragraph at lines 3792--3804
+\T1/lmr/m/n/10.95 Experiment-Protokollierung wa-ren die Vor-aus-set-zung für di
+e Root-Cause-Analysen im
  []
 
-[46
+[54
 
-]
-Overfull \hbox (31.32323pt too wide) in paragraph at lines 3272--3278
- []\T1/lmr/bx/n/10.95 Software und Bi-blio-the-ken.[] \T1/lmr/m/n/10.95 Die ver
--wen-de-ten Fremd-bi-blio-the-ken sind in Ta-bel-le [][]2[][] (Technologie-
- []
+] [55] [56] [57] [58
 
-[47]
-Overfull \hbox (0.97697pt too wide) in paragraph at lines 3319--3326
-[]\T1/lmr/bx/n/10.95 Curriculum-Lektion: \T1/lmr/m/n/10.95 Phase-1-Training (Ex
-it 5--12) er-reich-te 56%, aber der nai-ve Trans-
+] [59]
+Underfull \hbox (badness 3323) in paragraph at lines 4064--4064
+[]\T1/lmr/bx/n/14.4 Anhang: Ent-wick-lungs-ver-lauf von der Ba-se-li-ne zum
  []
 
 
-Overfull \hbox (8.17818pt too wide) in paragraph at lines 3327--3339
+Underfull \hbox (badness 1072) in paragraph at lines 4103--4115
 []\T1/lmr/bx/n/10.95 Der de-ter-mi-nis-ti-sche Kol-laps: \T1/lmr/m/n/10.95 Trot
-z 98% sto-chas-ti-scher SR lag die Argmax-Auswertung
+z 98% sto-chas-ti-scher SR lag die Argmax-
  []
 
-<figures/fig_entwicklung.pdf, id=1465, 664.88402pt x 310.761pt>
+<figures/fig_entwicklung.pdf, id=1852, 664.88402pt x 310.761pt>
 File: figures/fig_entwicklung.pdf Graphic file (type pdf)
 <use figures/fig_entwicklung.pdf>
-Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 3359.
+Package pdftex.def Info: figures/fig_entwicklung.pdf  used on input line 4135.
 (pdftex.def)             Requested size: 374.86775pt x 175.21042pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[48
+[60
 
 ]
-Overfull \hbox (30.19095pt too wide) in paragraph at lines 3381--3399
+Underfull \hbox (badness 1009) in paragraph at lines 4157--4175
 \T1/lmr/bx/n/10.95 Symptom: \T1/lmr/m/n/10.95 Ei-ne Se-rie von Ver-bes-se-rungs
--ver-su-chen (v6--v9: Wand-Penalty-Entfernung, visit_count-
+-ver-su-chen (v6--v9: Wand-Penalty-Entfernung,
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[49 <./figures/fig_entwicklung.pdf>]
-<figures/fig_v11_lernkurve.pdf, id=1576, 512.7205pt x 251.56421pt>
+[61 <./figures/fig_entwicklung.pdf>]
+<figures/fig_v11_lernkurve.pdf, id=1962, 512.7205pt x 251.56421pt>
 File: figures/fig_v11_lernkurve.pdf Graphic file (type pdf)
 <use figures/fig_v11_lernkurve.pdf>
-Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 3455
+Package pdftex.def Info: figures/fig_v11_lernkurve.pdf  used on input line 4231
 .
 (pdftex.def)             Requested size: 374.86775pt x 183.9244pt.
-
-Overfull \hbox (30.5238pt too wide) in paragraph at lines 3462--3476
-[]\T1/lmr/bx/n/10.95 Live-Monitoring-Redesign. \T1/lmr/m/n/10.95 Das WebSocket-
-Dashboard aus Etap-pe 2 wur-de nach Dashboard-
- []
-
-[50 <./figures/fig_v11_lernkurve.pdf>]
-<figures/fig_livemap.png, id=1630, 1405.25pt x 1168.365pt>
+ [62 <./figures/fig_v11_lernkurve.pdf>]
+<figures/fig_livemap.png, id=2017, 1405.25pt x 1168.365pt>
 File: figures/fig_livemap.png Graphic file (type png)
 <use figures/fig_livemap.png>
-Package pdftex.def Info: figures/fig_livemap.png  used on input line 3479.
+Package pdftex.def Info: figures/fig_livemap.png  used on input line 4255.
 (pdftex.def)             Requested size: 396.91325pt x 330.01024pt.
- [51 <./figures/fig_livemap.png (PNG copy)>]
-<figures/fig_cap_artefakt.pdf, id=1640, 462.52798pt x 245.718pt>
+
+[63 <./figures/fig_livemap.png (PNG copy)>]
+<figures/fig_cap_artefakt.pdf, id=2027, 462.52798pt x 245.718pt>
 File: figures/fig_cap_artefakt.pdf Graphic file (type pdf)
 <use figures/fig_cap_artefakt.pdf>
-Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 3545.
+Package pdftex.def Info: figures/fig_cap_artefakt.pdf  used on input line 4321.
 
 (pdftex.def)             Requested size: 352.81552pt x 187.44124pt.
 
-Underfull \hbox (badness 2922) in paragraph at lines 3548--3548
-[]\T1/lmr/m/n/10.95 Abbildung 17: []Erfolgsquote \T1/lmr/m/it/10.95 des-sel-ben
+Underfull \hbox (badness 2922) in paragraph at lines 4324--4324
+[]\T1/lmr/m/n/10.95 Abbildung 19: []Erfolgsquote \T1/lmr/m/it/10.95 des-sel-ben
  Mo-dells \T1/lmr/m/n/10.95 (bes-ter Phase-1-Checkpoint, Seed 0)
  []
 
 
-Underfull \hbox (badness 6592) in paragraph at lines 3548--3548
+Underfull \hbox (badness 6592) in paragraph at lines 4324--4324
 \T1/lmr/m/n/10.95 in Ab-hän-gig-keit des Epi-so-den-limits der Eva-lua-ti-on, 5
 0 Val-Seeds. Er-zeugt mit
  []
 
-[52 <./figures/fig_cap_artefakt.pdf>]
-Overfull \hbox (16.55936pt too wide) in paragraph at lines 3563--3566
-[]\T1/lmr/m/it/10.95 Wand-/Loop-Penalties (Maÿ-nah-me B7)? \T1/lmr/m/n/10.95 En
-t-las-tet oh-ne neu-en Lauf: Die Batch-Validierung
- []
-
-<figures/fig_batch_vergleich.pdf, id=1695, 476.98201pt x 404.712pt>
+[64 <./figures/fig_cap_artefakt.pdf>]
+<figures/fig_batch_vergleich.pdf, id=2082, 476.98201pt x 404.712pt>
 File: figures/fig_batch_vergleich.pdf Graphic file (type pdf)
 <use figures/fig_batch_vergleich.pdf>
-Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 36
-12.
+Package pdftex.def Info: figures/fig_batch_vergleich.pdf  used on input line 43
+88.
 (pdftex.def)             Requested size: 374.86775pt x 318.07632pt.
+
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[53]
-Overfull \hbox (20.06648pt too wide) in paragraph at lines 3658--3660
-[]\T1/lmr/bx/n/10.95 Eval-Callback: \T1/lmr/m/n/10.95 pha-sen-ge-rech-tes Ga-ti
-ng (Ta-bel-le [][]6[][]), Episoden-Caps pro Pha-se, Det+Stoch-
- []
-
-<figures/fig_exit_distanz.pdf, id=1707, 410.79002pt x 226.33928pt>
+[65]
+<figures/fig_exit_distanz.pdf, id=2094, 410.79002pt x 226.33928pt>
 File: figures/fig_exit_distanz.pdf Graphic file (type pdf)
 <use figures/fig_exit_distanz.pdf>
-Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 3664.
+Package pdftex.def Info: figures/fig_exit_distanz.pdf  used on input line 4440.
 
 (pdftex.def)             Requested size: 352.81552pt x 194.3993pt.
 
+
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[54 <./figures/fig_batch_vergleich.pdf>]
-<figures/fig_fps_benchmark.pdf, id=1767, 375.804pt x 216.81pt>
+[66 <./figures/fig_batch_vergleich.pdf>]
+<figures/fig_fps_benchmark.pdf, id=2154, 375.804pt x 216.81pt>
 File: figures/fig_fps_benchmark.pdf Graphic file (type pdf)
 <use figures/fig_fps_benchmark.pdf>
-Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 3692
+Package pdftex.def Info: figures/fig_fps_benchmark.pdf  used on input line 4468
 .
 (pdftex.def)             Requested size: 317.5333pt x 183.20094pt.
-
-Overfull \hbox (2.6746pt too wide) in paragraph at lines 3702--3712
-\T1/lmr/m/n/10.95 tes-tet hat-te, wur-de ein Va-li-die-rungs-lauf durch-ge-führ
-t: 150k Phase-1-Steps mit \T1/lmtt/m/n/10.95 batch_size\T1/lmr/m/n/10.95 =64
- []
-
-
-Overfull \hbox (2.16415pt too wide) in paragraph at lines 3702--3712
-\T1/lmr/m/n/10.95 (Ab-bil-dung [][]21[][]). Er-geb-nis: ge-sun-de Lern-me-tri-k
-en (\T1/lmtt/m/n/10.95 approx_kl \T1/lmr/m/n/10.95 0.01--0.06, \T1/lmtt/m/n/10.
-95 explained_variance
- []
-
-[55 <./figures/fig_exit_distanz.pdf> <./figures/fig_fps_benchmark.pdf>]
-<figures/fig_batch64_validation.pdf, id=1876, 375.804pt x 274.626pt>
+ [67 <./figures/fig_exit_distanz.pdf> <./figures/fig_fps_benchmark.pdf>]
+<figures/fig_batch64_validation.pdf, id=2262, 375.804pt x 274.626pt>
 File: figures/fig_batch64_validation.pdf Graphic file (type pdf)
 <use figures/fig_batch64_validation.pdf>
 Package pdftex.def Info: figures/fig_batch64_validation.pdf  used on input line
- 3727.
+ 4503.
 (pdftex.def)             Requested size: 317.5333pt x 232.05453pt.
 
-Underfull \hbox (badness 1565) in paragraph at lines 3749--3749
+Underfull \hbox (badness 1565) in paragraph at lines 4525--4525
 []|\T1/lmr/m/n/10 Curriculum P1; nai-ver Trans-fer kol-la-biert $\OMS/lmsy/m/n/
 10 !$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3755--3755
+Underfull \hbox (badness 10000) in paragraph at lines 4531--4531
 []|\T1/lmr/m/n/10 v6--v9 schei-tern $\OMS/lmsy/m/n/10 !$ \T1/lmr/m/n/10 Root-Ca
 use
  []
 
 
-Underfull \hbox (badness 6252) in paragraph at lines 3756--3756
+Underfull \hbox (badness 6252) in paragraph at lines 4532--4532
 []|\T1/lmr/m/n/10 v10-Reproduktion ab-ge-schlos-sen (Re-fe-renz-mo-
  []
 
 
-Underfull \hbox (badness 5711) in paragraph at lines 3758--3758
+Underfull \hbox (badness 5711) in paragraph at lines 4534--4534
 []|\T1/lmr/m/n/10 v11-Läufe Seed 0/1 sta-gnie-ren; Monitoring-
  []
 
 
-Underfull \hbox (badness 7595) in paragraph at lines 3760--3760
+Underfull \hbox (badness 7595) in paragraph at lines 4536--4536
 []|\T1/lmr/bx/n/10 v12-Läufe Seeds 1--3 (batch=8)\T1/lmr/m/n/10 ; Gap-
  []
 
 
-Overfull \hbox (12.75226pt too wide) in paragraph at lines 3743--3766
+Overfull \hbox (12.75226pt too wide) in paragraph at lines 4519--4542
  [][] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[56 <./figures/fig_batch64_validation.pdf>]
-Overfull \hbox (21.32481pt too wide) in paragraph at lines 3793--3797
-\T1/lmr/m/n/10.95 punkt, zeig-te aber, dass der Ver-lauf da-zwi-schen vo-la-til
- war. Hyperparameter-Entscheidungen
+[68 <./figures/fig_batch64_validation.pdf>]
+Underfull \hbox (badness 1122) in paragraph at lines 4569--4573
+\T1/lmr/m/n/10.95 Mess-punkt ei-ner stark schwan-ken-den Kur-ve; die ex-ak-te R
+e-pro-duk-ti-on traf den
  []
 
-[57] (./Projektdokumentation.bbl [58
+[69] [70] (./Projektdokumentation.bbl [71
 
 
-] [59]) [60] (./Projektdokumentation.aux)
+] [72]) [73]
+(./Projektdokumentation.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
 Package rerunfilecheck Info: File `Projektdokumentation.out' has not changed.
-(rerunfilecheck)             Checksum: 58D284BFF19F70E40CF47611C9FD5A58;17296.
+(rerunfilecheck)             Checksum: 398E543C9B8A686040912B8D004D7430;18181.
  ) 
 Here is how much of TeX's memory you used:
- 25460 strings out of 467525
- 481931 string characters out of 5418982
- 882304 words of memory out of 5000000
- 53588 multiletter control sequences out of 15000+600000
- 771864 words of font info for 115 fonts, out of 8000000 for 9000
+ 27772 strings out of 467525
+ 512676 string characters out of 5418982
+ 1317956 words of memory out of 5000000
+ 55714 multiletter control sequences out of 15000+600000
+ 783463 words of font info for 127 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,12n,104p,722b,942s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,104p,725b,2199s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/local/texlive/2026/texm
-f-dist/fonts/type1/public/lm/lmbxi10.pfb></usr/local/texlive/2026/texmf-dist/fo
-nts/type1/public/lm/lmex10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/
-public/lm/lmmi10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/
-lmmi12.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi6.pfb>
-</usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local
-/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/local/texlive/20
-26/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2026/texmf-di
-st/fonts/type1/public/lm/lmr12.pfb></usr/local/texlive/2026/texmf-dist/fonts/ty
-pe1/public/lm/lmr6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/l
-m/lmr7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb><
-/usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/local
-/texlive/2026/texmf-dist/fonts/type1/public/lm/lmri8.pfb></usr/local/texlive/20
-26/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2026/texmf-d
-ist/fonts/type1/public/lm/lmsy6.pfb></usr/local/texlive/2026/texmf-dist/fonts/t
-ype1/public/lm/lmsy7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public
-/lm/lmsy8.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtt10.
-pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtt8.pfb></usr/l
-ocal/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Projektdokumentation.pdf (69 pages, 1652452 bytes).
+f-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2026/texmf-dist/font
+s/type1/public/lm/lmbxi10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/p
+ublic/lm/lmex10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/l
+mmi10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi12.pfb>
+</usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></usr/local
+/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local/texlive/20
+26/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/local/texlive/2026/texmf-di
+st/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2026/texmf-dist/fonts/ty
+pe1/public/lm/lmr12.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/
+lm/lmr6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr7.pfb>
+</usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/local/
+texlive/2026/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/local/texlive/2026
+/texmf-dist/fonts/type1/public/lm/lmri10.pfb></usr/local/texlive/2026/texmf-dis
+t/fonts/type1/public/lm/lmri8.pfb></usr/local/texlive/2026/texmf-dist/fonts/typ
+e1/public/lm/lmsy10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/
+lm/lmsy6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy7.pf
+b></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/loc
+al/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texlive
+/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/texm
+f-dist/fonts/type1/public/lm/lmtt8.pfb></usr/local/texlive/2026/texmf-dist/font
+s/type1/public/lm/lmtt9.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/pub
+lic/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfo
+nts/symbols/msbm10.pfb>
+Output written on Projektdokumentation.pdf (82 pages, 1905847 bytes).
 PDF statistics:
- 2172 PDF objects out of 2487 (max. 8388607)
- 1470 compressed objects within 15 object streams
- 313 named destinations out of 1000 (max. 500000)
- 701 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 2616 PDF objects out of 2984 (max. 8388607)
+ 1790 compressed objects within 18 object streams
+ 470 named destinations out of 1000 (max. 500000)
+ 735 words of extra memory for PDF output out of 10000 (max. 10000000)
 

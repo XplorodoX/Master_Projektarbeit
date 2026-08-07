@@ -4,19 +4,21 @@
 \contentsline {figure}{\numberline {3}{\ignorespaces Partielle Beobachtbarkeit am Beispiel Stoneforge}}{8}{figure.3}%
 \contentsline {figure}{\numberline {4}{\ignorespaces Wirkung des PPO-Clippings}}{9}{figure.4}%
 \contentsline {figure}{\numberline {5}{\ignorespaces Rekurrente Politik über die Zeit}}{10}{figure.5}%
-\contentsline {figure}{\numberline {6}{\ignorespaces Pipeline der Weltgenerierung je Chunk}}{18}{figure.6}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients}}{19}{figure.7}%
-\contentsline {figure}{\numberline {8}{\ignorespaces Luftlinien- gegenüber BFS-Potential an einer Sackgasse}}{21}{figure.8}%
-\contentsline {figure}{\numberline {9}{\ignorespaces Architektur: gemeinsamer Simulationskern für Training und Client}}{23}{figure.9}%
-\contentsline {figure}{\numberline {10}{\ignorespaces Lernkurve des historischen Referenzlaufs}}{31}{figure.10}%
-\contentsline {figure}{\numberline {11}{\ignorespaces Endergebnis v12 mit Streuung über sieben Läufe}}{32}{figure.11}%
-\contentsline {figure}{\numberline {12}{\ignorespaces Trainingsverläufe der sieben v12-Läufe}}{33}{figure.12}%
-\contentsline {figure}{\numberline {13}{\ignorespaces Erfolgsquote nach Startdistanz zum Exit}}{38}{figure.13}%
-\contentsline {figure}{\numberline {14}{\ignorespaces Entwicklung über die Modellgenerationen}}{49}{figure.14}%
-\contentsline {figure}{\numberline {15}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs}}{50}{figure.15}%
-\contentsline {figure}{\numberline {16}{\ignorespaces Live-Monitoring-Dashboard}}{51}{figure.16}%
-\contentsline {figure}{\numberline {17}{\ignorespaces Eval-Cap-Artefakt}}{52}{figure.17}%
-\contentsline {figure}{\numberline {18}{\ignorespaces Batch-Größen-Forensik}}{54}{figure.18}%
-\contentsline {figure}{\numberline {19}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung}}{55}{figure.19}%
-\contentsline {figure}{\numberline {20}{\ignorespaces Training-FPS nach Device und Batch-Größe}}{55}{figure.20}%
-\contentsline {figure}{\numberline {21}{\ignorespaces Validierungslauf batch\_size=64}}{56}{figure.21}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Hash-Rauschen gegenüber interpoliertem Wertrauschen}}{20}{figure.6}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Die Generator-Pipeline an einer echten Welt}}{24}{figure.7}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Pipeline der Weltgenerierung je Chunk}}{25}{figure.8}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients}}{29}{figure.9}%
+\contentsline {figure}{\numberline {10}{\ignorespaces Luftlinien- gegenüber BFS-Potential an einer Sackgasse}}{33}{figure.10}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Architektur: gemeinsamer Simulationskern für Training und Client}}{35}{figure.11}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Lernkurve des historischen Referenzlaufs}}{43}{figure.12}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Endergebnis v12 mit Streuung über sieben Läufe}}{44}{figure.13}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Trainingsverläufe der sieben v12-Läufe}}{45}{figure.14}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Erfolgsquote nach Startdistanz zum Exit}}{50}{figure.15}%
+\contentsline {figure}{\numberline {16}{\ignorespaces Entwicklung über die Modellgenerationen}}{61}{figure.16}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs}}{62}{figure.17}%
+\contentsline {figure}{\numberline {18}{\ignorespaces Live-Monitoring-Dashboard}}{63}{figure.18}%
+\contentsline {figure}{\numberline {19}{\ignorespaces Eval-Cap-Artefakt}}{64}{figure.19}%
+\contentsline {figure}{\numberline {20}{\ignorespaces Batch-Größen-Forensik}}{66}{figure.20}%
+\contentsline {figure}{\numberline {21}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung}}{67}{figure.21}%
+\contentsline {figure}{\numberline {22}{\ignorespaces Training-FPS nach Device und Batch-Größe}}{67}{figure.22}%
+\contentsline {figure}{\numberline {23}{\ignorespaces Validierungslauf batch\_size=64}}{68}{figure.23}%

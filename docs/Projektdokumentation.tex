@@ -15,8 +15,32 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds,
                 decorations.pathreplacing}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage[colorlinks=true, allcolors=black]{hyperref}
 \usepackage{longtable}
+
+% Quelltextauszüge: bewusst sparsam eingesetzt, nur dort, wo der Code selbst
+% das Argument trägt (Reward-Formel, Lösbarkeitsgarantie, Zustandsführung).
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{gray!65!black},
+  numbers=left, numberstyle=\tiny\color{gray!80!black}, numbersep=8pt,
+  frame=single, rulecolor=\color{gray!45},
+  breaklines=true, showstringspaces=false,
+  captionpos=b, xleftmargin=1.6em, aboveskip=1.2em, belowskip=1.2em,
+  literate={ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+           {Ä}{{\"A}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1 {ß}{{\ss}}1
+           {Φ}{{$\Phi$}}1 {β}{{$\beta$}}1 {γ}{{$\gamma$}}1
+           {≥}{{$\geq$}}1 {→}{{$\rightarrow$}}1 {·}{{$\cdot$}}1 {×}{{$\times$}}1
+           {—}{{---}}1 {–}{{--}}1 {„}{{\glqq}}1 {"}{{\grqq}}1,
+}
+\renewcommand{\lstlistingname}{Listing}
+
+% Lange \texttt-Bezeichner (Dateinamen, Config-Schluessel, C++-Symbole) lassen sich
+% nicht trennen und ragen sonst in den Rand. Notdehnung statt uebervoller Zeilen.
+\setlength{\emergencystretch}{3em}
 \geometry{a4paper, left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
 
 % Verzeichnisse sollen im PDF-Lesezeichenbaum und im Inhaltsverzeichnis auftauchen
@@ -88,18 +112,34 @@ Diese Projektarbeit verbindet zwei Themen, die auf den ersten Blick wenig
 miteinander zu tun haben: die prozedurale Erzeugung von Spielwelten und
 Reinforcement Learning unter partieller Beobachtbarkeit. Im ersten Teil bauen
 wir mit \emph{Stoneforge} ein Spiel, dessen Generator reproduzierbare,
-nachweislich lösbare 2D-Welten mit frei steuerbarer Zielentfernung erzeugt.
-Jede Karte ist lösbar. Jeder Seed reproduzierbar. Im zweiten Teil stellen wir
-eine unbequeme Frage: Bildet ein Agent, der nur einen kleinen lokalen
-Ausschnitt seiner Umgebung sieht, wirklich eine Navigationsstrategie, oder
-lernt er bloß die trainierten Karten auswendig? Wir testen ihn dort, wo es
-zählt: auf Welten, die er nie gesehen hat.
+nachweislich lösbare zweidimensionale Welten mit frei steuerbarer
+Zielentfernung erzeugt. Jede Karte ist lösbar. Jeder Seed reproduzierbar. Im
+zweiten Teil stellen wir eine unbequeme Frage: Bildet ein Agent, der nur einen
+kleinen lokalen Ausschnitt seiner Umgebung sieht, wirklich eine
+Navigationsstrategie, oder lernt er bloß die trainierten Karten auswendig? Wir
+testen ihn dort, wo es zählt: auf Welten, die er nie gesehen hat.
 
-Auf dem Weg zur Antwort verschiebt sich die eigentlich interessante Frage. Am
-Ende zählt nicht, wie gut der Agent navigiert, sondern woran sich dieser Erfolg
-überhaupt verlässlich messen lässt. Und genau dort hält die naheliegende
-Erfolgsquote nicht, was sie verspricht. Was diese Arbeit daraus für die
-Bewertung solcher Agenten ableitet, zeigen die folgenden Kapitel.
+Der Generator erfüllt seine Anforderungen vollständig. Determinismus bis hin zu
+bitidentischen Trainingspfaden, 100\,\% Lösbarkeit über 3\,150 geprüfte Seeds,
+eine Zielentfernung, die am tatsächlichen Laufweg gemessen exakt eingehalten
+wird. Der Agent, ein rekurrentes Verfahren mit internem Gedächtnis, erreicht
+über sieben unabhängige Läufe $65{,}7\,\% \pm 12{,}4$ auf dem Testset und
+$66{,}9\,\% \pm 12{,}8$ auf einem gesperrten Holdout. Die Holdoutschwelle ist
+erfüllt, die Testsetschwelle verfehlt.
+
+Diese Zahlen tragen nicht. Eine ungelernte Kompassheuristik aus vier Zeilen
+Code erreicht auf derselben Aufgabe 92\,\% und ist bei vergleichbarer
+Erfolgsquote zugleich dreimal wegeffizienter. Die Erfolgsquote misst hier also
+nicht die Fähigkeit, um die es geht. Die Ursache liegt nicht im Agenten,
+sondern im Generator: Solange die Hindernisse aus unkorreliertem Rauschen
+stammen, entstehen kaum Sackgassen, und ohne Sackgassen erzwingt die Aufgabe
+kein Gedächtnis. Die zweite Forschungsfrage ist mit diesem Aufbau nicht
+entscheidbar.
+
+Daraus folgt der übertragbare Beitrag. Die Schwierigkeit einer Lernaufgabe ist
+eine Eigenschaft der Weltgenerierung und gehört dort spezifiziert und geprüft,
+bevor ein Lernverfahren darauf angesetzt wird. Eine ungelernte Referenzpolitik
+leistet genau das, in Sekunden statt in Trainingsstunden.
 
 \vspace{0.5cm}
 \noindent\textbf{Schlagwörter:} Prozedurale Weltgenerierung, Spielentwicklung,
@@ -449,8 +489,8 @@ gesperrt sind. Da einzelne Trainingsläufe im Reinforcement Learning stark
 schwanken können \cite{henderson2018matters}, beruht jede berichtete Zahl auf
 mehreren unabhängigen Läufen. Zusätzlich tritt der Agent gegen ungelernte
 Vergleichspolitiken an, die dieselbe Aufgabe unter demselben Protokoll lösen.
-Die Einzelheiten stehen in den Kapiteln~\ref{sec:umgebung}
-und~\ref{sec:methodik}.
+Die Einzelheiten stehen in den Kapiteln~\ref{sec:umgebung},
+\ref{sec:rlumgebung} und~\ref{sec:methodik}.
 
 Eine Lücke in dieser Liste bestimmt am Ende das Ergebnis der Arbeit: Z1
 verlangt lösbare Welten mit einstellbarer Entfernung, aber nicht, dass sie
@@ -463,13 +503,14 @@ Folgearbeiten steht in Abschnitt~\ref{sec:ausblick}.
 \label{sec:aufbau}
 
 Die Arbeit folgt dem üblichen Ablauf: erst die Begriffe, dann der Versuchsaufbau,
-dann die Messungen, zuletzt deren Bewertung. Innerhalb jedes Kapitels steht
-dabei zuerst das Spiel und dann der Agent, weil die eine die Voraussetzung des
-anderen ist. Kapitel~\ref{sec:umgebung} behandelt entsprechend erst
-Weltgenerator, Lösbarkeitsgarantie und Client (Spielteil), dann POMDP-Charakter,
-Beobachtungsraum und Reward-Design sowie Trainings-Pipeline und Monitoring
-(RL-Teil) -- beide Teile sind Bestandteile derselben Implementierung, nicht
-getrennte Vorhaben; Kapitel~\ref{sec:evaluation} bewertet in gleicher
+dann die Messungen, zuletzt deren Bewertung. Durchgehend steht dabei zuerst das
+Spiel und dann der Agent, weil das eine die Voraussetzung des anderen ist. Die
+Implementierung belegt deshalb zwei Kapitel: Kapitel~\ref{sec:umgebung}
+behandelt das Spiel mit Simulationskern, Weltgenerator, Lösbarkeitsgarantie und
+Client, Kapitel~\ref{sec:rlumgebung} die darauf aufsetzende Lernumgebung mit
+POMDP-Charakter, Beobachtungsraum, Reward-Design, Trainings-Pipeline und
+Monitoring. Beide sind Bestandteile derselben Implementierung und keine
+getrennten Vorhaben; Kapitel~\ref{sec:evaluation} bewertet in gleicher
 Reihenfolge erst die Plattform und dann den Agenten. Zwei Anhänge ergänzen den
 Hauptteil: einer zur Reproduzierbarkeit, einer
 zum chronologischen Entwicklungsverlauf mit den gescheiterten Versuchen. Dass
@@ -505,7 +546,7 @@ Spielkonzept, C++-Simulationskern, Spiellogik & Laurin Rößler & \ref{sec:umgeb
 Prozedurale Weltgenerierung und Lösbarkeitsgarantie & Laurin Rößler & \ref{sec:pcg_algorithmen}, \ref{sec:weltgenerator} \\
 Grafischer Spiel-Client mit KI-Zuschaumodus & Laurin Rößler & \ref{sec:technik} \\
 \midrule
-Gym-Anbindung, Beobachtungsraum, Reward-Design & Florian Merlau & \ref{sec:pbrs}, \ref{sec:umgebung} \\
+Gym-Anbindung, Beobachtungsraum, Reward-Design & Florian Merlau & \ref{sec:pbrs}, \ref{sec:rlumgebung} \\
 Curriculum-Training, Hyperparameter, Fehleranalysen & Florian Merlau & \ref{sec:methodik}, \ref{sec:entwicklung} \\
 Evaluationsprotokoll, Referenzpolitiken, Auswertung & Florian Merlau & \ref{sec:evalprotokoll}, \ref{sec:evaluation} \\
 \midrule
@@ -519,21 +560,19 @@ Live-Monitoring, Werkzeuge, Experiment-Changelog & gemeinsam & \ref{sec:technik}
 \section{Grundlagen}
 \label{sec:grundlagen}
 
-Dieses Kapitel führt die Begriffe ein, auf denen die folgenden Kapitel
-aufbauen. Es behandelt dabei bewusst zuerst zwei voneinander unabhängige Themen
-getrennt und führt sie erst danach zusammen: die prozedurale Erzeugung von
-Spielwelten als Verfahren der Spieleentwicklung
-(Abschnitt~\ref{sec:g_pcg}) und das Reinforcement Learning unter partieller
-Beobachtbarkeit als Lernparadigma (Abschnitt~\ref{sec:g_rl}). Beide lassen sich
-zunächst ohne Bezug aufeinander verstehen. Erst
-Abschnitt~\ref{sec:g_bridge} verbindet sie und begründet, warum prozedural
-erzeugte Welten das geeignete Mittel sind, um die Generalisierung einer
-gelernten Politik zu prüfen; darauf aufbauend behandeln
-Abschnitt~\ref{sec:g_steuerung} die Steuerung des Lernprozesses und
-Abschnitt~\ref{sec:g_messen} die Metriken und statistischen Werkzeuge, mit denen
-das Ergebnis bewertet wird. Für eine vollständige Einführung in das RL-Gebiet
-sei auf Sutton und Barto \cite{sutton2018rl} verwiesen, für die prozedurale
-Inhaltserzeugung auf Shaker et al.\ \cite{shaker2016pcg}.
+Dieses Kapitel legt die Begriffe fest, mit denen die folgenden Kapitel
+arbeiten. Zwei Themen behandeln wir zuerst getrennt, weil sie sich getrennt
+verstehen lassen: die prozedurale Erzeugung von Spielwelten als Verfahren der
+Spieleentwicklung (Abschnitt~\ref{sec:g_pcg}) und das Reinforcement Learning
+unter partieller Beobachtbarkeit als Lernparadigma (Abschnitt~\ref{sec:g_rl}).
+Abschnitt~\ref{sec:g_bridge} führt beide zusammen und begründet, warum
+prozedural erzeugte Welten das geeignete Mittel sind, um die Generalisierung
+einer gelernten Politik zu prüfen. Darauf bauen die letzten beiden Abschnitte
+auf: die Steuerung des Lernprozesses (Abschnitt~\ref{sec:g_steuerung}) sowie die
+Metriken und das statistische Handwerkszeug, mit denen wir das Ergebnis bewerten
+(Abschnitt~\ref{sec:g_messen}). Eine vollständige Einführung in das RL-Gebiet
+liefern Sutton und Barto \cite{sutton2018rl}, in die prozedurale
+Inhaltserzeugung Shaker et al.\ \cite{shaker2016pcg}.
 
 \subsection{Prozedurale Weltgenerierung}
 \label{sec:g_pcg}
@@ -541,123 +580,114 @@ Inhaltserzeugung auf Shaker et al.\ \cite{shaker2016pcg}.
 \subsubsection{Begriff, Seed und Determinismus}
 \label{sec:pcg_generalisierung}
 
-Unter prozeduraler Inhaltserzeugung (\emph{Procedural Content Generation}, PCG)
-versteht man die algorithmische statt manuelle Erstellung von Spielinhalten wie
-Karten, Leveln oder Gegenständen \cite{shaker2016pcg, togelius2011search}. Statt
-eine Welt von Hand zu entwerfen, formuliert der Entwickler ein Regelwerk, das
-die Welt bei Bedarf berechnet. In der Spieleentwicklung dient das traditionell
-zwei Zwecken: der Einsparung von Speicher und Autorenaufwand, weil nur der
-Algorithmus und nicht das fertige Level gespeichert werden muss, sowie der
-Erzeugung praktisch unbegrenzter Vielfalt \cite{shaker2016pcg}.
+Prozedurale Inhaltserzeugung (\emph{Procedural Content Generation}, PCG) erzeugt
+Spielinhalte wie Karten, Level oder Gegenstände algorithmisch statt von Hand
+\cite{shaker2016pcg, togelius2011search}. Der Entwickler entwirft kein Level,
+sondern ein Regelwerk, das die Welt bei Bedarf berechnet. Das spart Speicher und
+Autorenaufwand, weil nur der Algorithmus abgelegt wird und nicht das fertige
+Level, und es liefert praktisch unbegrenzte Vielfalt \cite{shaker2016pcg}.
 
 Gesteuert wird die Erzeugung über einen \emph{Seed}, den Startwert des
-Zufallszahlengenerators. Derselbe Seed erzeugt reproduzierbar dieselbe Welt,
-verschiedene Seeds verschiedene Welten. Diese Reproduzierbarkeit ist keine
-technische Nebensache, sondern die Grundlage jedes kontrollierten Experiments
-mit prozeduralen Welten: Eine über ihre Seeds festgelegte Menge von Welten lässt
-sich jederzeit exakt wiederherstellen und damit eine feste, benannte
-Stichprobe von Welten definieren. Wie diese Eigenschaft genutzt wird, um eine
-Trainings- sauber von einer Testmenge zu trennen, behandelt
-Abschnitt~\ref{sec:g_bridge}.
+Zufallszahlengenerators. Derselbe Seed erzeugt reproduzierbar dieselbe Welt, ein
+anderer Seed eine andere. Diese Reproduzierbarkeit ist keine technische
+Nebensache. Sie ist die Grundlage jedes kontrollierten Experiments mit
+prozeduralen Welten: Eine über ihre Seeds festgelegte Menge von Welten lässt
+sich jederzeit exakt wiederherstellen, womit eine feste, benannte Stichprobe
+definiert ist. Wie wir diese Eigenschaft nutzen, um Trainings- und Testmenge
+sauber zu trennen, zeigt Abschnitt~\ref{sec:g_bridge}.
 
 \subsubsection{Algorithmen der prozeduralen Weltgenerierung}
 \label{sec:pcg_algorithmen}
 
-Der vorige Abschnitt klärt, \emph{was} prozedurale Generierung ist; dieser
-beschreibt, \emph{wie} eine begehbare Welt konkret erzeugt wird. Die
-Darstellung folgt dem für gitterbasierte Generatoren üblichen dreistufigen
-Aufbau aus Basisbelegung, Formgebung und Validierung \cite{shaker2016pcg} und
-bereitet damit die konkrete Umsetzung in Abschnitt~\ref{sec:weltgenerator} vor.
-Eine umfassende Übersicht des Feldes geben Shaker et al.\ \cite{shaker2016pcg}
-sowie Togelius et al.\ \cite{togelius2011search}.
+Der vorige Abschnitt klärt, \emph{was} prozedurale Generierung ist. Dieser
+klärt, \emph{wie} eine begehbare Welt entsteht. Die Darstellung folgt dem für
+gitterbasierte Generatoren üblichen dreistufigen Aufbau aus Basisbelegung,
+Formgebung und Validierung \cite{shaker2016pcg} und bereitet die konkrete
+Umsetzung in Abschnitt~\ref{sec:weltgenerator} vor. Einen Überblick über das
+Feld geben Shaker et al.\ \cite{shaker2016pcg} sowie Togelius et al.\
+\cite{togelius2011search}.
 
-Gitterbasierte Generatoren erzeugen die Welt üblicherweise nicht am Stück,
-sondern in quadratischen Kacheln fester Größe, sogenannten \emph{Chunks}. Ein
-Chunk wird erst berechnet, wenn er betreten wird; hängt seine Berechnung
-ausschließlich von Seed und Koordinaten ab, ist das Ergebnis unabhängig von der
-Reihenfolge der Erzeugung und die Welt braucht keinen gespeicherten Zustand.
+Gitterbasierte Generatoren bauen die Welt selten am Stück, sondern in
+quadratischen Kacheln fester Größe, sogenannten \emph{Chunks}. Ein Chunk
+entsteht erst, wenn der Agent ihn betritt. Hängt seine Berechnung ausschließlich
+von Seed und Koordinaten ab, spielt die Reihenfolge der Erzeugung keine Rolle
+und die Welt braucht keinen gespeicherten Zustand.
 
 \paragraph{Rauschbasierte Basisbelegung.}
-Die erste Stufe belegt jede Gitterzelle deterministisch aus einer
-Rauschfunktion, deren Wert mit Schwellwerten in Materialklassen übersetzt wird;
-rauschbasierte Belegung ist eines der Standardverfahren gitterbasierter PCG
-\cite{shaker2016pcg}. Zu unterscheiden sind zwei Varianten, deren Unterschied
-für die Spielbarkeit wesentlich ist. \emph{Hash-Rauschen} berechnet den Wert jeder Zelle unabhängig
-aus ihren Koordinaten und dem Seed; das Ergebnis ist unkorreliertes weißes
-Rauschen, das über einen Schwellwert verstreute \emph{Einzelhindernisse}
-erzeugt. \emph{Wert-} oder \emph{Gradientenrauschen} wertet dagegen nur ein
-gröberes Stützgitter aus und interpoliert dazwischen, klassisch mit der von
-Perlin eingeführten Glättungsfunktion $3t^2 - 2t^3$ \cite{perlin1985image};
-benachbarte Zellen sind dadurch korreliert, und es entstehen
-\emph{zusammenhängende} Formationen. Werden die Eingabekoordinaten vor der
-Auswertung selbst durch ein Rauschfeld verschoben (\emph{Domain Warping}),
-verlieren die entstehenden Regionen ihre am Stützgitter erkennbare
-Rechteckigkeit. Beide Verfahren sind pro Seed
-reproduzierbar und benötigen keinen gespeicherten Zustand, sind also für
-theoretisch unbegrenzte Welten geeignet.
+Die erste Stufe belegt jede Gitterzelle deterministisch aus einer Rauschfunktion
+und übersetzt deren Wert über Schwellwerte in Materialklassen. Das ist eines der
+Standardverfahren gitterbasierter PCG \cite{shaker2016pcg}. Zwei Varianten sind
+zu unterscheiden, und der Unterschied entscheidet über die Spielbarkeit.
+\emph{Hash-Rauschen} berechnet den Wert jeder Zelle unabhängig aus ihren
+Koordinaten und dem Seed. Das Ergebnis ist unkorreliertes weißes Rauschen, aus
+dem ein Schwellwert verstreute \emph{Einzelhindernisse} schneidet. \emph{Wert-}
+oder \emph{Gradientenrauschen} wertet dagegen nur ein gröberes Stützgitter aus
+und interpoliert dazwischen, klassisch mit Perlins Glättungsfunktion
+$3t^2 - 2t^3$ \cite{perlin1985image}. Benachbarte Zellen korrelieren dadurch,
+und es entstehen \emph{zusammenhängende} Formationen. Verschiebt man die
+Eingabekoordinaten vor der Auswertung selbst durch ein Rauschfeld
+(\emph{Domain Warping}), verlieren die Regionen ihre am Stützgitter ablesbare
+Rechteckigkeit. Beide Verfahren sind pro Seed reproduzierbar und kommen ohne
+gespeicherten Zustand aus, taugen also für theoretisch unbegrenzte Welten.
 
 \paragraph{Zelluläre Automaten als Formgebung.}
-Weil rein rauschbasierte Belegungen häufig zerfranst wirken, folgt oft eine
-Glättungsstufe über einen zellulären Automaten. Jede Zelle wird dabei
-iterativ anhand der Zahl belegter Nachbarn neu bewertet. Häufig wird hierbei
-die \emph{Moore-Nachbarschaft} verwendet, welche die acht direkt angrenzenden
-Zellen umfasst (horizontal, vertikal und diagonal). Über gezielte Geburts- und
-Überlebensregeln (\emph{Birth}/\emph{Survival Rules}) lassen sich aus
-verrauschten Initialzuständen fließende, natürlich wirkende Höhlen- und
-Klippenstrukturen synthetisieren: Eine freie Zelle wird belegt, sobald die Zahl
-belegter Nachbarn eine Geburtsschwelle erreicht; eine belegte Zelle bleibt es
-nur, solange eine Überlebensschwelle erfüllt ist. Wenige Iterationen genügen,
-um verstreutes Rauschen in zusammenhängende Strukturen zu überführen; Johnson
-et al.\ \cite{johnson2010cellular} zeigen das Verfahren für echtzeitfähig
-erzeugte Höhlenlevel.
+Rein rauschbasierte Belegungen wirken häufig zerfranst, weshalb meist eine
+Glättungsstufe über einen zellulären Automaten folgt. Er bewertet jede Zelle
+iterativ anhand der Zahl belegter Nachbarn, üblicherweise in der
+\emph{Moore-Nachbarschaft} aus den acht direkt angrenzenden Zellen (horizontal,
+vertikal und diagonal). Geburts- und Überlebensregeln
+(\emph{Birth}/\emph{Survival Rules}) formen daraus fließende, natürlich wirkende
+Höhlen- und Klippenstrukturen: Eine freie Zelle wird belegt, sobald die Zahl
+belegter Nachbarn eine Geburtsschwelle erreicht; eine belegte Zelle bleibt nur
+belegt, solange sie eine Überlebensschwelle erfüllt. Wenige Iterationen genügen,
+um verstreutes Rauschen in zusammenhängende Strukturen zu überführen. Johnson
+et al.\ \cite{johnson2010cellular} demonstrieren das Verfahren an
+echtzeitfähig erzeugten Höhlenleveln.
 
 \paragraph{Graphentheoretische Erreichbarkeitsanalyse.}
-Ein zentrales Problem prozeduraler Welten ist die Sicherstellung der
-Spielbarkeit (\emph{Playability}), insbesondere die Vermeidung unlösbarer
-Level-Zustände (\emph{Deadlocks}). Zur Analyse der Konnektivität wird das
-Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen
-Knoten und Nachbarschaftsbeziehungen Kanten darstellen. Welche Nachbarschaft
-dabei anzusetzen ist, folgt aus dem Bewegungsmodell: Bei ausschließlich
-achsenparalleler Bewegung ist die Vierer-Nachbarschaft (\emph{von
-Neumann}) korrekt, nicht die für die Glättung verwendete Moore-Nachbarschaft
-eine über die Diagonale hergestellte Verbindung wäre für den Agenten nicht
-begehbar. Die Breitensuche (\emph{Breadth-First Search}, BFS) traversiert den
-Graphen ebenenweise vom Startknoten aus \cite{cormen2009algorithms}. Wird sie
-nur zur Bestimmung der erreichbaren Menge und ohne Interesse an den Distanzen
-eingesetzt, spricht man von \emph{Flood-Fill}. Sie eignet
-sich damit sowohl zur Prüfung, ob ein Zielknoten überhaupt erreichbar ist, als
-auch zur Bestimmung des kürzesten Pfades auf ungewichteten Gittern
-\cite{cormen2009algorithms}. Beide Eigenschaften~-- Erreichbarkeit und
-kürzester Pfad~-- werden an späterer Stelle wieder aufgegriffen
+Prozedurale Welten haben ein Kernproblem: die Spielbarkeit
+(\emph{Playability}), also die Vermeidung unlösbarer Level-Zustände
+(\emph{Deadlocks}). Für die Analyse der Konnektivität lesen wir das Zellgitter
+als ungerichteten Graphen, in dem begehbare Zellen die Knoten und
+Nachbarschaftsbeziehungen die Kanten bilden. Welche Nachbarschaft dabei richtig
+ist, folgt aus dem Bewegungsmodell: Bei ausschließlich achsenparalleler Bewegung
+gilt die Vierer-Nachbarschaft (\emph{von Neumann}) und nicht die für die
+Glättung verwendete Moore-Nachbarschaft, denn eine über die Diagonale
+hergestellte Verbindung könnte der Agent gar nicht begehen. Die Breitensuche
+(\emph{Breadth-First Search}, BFS) traversiert den Graphen ebenenweise vom
+Startknoten aus \cite{cormen2009algorithms}. Interessiert dabei nur die
+erreichbare Menge und nicht die Distanz, spricht man von \emph{Flood-Fill}. Die
+BFS beantwortet damit zwei Fragen zugleich: ob ein Zielknoten überhaupt
+erreichbar ist und wie der kürzeste Pfad auf einem ungewichteten Gitter verläuft
+\cite{cormen2009algorithms}. Beide Eigenschaften kehren später wieder
 (Abschnitte~\ref{sec:pbrs} und~\ref{sec:g_metriken}).
 
 \paragraph{Heuristische Sicherheitsnetze und Metriken.}
-Die Sicherstellung der Spielbarkeit und die Reparatur unspielbarer Level sind
-ein eigenständiger Baustein der PCG-Praxis \cite{shaker2016pcg}. Da die exakte
-graphenbasierte Validierung bei großen Weltausschnitten rechenintensiv sein
-kann, werden dabei häufig kombinierte Ansätze gewählt. Als billige
-Vorabschätzung dient die \emph{Manhattan-Distanz}, die Distanz zweier Punkte
-auf einem orthogonalen Gitter unter achsenparalleler Bewegung:
+Spielbarkeit sicherzustellen und unspielbare Level zu reparieren ist ein
+eigenständiger Baustein der PCG-Praxis \cite{shaker2016pcg}. Weil die exakte
+graphenbasierte Validierung bei großen Weltausschnitten teuer wird, kombiniert
+man sie häufig mit billigeren Prüfungen. Als Vorabschätzung dient die
+\emph{Manhattan-Distanz}, die Distanz zweier Punkte auf einem orthogonalen
+Gitter unter achsenparalleler Bewegung:
 \begin{equation}
 D_{\mathrm{Manhattan}} = |x_1 - x_2| + |y_1 - y_2|.
 \end{equation}
 Sie ist in konstanter Zeit berechenbar und unterschätzt den tatsächlichen
-Laufweg, sobald Hindernisse im Weg stehen; als Ersatz für eine
+Laufweg, sobald Hindernisse dazwischenstehen. Als Ersatz für eine
 Erreichbarkeitsprüfung taugt sie deshalb nicht, wohl aber als untere Schranke
-und als Abbruchkriterium. Scheitert die Prüfung, garantiert als zweites
-Sicherheitsnetz eine pragmatische \emph{Fallback-Generierung}
-(\emph{Carving}) entlang direkter Geometrieachsen eine funktionale
-Wegeverbindung: Ein Korridor wird von Start zu Ziel freigeräumt, typischerweise
-erst in der einen, dann in der anderen Achse.
+und als Abbruchkriterium. Scheitert die Prüfung, greift ein zweites
+Sicherheitsnetz: Eine pragmatische \emph{Fallback-Generierung} (\emph{Carving})
+räumt entlang direkter Geometrieachsen einen Korridor von Start zu Ziel frei,
+typischerweise erst in der einen, dann in der anderen Achse.
 
-Beide Mittel sind wirksam, aber nicht folgenlos: Ein gecarvter Korridor ist per
-Konstruktion eine gerade, hindernisfreie Linie und damit eine strukturelle
+Beide Mittel wirken, aber sie sind nicht folgenlos. Ein gecarvter Korridor ist
+per Konstruktion eine gerade, hindernisfreie Linie und damit eine strukturelle
 Auffälligkeit, die das erzeugte Weltbild systematisch von einer gleichmäßig
-verteilten Hindernisstruktur abweichen lässt. Welche dieser Verfahren im
-vorliegenden Generator implementiert und welche in der berichteten
-Konfiguration tatsächlich aktiv sind, führt Abschnitt~\ref{sec:weltgenerator}
-auf; welche Konsequenz eine solche Auffälligkeit für eine lernende Politik hat,
-greift die Evaluation auf (Abschnitt~\ref{sec:evaluation}).
+verteilten Hindernisstruktur wegzieht. Welche Verfahren der vorliegende
+Generator implementiert und welche in der berichteten Konfiguration tatsächlich
+laufen, führt Abschnitt~\ref{sec:weltgenerator} auf. Was eine solche
+Auffälligkeit für eine lernende Politik bedeutet, greift die Evaluation auf
+(Abschnitt~\ref{sec:evaluation}).
 
 \subsection{Lernen unter partieller Beobachtbarkeit}
 \label{sec:g_rl}
@@ -665,23 +695,23 @@ greift die Evaluation auf (Abschnitt~\ref{sec:evaluation}).
 \subsubsection{Reinforcement Learning und der Markov-Entscheidungsprozess}
 \label{sec:mdp}
 
-Reinforcement Learning (RL) beschreibt das Lernen durch Interaktion: Ein Agent
-wählt in einem Zustand eine Aktion, erhält eine Belohnung (Reward) und geht in
-einen Folgezustand über \cite{sutton2018rl}. Formal wird dies als
-Markov-Entscheidungsprozess (MDP) modelliert, ein Tupel $(S, A, P, R, \gamma)$
-mit Zustandsmenge $S$, Aktionsmenge $A$, Übergangswahrscheinlichkeit
+Reinforcement Learning (RL) beschreibt Lernen durch Interaktion: Der Agent wählt
+in einem Zustand eine Aktion, kassiert eine Belohnung (Reward) und landet in
+einem Folgezustand \cite{sutton2018rl}. Formal ist das ein
+Markov-Entscheidungsprozess (MDP), ein Tupel $(S, A, P, R, \gamma)$ mit
+Zustandsmenge $S$, Aktionsmenge $A$, Übergangswahrscheinlichkeit
 $P(s'\mid s,a)$, Rewardfunktion $R(s,a)$ und Diskontfaktor $\gamma \in [0,1)$.
-Ziel ist eine Politik $\pi(a\mid s)$, die den erwarteten diskontierten Return
+Gesucht ist eine Politik $\pi(a\mid s)$, die den erwarteten diskontierten Return
 $G_t = \sum_{k\geq 0} \gamma^k r_{t+k}$ maximiert. Die Zustandswertfunktion
 $V^\pi(s) = \mathbb{E}_\pi[G_t \mid s_t=s]$ gibt den erwarteten Return ab einem
-Zustand an. Der Diskontfaktor $\gamma$ gewichtet spätere Rewards geringer; im
-Projekt wird $\gamma = 0{,}999$ verwendet.
+Zustand an. Der Diskontfaktor $\gamma$ gewichtet spätere Rewards geringer; wir
+arbeiten mit $\gamma = 0{,}999$.
 
 Abbildung~\ref{fig:mdp_loop} zeigt diesen Kreislauf. Er ist die Grundfigur des
-gesamten Verfahrens: Alles, was in dieser Arbeit trainiert wird, ist eine
-Variante dieser Schleife, in der die Umgebung \emph{Stoneforge} heißt, die
-Aktionen die vier Bewegungsrichtungen sind und der Reward aus
-Abschnitt~\ref{sec:umgebung} stammt.
+gesamten Verfahrens. Alles, was wir in dieser Arbeit trainieren, ist eine
+Variante dieser Schleife: Die Umgebung heißt \emph{Stoneforge}, die Aktionen
+sind die vier Bewegungsrichtungen, der Reward stammt aus
+Abschnitt~\ref{sec:rewarddesign}.
 
 \begin{figure}[h]
 \centering
@@ -720,15 +750,15 @@ zum nächsten Zeitschritt. Eigene Darstellung in Anlehnung an Sutton und Barto
 
 Sieht der Agent nicht den vollständigen Zustand, sondern nur eine Beobachtung,
 liegt ein \emph{Partially Observable} MDP (POMDP) vor \cite{kaelbling1998pomdp}.
-Die Markov-Eigenschaft gilt dann für die Beobachtung nicht mehr: Dieselbe lokale
-Beobachtung kann zu verschiedenen globalen Zuständen gehören. Eine reaktive
+Für die Beobachtung gilt die Markov-Eigenschaft dann nicht mehr: Dieselbe lokale
+Beobachtung kann zu ganz verschiedenen globalen Zuständen gehören. Eine reaktive
 Politik, die nur die aktuelle Beobachtung nutzt, ist deshalb im Allgemeinen
 nicht optimal. Abhilfe schafft ein internes Gedächtnis, das vergangene
-Beobachtungen zu einem \emph{Belief-State} zusammenfasst
+Beobachtungen zu einem \emph{Belief-State} verdichtet
 \cite{hausknecht2015drqn}. Abbildung~\ref{fig:mdp_vs_pomdp} stellt beide Fälle
-gegenüber: Im MDP greift die Politik direkt auf den Zustand zu, im POMDP
-liegt eine Beobachtungsfunktion dazwischen, und die Politik muss aus der
-Vorgeschichte erst rekonstruieren, wo sie sich vermutlich befindet.
+gegenüber: Im MDP greift die Politik direkt auf den Zustand zu, im POMDP schiebt
+sich eine Beobachtungsfunktion dazwischen, und die Politik muss aus der
+Vorgeschichte erst rekonstruieren, wo sie vermutlich steht.
 
 \begin{figure}[h]
 \centering
@@ -773,23 +803,24 @@ zusätzlich anfallen: die Beobachtung $o_t = O(s_t)$ und die Bildung eines
 \emph{Beliefs} aus ihr und der Vorgeschichte. Eigene Darstellung; Formalismus
 nach Kaelbling et al.\ \cite{kaelbling1998pomdp}.}
 \label{fig:mdp_vs_pomdp}
-\end{figure} Eine zweite Konsequenz ist für diese Arbeit
-zentral: Unter partieller Beobachtbarkeit kann eine \emph{stochastische}
-gedächtnislose Politik jede deterministische gedächtnislose erheblich
-übertreffen \cite{singh1994pomdp}. Zu beachten ist die Reichweite dieser
-Aussage: Sie gilt für \emph{gedächtnislose} Politiken. Ist der Belief-State
+\end{figure} Eine zweite Konsequenz trägt diese Arbeit
+weit: Unter partieller Beobachtbarkeit kann eine \emph{stochastische}
+gedächtnislose Politik jede deterministische gedächtnislose deutlich
+übertreffen \cite{singh1994pomdp}. Auf die Reichweite dieser Aussage kommt es
+an. Sie gilt für \emph{gedächtnislose} Politiken. Ist der Belief-State
 hinreichend genau rekonstruiert, existiert wieder eine optimale
 deterministische Politik. Ein Leistungsabstand zwischen Sampling- und
-Argmax-Auswertung einer \emph{rekurrenten} Politik ist daher gerade kein
+Argmax-Auswertung einer \emph{rekurrenten} Politik ist damit gerade kein
 notwendiges Merkmal der Aufgabe, sondern ein Indikator für einen
-unvollständigen Belief-State; er wird in der Evaluation als solcher geprüft
-(Abschnitt~\ref{sec:evaluation}). Stoneforge ist ein POMDP, da der Agent nur einen
-lokalen $15{\times}15$-Ausschnitt sieht (siehe Abschnitt~\ref{sec:umgebung}).
-Abbildung~\ref{fig:pomdp_schema} stellt den Unterschied schematisch dar. Neben
-diesem unmittelbar sichtbaren, lokalen Ausschnitt gibt es eine zweite, weniger
-offensichtliche Quelle partieller Beobachtbarkeit, die erst aus der Forderung
-nach Generalisierung auf unbekannte Welten entsteht; sie wird in
-Abschnitt~\ref{sec:g_bridge} behandelt, wo beide Themen zusammengeführt werden.
+unvollständigen Belief-State. Genau so prüfen wir ihn in der Evaluation
+(Abschnitt~\ref{sec:evaluation}). Stoneforge ist ein POMDP, denn der Agent sieht
+nur einen lokalen $15{\times}15$-Ausschnitt (siehe
+Abschnitt~\ref{sec:rlumgebung}); Abbildung~\ref{fig:pomdp_schema} stellt den
+Unterschied schematisch dar. Neben diesem unmittelbar sichtbaren lokalen
+Ausschnitt gibt es eine zweite, weniger offensichtliche Quelle partieller
+Beobachtbarkeit. Sie entsteht erst aus der Forderung nach Generalisierung auf
+unbekannte Welten und wird in Abschnitt~\ref{sec:g_bridge} behandelt, wo beide
+Themen zusammenlaufen.
 
 \begin{figure}[h]
   \centering
@@ -806,51 +837,51 @@ Abschnitt~\ref{sec:g_bridge} behandelt, wo beide Themen zusammengeführt werden.
 \subsubsection{Wertbasierte Verfahren: Q-Learning und DQN}
 
 Wertbasierte Verfahren lernen die Aktionswertfunktion
-$Q^\pi(s,a) = \mathbb{E}_\pi[G_t \mid s_t=s, a_t=a]$ und leiten daraus die
-Politik ab (Aktion mit dem höchsten $Q$-Wert). Q-Learning aktualisiert $Q$ über
-die Bellman-Gleichung. Deep Q-Networks (DQN) approximieren $Q$ mit einem
-neuronalen Netz und stabilisieren das Training über einen Replay-Buffer und ein
-Target-Netz \cite{mnih2015dqn}. DQN arbeitet nur mit diskreten Aktionsräumen;
-sein früher Einsatz im Projekt und der Wechsel zu PPO sind in
-Abschnitt~\ref{sec:methodik} begründet.
+$Q^\pi(s,a) = \mathbb{E}_\pi[G_t \mid s_t=s, a_t=a]$ und leiten die Politik
+daraus ab, indem sie die Aktion mit dem höchsten $Q$-Wert wählen. Q-Learning
+aktualisiert $Q$ über die Bellman-Gleichung. Deep Q-Networks (DQN) approximieren
+$Q$ mit einem neuronalen Netz und stabilisieren das Training über einen
+Replay-Buffer und ein Target-Netz \cite{mnih2015dqn}. DQN verarbeitet nur
+diskrete Aktionsräume. Warum wir es früh eingesetzt und später zu PPO gewechselt
+haben, begründet Abschnitt~\ref{sec:methodik}.
 
 \subsubsection{Policy-Gradient- und Actor-Critic-Verfahren}
 
 Policy-Gradient-Verfahren optimieren die Politik $\pi_\theta$ direkt über den
-Gradienten des erwarteten Returns. Actor-Critic-Verfahren kombinieren dies mit
-einer gelernten Wertfunktion (Critic), die als Baseline die Varianz der
+Gradienten des erwarteten Returns. Actor-Critic-Verfahren stellen ihnen eine
+gelernte Wertfunktion (Critic) zur Seite, die als Baseline die Varianz der
 Gradientenschätzung senkt. Der Vorteil (Advantage)
 $A(s,a) = Q(s,a) - V(s)$ misst, wie viel besser eine Aktion gegenüber dem
 Durchschnitt ist; die Generalized Advantage Estimation (GAE) schätzt ihn über
-mehrere Zeitschritte mit einem Parameter $\lambda$ \cite{schulman2016gae}
-(im Projekt $\lambda = 0{,}95$). Advantage Actor-Critic (A2C) ist die synchrone
+mehrere Zeitschritte mit einem Parameter $\lambda$ \cite{schulman2016gae}, im
+Projekt $\lambda = 0{,}95$. Advantage Actor-Critic (A2C) ist die synchrone
 Variante von A3C \cite{mnih2016a3c}.
-Wie gut der Critic gelernt hat, misst die \emph{explained variance} (EV): der
+Wie gut der Critic gelernt hat, verrät die \emph{explained variance} (EV): der
 Anteil der Varianz der tatsächlichen Returns, den die Wertschätzung erklärt.
-EV~$\approx$~1 bedeutet eine verlässliche Wertfunktion, EV~$\approx$~0, dass
-der Critic praktisch nichts gelernt hat. Diese Größe dient in der Arbeit als
-zentrale Diagnosemetrik des Trainings.
+EV~$\approx$~1 steht für eine verlässliche Wertfunktion, EV~$\approx$~0 dafür,
+dass der Critic praktisch nichts gelernt hat. Diese Größe ist unsere wichtigste
+Diagnosemetrik des Trainings.
 
 \subsubsection{Proximal Policy Optimization (PPO)}
 \label{sec:ppo}
 
-PPO ist das im Projekt eingesetzte Hauptverfahren \cite{schulman2017ppo}. Es ist
+PPO ist das Hauptverfahren dieser Arbeit \cite{schulman2017ppo}. Es ist
 ein Actor-Critic-Verfahren, das die Politik pro Update nur begrenzt verändert, um
-Instabilität durch zu große Schritte zu vermeiden. Dazu wird das
+Instabilität durch zu große Schritte zu vermeiden. Dazu schneidet es das
 Wahrscheinlichkeitsverhältnis
 $r_t(\theta) = \pi_\theta(a_t\mid s_t)/\pi_{\theta_\text{alt}}(a_t\mid s_t)$
-in der Zielfunktion abgeschnitten (\emph{clipping}):
+in der Zielfunktion ab (\emph{clipping}):
 \[
 L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\big(r_t(\theta)\,A_t,\;
 \operatorname{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\,A_t\big)\right].
 \]
-Abbildung~\ref{fig:ppo_clip} veranschaulicht die Wirkung des Clippings an einem
-einzelnen Zeitschritt. War die Aktion besser als erwartet ($A_t > 0$), lohnt es
-sich, ihre Wahrscheinlichkeit zu erhöhen, aber nur bis zum Faktor $1+\epsilon$;
-darüber hinaus verläuft die Zielfunktion flach, der Anreiz für einen größeren
-Schritt entfällt. War sie schlechter als erwartet ($A_t < 0$), gilt dasselbe
-spiegelbildlich bei $1-\epsilon$. Genau das verhindert die zu großen
-Aktualisierungen, an denen einfache Policy-Gradient-Verfahren scheitern.
+Abbildung~\ref{fig:ppo_clip} zeigt die Wirkung des Clippings an einem einzelnen
+Zeitschritt. War die Aktion besser als erwartet ($A_t > 0$), lohnt es sich, ihre
+Wahrscheinlichkeit zu erhöhen, aber nur bis zum Faktor $1+\epsilon$; darüber
+verläuft die Zielfunktion flach und der Anreiz für einen größeren Schritt fällt
+weg. War sie schlechter als erwartet ($A_t < 0$), gilt dasselbe spiegelbildlich
+bei $1-\epsilon$. Genau das verhindert die zu großen Aktualisierungen, an denen
+einfache Policy-Gradient-Verfahren scheitern.
 
 \begin{figure}[h]
 \centering
@@ -890,54 +921,52 @@ Anlehnung an Schulman et al.\ \cite[Abb.~1]{schulman2017ppo}.}
 \label{fig:ppo_clip}
 \end{figure}
 
-Zusätzlich wird ein Entropie-Term addiert, der Exploration fördert; sein Gewicht
+Hinzu kommt ein Entropie-Term, der Exploration fördert; sein Gewicht
 (\texttt{ent\_coef}) steuert, wie stochastisch die Politik bleibt. Trainiert
 wird in Zyklen: Erst sammeln die parallelen Umgebungen einen Rollout von
-$n_\text{steps}$ Schritten, dann wird dieser in Minibatches der Größe
-\texttt{batch\_size} über $n_\text{epochs}$ Durchläufe optimiert. Verwendet wird
-die Implementierung aus Stable-Baselines3 \cite{raffin2021stable}.
+$n_\text{steps}$ Schritten, dann optimiert PPO diesen in Minibatches der Größe
+\texttt{batch\_size} über $n_\text{epochs}$ Durchläufe. Wir verwenden die
+Implementierung aus Stable-Baselines3 \cite{raffin2021stable}.
 
 Eine gelernte stochastische Politik lässt sich auf zwei Arten ausführen:
-\emph{stochastisch} (die Aktion wird aus der Verteilung $\pi(a\mid s)$ gezogen,
-Sampling) oder \emph{deterministisch} (stets die wahrscheinlichste Aktion,
-Argmax). Dasselbe trainierte Modell kann in beiden Betriebsarten
-unterschiedlich gut abschneiden. Der Abstand zwischen beiden Messwerten wird in
-dieser Arbeit durchgängig als \textbf{Det/Stoch-Gap} bezeichnet; er ist einer
-ihrer zentralen Untersuchungsgegenstände, weil er sich als groß und
-hartnäckig erwiesen hat (Abschnitt~\ref{sec:gapexperimente}). Anschaulich
-gesprochen: Der Agent löst die Aufgabe zuverlässiger, wenn er würfelt, als
-wenn er stets seine eigene beste Aktion wählt. Dass dies unter partieller
-Beobachtbarkeit möglich ist, folgt aus Abschnitt~\ref{sec:pomdp}; dass es bei
-einer Politik \emph{mit} Gedächtnis dennoch erklärungsbedürftig bleibt,
-ebenfalls.
+\emph{stochastisch}, indem die Aktion aus der Verteilung $\pi(a\mid s)$ gezogen
+wird (Sampling), oder \emph{deterministisch} über die stets wahrscheinlichste
+Aktion (Argmax). Dasselbe trainierte Modell kann in beiden Betriebsarten
+unterschiedlich gut abschneiden. Den Abstand zwischen beiden Messwerten nennen
+wir durchgängig \textbf{Det/Stoch-Gap}. Er ist einer der Hauptgegenstände dieser
+Arbeit, weil er sich als groß und hartnäckig erwiesen hat
+(Abschnitt~\ref{sec:gapexperimente}). Anschaulich gesprochen: Der Agent löst die
+Aufgabe zuverlässiger, wenn er würfelt, als wenn er stets seine eigene beste
+Aktion wählt. Dass das unter partieller Beobachtbarkeit möglich ist, folgt aus
+Abschnitt~\ref{sec:pomdp}. Dass es bei einer Politik \emph{mit} Gedächtnis
+trotzdem erklärungsbedürftig bleibt, ebenfalls.
 
 \subsubsection{Rekurrente Politiken (LSTM)}
 \label{sec:lstm}
 
-Alle bisher genannten Verfahren lassen sich mit einem gewöhnlichen
-vorwärtsgerichteten neuronalen Netz umsetzen, einem \emph{Multilayer Perceptron}
+Alle bisher genannten Verfahren laufen auch mit einem gewöhnlichen
+vorwärtsgerichteten neuronalen Netz, einem \emph{Multilayer Perceptron}
 (MLP). Ein solches Netz bildet jede Beobachtung unabhängig auf eine Aktion ab
-und besitzt kein Gedächtnis: Es kann nicht unterscheiden, ob es eine Stelle
-zum ersten oder zum zehnten Mal sieht. Unter partieller Beobachtbarkeit ist das
-eine wesentliche Einschränkung (Abschnitt~\ref{sec:pomdp}); die Bezeichnung
-\emph{MLP} steht im Folgenden durchgängig für diese gedächtnislose Variante.
+und besitzt kein Gedächtnis. Es kann nicht unterscheiden, ob es eine Stelle zum
+ersten oder zum zehnten Mal sieht. Unter partieller Beobachtbarkeit ist das eine
+harte Einschränkung (Abschnitt~\ref{sec:pomdp}); die Bezeichnung \emph{MLP}
+steht im Folgenden durchgängig für diese gedächtnislose Variante.
 
-Um in einem POMDP ein Gedächtnis bereitzustellen, wird die Politik daher um ein
-rekurrentes Netz erweitert. Long Short-Term Memory (LSTM) ist eine
-rekurrente Architektur, die Information über viele Zeitschritte hinweg speichern
-kann \cite{hochreiter1997lstm}. Der LSTM-Zustand approximiert den Belief-State
-und fasst die bisher gesehenen Beobachtungen zusammen. Die Kombination aus
-rekurrentem Netz und wertbasiertem RL wurde als DRQN eingeführt
-\cite{hausknecht2015drqn}; im Projekt wird die policy-gradient-Variante
-RecurrentPPO (PPO mit LSTM-Politik) aus \emph{sb3-contrib} verwendet, mit einer
-LSTM-Größe von 256.
+Um in einem POMDP ein Gedächtnis bereitzustellen, erweitern wir die Politik um
+ein rekurrentes Netz. Long Short-Term Memory (LSTM) ist eine rekurrente
+Architektur, die Information über viele Zeitschritte hinweg hält
+\cite{hochreiter1997lstm}. Ihr Zustand approximiert den Belief-State und fasst
+die bisher gesehenen Beobachtungen zusammen. Rekurrentes Netz und wertbasiertes
+RL wurden als DRQN kombiniert \cite{hausknecht2015drqn}; wir nutzen die
+policy-gradient-Variante RecurrentPPO (PPO mit LSTM-Politik) aus
+\emph{sb3-contrib}, mit einer LSTM-Größe von 256.
 
 Wie das Gedächtnis wirkt, zeigt Abbildung~\ref{fig:lstm_unrolled} in der über
-die Zeit \glqq entrollten\grqq{} Darstellung: Der verborgene Zustand $h_t$ wird
-von Schritt zu Schritt weitergereicht und sammelt so Information, die in der
-einzelnen Beobachtung nicht enthalten ist. Für Stoneforge ist das genau die
-Information \glqq hier war ich schon\grqq{} bzw.\ \glqq diese Wand bin ich
-bereits nach Norden abgelaufen\grqq.
+die Zeit \glqq entrollten\grqq{} Darstellung: Der verborgene Zustand $h_t$
+wandert von Schritt zu Schritt weiter und sammelt Information, die in der
+einzelnen Beobachtung fehlt. Für Stoneforge ist das genau die Information
+\glqq hier war ich schon\grqq{} bzw.\ \glqq diese Wand bin ich bereits nach
+Norden abgelaufen\grqq.
 
 \begin{figure}[h]
 \centering
@@ -968,61 +997,58 @@ Politiken im RL nach Hausknecht und Stone \cite{hausknecht2015drqn}.}
 \end{figure}
 
 Trainiert wird ein solches Netz per \emph{Backpropagation Through Time} (BPTT):
-Das Netz wird über eine Sequenz fester Länge entrollt und der Gradient über alle
-Zeitschritte zurückgeführt. Die Sequenzlänge ist damit ein Hyperparameter mit
-zwei Seiten. Zu kurze Sequenzen begrenzen, wie weit zurück ein Zusammenhang
-gelernt werden kann; zu lange führen zu verschwindenden Gradienten und
-verlangsamen das Training. Hinzu kommt die Frage, mit welchem verborgenen
-Zustand eine Sequenz beginnt. Kapturowski et al.\ zeigen für rekurrente
-Verfahren, dass die Behandlung dieses Zustands die Leistung bei ansonsten
-unveränderter Architektur erheblich beeinflusst, und schlagen dafür unter
-anderem eine Einlaufphase (\emph{Burn-in}) vor \cite{kapturowski2019r2d2}.
-Dieselbe Frage stellt sich bei der Auswertung: Wird der Zustand zwischen
-Episoden nicht zurückgesetzt, misst man eine andere Politik als die trainierte.
+Das Netz wird über eine Sequenz fester Länge entrollt, der Gradient läuft über
+alle Zeitschritte zurück. Die Sequenzlänge ist damit ein Hyperparameter mit zwei
+Seiten. Zu kurze Sequenzen begrenzen, wie weit zurück ein Zusammenhang überhaupt
+gelernt werden kann; zu lange Sequenzen lassen Gradienten verschwinden und
+bremsen das Training. Dazu kommt die Frage, mit welchem verborgenen Zustand eine
+Sequenz startet. Kapturowski et al.\ zeigen für rekurrente Verfahren, dass die
+Behandlung dieses Zustands die Leistung bei sonst unveränderter Architektur
+erheblich verschiebt, und schlagen unter anderem eine Einlaufphase
+(\emph{Burn-in}) vor \cite{kapturowski2019r2d2}. Bei der Auswertung stellt sich
+dieselbe Frage: Wer den Zustand zwischen Episoden nicht zurücksetzt, misst eine
+andere Politik als die trainierte.
 
 \subsection{Prozedurale Welten im Reinforcement Learning}
 \label{sec:g_bridge}
 
 Die beiden vorangegangenen Abschnitte behandeln zwei eigenständige Themen: die
 prozedurale Erzeugung von Welten und das Lernen einer Politik unter partieller
-Beobachtbarkeit. Dieser Abschnitt verbindet sie und begründet, warum gerade
-prozedural erzeugte Welten für die vorliegende Fragestellung nötig sind.
+Beobachtbarkeit. Hier laufen sie zusammen.
 
-Der Ausgangspunkt ist ein bekanntes Problem des maschinellen Lernens: Wird ein
-Modell stets auf denselben Daten trainiert und geprüft, kann es die Antworten
-auswendig lernen (\emph{Overfitting}), statt eine übertragbare Regel zu bilden.
-Im Reinforcement Learning entspricht ein einzelnes festes Level solchen festen
-Daten; eine Politik kann dann die konkrete Karte memorieren, ohne allgemeine
-Navigation zu erlernen \cite{cobbe2020procgen, kirk2023survey}. Wird hingegen
-für jede Episode eine neue, per Seed erzeugte Welt verwendet, entzieht sich die
-Aufgabe dem Auswendiglernen: Der Agent sieht jede einzelne Karte zu selten, um
-sie zu memorieren, und muss stattdessen eine Strategie bilden, die über die
-Trainingswelten hinaus gilt. Prozedurale Generierung ist deshalb ein
-etabliertes Mittel, um Generalisierung im RL zu prüfen und Overfitting auf
-einzelne Level zu vermeiden \cite{cobbe2020procgen, risi2020increasing}.
+Der Ausgangspunkt ist ein bekanntes Problem des maschinellen Lernens. Trainiert
+und prüft man ein Modell stets auf denselben Daten, lernt es womöglich die
+Antworten auswendig (\emph{Overfitting}), statt eine übertragbare Regel zu
+bilden. Im Reinforcement Learning entspricht ein einzelnes festes Level solchen
+festen Daten; die Politik memoriert dann die konkrete Karte, ohne allgemeine
+Navigation zu erlernen \cite{cobbe2020procgen, kirk2023survey}. Bekommt dagegen
+jede Episode eine neue, per Seed erzeugte Welt, entzieht sich die Aufgabe dem
+Auswendiglernen: Der Agent sieht jede einzelne Karte zu selten, um sie zu
+behalten, und muss eine Strategie bilden, die über die Trainingswelten hinaus
+trägt. Prozedurale Generierung ist deshalb ein etabliertes Mittel, um
+Generalisierung im RL zu prüfen und Overfitting auf einzelne Level zu
+verhindern \cite{cobbe2020procgen, risi2020increasing}.
 
-Die im vorigen genannte Seed-Reproduzierbarkeit
-(Abschnitt~\ref{sec:pcg_generalisierung}) ist dabei das entscheidende Werkzeug:
-Sie erlaubt es, disjunkte Seed-Mengen festzulegen und so eine Trainings- streng
-von einer Testmenge zu trennen. Die Evaluation auf trainingsfremden Seeds
-(Testset~A und Holdout~B, Abschnitt~\ref{sec:evalprotokoll}) folgt genau
-diesem Prinzip: Gemessen wird nicht, wie gut eine Politik gelernte Welten
-wiederfindet, sondern wie gut sie auf nie gesehene Welten überträgt.
+Die Seed-Reproduzierbarkeit aus Abschnitt~\ref{sec:pcg_generalisierung} liefert
+dafür das Werkzeug: Sie erlaubt disjunkte Seed-Mengen und damit eine strenge
+Trennung von Trainings- und Testmenge. Die Evaluation auf trainingsfremden Seeds
+(Testset~A und Holdout~B, Abschnitt~\ref{sec:evalprotokoll}) folgt genau diesem
+Prinzip. Gemessen wird nicht, wie gut eine Politik gelernte Welten wiederfindet,
+sondern wie gut sie auf nie gesehene überträgt.
 
-Die Verbindung reicht tiefer als nur bis zum Versuchsaufbau. Die Forderung, auf
+Die Verbindung reicht tiefer als bis zum Versuchsaufbau. Die Forderung, auf
 unbekannten Welten zu funktionieren, erzeugt selbst partielle Beobachtbarkeit
 (Abschnitt~\ref{sec:pomdp}): Der Politik ist zur Laufzeit unbekannt, in welcher
-der möglichen Welten sie sich befindet. Ghosh et al.\ zeigen, dass daraus auch
-dann ein POMDP wird, wenn jede einzelne Welt für sich vollständig beobachtbar
-wäre, und bezeichnen dies als \emph{epistemic POMDP} \cite{ghosh2021epistemic}.
-Die Unsicherheit liegt hier über der Identität der Welt und nicht über dem
-Zustand innerhalb einer bekannten Welt; sie lässt sich deshalb durch mehr
-Gedächtnis über die laufende Episode nicht auflösen. Auch die optimale Politik
-eines epistemic POMDP ist im Allgemeinen stochastisch~-- eine Eigenschaft, die
-für die spätere Untersuchung des Det/Stoch-Gaps von Bedeutung ist. Prozedurale
-Generierung und Lernen unter partieller Beobachtbarkeit sind für diese Arbeit
-also nicht zwei zufällig kombinierte Bausteine, sondern über die
-Generalisierungsanforderung ursächlich miteinander verknüpft.
+der möglichen Welten sie steckt. Ghosh et al.\ zeigen, dass daraus auch dann ein
+POMDP wird, wenn jede einzelne Welt für sich vollständig beobachtbar wäre, und
+nennen das \emph{epistemic POMDP} \cite{ghosh2021epistemic}. Die Unsicherheit
+liegt hier über der Identität der Welt und nicht über dem Zustand innerhalb
+einer bekannten Welt. Mehr Gedächtnis über die laufende Episode löst sie deshalb
+nicht auf. Auch die optimale Politik eines epistemic POMDP ist im Allgemeinen
+stochastisch, was für die spätere Untersuchung des Det/Stoch-Gaps zählt.
+Prozedurale Generierung und Lernen unter partieller Beobachtbarkeit sind für
+diese Arbeit also keine zufällig kombinierten Bausteine. Die
+Generalisierungsanforderung verknüpft sie ursächlich.
 
 \subsection{Steuerung des Lernprozesses}
 \label{sec:g_steuerung}
@@ -1031,49 +1057,48 @@ Generalisierungsanforderung ursächlich miteinander verknüpft.
 \label{sec:pbrs}
 
 Zusätzliche Belohnungen können das Lernen beschleunigen, dürfen die optimale
-Politik aber nicht verändern. Potential-Based Reward Shaping (PBRS) erfüllt dies:
-Der Zusatzreward hat die Form $F(s,s') = \gamma\,\Phi(s') - \Phi(s)$ mit einer
-Potentialfunktion $\Phi$. Ng et al.\ zeigen, dass eine solche Form
-policy-invariant ist, die optimale Politik also erhalten bleibt
-\cite{ng1999policy}. Im Projekt ist $\Phi$ an die BFS-Distanz zum Exit
-gekoppelt: Die Breitensuche (BFS) liefert die Länge des kürzesten begehbaren
-Wegs vom Agenten zum Exit in Schritten. Im Gegensatz zur Luftlinie
-berücksichtigt sie Wände und Umwege.
+Politik aber nicht verändern. Potential-Based Reward Shaping (PBRS) leistet
+genau das: Der Zusatzreward hat die Form
+$F(s,s') = \gamma\,\Phi(s') - \Phi(s)$ mit einer Potentialfunktion $\Phi$. Ng
+et al.\ zeigen, dass diese Form policy-invariant ist, die optimale Politik also
+unangetastet lässt \cite{ng1999policy}. Bei uns hängt $\Phi$ an der BFS-Distanz
+zum Exit: Die Breitensuche (BFS) liefert die Länge des kürzesten begehbaren Wegs
+vom Agenten zum Exit in Schritten. Anders als die Luftlinie berücksichtigt sie
+Wände und Umwege.
 
 \subsubsection{Curriculum Learning}
 
-Curriculum Learning bezeichnet das Training mit ansteigender
-Aufgabenschwierigkeit statt einer zufälligen Reihenfolge \cite{bengio2009curriculum}.
-Im Projekt wird die Exit-Distanz stufenweise erhöht; der Übergang zwischen den
-Stufen erfolgt leistungsbasiert (eine Stufe gilt ab einer Ziel-Erfolgsquote als
-bestanden). Davon zu unterscheiden ist die Steuerung auf Ebene einzelner Welten.
-\emph{Prioritized Level Replay} (PLR) wiederholt gezielt jene Level, an denen
-eine Politik noch am meisten lernen kann, statt sie gleichverteilt zu ziehen,
-und verbessert damit Sample-Effizienz und Generalisierung
-\cite{jiang2021plr}. Entscheidend ist die Auswahlrichtung: Wiederholt werden
-Level mit hohem Lernpotenzial, also gerade nicht die bereits gemeisterten.
+Curriculum Learning trainiert mit ansteigender Aufgabenschwierigkeit statt in
+zufälliger Reihenfolge \cite{bengio2009curriculum}. Wir erhöhen die Exit-Distanz
+stufenweise; der Übergang zwischen den Stufen läuft leistungsbasiert, eine Stufe
+gilt ab einer Ziel-Erfolgsquote als bestanden. Davon zu unterscheiden ist die
+Steuerung auf Ebene einzelner Welten. \emph{Prioritized Level Replay} (PLR)
+wiederholt gezielt jene Level, an denen eine Politik noch am meisten lernen
+kann, statt sie gleichverteilt zu ziehen, und verbessert so Sample-Effizienz und
+Generalisierung \cite{jiang2021plr}. Auf die Auswahlrichtung kommt es an:
+Wiederholt werden Level mit hohem Lernpotenzial, gerade nicht die bereits
+gemeisterten.
 
 \subsection{Messen und Bewerten}
 \label{sec:g_messen}
 
-Die bisherigen Abschnitte behandeln, wie Welten erzeugt und wie Politiken
-gelernt werden. Dieser Abschnitt behandelt, woran sich beides beurteilen lässt.
-Das ist kein Nebenaspekt: Zwei der drei Befunde dieser Arbeit betreffen nicht
-das Verhalten des Agenten, sondern die Frage, was eine Messung überhaupt
-aussagt.
+Die bisherigen Abschnitte behandeln, wie Welten entstehen und wie Politiken
+lernen. Dieser behandelt, woran sich beides beurteilen lässt. Das ist kein
+Nebenschauplatz: Zwei der drei Befunde dieser Arbeit betreffen nicht das
+Verhalten des Agenten, sondern die Frage, was eine Messung überhaupt aussagt.
 
 \subsubsection{Metriken einer Navigationsaufgabe}
 \label{sec:g_metriken}
 
 \paragraph{Erfolgsquote.}
 Die naheliegende Metrik ist der Anteil gelöster Welten. Formal ist sie der
-Schätzwert $\hat p = k/n$ eines Bernoulli-Parameters: Jede Welt ist ein
-Versuch, der gelingt oder nicht. Zwei Eigenschaften folgen daraus unmittelbar.
-Erstens ist die Erfolgsquote nur zusammen mit dem Abbruchkriterium definiert,
-denn ob eine Welt als gelöst zählt, hängt davon ab, wie lange der Agent suchen
-darf; das Episodenlimit ist damit Teil der Metrik und nicht ihres Umfelds.
-Zweitens ist $\hat p$ bei kleinem $n$ ungenau, was Abschnitt~\ref{sec:g_streuung}
-beziffert.
+Schätzwert $\hat p = k/n$ eines Bernoulli-Parameters: Jede Welt ist ein Versuch,
+der gelingt oder nicht. Daraus folgen zwei Eigenschaften unmittelbar. Erstens
+ist die Erfolgsquote nur zusammen mit dem Abbruchkriterium definiert, denn ob
+eine Welt als gelöst zählt, hängt davon ab, wie lange der Agent suchen darf. Das
+Episodenlimit gehört damit zur Metrik und nicht zu ihrem Umfeld. Zweitens ist
+$\hat p$ bei kleinem $n$ ungenau. Wie ungenau, beziffert
+Abschnitt~\ref{sec:g_streuung}.
 
 \paragraph{Pfadeffizienz.}
 Die Erfolgsquote sagt nichts darüber, \emph{wie} eine Welt gelöst wurde. Dafür
@@ -1082,85 +1107,82 @@ dient die Pfadeffizienz
 \eta \;=\; \frac{d^{*}(s_0)}{T},
 \end{equation}
 das Verhältnis aus kürzestem Weg $d^{*}$ vom Startzustand und tatsächlich
-benötigten Schritten $T$. Es gilt $0 < \eta \leq 1$, wobei $\eta = 1$ optimale
-Navigation bedeutet und $\eta = 0{,}05$ einem zwanzigfachen Umweg entspricht.
-Zwei Feinheiten sind zu beachten, weil sie sonst als Rechenfehler gelesen
-werden.
+benötigten Schritten $T$. Es gilt $0 < \eta \leq 1$; $\eta = 1$ bedeutet
+optimale Navigation, $\eta = 0{,}05$ einen zwanzigfachen Umweg. Zwei Feinheiten
+sind zu beachten, sonst liest man sie als Rechenfehler.
 
-Zum einen ist zu unterscheiden, ob über die \emph{Quotienten} der Einzelepisoden
-gemittelt wird oder ob der Quotient der Mittelwerte gebildet wird. Beide
+Zum einen macht es einen Unterschied, ob über die \emph{Quotienten} der
+Einzelepisoden gemittelt oder der Quotient der Mittelwerte gebildet wird. Beide
 Größen fallen auseinander, sobald die Schrittzahl schief verteilt ist. Da
 $1/T$ konvex in $T$ ist, liefert die Jensen-Ungleichung
 \begin{equation}
 \mathbb{E}\!\left[\frac{d^{*}}{T}\right] \;\geq\; \frac{d^{*}}{\mathbb{E}[T]},
 \end{equation}
-das Mittel der Quotienten liegt also systematisch höher. Welche Variante
-berichtet wird, ist anzugeben.
+Das Mittel der Quotienten liegt also systematisch höher. Welche Variante
+berichtet wird, gehört in den Text.
 
 Zum anderen ist $\eta$ nur auf erfolgreichen Episoden definiert. Vergleicht man
-zwei Politiken mit unterschiedlicher Erfolgsquote, wird die schwächere auf der
-leichteren Teilmenge bewertet. Die Verzerrung wirkt damit zugunsten der
-schwächeren Politik, was bei der Interpretation zu berücksichtigen ist.
+zwei Politiken mit unterschiedlicher Erfolgsquote, bewertet man die schwächere
+auf der leichteren Teilmenge. Die Verzerrung arbeitet also zugunsten der
+schwächeren Politik. Wer das beim Interpretieren vergisst, liest eine Stärke,
+wo keine ist.
 
 \paragraph{Betriebsarten.}
-Eine gelernte stochastische Politik lässt sich auf zwei Arten ausführen:
-durch Ziehen aus $\pi(a \mid s)$ oder durch Wahl der wahrscheinlichsten Aktion
-(Argmax). Zwischen beiden Extremen liegt die temperaturskalierte Auswertung,
-bei der die Logits vor dem Softmax durch einen Parameter $T$ geteilt werden;
-$T \to 0$ ergibt Argmax, $T = 1$ das ungeänderte Sampling. Dieselbe
-Politik kann in beiden Betriebsarten unterschiedlich abschneiden, weshalb
-anzugeben ist, welche gemessen wurde. Dass ein solcher Unterschied unter
-partieller Beobachtbarkeit theoretisch zu erwarten ist, folgt aus
-Abschnitt~\ref{sec:pomdp}.
+Eine gelernte stochastische Politik lässt sich auf zwei Arten ausführen: durch
+Ziehen aus $\pi(a \mid s)$ oder durch Wahl der wahrscheinlichsten Aktion
+(Argmax). Dazwischen liegt die temperaturskalierte Auswertung, die die Logits
+vor dem Softmax durch einen Parameter $T$ teilt; $T \to 0$ ergibt Argmax,
+$T = 1$ das ungeänderte Sampling. Dieselbe Politik kann in beiden Betriebsarten
+unterschiedlich abschneiden, weshalb jede Angabe die gemessene Betriebsart
+nennen muss. Dass ein solcher Unterschied unter partieller Beobachtbarkeit
+theoretisch zu erwarten ist, folgt aus Abschnitt~\ref{sec:pomdp}.
 
 \subsubsection{Streuung, Konfidenz und die Zahl der Läufe}
 \label{sec:g_streuung}
 
-Messunsicherheit entsteht in dieser Art von Experiment aus zwei voneinander
-unabhängigen Quellen, die getrennt zu behandeln sind.
+Die Messunsicherheit dieser Experimente hat zwei voneinander unabhängige
+Quellen. Wer sie vermischt, misst Unsinn.
 
 \paragraph{Unsicherheit innerhalb eines Laufs.}
-Wird ein festes Modell auf $n$ Welten geprüft, ist die Erfolgsquote ein
+Prüfen wir ein festes Modell auf $n$ Welten, ist die Erfolgsquote ein
 Bernoulli-Anteil mit Standardfehler $\sqrt{p(1-p)/n}$. Für $n = 50$ und den
-ungünstigsten Fall $p = 0{,}5$ ergibt das ein 95\,\%-Konfidenzintervall von
-rund $\pm 14$ Prozentpunkten. Unterschiede unterhalb dieser Größe sind aus
-einer einzelnen Messung nicht interpretierbar, unabhängig davon, wie sorgfältig
-sie erhoben wurde.
+ungünstigsten Fall $p = 0{,}5$ ergibt das ein 95\,\%-Konfidenzintervall von rund
+$\pm 14$ Prozentpunkten. Unterschiede unterhalb dieser Größe lassen sich aus
+einer einzelnen Messung nicht interpretieren, egal wie sorgfältig sie erhoben
+wurde.
 
 \paragraph{Unsicherheit zwischen Läufen.}
-Zwei Trainingsläufe derselben Konfiguration unterscheiden sich allein durch die
-Zufallsinitialisierung und die Reihenfolge der Erfahrungen. Henderson et al.\
-zeigen, dass diese Streuung im Deep Reinforcement Learning so groß ist, dass
-Aussagen aus wenigen Läufen systematisch in die Irre führen können; sie fordern
-deshalb, Mittelwert und Standardabweichung über mehrere unabhängige Läufe zu
-berichten und ausdrücklich \emph{nicht} den besten Lauf
-\cite{henderson2018matters}. Für die Aggregation über $m$ Läufe ist die
-\emph{Stichproben}-Standardabweichung zu verwenden,
+Zwei Trainingsläufe derselben Konfiguration unterscheiden sich allein durch
+Zufallsinitialisierung und Reihenfolge der Erfahrungen. Henderson et al.\
+zeigen, dass diese Streuung im Deep Reinforcement Learning so groß ausfällt,
+dass Aussagen aus wenigen Läufen systematisch in die Irre führen. Sie fordern
+deshalb Mittelwert und Standardabweichung über mehrere unabhängige Läufe und
+ausdrücklich \emph{nicht} den besten Lauf \cite{henderson2018matters}. Für die
+Aggregation über $m$ Läufe gilt die \emph{Stichproben}-Standardabweichung,
 \begin{equation}
 s \;=\; \sqrt{\frac{1}{m-1}\sum_{i=1}^{m}\left(x_i - \bar{x}\right)^2},
 \end{equation}
-mit dem Nenner $m-1$ statt $m$ (Bessel-Korrektur), da die Läufe eine Stichprobe
-aus allen möglichen Läufen sind und nicht die Grundgesamtheit. Das
+mit dem Nenner $m-1$ statt $m$ (Bessel-Korrektur), denn die Läufe sind eine
+Stichprobe aus allen möglichen Läufen und nicht die Grundgesamtheit. Das
 zugehörige Konfidenzintervall folgt bei kleinem $m$ der $t$-Verteilung mit
 $m-1$ Freiheitsgraden, nicht der Normalverteilung.
 
 \paragraph{Vergleich zweier Gruppen.}
-Sollen zwei Chargen von Läufen verglichen werden, etwa um zu prüfen, ob ein
-Unterschied auf eine systematische Ursache oder auf Streuung zurückgeht, eignet
-sich der Welch-Test. Er ist die Variante des $t$-Tests, die ungleiche Varianzen
-und ungleiche Gruppengrößen zulässt, und damit die konservative Wahl, wenn über
-die Varianzen nichts bekannt ist. Ein nicht signifikanter Ausgang belegt dabei
-keine Gleichheit; er besagt nur, dass die Daten einen Unterschied nicht
-belegen.
+Wollen wir zwei Chargen von Läufen vergleichen, etwa um zu prüfen, ob ein
+Unterschied eine systematische Ursache hat oder bloß Streuung ist, eignet sich
+der Welch-Test. Er ist die Variante des $t$-Tests, die ungleiche Varianzen und
+ungleiche Gruppengrößen zulässt, und damit die konservative Wahl, solange über
+die Varianzen nichts bekannt ist. Ein nicht signifikanter Ausgang belegt keine
+Gleichheit. Er besagt nur, dass die Daten einen Unterschied nicht belegen.
 
 \paragraph{Vorabfestlegung von Schwellen.}
-Werden Erfolgskriterien erst nach Kenntnis der Ergebnisse formuliert oder
-nachträglich angepasst, verlieren sie ihre Aussagekraft. Kerr bezeichnet dieses
-Vorgehen als \emph{HARKing} (\emph{Hypothesizing After the Results are Known})
-\cite{kerr1998harking}. Ein wirksames Gegenmittel ist die dokumentierte
-Festlegung vor der Messung. Allgemeiner fassen Pineau et al.\ die Anforderungen
-an reproduzierbare Berichte in einer Checkliste zusammen, die neben der Zahl
-der Läufe auch den durchsuchten Hyperparameterbereich und die Trennung der
+Formuliert man Erfolgskriterien erst nach Kenntnis der Ergebnisse oder passt sie
+nachträglich an, verlieren sie ihre Aussagekraft. Kerr nennt dieses Vorgehen
+\emph{HARKing} (\emph{Hypothesizing After the Results are Known})
+\cite{kerr1998harking}. Das Gegenmittel ist billig: die dokumentierte Festlegung
+vor der Messung. Allgemeiner fassen Pineau et al.\ die Anforderungen an
+reproduzierbare Berichte in einer Checkliste zusammen, die neben der Zahl der
+Läufe auch den durchsuchten Hyperparameterbereich und die Trennung der
 Datenmengen umfasst \cite{pineau2021repro}.
 
 \subsubsection{Referenzpolitiken als Bezugspunkt}
@@ -1170,29 +1192,27 @@ Ein Messwert ohne Bezugspunkt ist nicht interpretierbar. Ob eine Erfolgsquote
 von 65\,\% eine gelernte Fähigkeit ausdrückt, lässt sich nur beantworten, wenn
 bekannt ist, was ohne Lernen erreichbar wäre. Dafür dienen \emph{ungelernte
 Referenzpolitiken}, die dieselbe Beobachtung erhalten und unter demselben
-Protokoll bewertet werden. Zwei Typen sind zu unterscheiden.
+Protokoll laufen. Zwei Typen sind zu unterscheiden.
 
 Eine \textbf{Zufallspolitik} wählt gleichverteilt aus dem Aktionsraum und
-liefert die absolute Untergrenze. Sie beantwortet die Frage, ob überhaupt
-etwas gelernt wurde, aber nicht, ob das Gelernte über triviale Strategien
-hinausgeht.
+markiert die absolute Untergrenze. Sie beantwortet, ob überhaupt etwas gelernt
+wurde, nicht aber, ob das Gelernte über triviale Strategien hinausgeht.
 
 Eine \textbf{Heuristik} nutzt einen Teil der Beobachtung nach einer fest
 programmierten Regel, ohne Parameter und ohne Training. Sie ist der schärfere
-Bezugspunkt, weil sie ausdrückt, welcher Anteil des Ergebnisses bereits ohne
-Lernen erreichbar ist. Übertrifft eine solche Heuristik den trainierten Agenten,
-ist nicht der Agent das Problem, sondern die Aufgabenstellung: Sie erfordert die
-Fähigkeit nicht, deren Nutzen gemessen werden soll.
+Bezugspunkt, weil sie ausdrückt, welcher Anteil des Ergebnisses schon ohne
+Lernen zu haben ist. Übertrifft eine solche Heuristik den trainierten Agenten,
+liegt das Problem nicht beim Agenten, sondern bei der Aufgabenstellung: Sie
+verlangt die Fähigkeit gar nicht, deren Nutzen wir messen wollen.
 
-Damit erhält die Referenzpolitik eine zweite Rolle, die über den Vergleich
-hinausgeht. Sie lässt sich als \emph{Kalibrierinstrument} einsetzen, mit dem
-sich die Schwierigkeit einer Umgebung vor jedem Training bestimmen lässt, und
-zwar in Sekunden statt in Trainingsstunden. Kirk et al.\ argumentieren in
-dieselbe Richtung, wenn sie feststellen, dass ein rein prozeduraler Ansatz beim
-Benchmark-Entwurf dem Fortschritt in der Generalisierungsforschung nicht
-förderlich ist: Ohne Instrument, das trennt, warum ein Verfahren gelingt oder
-scheitert, bleibt der Messwert allein wenig aussagekräftig
-\cite{kirk2023survey}.
+Damit bekommt die Referenzpolitik eine zweite Rolle, die über den Vergleich
+hinausgeht. Sie taugt als \emph{Kalibrierinstrument}, das die Schwierigkeit
+einer Umgebung vor jedem Training bestimmt, in Sekunden statt in
+Trainingsstunden. Kirk et al.\ argumentieren in dieselbe Richtung, wenn sie
+einen rein prozeduralen Ansatz beim Benchmark-Entwurf als hinderlich für den
+Fortschritt der Generalisierungsforschung bezeichnen: Ohne Instrument, das
+trennt, warum ein Verfahren gelingt oder scheitert, sagt der Messwert allein
+wenig \cite{kirk2023survey}.
 
 \section{Einordnung in verwandte Arbeiten}
 \label{sec:relatedwork}
@@ -1246,22 +1266,31 @@ evaluierte Welt und macht die Zielentfernung als kontrollierte Variable
 überhaupt erst nutzbar.
 
 \paragraph{Die Schwierigkeit steckt in der Struktur der Hindernisse.}
-Ein zweiter, in der Rückschau zentraler Punkt betrifft nicht die Lösbarkeit,
+Ein zweiter, in der Rückschau wichtiger Punkt betrifft nicht die Lösbarkeit,
 sondern die \emph{Art} der Hindernisse. In der PCG-Literatur ist es gerade die
 Glättungsstufe über zelluläre Automaten, die aus verstreutem Rauschen
-zusammenhängende, konkave Strukturen~-- Höhlen, Sackgassen, U-förmige Wände~--
-formt \cite{johnson2010cellular, shaker2016pcg}; erst solche Strukturen bringen
-eine rein reaktive, gedächtnislose Navigation zuverlässig zum Scheitern. Wird
-diese Stufe deaktiviert, verbleiben im Wesentlichen verstreute Einzelhindernisse
+zusammenhängende, konkave Strukturen formt: Höhlen, Sackgassen, U-förmige
+Wände \cite{johnson2010cellular, shaker2016pcg}. Erst solche Strukturen bringen
+eine rein reaktive, gedächtnislose Navigation zuverlässig zum Scheitern. Ohne
+diese Stufe verbleiben verstreute Einzelhindernisse
 (Tabelle~\ref{tab:worldgen_aktiv}), die ein Kompass-Folger auch ohne Gedächtnis
-weitgehend umgeht~-- was die hohe Erfolgsquote der ungelernten Referenzpolitik
-in Abschnitt~\ref{sec:baselines} unmittelbar erklärt. Eine frühere
-Auseinandersetzung mit genau dieser Stelle der Literatur hätte diesen
-Zusammenhang nahegelegt; er wurde in dieser Arbeit erst durch die nachträgliche
-Baseline-Kalibrierung sichtbar. Die daraus abgeleitete methodische Lehre~--
-die Schwierigkeit einer prozeduralen Umgebung mit einer ungelernten Heuristik
-zu \emph{kalibrieren, bevor} das eigentliche Training beginnt~-- ist in den
-Ausblick übernommen (Abschnitt~\ref{sec:ausblick}).
+weitgehend umgeht. Das erklärt die hohe Erfolgsquote der ungelernten
+Referenzpolitik in Abschnitt~\ref{sec:baselines} unmittelbar. Eine frühere
+Auseinandersetzung mit genau dieser Stelle der Literatur hätte den Zusammenhang
+nahegelegt; sichtbar wurde er erst durch die nachträgliche
+Baseline-Kalibrierung.
+
+Der Umkehrschluss trägt allerdings nicht, und das ist der lehrreichere Teil.
+Die Glättungsstufe in diesem Generator einzuschalten härtet die Welt nicht, es
+planiert sie: Wanddichte 0,037 statt 0,238, Umwegfaktor 1,001 statt 1,10
+(Tabelle~\ref{tab:geometrieprobe}). Was in der Literatur Höhlen formt, radiert
+hier die Wände weg, weil die Ausgangsdichte unter der Geburtsschwelle liegt.
+Publizierte PCG-Bausteine sind also nicht parameterfrei übertragbar. Welche
+Struktur ein zellulärer Automat erzeugt, entscheidet der Betriebspunkt der
+Stufe davor, nicht der Automat. Die methodische Lehre bleibt davon unberührt
+und ist in den Ausblick übernommen: die Schwierigkeit einer prozeduralen
+Umgebung mit einer ungelernten Heuristik \emph{kalibrieren, bevor} das
+eigentliche Training beginnt (Abschnitt~\ref{sec:ausblick}).
 
 \paragraph{Gedächtnis in teilbeobachtbaren Umgebungen.}
 Die Standardantwort auf partielle Beobachtbarkeit ist eine rekurrente Politik:
@@ -1319,7 +1348,7 @@ Kriterien (Abschnitt~\ref{sec:kriterienrevision}). Alle Vergleichsbedingungen
 laufen dort auf demselben Generator, mit derselben Metrik und demselben
 Eval-Protokoll.
 
-\section{Stoneforge: Implementierung von Spiel und Lernumgebung}
+\section{Implementierung des Spiels Stoneforge}
 \label{sec:umgebung}
 
 Stoneforge ist ein selbst entwickeltes, rundenbasiertes 2D-Spiel: ein
@@ -1328,14 +1357,20 @@ tatsächlich spielen kann, und eine Python-Anbindung über pybind11, über die e
 Lernverfahren \emph{dieselbe} Simulation ansteuert. Was der Agent erlebt, ist
 damit bis auf die Wahrnehmung identisch mit dem, was ein Spieler erlebt.
 
-Dieses Kapitel behandelt beide Hälften der Implementierung in der Reihenfolge,
-in der sie aufeinander aufbauen: zuerst das Spiel und seinen Weltgenerator
-(Abschnitte~\ref{sec:weltgenerator}--\ref{sec:client}), danach die
-Reinforcement-Learning-Umgebung, die darauf aufsetzt, samt Trainings-Pipeline
-und Monitoring. Beide Teile sind technische Ingenieursleistungen gleichen
-Gewichts und Bestandteil derselben Arbeit; die Trennung in \glqq Spiel\grqq{}
-und \glqq RL-Umgebung\grqq{} beschreibt die Zuständigkeit (Tabelle~\ref{tab:arbeitsteilung}),
-nicht eine Rangfolge.
+Die Implementierung ist auf zwei Kapitel verteilt, in der Reihenfolge, in der
+sie aufeinander aufbauen. Dieses Kapitel behandelt das Spiel: den
+Simulationskern, den Weltgenerator und den grafischen Client. Es endet mit
+einer Welt, die reproduzierbar, lösbar und in ihrer Zielentfernung steuerbar
+ist, aber von Reinforcement Learning noch nichts weiß.
+Kapitel~\ref{sec:rlumgebung} setzt darauf auf und macht daraus eine
+Lernumgebung.
+
+Beide Teile sind technische Ingenieursleistungen gleichen Gewichts und
+Bestandteil derselben Arbeit; die Trennung beschreibt die Zuständigkeit
+(Tabelle~\ref{tab:arbeitsteilung}), nicht eine Rangfolge. Der Schwerpunkt
+dieses Kapitels liegt auf dem Weltgenerator
+(Abschnitt~\ref{sec:weltgenerator}), weil er festlegt, wie die Welten
+aussehen, in denen später alles gemessen wird.
 
 \subsection{Technologie-Stack}
 \label{sec:technik}
@@ -1346,7 +1381,7 @@ Tabelle~\ref{tab:stack} listet die verwendeten Komponenten.
 
 \begin{table}[h]
 \centering
-\small
+\footnotesize
 \begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Komponente} & \textbf{Technologie} & \textbf{Zweck} \\
@@ -1374,47 +1409,434 @@ Konfiguration (\texttt{batch\_size}=8) liegt am unteren Ende dieser Spanne. Die
 verwendete Hardware und der zugehörige Benchmark sind in
 Anhang~\ref{sec:performance} dokumentiert.
 
-\subsection{Aufbau des Weltgenerators}
+\subsection{Die Bausteine: Tile, Chunk und Welt}
+\label{sec:bausteine}
+
+Bevor von Generierung die Rede sein kann, braucht es die drei Dinge, die
+erzeugt werden. Sie bauen streng aufeinander auf.
+
+\paragraph{Das Tile.} Die kleinste Einheit der Welt ist ein Feld auf einem
+ganzzahligen Gitter. Ein Tile trägt genau einen Typ aus einer Aufzählung von
+15 Werten (\texttt{TileType} in \texttt{types.hpp}): leer, Wand, Erz, Exit,
+Baum, Werkbank, Holzwand, Holzstamm und sieben biomspezifische
+Struktur-Tiles. Es gibt keine Höhe, keine Ebenen und keine Teilbelegung, ein
+Feld ist genau eine Sache.
+
+Jedem Typ ist ein \texttt{WorldObject} zugeordnet, das seine Eigenschaften
+kennt, darunter die für alles Weitere entscheidende Frage, ob man darüber
+laufen kann. Die Voreinstellung lautet \emph{nein}: Nur leere Felder und der
+Exit sind begehbar, alles andere blockiert. Das klingt nach einem Detail, hat
+aber Folgen bis in die Ergebnisse, denn Bäume und Erzadern sind damit
+genauso Hindernis wie Wände (Tabelle~\ref{tab:tilecensus}).
+
+\paragraph{Der Chunk.} Tiles werden nicht einzeln verwaltet, sondern in
+Blöcken von $8\times8$ Feldern. Ein Chunk ist ein flaches Array aus 64
+Tile-Typen plus einem Flag, ob er bereits erzeugt wurde. Mehr nicht.
+
+\paragraph{Die Welt.} \texttt{World} hält eine Hashtabelle von
+Chunk-Koordinate auf Chunk. Diese Tabelle ist zu Beginn leer und füllt sich
+erst, während gespielt wird: Jeder Zugriff auf ein Tile rechnet die
+Weltkoordinate in Chunk- und lokale Koordinate um, und findet sich der Chunk
+nicht in der Tabelle, wird er in diesem Moment erzeugt und abgelegt.
+Materialisiert wird also nur, was jemand tatsächlich ansieht.
+
+Daraus folgt die zentrale Eigenschaft des Generators, und sie ist bewusst so
+gebaut: Die Erzeugung eines Chunks hängt \emph{ausschließlich} vom Seed und
+seinen eigenen Koordinaten ab, von keinem anderen Chunk und von keinem
+Zustand. Der Generator ist eine reine Funktion
+\begin{equation}
+  (\mathit{seed}, c_x, c_y) \;\longmapsto\; \text{64 Tile-Typen}.
+\end{equation}
+Die Welt ist damit praktisch unbegrenzt, ohne je gespeichert zu werden, und
+zwei Durchläufe liefern denselben Chunk unabhängig davon, in welcher
+Reihenfolge der Spieler die Welt betreten hat.
+
+\paragraph{Warum das nicht nur elegant, sondern notwendig ist.} Genau diese
+Reproduzierbarkeit trägt später das Evaluationsprotokoll
+(Abschnitt~\ref{sec:evalprotokoll}). Testset~A besteht nicht aus gespeicherten
+Karten, sondern aus 50 Zahlen (Seeds 7000 bis 7049). Der Seed \emph{ist} die
+Welt. Nur weil derselbe Seed bitgenau dieselben Tiles liefert, lassen sich
+sieben Trainingsläufe auf demselben Testset vergleichen, lässt sich ein
+Trainingsseed sauber von einem Testseed trennen, und lässt sich eine Episode
+im grafischen Client exakt nachspielen. Ein Generator mit einem
+fortlaufenden Zufallsgenerator statt einer reinen Funktion würde all das
+zerstören, weil dann die Reihenfolge der Aufrufe das Ergebnis mitbestimmt.
+
+\subsection{Der Weltgenerator}
 \label{sec:weltgenerator}
 
-Der Generator setzt die in Abschnitt~\ref{sec:pcg_algorithmen} beschriebenen
-Verfahren in einer dreistufigen Pipeline je Chunk ($16\times16$ Tiles) um. Die
-Welt ist dabei nicht vorberechnet, sondern wird beim Betreten eines Chunks
-deterministisch aus Seed und Koordinaten erzeugt; sie ist damit theoretisch
-unbegrenzt und benötigt keinen gespeicherten Weltzustand.
+Damit ist die Frage gestellt, die dieser Abschnitt beantwortet: Wie werden aus
+einem Seed und zwei Chunk-Koordinaten 64 Tile-Typen? Die begrifflichen
+Grundlagen dazu (Hash- gegenüber Wertrauschen, Domain Warping, zelluläre
+Automaten, Breitensuche) stehen in Abschnitt~\ref{sec:pcg_algorithmen}; hier
+geht es darum, wie sie zusammengeschaltet sind.
 
-\begin{description}
-  \item[Stufe 0, Biomfeld.] Für jeden Chunk wird ein skalares Biomfeld aus
-    \emph{interpoliertem Wertrauschen} über einem groben Stützgitter bestimmt
-    (bilineare Interpolation mit Perlins Glättungsfunktion, zusätzlich
-    \emph{Domain Warping}, damit die Biomgrenzen nicht rechteckig verlaufen).
-    Sieben gleich breite Intervalle des Feldes ergeben die Biome Grasland,
-    Wald, Wüste, Bergland, Steppe, Tundra und Hölle.
-  \item[Stufe 1, Basisbelegung.] Jedes Tile erhält seinen Typ aus
-    \emph{Hash-Rauschen} über Weltkoordinaten, Seed und einem
-    merkmalsspezifischen \emph{Salt} (getrennte Felder für Dichte, Erz und
-    Bäume). Die Schwellwerte hängen vom Biom ab; der Wandanteil reicht von
-    7\,\% im Wald bis 25\,\% im Bergland. Vorgelagert ist eine Seenmaske, die
-    sich aus einer gewichteten Linearkombination zweier Rauschfelder ergibt,
-    \begin{equation}
-      \mathit{Score} = 0{,}75\,a + 0{,}25\,b,
-    \end{equation}
-    und eine Zelle oberhalb eines harten Cutoffs von $0{,}86$ als Wasser
-    ausweist. Seen sind dabei hindernisfreie Regionen und überschreiben die
-    Basisbelegung.
-  \item[Stufe 2, Zelluläre Glättung.] Optionaler zellulärer Automat über
-    der Moore-Nachbarschaft mit konfigurierbarer Geburts- und
-    Überlebensschwelle. Damit die Glättung an Chunk-Grenzen nicht springt,
-    wird ein Halo in Breite der Iterationszahl mitberechnet und anschließend
-    verworfen; das Ergebnis ist dadurch unabhängig von der Reihenfolge, in der
-    Chunks erzeugt werden.
-  \item[Stufe 3, Landmarken.] Mit einer festen Wahrscheinlichkeit von
-    $P = 0{,}10$ je Chunk wird eine biomspezifische Point-of-Interest-Struktur
-    gesetzt. Ihre Form stammt aus handgeschriebenen ASCII-Matrizen der Größe
-    $5\times5$, je eine pro Biom. Chunks, die Spawn oder Exit enthalten,
-    werden dabei übersprungen, damit die Strukturen weder den Start noch das
-    Ziel verbauen.
-\end{description}
+Der Einstieg ist \texttt{World::generateChunk()}, und die Funktion ist kurz
+genug, um sie ganz zu zeigen (Listing~\ref{lst:genchunk}). Sie ist die
+Landkarte für alles Weitere: Erst wird jedes der 64 Felder einzeln
+ausgewürfelt, dann optional geglättet, dann eventuell eine Landmarke
+eingestempelt. Mehr passiert nicht. Die Biomwahl steckt dabei in
+\texttt{sampleBaseTile} und wird gleich als eigene Stufe behandelt.
+
+\begin{lstlisting}[language=C++,caption={[Die Generator-Pipeline eines
+Chunks]Die vollständige Erzeugung eines Chunks
+(\texttt{World::generateChunk()}, \texttt{src/core/world.cpp}). Jedes Feld
+wird unabhängig aus seinen Weltkoordinaten bestimmt; nichts in dieser
+Funktion greift auf einen Nachbar-Chunk oder auf gespeicherten Zustand
+zu.},label={lst:genchunk}]
+void World::generateChunk(int cx, int cy, Chunk& chunk) const {
+    const auto& cfg = gameConfig().world;
+
+    // Stufe 0+1: Basisbelegung, Feld fuer Feld
+    for(int ly = 0; ly < kChunkSize; ++ly) {
+        for(int lx = 0; lx < kChunkSize; ++lx) {
+            const int wx = cx * kChunkSize + lx;   // lokal -> Weltkoordinate
+            const int wy = cy * kChunkSize + ly;
+            chunk.tiles[ly * kChunkSize + lx] = sampleBaseTile(wx, wy, cfg);
+        }
+    }
+    // Stufe 2: optionale Glaettung (in dieser Arbeit abgeschaltet)
+    runCellularSmoothingStage(cx, cy, chunk, cfg);
+    // Stufe 3: seltene Landmarke
+    placeBiomeStructure(cx, cy, chunk);
+}
+\end{lstlisting}
+
+\paragraph{Woher der Zufall kommt.} Alle Stufen ziehen ihre Zufallszahlen aus
+einer einzigen Funktion, \texttt{noise01(x, y, salt)}
+(Listing~\ref{lst:noise}). Sie tut nichts weiter, als ihre drei Argumente zu
+einer 64-Bit-Zahl zu verrühren und daraus einen Wert in $[0,1)$ zu machen: Die
+Koordinaten und der Seed werden mit großen ungeraden Konstanten multipliziert
+und per XOR verknüpft, dann läuft das Ergebnis durch einen Bit-Mixer, dessen
+Multiplikatoren aus SplitMix64 stammen \cite{steele2014splitmix}. Der Mixer
+sorgt dafür, dass sich benachbarte Eingaben auf völlig verschiedene Ausgaben
+verteilen. Die unteren 48 Bit ergeben, skaliert, die Zufallszahl.
+
+\begin{lstlisting}[language=C++,caption={[Die Rauschfunktion des
+Generators]Die zustandsfreie Rauschquelle des Generators
+(\texttt{src/core/world.cpp}). Der Rückgabewert hängt ausschließlich von den
+Argumenten ab, nicht davon, wann oder wie oft die Funktion aufgerufen
+wird.},label={lst:noise}]
+double World::noise01(int worldX, int worldY, std::uint64_t salt) const {
+    std::uint64_t value = static_cast<std::uint64_t>(worldX) * 0x9e3779b185ebca87ULL;
+    value ^= static_cast<std::uint64_t>(worldY) * 0xc2b2ae3d27d4eb4fULL;
+    value ^= seed_ * 0x165667b19e3779f9ULL;
+    value ^= salt;
+    value = mix(value);   // SplitMix64-Finalizer
+
+    constexpr double kScale = 1.0 / static_cast<double>(0xFFFFFFFFFFFFULL);
+    return static_cast<double>(value & 0xFFFFFFFFFFFFULL) * kScale;
+}
+\end{lstlisting}
+
+Der Unterschied zu einem gewöhnlichen Zufallszahlengenerator ist der Kern der
+Sache. Ein solcher Generator besitzt einen Zustand und liefert seine Werte in
+einer festen Reihenfolge; wer den tausendsten Wert braucht, muss die 999
+davor ziehen. Damit hinge die Welt davon ab, in welcher Reihenfolge man ihre
+Chunks erzeugt, und die in Abschnitt~\ref{sec:bausteine} begründete
+Reproduzierbarkeit wäre dahin. \texttt{noise01} hat keinen Zustand. Der Wert
+eines Feldes hängt nur von dessen Koordinaten ab, ist also jederzeit,
+beliebig oft und in beliebiger Reihenfolge neu berechenbar, immer mit
+demselben Ergebnis.
+
+Das dritte Argument, der \emph{Salt}, ist eine feste Konstante je Merkmal. Er
+fließt in den Hash ein und erzeugt so aus derselben Koordinate mehrere
+voneinander unabhängige Rauschfelder. Der Generator hält getrennte Salts für
+Wanddichte, Erz und Bäume bereit. Ohne sie lägen alle drei Merkmale an exakt
+denselben Stellen, weil sie dieselbe Zahl auswerten würden.
+
+Damit ist auch schon gesagt, welche Art von Rauschen hier vorliegt: Es ist
+\emph{Hash-Rauschen} im Sinne von Abschnitt~\ref{sec:pcg_algorithmen}, also
+unkorreliertes weißes Rauschen. Nachbarfelder wissen nichts voneinander.
+Abbildung~\ref{fig:noisevergleich} zeigt, was das für die Form der Welt
+bedeutet, und der Unterschied ist drastisch: Derselbe Schwellwert schneidet aus
+Hash-Rauschen verstreute Einzelfelder, aus interpoliertem Wertrauschen dagegen
+zusammenhängende Barrieren. Diese Eigenschaft wird uns am Ende des Abschnitts
+wieder einholen.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\textwidth]{figures/fig_noise_vergleich.pdf}
+\caption[Hash-Rauschen gegenüber interpoliertem Wertrauschen]{Warum die Wahl der
+Rauschquelle über die Form der Welt entscheidet. Links das Hash-Rauschen aus
+Listing~\ref{lst:noise}, bei dem jedes Feld unabhängig aus seinen Koordinaten
+berechnet wird; rechts interpoliertes Wertrauschen über einem groben
+Stützgitter. Oben die rohen Felder, unten dasselbe Feld nach demselben
+Schwellwert als Hindernis gelesen. Aus dem Hash-Rauschen entstehen verstreute
+Einzelhindernisse, die man einfach umgeht; erst die Interpolation erzeugt
+zusammenhängende Barrieren, die einen Umweg erzwingen. Der Generator nutzt
+Hash-Rauschen für die Belegung der Felder (Stufe 1) und interpoliertes
+Wertrauschen nur für das Biomfeld (Stufe 0). Beide Felder mit
+\texttt{scripts/plot\_worldgen.py} aus der Rauschfunktion des Kerns erzeugt.}
+\label{fig:noisevergleich}
+\end{figure}
+
+\subsubsection*{Stufe 0: Welches Biom hat dieser Chunk?}
+
+Zuerst bekommt der \emph{ganze Chunk} ein Biom, nicht jedes Feld einzeln. Das
+ist eine bewusste Vergröberung: Sie hält die Landschaft zusammenhängend, statt
+Wald und Wüste feldweise abwechseln zu lassen.
+
+Für das Hash-Rauschen aus Listing~\ref{lst:noise} allein wäre das nicht zu
+haben, denn es liefert für benachbarte Chunks völlig unabhängige Werte. Die
+Stufe baut deshalb daraus \emph{Wertrauschen}
+(Abschnitt~\ref{sec:pcg_algorithmen}): Sie wertet \texttt{noise01} nur an den
+Ecken eines groben Stützgitters aus und interpoliert dazwischen bilinear.
+Damit die Übergänge nicht als Gitterkanten sichtbar werden, läuft der
+Interpolationsparameter zuvor durch Perlins Glättungsfunktion
+$3t^2 - 2t^3$ \cite{perlin1985image}. Benachbarte Chunks bekommen so ähnliche
+Werte, und es entstehen Regionen statt Flimmern.
+
+Darüber liegen zwei weitere Kunstgriffe (Listing~\ref{lst:biomefield}). Erstens
+werden drei solcher Felder mit steigender Frequenz gewichtet addiert
+($0{,}62 : 0{,}28 : 0{,}10$); das grobe Feld gibt die Grundform vor, die
+feineren rauen die Ränder auf. Zweitens \emph{Domain Warping}: Bevor das Feld
+ausgewertet wird, verschieben zwei weitere Rauschfelder die Abtastkoordinate
+selbst. Ohne diesen Schritt lägen die Biomgrenzen erkennbar am Stützgitter
+und sähen rechteckig aus.
+
+\begin{lstlisting}[language=C++,caption={[Aufbau des Biomfelds]Kern der Stufe 0
+(\texttt{World::biomeFieldForChunk()}, \texttt{src/core/world.cpp}, gekürzt).
+\texttt{sampleValue} ist das interpolierte Wertrauschen; \texttt{warpX} und
+\texttt{warpY} verschieben die Abtastkoordinate, bevor die drei Oktaven
+überlagert werden.},label={lst:biomefield}]
+double x = static_cast<double>(cx) * 0.22;   // Chunk- -> Feldkoordinate
+double y = static_cast<double>(cy) * 0.22;
+
+// Domain Warping: die Abtastkoordinate selbst verrauschen
+const double warpX = sampleValue(x * 0.57 + 19.3, y * 0.57 - 7.1, ...);
+const double warpY = sampleValue(x * 0.57 - 11.8, y * 0.57 + 13.4, ...);
+x += (warpX - 0.5) * 2.8;
+y += (warpY - 0.5) * 2.8;
+
+// Drei Oktaven: grobe Form + zwei feinere Detailebenen
+const double n1 = sampleValue(x,             y,             ...);
+const double n2 = sampleValue(x * 2.1 - 3.7, y * 2.1 + 1.9, ...);
+const double n3 = sampleValue(x * 4.2 + 8.4, y * 4.2 - 5.6, ...);
+
+return std::clamp(n1 * 0.62 + n2 * 0.28 + n3 * 0.10, 0.0, 1.0);
+\end{lstlisting}
+
+Der Rückgabewert liegt in $[0,1)$ und wird in sieben gleich breite Intervalle
+geschnitten. Diese ergeben die Biome Grasland, Wald, Wüste, Bergland, Steppe,
+Tundra und Hölle. Weil die Chunk-Koordinaten mit $0{,}22$ skaliert eingehen,
+verändert sich das Feld nur langsam: Ein Biom erstreckt sich typischerweise
+über vier bis fünf Chunks, also rund 36 Felder, und ist damit deutlich größer
+als das $15\times15$-Sichtfenster eines Agenten. Ein Agent sieht also fast nie
+eine Biomgrenze, sondern immer nur eine Landschaft.
+
+\subsubsection*{Stufe 1: Was liegt auf diesem einzelnen Feld?}
+
+Jetzt erst wird Feld für Feld entschieden, und hier fällt die Entscheidung, die
+für die Navigation zählt: Hindernis oder frei. Der Generator zieht für jedes
+Feld drei unabhängige Rauschwerte, einen für Wanddichte, einen für Erz, einen
+für Bäume, und vergleicht jeden mit einem Schwellwert, der vom Biom des Chunks
+abhängt. Die Schwellwerte stehen vollständig in Tabelle~\ref{tab:biome}, die
+Entscheidungslogik in Listing~\ref{lst:basetile}.
+
+\begin{lstlisting}[language=C++,caption={[Belegung eines einzelnen Feldes]Die
+Entscheidung über ein einzelnes Feld (\texttt{World::sampleBaseTile()},
+\texttt{src/core/world.cpp}, gekürzt). Die Reihenfolge der vier Prüfungen ist
+die Regel: See schlägt alles, Erz überschreibt bedingungslos, ein Baum wächst
+nur auf einem bis dahin leeren Feld.},label={lst:basetile}]
+const double density = noise01(worldX, worldY, cfg.densitySalt);
+const double ore     = noise01(worldX, worldY, cfg.oreSalt);
+const double trees   = noise01(worldX, worldY, cfg.treeSalt);
+// wallThreshold / oreThreshold / treeThreshold: je nach Biom gesetzt
+
+TileType tile = TileType::Empty;
+
+// 1. Seen sind hindernisfrei und schlagen alles Weitere
+if(lakeMaskAt(worldX, worldY)) { return TileType::Empty; }
+// 2. Wand
+if(density < wallThreshold)    { tile = TileType::Wall; }
+// 3. Erz, nur im Bergland; ueberschreibt auch eine Wand
+if(biomeTag == 3 && ore < oreThreshold) { tile = TileType::Resource; }
+// 4. Baum, nur auf noch leerem Feld
+if(treeThreshold > 0.0 && tile == TileType::Empty && trees < treeThreshold) {
+    tile = TileType::Tree;
+}
+return tile;
+\end{lstlisting}
+
+Zwei Dinge daran sind leicht zu übersehen. Erstens ist die Reihenfolge der
+Prüfungen selbst eine Regel und kein Implementierungsdetail: Erz wird
+bedingungslos gesetzt und kann eine bereits bestimmte Wand ersetzen, ein Baum
+dagegen nur dort wachsen, wo bis dahin nichts liegt. Zweitens ist
+\texttt{oreThreshold} für sechs der sieben Biome wirkungslos, weil die Prüfung
+zusätzlich \texttt{biomeTag == 3} verlangt. Erz gibt es ausschließlich im
+Bergland; die übrigen Zeilen der Erzspalte in Tabelle~\ref{tab:biome} laufen
+ins Leere.
+
+Die vorgelagerte Seenmaske ergibt sich aus einer gewichteten Linearkombination
+zweier Rauschfelder,
+\begin{equation}
+  \mathit{Score} = 0{,}75\,a + 0{,}25\,b,
+\end{equation}
+und weist eine Zelle oberhalb eines harten Cutoffs von $0{,}86$ als Wasser aus.
+Beide Felder werden dabei auf ganzzahlig geteilten Koordinaten ausgewertet
+($x/7$ bzw.\ $x/3$), sind also blockweise konstant; die Seen sind deshalb
+grobkörnig und nicht rund. Sie sind hindernisfrei und überschreiben die
+Basisbelegung vollständig.
+
+\paragraph{Ein Chunk, Feld für Feld.} Wie das konkret aussieht, zeigt
+Tabelle~\ref{tab:trace} an einer echten Zeile aus einer Eval-Welt. Alle acht
+Felder liegen im selben Chunk und damit im selben Biom, sehen also dieselben
+Schwellwerte; allein die drei Rauschwerte unterscheiden sie.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+\textbf{Feld} & \textbf{Dichte} & \textbf{Erz} & \textbf{Baum} & \textbf{Ergebnis} \\
+ & \tiny{$<0{,}25$?} & \tiny{$<0{,}10$?} & \tiny{$<0{,}02$?} & \\
+\midrule
+$(-32,-31)$ & 0,330 & \textbf{0,002} & 0,622 & Erz \\
+$(-31,-31)$ & 0,401 & 0,249 & \textbf{0,013} & Baum \\
+$(-30,-31)$ & 0,712 & 0,164 & 0,537 & leer \\
+$(-29,-31)$ & \textbf{0,078} & 0,436 & 0,378 & Wand \\
+$(-28,-31)$ & 0,357 & 0,994 & 0,217 & leer \\
+$(-27,-31)$ & 0,370 & 0,376 & 0,154 & leer \\
+$(-26,-31)$ & \textbf{0,186} & 0,149 & 0,064 & Wand \\
+$(-25,-31)$ & 0,559 & 0,481 & 0,579 & leer \\
+\bottomrule
+\end{tabular}
+\caption[Belegung einer Chunk-Zeile Feld für Feld]{Eine vollständige
+Chunk-Zeile aus der Welt zu Seed 7000, Chunk $(-4,-4)$, Biom Bergland
+(Schwellwerte 0,25 / 0,10 / 0,02). Fett gesetzt ist jeweils der Rauschwert, der
+seinen Schwellwert unterschreitet und damit die Belegung auslöst. Feld
+$(-32,-31)$ zeigt die Vorrangregel: Die Dichte 0,330 hätte keine Wand erzeugt,
+der Erzwert 0,002 setzt trotzdem Erz. Werte reproduziert mit einem
+Nachbau des Generators in Python, der auf 3\,663 geprüften Feldern dieser Welt
+ausnahmslos dieselben Tile-Typen liefert wie der C++-Kern.}
+\label{tab:trace}
+\end{table}
+
+\subsubsection*{Stufe 2: Glättung, in dieser Arbeit abgeschaltet}
+
+Auf die Basisbelegung könnte ein zellulärer Automat folgen, der verstreute
+Einzelhindernisse zu zusammenhängenden Formationen verschmilzt
+(Moore-Nachbarschaft, Geburts- und Überlebensschwelle,
+Abschnitt~\ref{sec:pcg_algorithmen}). Er ist implementiert, in allen
+berichteten Läufen aber abgeschaltet; Abbildung~\ref{fig:pcgpipeline} zeigt ihn
+deshalb gestrichelt. Warum das Einschalten die Welten nicht härter, sondern
+leerer macht, steht weiter unten.
+
+Seine Konstruktion verdient trotzdem eine Bemerkung, weil sie ein echtes
+Problem löst. Ein Automat braucht die acht Nachbarn jeder Zelle. Am Chunk-Rand
+liegen die im Nachbar-Chunk, und den zu erzeugen würde eine Abhängigkeit
+zwischen Chunks einführen und damit genau die Reinheit zerstören, auf der die
+Reproduzierbarkeit beruht. Die Stufe berechnet deshalb einen \emph{Halo} in
+Breite der Iterationszahl aus der Basisbelegung mit, lässt den Automaten
+darüber laufen und verwirft ihn danach. Das Ergebnis hängt so weiterhin nur von
+Seed und Chunk-Koordinaten ab.
+
+\subsubsection*{Stufe 3: Landmarken}
+
+Zuletzt setzt der Generator mit einer Wahrscheinlichkeit von $P = 0{,}10$ je
+Chunk eine biomspezifische Landmarke. Ihre Form stammt aus handgeschriebenen
+ASCII-Matrizen der Größe $5\times5$, je eine pro Biom, die an einer aus dem
+Rauschen bestimmten Position im Chunk eingestempelt wird. Bei einer
+Chunk-Kantenlänge von 8 bleiben dafür drei Felder Spielraum in jeder Richtung.
+Chunks, die Spawn oder Exit enthalten, überspringt die Stufe, damit die
+Strukturen weder den Start noch das Ziel verbauen.
+
+\paragraph{Die Pipeline an einer echten Welt.} Abbildung~\ref{fig:worldgenreal}
+zeigt alle Stufen nebeneinander an einer der 50 Welten des Testsets. Links das
+Biomfeld, dessen Blöcke sichtbar an den Chunk-Grenzen ausgerichtet sind und
+dessen Regionen sich über mehrere Chunks erstrecken. In der Mitte die
+Basisbelegung: Der Biomwechsel ist als Dichtewechsel zu erkennen, im Bergland
+liegen sichtbar mehr Wände und Erz als in der Tundra. Rechts die fertige Welt
+mit Landmarken, Spawn, Exit und dem kürzesten Weg.
+
+Dieser Weg ist die eigentliche Aussage der Abbildung. Er ist eine grobe Treppe
+zwischen zwei Punkten und weicht kaum einmal seitlich aus. Ein knappes Viertel
+der Felder ist blockiert, und trotzdem gibt es nichts zu umrunden, weil die
+Hindernisse einzeln stehen statt Wände zu bilden. Genau das quantifiziert der
+Umwegfaktor weiter unten.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_worldgen_pipeline.pdf}
+\caption[Die Generator-Pipeline an einer echten Welt]{Die Stufen der
+Weltgenerierung an der Welt zu Seed 7000, einem der 50 Seeds des Testsets~A,
+in einem $91\times91$-Ausschnitt um den Spawn. \textbf{Links:} das Biomfeld aus
+Stufe 0, konstant je Chunk, mit eingezeichnetem $8\times8$-Chunk-Raster.
+\textbf{Mitte:} die Basisbelegung aus Stufe 1, wobei jedes Feld allein aus
+seinen Koordinaten entsteht. \textbf{Rechts:} die fertige Welt inklusive
+Landmarken (violett), mit Spawn, Exit und dem kürzesten Weg von 43 Schritten.
+Grau sind Wände, grün Bäume, ocker Erz; alle drei blockieren
+(Tabelle~\ref{tab:tilecensus}). Erzeugt mit
+\texttt{scripts/plot\_worldgen.py}. Die Tile-Darstellungen stammen direkt aus
+dem C++-Kern; das Biomfeld ist im Python-Binding nicht zugänglich und wurde aus
+einem Nachbau der Generatorfunktionen berechnet, der die Tile-Typen des Kerns
+auf allen 8\,115 geprüften Feldern dieses Ausschnitts exakt reproduziert.}
+\label{fig:worldgenreal}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+\textbf{Biom} & \textbf{Wand} & \textbf{Erz} & \textbf{Baum} & \textbf{Charakter} \\
+\midrule
+Wald      & 0,07 & 0,015 & 0,23 & dicht bewachsen, kaum Stein \\
+Grasland  & 0,10 & 0,03  & 0,05 & offen \\
+Steppe    & 0,11 & 0,03  & 0,09 & offen, etwas mehr Bewuchs \\
+Tundra    & 0,14 & 0,05  & 0,07 & ausgeglichen \\
+Wüste     & 0,19 & 0,08  & 0,00 & steinig, baumlos \\
+Hölle     & 0,23 & 0,09  & 0,06 & steinig \\
+Bergland  & 0,25 & 0,10  & 0,02 & dichtester Fels, \emph{einziges Erzbiom} \\
+\bottomrule
+\end{tabular}
+\caption[Biomabhängige Schwellwerte der Basisbelegung]{Schwellwerte der Stufe 1
+je Biom (\texttt{World::sampleBaseTile()}). Ein Feld wird zur Wand, wenn sein
+Dichte-Rauschwert unter der Wandschwelle liegt, entsprechend für Erz und Bäume
+mit ihren eigenen Rauschfeldern. Erz entsteht ausschließlich im Bergland; die
+Erzspalte der übrigen Biome bleibt wirkungslos. Die Werte sind in
+\texttt{world.cpp} hartkodiert und über \texttt{game\_config.json} nicht
+erreichbar.}
+\label{tab:biome}
+\end{table}
+
+\paragraph{Was am Ende tatsächlich im Weg steht.} Die Schwellwerte in
+Tabelle~\ref{tab:biome} sind Parameter, keine Messwerte, und sie beschreiben
+allein die Wände. Wie viel eine erzeugte Welt dem Spieler wirklich in den Weg
+legt, ist eine andere Zahl: Weil Bäume, Erz und Landmarken ebenfalls
+blockieren, liegt der Anteil unpassierbarer Felder deutlich über jeder
+einzelnen Wandschwelle. Tabelle~\ref{tab:tilecensus} schlüsselt ihn auf. Die
+Zusammensetzung erklärt zugleich, warum die Wandschwellen im Bereich 0,07 bis
+0,25 liegen, die weiter unten diskutierte Hindernisdichte aber bei rund 0,24:
+Es sind zwei verschiedene Größen, und nur die zweite entscheidet über die
+Geometrie der Wege.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Tile} & \textbf{Anteil} & \textbf{begehbar} \\
+\midrule
+Leer            & 0,7511 & ja \\
+Wand            & 0,1562 & nein \\
+Baum            & 0,0421 & nein \\
+Erz             & 0,0322 & nein \\
+Landmarken      & 0,0183 & nein \\
+Exit            & 0,0002 & ja \\
+\midrule
+\textbf{unpassierbar gesamt} & \textbf{0,2487} & \\
+\bottomrule
+\end{tabular}
+\caption[Tile-Zusammensetzung der Eval-Welten]{Zusammensetzung der erzeugten
+Welten, gezählt über die 100 Seeds beider Eval-Sets in einem
+$81\times81$-Fenster um den Spawn (656\,100 Tiles). Nur ein knappes Sechstel
+der Welt besteht aus Wänden; Bäume und Erz steuern zusammen weitere sieben
+Prozentpunkte zur Undurchdringlichkeit bei. Die Landmarkenzeile fasst die
+sieben biomspezifischen Struktur-Tiles zusammen.}
+\label{tab:tilecensus}
+\end{table}
 
 \begin{figure}[h]
 \centering
@@ -1447,29 +1869,33 @@ unbegrenzt und benötigt keinen gespeicherten Weltzustand.
 \end{tikzpicture}%
 }
 \caption[Pipeline der Weltgenerierung je Chunk]{Die vierstufige Pipeline der
-Weltgenerierung, je Chunk ($16{\times}16$ Tiles) deterministisch aus Seed und
+Weltgenerierung, je Chunk ($8{\times}8$ Tiles) deterministisch aus Seed und
 Koordinaten berechnet. Stufe 2 ist in der berichteten Konfiguration
 abgeschaltet (gestrichelt, Tabelle~\ref{tab:worldgen_aktiv}); die Welten
-entstehen also allein aus den Stufen 0, 1 und 3.}
+entstehen also allein aus den Stufen 0, 1 und 3. Die Exit-Platzierung
+(Abschnitt~\ref{sec:loesbarkeit}) ist der Pipeline nachgelagert und arbeitet
+nicht mehr chunkweise, sondern auf der bereits erzeugten Welt.}
 \label{fig:pcgpipeline}
 \end{figure}
 
-\noindent
-Ergänzend erzwingt der Generator freie Radien um Spawn und Exit
-($2$ bzw.\ $1$ Tile), damit weder der Agent noch das Ziel in einem Hindernis
-liegt. Die Biomzuordnung selbst erfolgt über eine feste Sieben-Intervall-Teilung
-des Biomfeldes; sie ist im Code hinterlegt und bewusst nicht über die
-Konfigurationsdatei steuerbar. Ein Audit der Konfiguration entfernte an dieser
-Stelle mehrere Schlüssel (\texttt{coldBiomeMax}, \texttt{warmBiomeMax} und die
-\texttt{moss}-Schwellwerte), die zwar eingelesen, durch die feste Binning-Logik
-aber nie ausgewertet wurden und so ein wirkungsloses Tuning nahelegten
-(Abschnitt~\ref{sec:v11}).
+\paragraph{Nachbearbeitung und eine Grenze der Konfigurierbarkeit.} Nach den
+vier Stufen räumt der Generator noch feste Radien um Spawn und Exit frei
+($5\times5$ bzw.\ $3\times3$ Felder), damit weder Spieler noch Ziel in einem
+Hindernis stecken. Die Biomzuordnung dagegen ist starr: Die
+Sieben-Intervall-Teilung des Biomfeldes steht im Code und lässt sich über
+\texttt{game\_config.json} nicht verändern. Ein Audit der Konfiguration
+entfernte hier mehrere Schlüssel (\texttt{coldBiomeMax}, \texttt{warmBiomeMax}
+und die \texttt{moss}-Schwellwerte), die zwar eingelesen, durch die feste
+Binning-Logik aber nie ausgewertet wurden. Sie versprachen ein Tuning, das
+faktisch wirkungslos war (Abschnitt~\ref{sec:v11}). Dasselbe gilt für die
+Schwellwerte in Tabelle~\ref{tab:biome}: Wer die Welten härter machen will,
+muss den Generator anfassen, nicht die Konfiguration.
 
-Die Exit-Platzierung und die Lösbarkeitssicherung setzen darauf auf und sind in
-Abschnitt~\ref{sec:loesbarkeit} beschrieben. Der Generator implementiert
-darüber hinaus die in Abschnitt~\ref{sec:pcg_algorithmen} genannten
-Sicherheitsnetze. Für die Bewertung der Ergebnisse ist entscheidend, welche
-davon in den berichteten Läufen tatsächlich wirksam waren
+Die Exit-Platzierung und die Lösbarkeitssicherung setzen auf der so erzeugten
+Welt auf und sind in Abschnitt~\ref{sec:loesbarkeit} beschrieben. Der Generator
+implementiert darüber hinaus die in Abschnitt~\ref{sec:pcg_algorithmen}
+genannten Sicherheitsnetze. Für die Bewertung der Ergebnisse ist entscheidend,
+welche davon in den berichteten Läufen tatsächlich wirksam waren
 (Tabelle~\ref{tab:worldgen_aktiv}).
 
 \begin{table}[htbp]
@@ -1498,27 +1924,211 @@ Mechanismen und ihr Status in der berichteten Konfiguration (Quelle:
 folgt eine Eigenschaft der Welten, die für die Bewertung in
 Abschnitt~\ref{sec:baselines} unmittelbar relevant ist: Da die Glättung
 abgeschaltet ist, stammt die Hindernisverteilung ausschließlich aus
-\emph{unkorreliertem} Hash-Rauschen. Die Wandtiles sind damit statistisch
-unabhängig voneinander verteilt und bilden überwiegend verstreute
-Einzelhindernisse statt zusammenhängender Barrieren
-(Abbildung~\ref{fig:pomdp_schema}). Genau diese Struktur macht die Welten
+\emph{unkorreliertem} Hash-Rauschen. Jedes Feld entscheidet für sich, ohne
+seine Nachbarn zu kennen, denn \texttt{noise01} ist genau dafür gebaut. Die
+Hindernisse sind damit statistisch unabhängig voneinander verteilt und bilden
+überwiegend verstreute Einzelfelder statt zusammenhängender Barrieren
+(Abbildung~\ref{fig:pomdp_schema}). Was den Generator reproduzierbar macht,
+kostet ihn also zugleich jede Struktur: Genau die Eigenschaft, die
+Abschnitt~\ref{sec:bausteine} als notwendig begründet, verhindert hier
+Sackgassen. Genau diese Struktur macht die Welten
 \glqq offen\grqq{} im Sinne von Abschnitt~\ref{sec:baselines}: Sackgassen, die
 Gedächtnis erfordern würden, entstehen selten, und eine ungerichtete
-Zufallsbewegung verlässt sie zuverlässig. Die Glättungsstufe ist damit
-\emph{der} naheliegende Hebel für die im Ausblick vorgeschlagene Härtung der
-Umgebung, sie ist bereits implementiert und muss nur aktiviert und
-kalibriert werden (Abschnitt~\ref{sec:ausblick}).
+Zufallsbewegung verlässt sie zuverlässig.
 
-\subsection{Garantierte Lösbarkeit}
+\paragraph{Wie offen die Welten sind, misst der Umwegfaktor.}
+Quantifizieren lässt sich diese Offenheit über das Verhältnis aus BFS-Laufweg
+und Manhattan-Distanz zwischen Spawn und Exit. Bei 1,0 ist der kürzeste Weg die
+Luftlinie, es gibt also nichts zu umrunden. Über beide Eval-Sets gemessen
+(100 Seeds, \texttt{scripts/probe\_world\_geometry.py}) liegt der Faktor bei
+\textbf{1,10}, bei einer Hindernisdichte von 0,238
+(Tabelle~\ref{tab:tilecensus}): Der kürzeste Weg ist zehn Prozent
+länger als die Luftlinie. Ein knappes Viertel der Welt ist blockiert, und
+trotzdem gibt es fast nichts zu umrunden. Das ist die quantitative Ursache dafür, dass ein
+vierzeiliger Kompass-Folger 92\,\% erreicht (Abschnitt~\ref{sec:baselines}).
+Nicht die Politik ist stark, die Geometrie ist schwach.
+
+\paragraph{Die naheliegende Reparatur funktioniert nicht.}
+Es liegt nahe, dagegen die vorhandene Glättungsstufe einzuschalten; in der
+PCG-Literatur ist gerade sie es, die aus verstreutem Rauschen konkave
+Strukturen formt \cite{johnson2010cellular, shaker2016pcg}. Für diesen
+Generator haben wir das nachgemessen, und es trifft nicht zu. Mit den
+hinterlegten Regeln (Geburt ab 5, Überleben ab 4, zwei Iterationen) fällt die
+Wanddichte von 0,238 auf 0,037 und der Umwegfaktor auf 1,001. Die Welt wird
+zur leeren Ebene statt zum Labyrinth. Schuld ist die niedrige Ausgangsdichte:
+Bei 24\,\% Wandanteil hat kaum ein Wandtile die geforderten fünf soliden
+Nachbarn, also stirbt fast jede Wand und keine wird geboren. Wer die Stufe
+aktiviert, treibt die Erfolgsquote der ungelernten Heuristik nach oben statt
+sie einbrechen zu lassen.
+
+Der Regelsweep in Tabelle~\ref{tab:geometrieprobe} zeigt darüber hinaus einen
+harten Zielkonflikt. Jede Kombination, die den Umwegfaktor spürbar hebt,
+zerstört die Lösbarkeit; alles, was bei 50 von 50 lösbaren Welten bleibt, liegt
+beim Umweg im Rauschen der Referenz. Die Ursache liegt außerhalb des Automaten.
+\texttt{enableFloodFillValidation} und \texttt{enableMacroGraphPrecheck} stehen
+beide auf \texttt{false} (\texttt{assets/base/game\_config.json}), und die
+Basisdichte ist in \texttt{World::sampleBaseTile()} hartkodiert. Der Automat
+zählt Nachbarn, von Erreichbarkeit weiß er nichts. Eine Härtung der Umgebung
+ist deshalb kein Konfigurationsschalter, sondern ein Eingriff in den Generator
+(Abschnitt~\ref{sec:ausblick}).
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Regel der Glättungsstufe} & \textbf{lösbar} & \textbf{Wanddichte} &
+\textbf{BFS} & \textbf{Umweg} & \textbf{p90} \\
+\midrule
+aus (berichtete Konfiguration) & 50/50 & 0,240 & 40,1 & \textbf{1,123} & 1,312 \\
+\addlinespace
+an, 2 Iter., $b{=}5$ / $s{=}4$ (Default) & 50/50 & 0,036 & 40,1 & 1,001 & 1,000 \\
+an, 2 Iter., $b{=}4$ / $s{=}3$ & 50/50 & 0,169 & 40,1 & 1,101 & 1,327 \\
+an, 1 Iter., $b{=}3$ / $s{=}3$ & 50/50 & 0,271 & 39,8 & 1,145 & 1,637 \\
+an, 2 Iter., $b{=}3$ / $s{=}2$ & 41/50 & 0,447 & 39,4 & 1,158 & 1,357 \\
+an, 4 Iter., $b{=}3$ / $s{=}2$ & 19/50 & 0,699 & 39,7 & 1,173 & 1,607 \\
+an, 2 Iter., $b{=}2$ / $s{=}1$ & \textbf{3/50} & 0,875 & 35,3 & \textbf{1,636} & 2,299 \\
+\bottomrule
+\end{tabular}
+\caption[Regelsweep der zellulären Glättung]{Regelsweep der zellulären
+Glättungsstufe auf Testset~A (Seeds 7000--7049), gemessen mit
+\texttt{scripts/probe\_world\_geometry.py -{}-sweep}. $b$ ist die Geburts-, $s$
+die Überlebensschwelle. Der Umwegfaktor ist das Mittel aus BFS-Laufweg geteilt
+durch Manhattan-Distanz über die lösbaren Seeds. Die einzige Zeile mit deutlich
+erhöhtem Umweg ist zugleich die, in der nur noch 3 von 50 Welten lösbar sind.}
+\label{tab:geometrieprobe}
+\end{table}
+
+\subsection{Exit-Platzierung und garantierte Lösbarkeit}
 \label{sec:loesbarkeit}
 
-Die Exit-Platzierung wählt Kandidaten per Flood-Fill vom Spawn aus
-ausschließlich über \emph{begehbare} Tiles; jeder mögliche Exit ist damit per
-Konstruktion erreichbar. Empirisch bestätigt: 3\,150 geprüfte Seeds (inkl.\
-aller Eval-Sets und Trainingsbereiche) sowie eine erneute Messung am 06.07.2026
-(150/150) ergaben \textbf{100\,\% Lösbarkeit}. Ein BFS-Oracle-Agent erreicht den
-Exit auf allen Test-Seeds in exakt der BFS-Distanz und bestätigt damit die
-gesamte Kette aus Weltgenerierung, Bewegungsmechanik und Reward-Signal.
+\paragraph{Warum das überhaupt eine Rolle spielt.} Die zentrale Messgröße
+dieser Arbeit ist die Erfolgsquote: der Anteil der Welten, in denen der Agent
+den Exit erreicht. Diese Zahl ist nur dann interpretierbar, wenn jede
+gescheiterte Episode auch tatsächlich am Agenten lag. Erzeugt der Generator
+Welten, in denen der Exit hinter einer geschlossenen Wandbarriere liegt, mischt
+sich in jede Erfolgsquote ein unbekannter Anteil unlösbarer Karten. Ein Modell
+mit 65\,\% wäre dann von einem Modell mit 80\,\% nicht mehr zu unterscheiden,
+wenn 15\,\% der Welten von vornherein niemand lösen kann. Der Generator muss
+also \emph{jede} Welt lösbar erzeugen, und zwar nicht \glqq meistens\grqq{},
+sondern immer.
+
+\paragraph{Der übliche Weg und warum wir ihn nicht gehen.} Naheliegend wäre
+Rejection Sampling: Welt erzeugen, Exit zufällig setzen, Erreichbarkeit per
+Flood-Fill prüfen, bei Misserfolg neu würfeln. Das ist teuer, weil der
+Verwerfungsanteil mit der Wanddichte steigt, und es hat keine obere
+Laufzeitschranke. Die verbreitete Alternative, das nachträgliche Freiräumen
+eines Korridors zwischen Spawn und Exit (\texttt{forceGuaranteedPath}), ist
+noch schlechter: Sie hinterlässt einen geraden, ein Tile breiten Gang durch die
+Welt. Ein Agent kann lernen, genau diese Struktur zu erkennen und ihr zu
+folgen, statt zu navigieren. Beide Verfahren sind im Generator implementiert,
+beide sind in den berichteten Läufen abgeschaltet
+(Tabelle~\ref{tab:worldgen_aktiv}).
+
+\paragraph{Stattdessen: den Exit aus dem Erreichbarkeitsbaum ziehen.} Statt
+einen Exit zu setzen und danach zu prüfen, kehrt der Generator die Reihenfolge
+um. Er lässt eine Breitensuche vom Spawn aus über \emph{ausschließlich
+begehbare} Tiles laufen und wählt den Exit erst danach, aus genau der Menge,
+die diese Suche erreicht hat. Damit ist Erreichbarkeit keine Eigenschaft, die
+man prüfen müsste, sondern eine Eigenschaft der Konstruktion: Ein Tile, das die
+Breitensuche nie besucht hat, kann gar nicht erst Kandidat werden. Der Ablauf
+in \texttt{World::chooseExitPoint()} umfasst vier Schritte.
+
+\begin{enumerate}
+  \item \textbf{Spawn freiräumen.} Um den festen Spawn wird ein $5\times5$-Feld
+    (Radius 2) auf \emph{begehbar} gesetzt, damit der Agent nicht in einem
+    Hindernis startet.
+  \item \textbf{Breitensuche vom Spawn.} Eine Vier-Nachbarschafts-BFS
+    expandiert über begehbare Tiles, begrenzt auf ein Fenster um den Spawn.
+    Ihre Tiefe ist der \emph{echte Laufweg} in Schritten, nicht der
+    geometrische Abstand. Die Suche bricht bei Tiefe
+    \texttt{exitMaxDistance} ab, weil die BFS-Tiefe monoton wächst.
+  \item \textbf{Kandidatenmenge bilden.} Jedes besuchte Tile mit einer Tiefe
+    zwischen \texttt{exitMinDistance} und \texttt{exitMaxDistance} kommt in die
+    Kandidatenliste. Diese Liste steuert zugleich das Curriculum: Ein
+    Distanzfenster von 5 bis 12 erzeugt kurze Welten, eines von 35 bis 45 die
+    Welten des Evaluationsprotokolls.
+  \item \textbf{Kandidat wählen.} Ein aus dem Seed gemischter Index bestimmt den
+    Startpunkt in der Liste. Von dort prüft der Generator bis zu 24 Kandidaten
+    gegen die Distanzbedingung des nächsten Absatzes und nimmt den ersten, der
+    besteht.
+\end{enumerate}
+
+\paragraph{Die Falle: die Freiräumung erzeugt eine Abkürzung.} Nach der Wahl
+räumt \texttt{World::reset()} auch um den Exit ein Feld frei, hier
+$3\times3$ (Radius 1), damit das Ziel nicht in einer Wand verschwindet. Genau
+das kann die eben gemessene Distanz wieder kaputt machen. Öffnet die
+Freiräumung eine Wand, die vorher einen Umweg erzwungen hat, entsteht eine
+Abkürzung, und der reale Laufweg fällt unter \texttt{exitMinDistance}. Bei
+einem Fenster von 35 bis 45 wäre der Agent dann in einer Welt, die
+nominell zur Phase 3 gehört, tatsächlich aber deutlich leichter ist. Für ein
+distanzgesteuertes Curriculum ist das kein Schönheitsfehler, sondern ein
+verfälschter Schwierigkeitsgrad.
+
+Die Lösung ist eine zweite Breitensuche, die die Freiräumung vorwegnimmt.
+Listing~\ref{lst:exit} zeigt den Kern: Tiles im Freiräumungsradius des
+Kandidaten gelten in dieser Suche bereits als begehbar, obwohl sie es noch
+nicht sind. Gemessen wird also der Laufweg der Welt, die \emph{nach} der
+Freiräumung existiert. Nur wenn dieser Weg noch mindestens
+\texttt{exitMinDistance} beträgt, wird der Kandidat angenommen.
+
+\begin{lstlisting}[language=C++,caption={[Exit-Platzierung mit virtueller
+Freiräumung]Kandidatenprüfung bei der Exit-Platzierung
+(\texttt{src/core/world.cpp}, gekürzt). Die zweite Breitensuche behandelt
+Tiles im Freiräumungsradius des Kandidaten als begehbar und misst damit den
+Laufweg der Welt \emph{nach} der Freiräumung. Ohne diese Vorwegnahme kann die
+Freiräumung eine Abkürzung öffnen und den Laufweg nachträglich unter
+\texttt{exitMinDistance} drücken.},label={lst:exit}]
+// BFS vom Spawn zum Kandidaten. Tiles im Freiraeumungsradius zaehlen
+// als begehbar, weil World::reset() sie ohnehin oeffnen wird:
+const bool virtuallyCleared =
+    std::abs(nx - target.x) <= cfg.exitClearRadius &&
+    std::abs(ny - target.y) <= cfg.exitClearRadius;
+if(!virtuallyCleared && !isPassable(nx, ny)) { continue; }
+
+// ... Kandidat nur annehmen, wenn der Weg auch danach lang genug bleibt:
+for(std::size_t k = 0; k < maxTries; ++k) {
+    const Vec2i cand = candidates[(start + k) % n];
+    if(clearedDistance(cand) >= minDist) { return cand; }
+}
+return candidates[start];   // Fallback: erreichbar, Distanz ggf. kuerzer
+\end{lstlisting}
+
+\paragraph{Was garantiert ist und was nicht.} Die beiden Zusagen sind
+unterschiedlich stark, und die Trennung ist wichtig:
+
+\begin{description}
+  \item[Erreichbarkeit: hart garantiert.] Jeder Kandidat stammt aus dem
+    Erreichbarkeitsbaum der ersten Breitensuche. Ein unlösbarer Exit ist damit
+    nicht unwahrscheinlich, sondern konstruktiv ausgeschlossen. Das gilt auch
+    für den Fallback in der letzten Zeile von Listing~\ref{lst:exit}.
+  \item[Distanz: garantiert bis auf einen Fallback.] Besteht keiner der 24
+    geprüften Kandidaten die Distanzbedingung, nimmt der Generator den zuerst
+    gezogenen. Die Welt bleibt lösbar, ihr Laufweg kann aber unter
+    \texttt{exitMinDistance} liegen. Dass dieser Zweig in der berichteten
+    Konfiguration nicht greift, ist gemessen und nicht angenommen: Über 150
+    geprüfte Seeds lag der reale Laufweg ausnahmslos im Fenster
+    $[35, 45]$ (Minimum 35, Mittel 39,7 bis 40,1, Maximum 45), und in
+    Phase 1 ebenso im Fenster $[5, 12]$. Bei deutlich höherer Wanddichte oder
+    einem engeren Distanzfenster wäre die Annahme neu zu prüfen.
+\end{description}
+
+\paragraph{Belege.} Die Konstruktion wurde nicht nur behauptet, sondern
+nachgemessen. Über 3\,150 geprüfte Seeds (alle Eval-Sets und die
+Trainingsbereiche) sowie eine erneute Stichprobe am 06.07.2026 (150 von 150)
+ergaben durchgängig \textbf{100\,\% Lösbarkeit}. Ein zweiter, schärferer Test
+prüft nicht nur die Weltgenerierung, sondern die gesamte Kette: Ein
+BFS-Orakel-Agent, der den kürzesten Weg direkt aus dem Distanzfeld des Kerns
+abliest, erreicht den Exit auf allen Test-Seeds in \emph{exakt} der
+BFS-Distanz. Dass die tatsächlich gelaufene Schrittzahl mit der berechneten
+Distanz übereinstimmt, schließt neben unlösbaren Welten auch stille Fehler in
+Bewegungsmechanik, Kollisionsprüfung und Distanzfeld aus. Der gemessene
+Umwegfaktor von 1,10 (Abschnitt~\ref{sec:weltgenerator}) stammt aus derselben
+Rechnung.
+
+Damit ist eine methodische Frage entschieden, die im Evaluationsteil sonst
+offen bliebe: Wenn ein Agent in einer Welt scheitert, liegt es nie an der
+Welt.
 
 \subsection{Grafischer Client und Zuschaumodus}
 \label{sec:client}
@@ -1544,10 +2154,20 @@ Mensch kann dem Agenten auf diese Weise beim Navigieren zusehen. Eine
 Launcher-GUI (Tkinter) bündelt Training, Evaluation und Abspielen zu einer
 gemeinsamen Oberfläche.
 
+\section{Implementierung der Lernumgebung}
+\label{sec:rlumgebung}
+
+Das vorige Kapitel endet mit einem lauffähigen Spiel. Dieses Kapitel macht
+daraus eine Lernumgebung, und zwar ohne die Simulation dafür zu verändern: Der
+C++-Kern aus Abschnitt~\ref{sec:technik} bleibt derselbe, ein Mensch spielt
+weiterhin dieselbe Welt wie der Agent. Hinzu kommen eine Übersetzungsschicht,
+die das Spiel als Markov-Entscheidungsproblem darstellt, ein Reward-Design und
+die Trainings- und Monitoring-Infrastruktur.
+
 \subsection{Was der Agent davon sieht: POMDP-Charakter}
 \label{sec:pomdpchar}
 
-Bis hierher ist die Welt vollständig beschrieben: Sie ist reproduzierbar,
+Die Welt ist damit vollständig beschrieben: Sie ist reproduzierbar,
 lösbar und in ihrer Zielentfernung gesteuert. Für den Agenten ist von alledem
 nichts unmittelbar zugänglich. Er sieht nur einen lokalen
 $15{\times}15$-Ausschnitt der Welt sowie einen
@@ -1563,8 +2183,14 @@ Weltpositionen ununterscheidbar (Abschnitt~\ref{sec:ablation}).
 \subsection{Umgebung, Beobachtung und Aktionen}
 \label{sec:envobs}
 
-\texttt{StoneforgeWorldEnv} (Python) kapselt den C++-Kern hinter der
-Gymnasium-API. Tabelle~\ref{tab:obs} listet die Beobachtung.
+Damit ein Lernverfahren die Simulation ansteuern kann, muss sie sich als
+\emph{Markov-Entscheidungsproblem} präsentieren: ein Zustand, den der Agent
+beobachtet, eine Menge von Aktionen, aus denen er wählt, und ein Reward pro
+Schritt. Stoneforge ist von Haus aus kein solches Problem, sondern ein Spiel
+mit Kamera, Inventar und Echtzeitschleife. \texttt{StoneforgeWorldEnv} (Python)
+übersetzt zwischen beiden Welten und kapselt den C++-Kern hinter der
+Gymnasium-API. Was der Agent dabei zu sehen bekommt, listet
+Tabelle~\ref{tab:obs}.
 
 \begin{table}[h]
 \centering
@@ -1606,13 +2232,87 @@ Der Schadens-Penalty ist entsprechend inert. Beides ist folgenlos für die
 berichteten Ergebnisse, aber bei einer Neufassung der Beobachtung zu
 streichen.
 
-Zwei Implementierungsdetails waren dabei fehlerkritisch: (1)~Die
-Weltgenerierungs-Konfiguration ist im C++-Kern prozessglobal; jede Env-Instanz
-stempelt sie deshalb bei jedem \texttt{reset()} neu, da sonst parallel erzeugte
-Evaluations-Umgebungen die Trainingsverteilung verändern
-(Abschnitt~\ref{sec:v11}). (2)~Der Exit wird seit v11 nach realer
-BFS-Laufwegdistanz platziert statt nach Luftlinie; alle erzeugten Welten sind
-nachweislich lösbar (150/150 im Test, Abschnitt~\ref{sec:loesbarkeit}).
+\subsection{Die Schnittstelle: was bei \texttt{reset()} und \texttt{step()}
+tatsächlich passiert}
+\label{sec:schnittstelle}
+
+Die Aufgabenteilung zwischen den beiden Sprachen ist eng geschnitten. Der
+C++-Kern besitzt den Weltzustand und rechnet alles, was pro Schritt anfällt:
+Weltgenerierung, Bewegung samt Kollision, das BFS-Distanzfeld und die
+Reward-Terme aus Tabelle~\ref{tab:reward}. Die Python-Seite besitzt keinen
+Weltzustand. Sie führt Buch über die Episode, formt die Beobachtung und
+implementiert genau jene Regeln, die sich ohne Neuübersetzung ändern lassen
+sollten. Das pybind11-Binding dazwischen ist bewusst dünn: Es exportiert im
+Wesentlichen \texttt{reset(seed)}, \texttt{step(action)} und eine Handvoll
+lesender Abfragen wie \texttt{current\_bfs\_distance\_to\_exit()} oder
+\texttt{player\_pos()}. Es enthält keine Spiellogik. Wer den Reward ändern
+will, ändert C++ und übersetzt neu; wer das Curriculum ändert, ändert Python.
+
+\paragraph{Ein \texttt{reset()} in vier Schritten.} Der Aufruf legt eine neue
+Episode an, und die Reihenfolge ist nicht beliebig:
+
+\begin{enumerate}
+  \item \textbf{Seed bestimmen.} Übergibt der Aufrufer einen Seed, wird dieser
+    verwendet. Das ist der Fall im Evaluationsprotokoll, wo die Testsets aus
+    festen Seeds bestehen. Im Training zieht die Umgebung stattdessen selbst
+    einen Zufallsseed, sodass jede Episode eine neue Welt sieht.
+  \item \textbf{Episodenbuchführung zurücksetzen.} Schrittzähler,
+    Besuchszähler je Tile, Zähler für Schritte ohne positiven Reward und der
+    Aktionspuffer werden geleert. Diese Zähler tragen den Revisit-Penalty und
+    den Early Stop, existieren also nur auf der Python-Seite.
+  \item \textbf{Weltgenerator-Konfiguration neu setzen.} Erst danach folgt der
+    eigentliche Reset des Kerns. Der Grund steht im nächsten Absatz.
+  \item \textbf{Kern zurücksetzen und Beobachtung bauen.} Der Kern erzeugt die
+    Welt zum Seed, platziert den Exit (Abschnitt~\ref{sec:loesbarkeit}) und
+    liefert einen rohen Zustandsvektor. Die Python-Seite normiert ihn und
+    schneidet die toten Legacy-Felder heraus.
+\end{enumerate}
+
+\paragraph{Ein Detail, das lange Zeit die Messungen verfälscht hat.} Die
+Weltgenerator-Konfiguration liegt im C++-Kern als \emph{prozessglobale}
+Struktur. Das ist für ein Spiel unproblematisch, in dem genau eine Welt
+existiert. Im Training existieren aber 16 parallele Umgebungen, und der
+Evaluations-Callback erzeugt zusätzlich eine eigene. Setzt diese
+Evaluations-Umgebung ihr Distanzfenster auf 35 bis 45, überschreibt sie damit
+das Fenster \emph{aller} Trainingsumgebungen, obwohl sie fachlich nichts
+miteinander zu tun haben. In Phase 3 verschob der Evaluations-Callback auf
+diese Weise die Trainingsverteilung nach der ersten Evaluation still von
+25 bis 45 auf 35 bis 45. Das Curriculum trainierte also nicht mehr auf dem
+Bereich, der in der Konfiguration stand.
+
+Die Lösung ist die dritte Zeile der Aufzählung oben: Jede Umgebung stempelt
+ihre Konfiguration vor jedem einzelnen \texttt{reset()} neu, statt sie einmalig
+im Konstruktor zu setzen. Nachweisen lässt sich der Fehler mit einem
+BFS-Orakel: Vor dem Fix brauchte es auf den Test-Seeds durchschnittlich 8,3
+Schritte, nachdem eine zweite Umgebung mit dem Fenster 5 bis 12 erzeugt worden
+war; danach wieder die korrekten 40,2 (Abschnitt~\ref{sec:v11}). Der Fehler
+war im Python-Code nicht zu sehen, denn dort stand die richtige Konfiguration.
+Sichtbar wurde er erst an Zahlen, die sich nicht erklären ließen.
+
+\paragraph{Ein \texttt{step()} in zwei Hälften.} Der Aufruf reicht die Aktion
+an den Kern durch, der Bewegung, Kollision und Reward rechnet und den neuen
+Zustand zurückgibt. Danach ergänzt die Python-Seite drei Regeln, die
+absichtlich nicht in C++ stehen, weil sie zur Trainingsmethodik gehören und
+nicht zum Spiel:
+
+\begin{itemize}
+  \item \textbf{Revisit-Penalty.} Ein Besuchszähler je Tile bestraft ab dem
+    26.\ Besuch desselben Feldes, gedeckelt ab dem 50. Er greift damit nur bei
+    ausgeprägtem Kreiseln (Tabelle~\ref{tab:reward}).
+  \item \textbf{Early Stop.} Bleiben 256 Schritte ohne positiven Reward, endet
+    die Episode als Truncation. Ohne diese Regel verbraucht ein feststeckender
+    Agent bis zu 4\,000 Schritte pro Episode und der Durchsatz bricht ein.
+  \item \textbf{Seed-Pool (\glqq Swarm\grqq).} Erfolgreiche Seeds werden
+    gesammelt und in 30\,\% der Fälle wiederholt.
+\end{itemize}
+
+Zwei Dinge sind an dieser Aufteilung erwähnenswert. Erstens ist der Early Stop
+eine \emph{Truncation} und kein Terminal: Der Wert des Endzustands wird
+weiter gebootstrappt, die Episode gilt nicht als Misserfolg im Sinne des
+Zielkriteriums. Zweitens ist die Trennung nicht kosmetisch. Jede Änderung an
+den drei Python-Regeln wirkt sofort, während jede Änderung am Reward einen
+Rebuild des Kerns erfordert. Über die Laufzeit des Projekts hat das die
+Iterationsgeschwindigkeit spürbar bestimmt.
 
 \subsection{Reward-Design}
 \label{sec:rewarddesign}
@@ -1627,7 +2327,23 @@ F(s, s') \;=\; \gamma\,\Phi(s') - \Phi(s), \qquad
 mit $\gamma = 0.999$ (identisch zum RL-Discount) und Gewicht $\beta = 2.5$.
 Ein Tile echter Fortschritt liefert damit rund $+0{,}02$; abzüglich des
 Schritt-Malus von $-0{,}01$ (Tabelle~\ref{tab:reward}) verbleiben netto etwa
-$+0{,}01$.
+$+0{,}01$. Listing~\ref{lst:pbrs} zeigt die Umsetzung im Kern.
+
+\begin{lstlisting}[language=C++,caption={[PBRS im Simulationskern]%
+Potential-Based Reward Shaping auf der BFS-Distanz
+(\texttt{Simulation::computeReward()}, \texttt{src/core/simulation.cpp}).
+Der Shaping-Discount ist bewusst identisch zum Discount des Lernverfahrens;
+nur unter dieser Bedingung ist $F$ policy-invariant
+\cite{ng1999policy}.},label={lst:pbrs}]
+constexpr float PBRS_MAX_DIST = 128.0F;  // Normierung der BFS-Distanz
+constexpr float PBRS_GAMMA    = 0.999F;  // identisch zum RL-Discount
+constexpr float PBRS_BETA     = 2.5F;    // +0,01 netto pro Tile bei d=40
+
+const float phi_prev = -static_cast<float>(previousDistance) / PBRS_MAX_DIST;
+const float phi_cur  = -static_cast<float>(currentDistance)  / PBRS_MAX_DIST;
+const float shaping  = PBRS_GAMMA * phi_cur - phi_prev;
+reward += PBRS_BETA * shaping;
+\end{lstlisting}
 
 Beide Konstanten sind aus dieser Netto-Vorgabe rückwärts bestimmt. Der Nenner
 128 normiert die BFS-Distanz auf die Größenordnung der übrigen Reward-Terme
@@ -1741,19 +2457,42 @@ desselben Tiles).}
 
 \subsection{Trainings-Pipeline}
 
-Das Curriculum-Training (\texttt{train\_curriculum.py}) orchestriert die vier
-Phasen aus Tabelle~\ref{tab:curriculum}. Je Lauf arbeiten 16 parallele
-Umgebungen (\texttt{DummyVecEnv}). Alle 25\,000 Schritte evaluiert ein Callback
-das aktuelle Modell auf den 50 Validierungs-Seeds in beiden Betriebsarten;
-die Phasen-Metrik steuert Gating (Ziel-SR in zwei aufeinanderfolgenden
-Evaluationen) und die Auswahl des besten Modells der Phase. Beim Phasenwechsel
-wird das beste Modell der Vorphase geladen. In Phase~3 senkt ein Callback den
-Entropie-Koeffizienten linear von 0{,}05 auf 0{,}001 über 500\,000 Schritte;
-Phase~4 trainiert mit 0{,}0001 (Greedy Fine-Tune). Optional ergänzt ein
-Seed-Pool (\glqq Swarm\grqq) 30\,\% der Episodenstarts durch Wiederholung
-bereits gelöster Seeds; der Pool wird bei jedem Phasenwechsel geleert. Jeder
-Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json} und
-\texttt{config.json} ab; alle Experimente sind zusätzlich im
+\texttt{train\_curriculum.py} orchestriert die vier Phasen aus
+Tabelle~\ref{tab:curriculum}. Ein Lauf ist damit kein einzelnes Training,
+sondern eine Kette aus vier Trainings, die einander das Modell weiterreichen.
+Vier Bausteine tragen diese Kette.
+
+\paragraph{Parallele Umgebungen.} Je Lauf arbeiten 16 Umgebungsinstanzen in
+einem \texttt{DummyVecEnv}. Sie laufen im selben Prozess, nacheinander pro
+Schritt, und bündeln ihre Beobachtungen zu einem Batch. Der Gewinn liegt nicht
+in echter Parallelität, sondern darin, dass ein Rollout Erfahrung aus 16
+verschiedenen Welten gleichzeitig enthält, statt aus einer.
+
+\paragraph{Evaluation und Gating.} Alle 25\,000 Schritte misst ein Callback
+das aktuelle Modell auf 50 Validierungs-Seeds, in beiden Betriebsarten. Diese
+Messung erfüllt zwei Aufgaben zugleich. Sie entscheidet erstens, wann eine
+Phase endet: Erreicht die maßgebliche Metrik die Ziel-Erfolgsquote in zwei
+aufeinanderfolgenden Evaluationen, schaltet das Curriculum weiter. Die
+Doppelbedingung filtert Ausreißer, denn ein einzelner guter Messpunkt ist bei
+dieser Lerndynamik kein Beleg (Abschnitt~\ref{sec:evalfallstricke}). Zweitens
+wählt sie das beste Modell der Phase aus, und genau dieses wird beim
+Phasenwechsel geladen. Welche Metrik dabei zählt, wechselt: Die Phasen 1 und 2
+gaten auf der stochastischen Erfolgsquote, die Phasen 3 und 4 auf der
+deterministischen.
+
+\paragraph{Absenkung der Exploration.} Der Entropie-Koeffizient hält die
+Politik früh breit gestreut und muss später aus dem Weg. In Phase 3 senkt ein
+Callback ihn linear von 0{,}05 auf 0{,}001 über 500\,000 Schritte, Phase 4
+trainiert mit 0{,}0001. Diese letzte Phase existiert nur, um die
+deterministische Politik nachzuziehen (Abschnitt~\ref{sec:detstochgap}).
+
+\paragraph{Seed-Pool.} Ein optionaler Pool (\glqq Swarm\grqq) sammelt bereits
+gelöste Seeds und startet 30\,\% der Episoden auf einem davon. Bei jedem
+Phasenwechsel wird er geleert, damit gelöste Welten der leichten Phase nicht
+die schwere Phase verwässern.
+
+Jeder Lauf legt pro Phase Modell-Checkpoints sowie \texttt{eval\_history.json}
+und \texttt{config.json} ab; alle Experimente sind zusätzlich im
 \texttt{CHANGELOG.md} des Repositories dokumentiert.
 
 \subsection{Monitoring und Werkzeuge}
@@ -1954,7 +2693,7 @@ dasselbe Modell misst sich bei einem Limit von 600 als 48-\%-, bei 4\,000 als
 
 Neben dem Limit bleibt in der Evaluation eine zweite Abbruchbedingung aktiv:
 die Early-Stop-Truncation nach 256 Schritten ohne positiven Reward
-(Abschnitt~\ref{sec:umgebung}). Sie ist Teil der Umgebung und wird in der
+(Abschnitt~\ref{sec:rlumgebung}). Sie ist Teil der Umgebung und wird in der
 Evaluation nicht abgeschaltet; sie gilt damit für den Agenten und für die
 Referenzpolitiken (Abschnitt~\ref{sec:baselines}) gleichermaßen. Zwei
 Konsequenzen sind zu beachten. Erstens ist das effektive Budget einer Episode
@@ -1989,7 +2728,28 @@ werden LSTM-Zustand und Episoden-Start-Signal an jeden
 \texttt{predict()}-Aufruf durchgereicht und zu Episodenbeginn zurückgesetzt,
 damit kein Zustand über Episodengrenzen übertragen wird; dies ist ein
 häufiger, leicht übersehener Fehler beim Evaluieren rekurrenter Politiken
-\cite{kapturowski2019r2d2}.
+\cite{kapturowski2019r2d2}. Listing~\ref{lst:lstmstate} zeigt die Umsetzung.
+Der Fehler ist deshalb tückisch, weil er nicht abstürzt: Wer den Zustand
+weglässt, misst ein Gedächtnismodell ohne Gedächtnis und erhält systematisch
+zu niedrige Werte, ohne dass die Messung als fehlerhaft auffällt.
+
+\begin{lstlisting}[language=Python,caption={[Zustandsführung der rekurrenten
+Politik im Eval]Führung von LSTM-Zustand und Episoden-Start-Signal im
+Evaluationsprotokoll (\texttt{ModelPolicy} in
+\texttt{scripts/eval\_baselines.py}). Das Start-Signal steht nur im ersten
+Schritt einer Episode auf \texttt{True} und setzt damit den rekurrenten
+Zustand zurück.},label={lst:lstmstate}]
+def reset(self):
+    return (None, np.ones((1,), dtype=bool))   # Episodenstart-Signal
+
+def __call__(self, obs, ctx):
+    state, episode_start = ctx
+    action, state = self.model.predict(
+        obs, state=state, episode_start=episode_start,
+        deterministic=self.deterministic,
+    )
+    return int(action), (state, np.zeros((1,), dtype=bool))
+\end{lstlisting}
 
 \paragraph{Aggregation über Läufe.}
 Für das Endergebnis werden sieben unabhängige Trainingsläufe gemittelt, mit
@@ -2326,6 +3086,11 @@ vorab festgelegten Erfolgsschwellen aus Abschnitt~\ref{sec:ziele}. Erzeugt mit
 \end{figure}
 
 \noindent
+Abbildung~\ref{fig:v12endergebnis} zeigt dieselben Zahlen grafisch und macht die
+Streuung sichtbar: Die sieben Einzelläufe liegen auf Testset~A zwischen 50\,\%
+und 84\,\%, die Schwelle aus Abschnitt~\ref{sec:ziele} liegt mitten in dieser
+Wolke. Ein einzelner Lauf hätte hier jedes gewünschte Ergebnis geliefert.
+
 Ausgewertet wird je Lauf nicht der letzte Checkpoint, sondern das nach
 Validierungs-Erfolgsquote beste Modell, gemessen in der Gating-Metrik der
 jeweiligen Phase (Tabelle~\ref{tab:curriculum}), für das Ausgabemodell also
@@ -3001,11 +3766,15 @@ haben beide dieselbe Ursache. Der Generator erfüllt seine Spezifikation
 vollständig, und die Spezifikation war unvollständig: Z1 verlangt lösbare
 und in ihrer Entfernung steuerbare Welten, aber keine, in denen die untersuchte
 Fähigkeit auch erforderlich ist. Die konkrete Stelle, an der das entsteht, ist
-im Generator benennbar: Ohne die abgeschaltete Glättungsstufe stammt die
-Hindernisverteilung aus unkorreliertem Rauschen und bildet verstreute
-Einzelhindernisse statt zusammenhängender Barrieren
-(Abschnitt~\ref{sec:weltgenerator}). Sackgassen, die Gedächtnis erzwingen
-würden, entstehen so kaum.
+im Generator benennbar und inzwischen vermessen: Ohne die abgeschaltete
+Glättungsstufe stammt die Hindernisverteilung aus unkorreliertem Rauschen und
+bildet verstreute Einzelhindernisse statt zusammenhängender Barrieren. Der
+Umwegfaktor liegt bei 1,10, der kürzeste Weg ist also nur zehn Prozent länger
+als die Luftlinie (Abschnitt~\ref{sec:weltgenerator}). Sackgassen, die
+Gedächtnis erzwingen würden, entstehen so kaum. Die naheliegende Reparatur,
+einfach die vorhandene Glättungsstufe einzuschalten, scheitert an derselben
+niedrigen Basisdichte und macht die Welt noch leerer
+(Tabelle~\ref{tab:geometrieprobe}).
 
 Damit ist das Ergebnis dieser Arbeit weder eine Aussage über den Agenten noch
 eine über den Generator, sondern eine über deren Zusammenspiel: \textbf{Die
@@ -3027,7 +3796,7 @@ Basisbelegung, zelluläre Glättungsstufe, BFS-basierte Exit-Platzierung mit
 Lösbarkeitsgarantie), ein spielbarer raylib-Client mit KI-Zuschaumodus und eine
 \texttt{pybind11}-Kapselung als Gymnasium-Umgebung, dazu
 Curriculum-Trainingspipeline, standardisierte Evaluationsskripte und
-Live-Monitoring (Kapitel~\ref{sec:umgebung}). Die
+Live-Monitoring (Kapitel~\ref{sec:umgebung} und~\ref{sec:rlumgebung}). Die
 deterministische Reproduzierbarkeit pro Seed
 und die durchgängige Experiment-Protokollierung waren die Voraussetzung für die
 Root-Cause-Analysen im Anhang~\ref{sec:entwicklung} und sind für Folgearbeiten
@@ -3036,9 +3805,11 @@ wiederverwendbar.
 Der praktische Wert dieser Plattform liegt weniger in den einzelnen Verfahren,
 die sämtlich Stand der Technik sind, als in ihrer Zugänglichkeit: Weil
 Wandanteil, Glättung, Distanzmaß und Sicherheitsnetze einzeln schaltbar sind,
-lässt sich die im Ausblick vorgeschlagene Härtung der Aufgabe ohne
-Neuentwicklung durchführen, der wirksamste Hebel, die Glättungsstufe, ist
-bereits implementiert und muss lediglich aktiviert und kalibriert werden.
+ließ sich die Geometrie der Welten in Stunden vermessen statt sie zu erraten.
+Genau das hat die zunächst geplante Härtung über die Glättungsstufe widerlegt,
+bevor eine einzige Trainingsstunde darauf verfiel
+(Tabelle~\ref{tab:geometrieprobe}). Ein fremder Benchmark hätte diese Sonde
+nicht zugelassen.
 
 \paragraph{Inhaltlich.} Ein rekurrenter Agent ohne BFS-Gradientenfeatures
 erreicht mindestens dieselbe stochastische Leistung wie ein MLP \emph{mit}
@@ -3120,15 +3891,20 @@ interpretierbar. Die Reparatur des Messregimes steht deshalb vor allem anderen.
         unkorreliertem Hash-Rauschen; die Hindernisse sind dadurch überwiegend
         verstreute Einzeltiles statt zusammenhängender Barrieren
         (Abschnitt~\ref{sec:weltgenerator}). Nicht der Wandanteil allein ist
-        deshalb der entscheidende Hebel, sondern die \emph{Korreliertheit} der
-        Verteilung. Beides ist im Generator bereits angelegt: Die zelluläre
-        Glättungsstufe (Moore-Nachbarschaft, Geburts- und Überlebensschwelle)
-        ist implementiert, in den berichteten Läufen aber abgeschaltet
-        (Tabelle~\ref{tab:worldgen_aktiv}). Sie zu aktivieren und gemeinsam mit
-        dem Wandanteil zu kalibrieren, ist der billigste verfügbare Weg zu
-        Welten mit echten Sackgassen. Zielgröße ist dabei nicht ein bestimmter
-        Wandanteil, sondern ein Betriebspunkt, an dem der Kompass-Zufallslauf
-        einbricht, die Lösbarkeit aber bei 100\,\% bleibt. Das Vorgehen ist
+        deshalb der wirksame Hebel, sondern die \emph{Korreliertheit} der
+        Verteilung. Der naheliegende Weg dorthin ist versperrt, und zwar
+        gemessen: Die implementierte Glättungsstufe einzuschalten senkt die
+        Wanddichte auf 0,037 und den Umwegfaktor auf 1,001, und jede
+        Regelvariante, die den Umweg spürbar hebt, zerstört die Lösbarkeit, im
+        Extremfall auf 3 von 50 Welten (Tabelle~\ref{tab:geometrieprobe}).
+        Eine Härtung verlangt deshalb drei Eingriffe im Code statt eines
+        Schalters: eine höhere und korrelierte Basisdichte in
+        \texttt{World::sampleBaseTile()}, eine aktive
+        Konnektivitätsvalidierung (\texttt{enableFloodFillValidation},
+        \texttt{enableMacroGraphPrecheck}) und eine Neuvalidierung nach jeder
+        Automateniteration. Zielgröße bleibt nicht ein bestimmter Wandanteil,
+        sondern ein Betriebspunkt, an dem der Kompass-Zufallslauf einbricht,
+        die Lösbarkeit aber bei 100\,\% bleibt. Das Vorgehen ist
         zweistufig: erst die Baseline-Politik als Kalibrierinstrument einsetzen,
         dann trainieren. Ein Trainingslauf ohne diese Vorabprüfung wäre erneut
         nicht interpretierbar.

@@ -31,19 +31,33 @@ Framework: Stable-Baselines3, Gym-API, C++ Core via Python-Binding (pybind11).
 
 > ⚠️ Modellwerte aus verschiedenen Env-Versionen sind NICHT vergleichbar.
 > Berichtsfähig ist ausschließlich der v12-Stand (n=7) unter dem Standard-Eval.
-> Ungelernte Referenz (`scripts/eval_baselines.py`): Random 8% · Kompass-Zufallslauf
-> bis 89% SR auf Testset A — die SR bei Cap 4000 ist allein nicht aussagekräftig,
-> immer zusätzlich die Pfadeffizienz berichten.
+> Ungelernte Referenz (Quelle: `logs/eval_results/baselines.json`, Testset A):
+> Random **5,2 % ± 2,7** (Effizienz 0,021) · Kompass-Zufallslauf ε=0,9 **92,0 % ± 5,1**
+> (Effizienz 0,047). Die früher hier notierten „8 % / 89 %" waren veraltet und
+> widersprachen der Projektdokumentation — korrigiert 05.08.2026 gegen die Rohdaten.
+>
+> ⚠️ **Die Pfadeffizienz rettet das Ergebnis NICHT.** v12 liegt bei 0,039–0,061 und damit
+> auf dem Niveau des ε=0,9-Zufallslaufs (0,040); der ε=0,3-Kompass erreicht 0,158 und ist
+> damit rund dreimal wegeffizienter als das trainierte Modell. Das LSTM erkauft seine
+> höhere SR durch mehr Herumlaufen, nicht durch bessere Wege.
+> (Quelle: `logs/eval_results/baselines_and_models.json`.)
 ├── OLD/                       # Veralteter Code (nicht gelöscht, nur archiviert)
 │   └── scripts/               # Alter CLI-Launcher, Shell-Skripte
 ├── python/                    # Importierbare RL-Bibliothek (PYTHONPATH)
 │   └── stoneforge_env.py      # Gym-Environment + Wrapper (importiert via PYTHONPATH)
 ├── scripts/                   # Ausführbare Skripte
 │   ├── launcher_gui.py        # ← HAUPT-EINSTIEGSPUNKT (GUI)
-│   ├── train.py               # Training (PPO / DQN / A2C, CurriculumCallback)
+│   ├── train_curriculum.py    # ← ERZEUGT DIE BERICHTSFÄHIGEN ERGEBNISSE (v12, n=7)
+│   │                          #   --algo {rppo,ppo}: LSTM bzw. MLP-Kontrollgruppe (F2)
+│   ├── train.py               # Einzelphasen-Training (PPO / DQN / A2C) — NICHT die
+│   │                          #   Quelle der v12-Zahlen, dafür train_curriculum.py
+│   ├── eval_baselines.py      # ← KANONISCHES EVAL-PROTOKOLL (SR + Pfadeffizienz)
+│   ├── probe_world_geometry.py # Weltgeometrie: Umwegfaktor, Wanddichte, Lösbarkeit
+│   ├── smoke_test_algo_switch.py # Schnelltest des --algo-Pfads (rppo/ppo)
 │   ├── watch_agent.py         # Grafische Agent-Visualisierung
 │   ├── analyze_agent.py       # Verhaltensanalyse
-│   ├── eval_hard_world.py     # Evaluation auf schwierigen Welten
+│   ├── eval_hard_world.py     # ⚠️ DEFEKT: setzt tote Config-Keys, Welt wird leerer
+│   │                          #   statt härter. Vor Weiterverwendung reparieren.
 │   ├── eval_temperature.py    # Temperatur-Sweep Benchmark
 │   └── setup_env.sh           # Umgebung aktivieren + PYTHONPATH setzen
 ├── screenshots/               # Screenshots
@@ -71,7 +85,12 @@ cmake --build build -j
 export PYTHONPATH="$PWD/build:$PWD/python:$PYTHONPATH"
 ```
 
-> ⚠️ Nach jeder Änderung an `game_config.json` (z. B. `observationRadius`) ist ein Rebuild nötig.
+> ⚠️ Nach jeder Änderung am **C++-Code** ist ein Rebuild nötig.
+> **Nicht** aber nach Änderungen an `game_config.json`: Die Datei wird zur Laufzeit gelesen
+> (`StoneforgeCoreEnv`-Konstruktor, `src/python/py_module.cpp:44-48`; im Client/Headless über
+> `loadGameConfigFile()`). CMake kopiert keine Assets. Ein JSON-Patch wirkt für jedes danach
+> **neu konstruierte** Env sofort — bestehende Env-Instanzen behalten ihre Werte.
+> (Nachgemessen 05.08.2026, siehe CHANGELOG v2026-08-05.1.)
 
 ---
 
@@ -98,42 +117,32 @@ TensorBoard-Logs landen in `logs/tensorboard/`.
 
 ---
 
-## Standardisierter Eval (50-Seed-Test)
+## Standardisierter Eval — kanonisch: `scripts/eval_baselines.py`
 
-Immer Seeds `7000–7049`, deterministisch, Mining geblockt:
+**Es gibt genau EIN gültiges Protokoll. Nicht selbst nachbauen.**
 
 ```bash
-python - <<'PY'
-import numpy as np
-from stable_baselines3 import PPO, A2C, DQN
-from stoneforge_env import StoneforgeWorldEnv
-
-seeds = list(range(7000, 7050))
-env = StoneforgeWorldEnv(exit_min=35, exit_max=45)
-
-# Modellpfad anpassen:
-path = "models/ppo_phase4/best_model.zip"
-model = None
-for Cls, name in [(PPO, "PPO"), (A2C, "A2C"), (DQN, "DQN")]:
-    try:
-        model = Cls.load(path); algo = name; break
-    except Exception:
-        pass
-
-succ, lens, rets = 0, [], []
-for seed in seeds:
-    obs, _ = env.reset(seed=seed)
-    done, ep_ret, steps, reached = False, 0.0, 0, False
-    while not done and steps < 4000:
-        action, _ = model.predict(obs, deterministic=True)
-        obs, r, term, trunc, info = env.step(int(action))
-        ep_ret += float(r); steps += 1
-        if info.get("reached_exit", False): reached = True
-        done = term or trunc
-    succ += int(reached); lens.append(steps); rets.append(ep_ret)
-print(f"{algo}: success={succ}/50 ({succ/50:.1%}), mean_len={np.mean(lens):.1f}, mean_return={np.mean(rets):.2f}")
-PY
+python scripts/eval_baselines.py --models     # Baselines + v12-Modelle
+python scripts/eval_baselines.py              # nur ungelernte Referenzen
 ```
+
+Protokoll: Testset A `7000–7049`, Holdout B `8000–8049`, `exit 35–45`, **Cap 4000**,
+5 Wiederholungen über unabhängige Politik-RNG-Seeds. Ergebnis landet in
+`logs/eval_results/baselines.json`.
+
+> ⚠️ **Das frühere Inline-Snippet an dieser Stelle war defekt** (entfernt 05.08.2026):
+> es probierte nur `PPO`/`A2C`/`DQN` durch — `RecurrentPPO` fehlte, eure v12-Modelle
+> hätten sich gar nicht laden lassen. Zudem rief es `model.predict()` **ohne LSTM-Zustand**
+> auf; wer es zum Laufen bringt, misst ein Gedächtnismodell ohne Gedächtnis und erhält
+> systematisch zu niedrige Werte. `eval_baselines.py` führt den Zustand in `ModelPolicy`
+> korrekt mit.
+
+**Immer beide Metriken berichten, SR allein ist wertlos.** Bei Cap 4000 sättigt die
+Erfolgsquote: ein Zufallslauf mit leichtem Kompassdrift (ε=0,9) erreicht 92 % — ohne
+irgendetwas zu können. Die Pfadeffizienz (BFS-Optimum / tatsächliche Schritte, gemittelt
+über die *erfolgreichen* Episoden) trennt dort, wo die SR das nicht mehr tut.
+Vorsicht bei der Interpretation: Effizienz wird nur über Erfolge gemittelt, eine Politik
+mit niedriger SR schafft bevorzugt die leichten Seeds und sieht dadurch effizienter aus.
 
 ---
 
@@ -151,7 +160,12 @@ PY
 | `n_eval_episodes` | 50 |
 | Timesteps | 1.000.000 |
 
-Curriculum: leistungsbasiert (4 Phasen: 5–12 / 12–25 / 25–45 / Greedy Fine-Tune).
+Curriculum: leistungsbasiert (4 Phasen: 5–12 / 12–25 / 25–45 / Greedy Fine-Tune) über
+`scripts/train_curriculum.py`. Seit 05.08.2026 mit `--algo {rppo,ppo}`:
+`rppo` = RecurrentPPO (LSTM), `ppo` = gedächtnislose MLP-Kontrollgruppe für F2 auf
+**identischem** Curriculum. Unterschiede nur architekturspezifisch (`policy`, `batch_size`,
+`net_arch`), alles übrige geteilt. Durchsatz gemessen: MLP 5.989 Steps/s, LSTM 104 Steps/s —
+die „8 Stunden pro Lauf" aus dem Anhang gelten **nur** für das LSTM.
 Observation (Env v11, seit 06.07.2026): **229 Features** = Grid 15×15 (225) + HP + exitDx/exitDy + step_frac.
 Legacy-Modelle (231-dim, vor 06.07.2026): `StoneforgeWorldEnv(..., include_energy_inventory=True)`.
 RecurrentPPO: `batch_size=8` (**NICHT 64!** — 64 destabilisiert den Critic: EV bleibt ≈ 0,1,
@@ -237,7 +251,19 @@ sie existieren nur noch im spielbaren Client. Die früheren Wrapper
 - **Einzelne Eval-Snapshots sind keine Validierung:** Die Lerndynamik kann chaotisch sein
   (transiente Hochphasen). Hyperparameter-Entscheidungen nur auf Basis ganzer Eval-KURVEN treffen.
 - **Zeitbasiertes Curriculum** → Reward-Kollaps. Seit v1.1 leistungsbasiert.
-- **Rebuild vergessen** nach Änderungen an C++ oder `game_config.json` → Crash oder falsche Ergebnisse.
+- **Rebuild vergessen** nach Änderungen an C++ → Crash oder falsche Ergebnisse.
+  (`game_config.json` braucht **keinen** Rebuild, siehe Build-Abschnitt.)
+- **Die Umgebung hat Umwegfaktor 1,12** (BFS-Distanz / Manhattan-Distanz, 100 Seeds,
+  05.08.2026). Der kürzeste Weg ist nur 12 % länger als die Luftlinie — es gibt fast nichts
+  zu umrunden. Das ist die quantitative Ursache dafür, dass ein Vierzeilen-Kompass 92 %
+  erreicht und Gedächtnis kaum Vorteil bringt. Bei jeder Aussage über „Schwierigkeit" der
+  Welt diese Zahl mitdenken, nicht die SR.
+- **Zelluläre Glättung härtet die Welt NICHT.** `enableCellularSmoothing: true` mit den
+  hinterlegten Regeln (b=5/s=4) senkt die Wanddichte von 0,238 auf 0,037 und den Umwegfaktor
+  auf 1,001 — die Welt wird zur leeren Ebene. Jede Regelvariante, die den Umwegfaktor hebt,
+  zerstört die Lösbarkeit (b=2/s=1 → 3/50 lösbar). Ursache: `enableFloodFillValidation` und
+  `enableMacroGraphPrecheck` sind aus, der Automat kennt keine Erreichbarkeit.
+  Prüfen mit `scripts/probe_world_geometry.py --sweep`.
 - **Modellpfade**: Alle Modelle liegen jetzt in `models/`, nicht mehr in `best_models_*/`.
 
 ---

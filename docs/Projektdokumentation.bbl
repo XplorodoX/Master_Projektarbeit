@@ -235,6 +235,13 @@ Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
   2019.
 \newblock Preprint 2018, \url{https://arxiv.org/abs/1810.12894}.
 
+\bibitem{steele2014splitmix}
+Guy~L. Steele, Doug Lea, and Christine~H. Flood.
+\newblock Fast splittable pseudorandom number generators.
+\newblock In {\em Proceedings of the 2014 ACM International Conference on
+  Object Oriented Programming Systems Languages \& Applications (OOPSLA)},
+  pages 453--472. ACM, 2014.
+
 \bibitem{oh2018sil}
 Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
 \newblock Self-imitation learning.

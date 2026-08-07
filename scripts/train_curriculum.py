@@ -22,6 +22,7 @@ from stable_baselines3.common.callbacks import BaseCallback, CallbackList
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.utils import set_random_seed
 from sb3_contrib import RecurrentPPO
+from stable_baselines3 import PPO
 
 _PYTHON_DIR  = os.path.join(os.path.dirname(__file__), "..", "python")
 _SCRIPTS_DIR = os.path.dirname(__file__)
@@ -84,6 +85,32 @@ RPPO_KWARGS = dict(
     verbose=1,
     tensorboard_log="logs/tensorboard/",
 )
+
+# Gedächtnislose Kontrollgruppe für F2 (--algo ppo). Alles außer den
+# architekturspezifischen Parametern ist mit RPPO_KWARGS identisch, sonst
+# vergleicht der A/B nicht Gedächtnis, sondern Hyperparameter.
+#   batch_size: 8 ist eine Notlösung für den LSTM-Critic (CHANGELOG v2026-07-07.4)
+#     und wäre beim MLP mit Rollout 256×16=4096 grotesk (512 Gradientenschritte
+#     pro Epoche). 256 = 16 Minibatches/Epoche, PPO-Standard.
+#   net_arch: [256,256] spiegelt lstm_hidden_size=256. Der SB3-Default [64,64]
+#     würde die Baseline über die Kapazität benachteiligen statt über das Gedächtnis.
+PPO_KWARGS = dict(
+    policy="MlpPolicy",
+    n_steps=256,
+    batch_size=256,
+    n_epochs=10,
+    learning_rate=3e-4,
+    gamma=0.999,
+    gae_lambda=0.95,
+    clip_range=0.2,
+    ent_coef=0.05,
+    vf_coef=0.5,
+    policy_kwargs=dict(net_arch=[256, 256]),
+    verbose=1,
+    tensorboard_log="logs/tensorboard/",
+)
+
+ALGOS = {"rppo": (RecurrentPPO, RPPO_KWARGS), "ppo": (PPO, PPO_KWARGS)}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -268,6 +295,9 @@ class EntropyAnnealingCallback(BaseCallback):
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
+    p.add_argument("--algo", choices=["rppo", "ppo"], default="rppo",
+                   help="rppo = RecurrentPPO (LSTM). ppo = gedächtnisloses MLP "
+                        "(Kontrollgruppe für F2, identisches Curriculum).")
     p.add_argument("--save-dir", default="models/ppo_lstm_curriculum")
     p.add_argument("--n-envs", type=int, default=16)
     p.add_argument("--eval-freq", type=int, default=25_000)
@@ -306,11 +336,15 @@ def main() -> None:
     args = parse_args()
     os.makedirs(args.save_dir, exist_ok=True)
 
+    algo_cls, algo_kwargs = ALGOS[args.algo]
+
     # --- Ablations-Overrides anwenden (08.07.2026) ---
     if args.vf_coef is not None:
-        RPPO_KWARGS["vf_coef"] = args.vf_coef
+        algo_kwargs["vf_coef"] = args.vf_coef
         print(f"  [Ablation] vf_coef → {args.vf_coef}")
     if args.lstm_size is not None:
+        if args.algo != "rppo":
+            raise SystemExit("--lstm-size ist nur mit --algo rppo sinnvoll.")
         RPPO_KWARGS["policy_kwargs"]["lstm_hidden_size"] = args.lstm_size
         print(f"  [Ablation] lstm_hidden_size → {args.lstm_size} "
               f"(nur wirksam bei --start-phase 1)")
@@ -338,7 +372,9 @@ def main() -> None:
             live_map_active = ws_map_server.start_server(port=args.live_map_port)
 
     print("\n" + "═"*60)
-    print("  Curriculum-Training: RecurrentPPO (LSTM), kein BFS")
+    _algo_label = ("RecurrentPPO (LSTM)" if args.algo == "rppo"
+                   else "PPO (MLP, gedächtnislose Kontrollgruppe)")
+    print(f"  Curriculum-Training: {_algo_label}, kein BFS")
     print("  Obs: 229 Features (Grid 225 + HP + Kompass 2 + StepFrac) — v11: ohne tote Features")
     print("  Phasen: 5-12 → 12-25 → 25-45")
     if swarm_pool:
@@ -358,7 +394,7 @@ def main() -> None:
 
     from datetime import datetime
     save_run_config(args.save_dir, {
-        "algo":       "rppo",
+        "algo":       args.algo,
         "script":     "train_curriculum.py",
         "n_envs":     args.n_envs,
         "eval_freq":  args.eval_freq,
@@ -375,7 +411,7 @@ def main() -> None:
             "max_steps":  p["max_steps"],
             "target_sr":  p["target_sr"],
         } for p in PHASES],
-        "hyperparams": {k: v for k, v in RPPO_KWARGS.items()
+        "hyperparams": {k: v for k, v in algo_kwargs.items()
                         if k not in ("verbose", "tensorboard_log")},
     })
     _train_start = time.time()
@@ -454,7 +490,7 @@ def main() -> None:
             # Entropie in Phase 3 linear 0.05 → 0.001.
             # Start MUSS dem Trainings-ent_coef aus Phase 1/2 entsprechen (RPPO_KWARGS:
             # 0.05), sonst springt die Entropie beim Phasenwechsel abrupt 0.05 → 0.01.
-            callbacks.append(EntropyAnnealingCallback(duration_steps=500_000, start_ent=RPPO_KWARGS["ent_coef"], end_ent=0.001))
+            callbacks.append(EntropyAnnealingCallback(duration_steps=500_000, start_ent=algo_kwargs["ent_coef"], end_ent=0.001))
         if i == 4:
             # Fix 2: Phase 4 Greedy Fine-Tune — Entropie sofort auf 0.0001 setzen
             ent_override = phase.get("ent_coef_override", 0.0001)
@@ -464,16 +500,16 @@ def main() -> None:
         callback = CallbackList(callbacks)
 
         if model is None and i == 1:
-            model = RecurrentPPO(env=env, **RPPO_KWARGS)
+            model = algo_cls(env=env, **algo_kwargs)
         elif model is None or i > 1:
             # Bestes Modell aus vorheriger Phase laden (auch bei --start-phase > 1)
             prev_best = os.path.join(args.save_dir, f"phase{i-1}_best_model.zip")
             prev_last = os.path.join(args.save_dir, f"phase{i-1}_model.zip")
             prev_path = prev_best if os.path.exists(prev_best) else prev_last
             print(f"  Lade Phase-{i-1}-Modell: {prev_path}")
-            model = RecurrentPPO.load(
+            model = algo_cls.load(
                 prev_path, env=env,
-                **{k: v for k, v in RPPO_KWARGS.items()
+                **{k: v for k, v in algo_kwargs.items()
                    if k not in ("verbose", "policy", "policy_kwargs")},
             )
 
@@ -532,7 +568,7 @@ def main() -> None:
 
     # Gesamt-Ergebnis dauerhaft speichern
     save_run_results(args.save_dir, {
-        "algo":               "rppo",
+        "algo":               args.algo,
         "training_duration":  _dur_str,
         "phases":             _phase_results,
         "best_sr_testset_a":  best_phase_sr,

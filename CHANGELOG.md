@@ -2,6 +2,540 @@
 
 ---
 
+## v2026-08-06.3 — Weltgenerator mit Code und Abbildungen erklärt, Implementierung in zwei Kapitel geteilt
+
+**Kontext:** Der Weltgenerator ist Laurins Kernbeitrag, wurde aber nur benannt statt erklärt.
+Dazu vermischte ein einziges Implementierungskapitel Spiel und RL.
+
+#### Änderung 1 — Implementierungskapitel in zwei Kapitel geteilt
+**Datei:** `docs/Projektdokumentation.tex`
+**Lösung:** Aus Kapitel 4 („Implementierung von Spiel und Lernumgebung") wurden:
+
+| Kapitel | Titel | Inhalt | Seiten |
+|---------|-------|--------|--------|
+| 4 (`sec:umgebung`) | Implementierung des Spiels Stoneforge | Stack, Bausteine, Weltgenerator, Lösbarkeit, Client | 17–29 |
+| 5 (`sec:rlumgebung`, neu) | Implementierung der Lernumgebung | POMDP, Beobachtung, Binding, Reward, Pipeline, Monitoring | 30–35 |
+
+`sec:umgebung` bleibt auf dem Spielteil, weil die Arbeitsteilungstabelle und fünf weitere
+Stellen darauf zeigen. Sechs Querverweise umgehängt, davon vier auf `sec:rlumgebung`
+(Beobachtung, Early Stop, Monitoring, Gym-Anbindung) und einer auf `sec:rewarddesign`.
+Der Absatz „Aufbau der Arbeit" beschreibt die neue Zweiteilung.
+
+#### Änderung 2 — Vier Quelltextauszüge zum Generator
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Die Stufen wurden benannt, aber nicht gezeigt. Ein Leser konnte sich unter
+„Hash-Rauschen mit Salt" oder „Domain Warping" nichts vorstellen.
+
+| Listing | Quelle | Zeigt |
+|---------|--------|-------|
+| `lst:genchunk` | `World::generateChunk()` | die Pipeline als Landkarte, vollständig |
+| `lst:noise` | `World::noise01()` | die zustandsfreie Rauschquelle |
+| `lst:biomefield` | `World::biomeFieldForChunk()` | Domain Warping + drei Oktaven |
+| `lst:basetile` | `World::sampleBaseTile()` | Vorrangregel See > Wand > Erz > Baum |
+
+Jede Stufe verweist jetzt auf die passende Stelle im Grundlagenkapitel
+(`sec:pcg_algorithmen`: Hash- gegen Wertrauschen, Domain Warping, Moore-Nachbarschaft),
+statt Vorwissen vorauszusetzen.
+
+#### Änderung 3 — Zwei neue Abbildungen aus echten Generatordaten
+**Datei:** `scripts/plot_worldgen.py` (neu), `docs/figures/fig_worldgen_pipeline.{pdf,png}`,
+`docs/figures/fig_noise_vergleich.{pdf,png}`
+
+- `fig:worldgenreal`: die drei Stufen nebeneinander an Seed 7000 (91×91-Ausschnitt),
+  Biomfeld mit Chunk-Raster → Basisbelegung → fertige Welt mit Spawn, Exit und dem
+  BFS-Weg (43 Schritte). Zeigt sichtbar, dass der kürzeste Weg eine grobe Treppe ist.
+- `fig:noisevergleich`: Hash- gegen Wertrauschen, roh und nach Schwellwert. Macht den
+  Kernbefund der Arbeit visuell: derselbe Schwellwert erzeugt links verstreute
+  Einzelfelder, rechts zusammenhängende Barrieren.
+
+**Verifikation:** Das Biomfeld ist im pybind11-Binding nicht exponiert und musste in
+Python nachgebaut werden. Der Nachbau reproduziert die Tile-Typen des C++-Kerns auf
+**8.115 von 8.115** geprüften Feldern exakt (`plot_worldgen.py` bricht bei jeder Abweichung
+ab). Ein zwischenzeitlicher Fehler (Python floor-Division gegen C++-Truncation bei
+negativen Koordinaten in der Seenmaske) fiel genau dadurch auf: 50 Abweichungen, alle an
+negativen Koordinaten.
+
+#### Änderung 4 — Durchgerechnetes Beispiel `tab:trace`
+**Lösung:** Eine echte Chunk-Zeile (Seed 7000, Chunk (−4,−4), Bergland) mit allen drei
+Rauschwerten je Feld und dem resultierenden Tile. Enthält alle vier Ausgänge und zeigt an
+Feld (−32,−31) die Vorrangregel: Dichte 0,330 erzeugt keine Wand, Erzwert 0,002 setzt
+trotzdem Erz.
+
+#### Änderung 5 — Übervolle Zeilen behoben
+**Problem:** Lange `\texttt`-Bezeichner (`enableFloodFillValidation`,
+`assets/base/game_config.json`) sind nicht trennbar und ragten in den Rand.
+**Lösung:** `\setlength{\emergencystretch}{3em}`; Technologie-Stack-Tabelle auf
+`\footnotesize`.
+
+| | vorher | nachher |
+|---|--------|---------|
+| Overfull-Boxen | 31 | **4** (alle < 13 pt, alle in Abbildungen außerhalb Kap. 4/5) |
+
+**Korrektur zu v2026-08-06.1 und .2:** Die dort berichteten „0 Overfull-Boxen" waren falsch.
+Das `.log` enthält Bytes, an denen `grep` die Datei als binär behandelt und stillschweigend
+nichts ausgibt; die Prüfung lief ins Leere. Die tatsächliche Zahl lag bei 31. Prüfung
+erfolgt jetzt über Python mit `errors="replace"`.
+
+#### Änderung 6 — `listings` gegen Nicht-ASCII abgesichert
+**Problem:** Ein Em-Dash in einem Code-Kommentar brach den Build
+(`Invalid UTF-8 byte sequence`), weil `listings` mit `inputenc`/utf8 nur die im `literate`
+hinterlegten Zeichen kennt.
+**Lösung:** Zeichen entfernt, zusätzlich `—`, `–`, `„`, `"` ins `literate` aufgenommen.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, **82 Seiten**, 4 Overfull-Boxen, keine
+undefinierten Referenzen oder Zitate. Sieben Listings, zwei neue Abbildungen. Kein Eingriff
+in Simulationskern, Modelle oder Messergebnisse.
+
+---
+
+## v2026-08-06.2 — Spielteil des Implementierungskapitels von unten nach oben neu aufgebaut
+
+**Kontext:** Das Kapitel stieg bei der Generator-Pipeline ein, ohne vorher gesagt zu haben,
+was ein Tile, ein Chunk und eine Welt sind. Damit fehlte die unterste Ebene, und alles
+darüber wirkte zusammenhanglos. Fokus dieser Runde ausschließlich auf Spiel und prozedurale
+Weltgenerierung; die RL-Abschnitte bleiben unangetastet.
+
+#### Änderung 1 — Neuer Abschnitt `sec:bausteine` als unterste Ebene
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** `TileType`, Chunk und `World` kamen im Text nicht vor, obwohl die gesamte
+Argumentation (Determinismus, Reproduzierbarkeit, Lösbarkeit) auf ihnen steht.
+**Lösung:** Neuer Abschnitt „Die Bausteine: Tile, Chunk und Welt" vor dem Generator:
+15 Tile-Typen, Begehbarkeit als Default-`false` (Bäume und Erz blockieren also ebenfalls),
+Chunk als 8×8-Array, `World` als lazy gefüllte Hashtabelle, Generator als reine Funktion
+`(seed, cx, cy) → 64 Tile-Typen`, und daraus abgeleitet die Notwendigkeit für das
+Evaluationsprotokoll.
+
+#### Änderung 2 — `sec:weltgenerator` am Code neu geschrieben
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Die Stufenbeschreibung nannte Verfahren, erklärte aber keines. Mehrere im Code
+zentrale Fakten fehlten ganz.
+
+| Fakt | vorher | nachher |
+|------|--------|---------|
+| Chunkgröße | **16×16 (falsch)** | 8×8 (`world.hpp:15`, einzige Definition) |
+| Biom pro Tile oder Chunk? | unklar | **pro Chunk**, `biomeTagForChunk(cx,cy)` |
+| Biomgröße | fehlte | Skalierung 0,22 → ca. 4–5 Chunks ≈ 36 Tiles |
+| Rauschquelle | „Hash-Rauschen" | SplitMix64-Mixer, zustandsfrei, Begründung gegen laufenden RNG |
+| Oktaven Biomfeld | fehlte | 3 Felder, Gewichte 0,62 / 0,28 / 0,10 |
+| Glättungsfunktion | „Perlins" | Hermite `3t²−2t³` |
+| Erzverteilung | fehlte | **nur Bergland** (`biomeTag == 3`) |
+| Seen | „zwei Rauschfelder" | zusätzlich: ganzzahlige Division `x/7`, `x/3` → blockweise konstant, Seen grobkörnig |
+| Reihenfolge in `sampleBaseTile` | fehlte | See > Wand > Erz > Baum, als Regel benannt |
+| Halo der Glättungsstufe | „damit es nicht springt" | Begründung: erhält die Reinheit der Generatorfunktion |
+| Landmarken-Offset | fehlte | 3 Felder Spielraum bei Chunkgröße 8 |
+
+Neu: `tab:biome` mit allen 21 Schwellwerten aus `World::sampleBaseTile()`.
+
+#### Änderung 3 — Widerspruch „Wandanteil 7–25 %" vs. „Wanddichte 0,238" aufgelöst
+**Problem:** Beide Zahlen standen zwei Absätze auseinander im Text, ohne Erklärung. Sie messen
+verschiedene Dinge: die erste ist der Schwellwert-Parameter für Wände, die zweite der
+gemessene Anteil **unpassierbarer** Felder inkl. Bäumen, Erz und Landmarken.
+**Messung:** Tile-Zensus über beide Eval-Sets (100 Seeds, 81×81-Fenster um den Spawn,
+656.100 Tiles):
+
+| Tile | Anteil | begehbar |
+|------|--------|----------|
+| Leer | 0,7511 | ja |
+| Wand | 0,1562 | nein |
+| Baum | 0,0421 | nein |
+| Erz | 0,0322 | nein |
+| Landmarken (7 Typen) | 0,0183 | nein |
+| Exit | 0,0002 | ja |
+| **unpassierbar gesamt** | **0,2487** | |
+
+**Lösung:** Neue `tab:tilecensus` plus Absatz „Was am Ende tatsächlich im Weg steht".
+Formulierung im Umwegfaktor-Absatz von „Wanddichte" auf „Hindernisdichte" korrigiert.
+Wände allein sind nur 15,6 %, nicht 23,8 %.
+
+#### Änderung 4 — Kausalkette zwischen Determinismus und Offenheit explizit gemacht
+**Problem:** Dass die Welten offen sind, stand als Beobachtung da. Der Grund dafür ist aber
+dieselbe Entwurfsentscheidung, die Reproduzierbarkeit erzeugt: `noise01` ist zustandsfrei,
+also entscheidet jedes Feld ohne Kenntnis seiner Nachbarn.
+**Lösung:** Im Absatz „Eine Konsequenz für die Ergebnisse" explizit als Zielkonflikt benannt
+und auf `sec:bausteine` zurückverwiesen.
+
+#### Änderung 5 — Neue Literaturstelle
+**Datei:** `docs/references.bib`
+**Lösung:** `steele2014splitmix` (Steele, Lea, Flood, OOPSLA 2014) für den Bit-Mixer in
+`World::mix()`.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, 74 → **76 Seiten**, **0 Overfull-Boxen**, keine
+undefinierten Referenzen, neue Zitierung korrekt im Literaturverzeichnis aufgelöst. Zwei
+neue Tabellen (Nr. 3 und 4). Keine Änderung an Code, Modellen oder RL-Abschnitten.
+
+**Offen:** Kommentar `src/core/world.cpp:402` spricht weiterhin von „5×5-Exit-Freiräumung",
+tatsächlich 3×3 (`exitClearRadius: 1`). Nur der Paper-Text ist korrigiert.
+
+---
+
+## v2026-08-06.1 — Implementierungskapitel verständlich gemacht, drei Quelltextauszüge ergänzt
+
+**Kontext:** Das Kapitel `sec:umgebung` benannte Ergebnisse, erklärte aber die Mechanismen
+nicht. `sec:loesbarkeit` bestand aus sieben Zeilen, die die Garantie behaupteten, ohne zu
+zeigen, wodurch sie entsteht. Ein Leser konnte die zentrale Aussage der Arbeit („jede Welt
+ist lösbar, also liegt jeder Misserfolg am Agenten") nicht nachvollziehen.
+
+#### Änderung 1 — `sec:loesbarkeit` vollständig neu geschrieben
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Der Abschnitt sprang von der Behauptung direkt zum empirischen Beleg. Weder der
+Mechanismus noch die Unterscheidung zwischen Erreichbarkeits- und Distanzgarantie kamen vor.
+Die eigentliche Ingenieursleistung (Exit aus dem Erreichbarkeitsbaum ziehen statt Rejection
+Sampling oder Korridor-Carving) war unsichtbar.
+**Lösung:** Umbenannt in „Exit-Platzierung und garantierte Lösbarkeit", Aufbau jetzt:
+Motivation über die Interpretierbarkeit der Erfolgsquote → verworfene Alternativen mit
+Begründung → vierstufiger Ablauf von `World::chooseExitPoint()` → die Freiräumungs-Falle →
+Trennung harte Erreichbarkeitsgarantie vs. Distanzgarantie mit Fallback → Belege.
+
+| Aspekt | vorher | nachher |
+|--------|--------|---------|
+| Umfang | 7 Zeilen | ca. 2 Seiten inkl. Listing |
+| Mechanismus | „Flood-Fill vom Spawn" | 4 nummerierte Schritte, BFS-Tiefe = echter Laufweg |
+| Freiräumungs-Falle | fehlte | eigener Absatz + `lst:exit` |
+| Fallback nach 24 Versuchen | verschwiegen | explizit als Grenze der Distanzgarantie benannt |
+| Freiräumungsradius Exit | — | **3×3 (Radius 1)**, nicht 5×5 |
+
+#### Änderung 2 — Neuer Abschnitt `sec:schnittstelle`
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Das Kapitel erklärte nirgends, was bei `reset()` und `step()` tatsächlich
+passiert und wie die Arbeit zwischen C++ und Python aufgeteilt ist. Das prozessglobale
+Config-Leck stand als Halbsatz in einer Klammer, obwohl es einen ganzen Trainingslauf
+verfälscht hatte.
+**Lösung:** Neuer Abschnitt „Die Schnittstelle: was bei `reset()` und `step()` tatsächlich
+passiert" mit Arbeitsteilung der Sprachen, `reset()` in vier Schritten, `step()` in zwei
+Hälften (Kern-Reward vs. drei Python-Regeln), und dem Config-Leck als eigenem Absatz
+inklusive Orakel-Nachweis (8,3 vs. 40,2 Schritte).
+
+#### Änderung 3 — Drei Quelltextauszüge, `listings` in der Preamble
+**Datei:** `docs/Projektdokumentation.tex`
+**Lösung:** `listings` + `xcolor` + `\lstset` (Literate-Mapping für Umlaute und griechische
+Zeichen, da `inputenc`/utf8). Drei Listings, bewusst nur dort, wo der Code das Argument trägt:
+
+| Listing | Quelle | Trägt welche Aussage |
+|---------|--------|----------------------|
+| `lst:exit` | `src/core/world.cpp` | Virtuelle Freiräumung schützt die Distanzgarantie |
+| `lst:pbrs` | `src/core/simulation.cpp` | Shaping-γ = RL-γ, Bedingung der Policy-Invarianz |
+| `lst:lstmstate` | `scripts/eval_baselines.py` | Korrekte LSTM-Zustandsführung im Eval |
+
+#### Änderung 4 — Motivation und Jargon im Generator-Abschnitt
+**Datei:** `docs/Projektdokumentation.tex`, `sec:weltgenerator`, `Trainings-Pipeline`
+**Problem:** Der Generator wurde beschrieben, ohne zu sagen, warum er so gebaut ist.
+„Hash-Rauschen mit merkmalsspezifischem Salt" stand unerklärt. Die Trainings-Pipeline war
+ein einziger Absatz aus aneinandergereihten Fakten.
+**Lösung:** Zwei Entwurfsentscheidungen vorangestellt (zustandsfreier Generator;
+Determinismus als Voraussetzung des Evaluationsprotokolls, „der Seed *ist* die Welt").
+Hash-Rauschen und Salt in zwei Sätzen erklärt. Trainings-Pipeline in vier benannte Bausteine
+gegliedert (parallele Umgebungen, Evaluation und Gating, Absenkung der Exploration,
+Seed-Pool), inkl. Begründung der Doppelbedingung beim Gating.
+
+#### Änderung 5 — Pipeline-Stufenzahl korrigiert
+**Problem:** Fließtext sagte „dreistufige Pipeline", Abbildungsunterschrift und
+`description`-Liste zeigten vier Stufen (0 bis 3).
+**Lösung:** „vierstufig".
+
+**Messung:** `scripts/probe_world_geometry.py` erneut ausgeführt zur Prüfung der im Text
+genannten 1,10.
+
+| Konfiguration | lösbar | Wanddichte | BFS Ø | Umweg Ø | p90 |
+|---------------|--------|------------|-------|---------|-----|
+| Glättung AUS (berichtet) | 100/100 | 0,238 | 40,0 | **1,099** | 1,254 |
+| AN it=2 b=5 s=4 | 100/100 | 0,037 | 40,1 | 1,001 | 1,000 |
+
+Der Wert 1,10 im Fließtext (100 Seeds, A+B) ist korrekt; 1,123 in `tab:geometrieprobe` ist
+der 50-Seed-Wert auf Testset A. Beide stehen mit korrektem n im Dokument.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei (exit 0), 73 → 74 Seiten, **0 Overfull-Boxen**,
+keine undefinierten Referenzen oder Zitate. Alle drei Listings korrekt nummeriert (S. 21,
+25, 30). Keine Änderung an Code, Modellen oder Messergebnissen.
+
+**Offen:** Der Kommentar in `src/core/world.cpp:402` und der Changelog-Eintrag v2026-07-06
+sprechen von einer „5×5-Exit-Freiräumung". Bei `exitClearRadius: 1` in
+`assets/base/game_config.json` sind es **3×3**. 5×5 gilt für den Spawn (`spawnClearRadius: 2`).
+Das Paper nennt jetzt 3×3; der C++-Kommentar sollte nachgezogen werden.
+
+---
+
+## v2026-08-05.3 — Glättungsthese im Paper gegen die Härtungssonde geradegezogen
+
+**Kontext:** Die Messung aus v2026-08-05.1 widerlegt eine Annahme, die an vier Stellen
+der Ausarbeitung als Tatsache stand. Die Arbeit hätte im Related Work und im Ausblick eine
+These vertreten, die ihre eigenen Rohdaten kippen.
+
+#### Änderung 1 — Härtungssonde als zitierbare Messung im Paper verankert
+**Datei:** `docs/Projektdokumentation.tex`, Abschnitt `sec:weltgenerator`
+**Problem:** Umwegfaktor und Regelsweep existierten nur im Changelog. Jede Korrektur im
+Related Work und Ausblick wäre eine Behauptung ohne Beleg im Dokument gewesen.
+**Lösung:** Zwei neue Absätze („Wie offen die Welten sind, misst der Umwegfaktor",
+„Die naheliegende Reparatur funktioniert nicht") plus `tab:geometrieprobe` mit dem
+vollständigen 7-Zeilen-Sweep (Quelle: `scripts/probe_world_geometry.py --sweep`,
+Testset A, 50 Seeds). Ursachenkette benannt: `enableFloodFillValidation` und
+`enableMacroGraphPrecheck` auf `false`, Basisdichte hartkodiert in `World::sampleBaseTile()`.
+
+#### Änderung 2 — Vier widerlegte Aussagen korrigiert
+
+| Stelle | vorher | nachher |
+|--------|--------|---------|
+| `sec:weltgenerator`, Konsequenz-Absatz | „Die Glättungsstufe ist **der** naheliegende Hebel … muss nur aktiviert und kalibriert werden" | Messung: Dichte 0,238 → 0,037, Umweg 1,10 → 1,001; Härtung ist kein Config-Schalter |
+| `sec:relatedwork`, Hindernisstruktur | implizit: Glättung an ⇒ Sackgassen | Literaturaussage bleibt, Umkehrschluss explizit widerlegt; neue Lehre: PCG-Bausteine sind nicht parameterfrei übertragbar, der Betriebspunkt der Vorstufe entscheidet |
+| `sec:ausblick`, Beiträge/Technisch | „der wirksamste Hebel … muss lediglich aktiviert werden" | Zugänglichkeit erlaubte, die geplante Härtung **vor** der ersten Trainingsstunde zu widerlegen |
+| `sec:ausblick`, Punkt 1 Härtung | „billigster verfügbarer Weg zu echten Sackgassen" | drei benannte Code-Eingriffe statt eines Schalters; Zielkonflikt (3/50 lösbar) beziffert |
+
+**Begründung:** Ein Related-Work-Kapitel, das eine im Projekt gemessene Widerlegung
+verschweigt, ist angreifbar. Die zweistufige Methodik (erst kalibrieren, dann trainieren)
+überlebt die Korrektur unverändert und wird durch sie sogar gestützt.
+
+**Ergebnis:** Keine neue Messung, alle Zahlen aus v2026-08-05.1 übernommen. Zwei
+`pdflatex`-Durchläufe fehlerfrei (exit 0), keine undefinierten Referenzen oder Zitate,
+neue Tabelle als Nr. 4 im Tabellenverzeichnis, an fünf Stellen referenziert.
+
+**Offen:** CLAUDE.md nennt „Umwegfaktor 1,12 (100 Seeds)". Laut Messung 1 ist 1,099 der
+100-Seed-Wert, 1,123 der 50-Seed-Wert auf Testset A. Im Paper stehen beide Zahlen mit
+korrektem n; die Notiz in CLAUDE.md vermischt sie.
+
+---
+
+## v2026-08-05.2 — Grundlagenkapitel sprachlich überarbeitet
+
+#### Änderung 1 — Grundlagenkapitel auf den Schreibstil der Projektarbeit umgestellt
+**Datei:** `docs/Projektdokumentation.tex` (Abschnitt `sec:grundlagen`, Zeilen 535–1190)
+**Problem:** Das Kapitel las sich generiert: durchgehend Passiv und Nominalstil
+("wird verwendet", "ist zu beachten", "Gesteuert wird die Erzeugung"), gleichförmige
+Satzlängen ohne Rhythmus, Floskeln wie "umfassende Übersicht", "ein zentrales Problem",
+"was bei der Interpretation zu berücksichtigen ist".
+**Lösung:** Prosa aktiv umgeschrieben (Wir-Form, wo das Projekt handelt), Satzlängen
+gebrochen, harte Schlusssätze gesetzt ("Hier laufen sie zusammen.", "Wer sie vermischt,
+misst Unsinn.", "Wer das beim Interpretieren vergisst, liest eine Stärke, wo keine ist.").
+Parenthetische Gedankenstriche (`~--`) durch Punkte und Doppelpunkte ersetzt.
+
+| Aspekt | vorher | nachher | Begründung |
+|--------|--------|---------|------------|
+| Stimme | überwiegend Passiv | aktiv, Wir-Form bei eigenen Entscheidungen | Handschrift statt Bürokratendeutsch |
+| Gedankenstriche `~--` | 3 Vorkommen | 0 | Stilvorgabe CLAUDE.md |
+| Fachinhalt, Formeln, Zitate, TikZ | — | unverändert | rein sprachliche Überarbeitung |
+
+**Ergebnis:** Keine Messung (Textänderung). `pdflatex -draftmode -halt-on-error` läuft
+fehlerfrei durch (exit 0), Abschnitts- und Label-Struktur unverändert.
+
+---
+
+## v2026-08-05.1 — Härtungssonde widerlegt den Umbauplan, MLP-Kontrollgruppe für F2 nachgerüstet
+
+**Kontext:** Ein Gutachtenvorschlag verlangte, die Umgebung über die zelluläre Glättung zu
+härten (Kompass-Heuristik soll von 92 % auf unter 30 % einbrechen), anschließend MLP und LSTM
+darauf neu zu trainieren. Vor dem Trainingssprint haben wir die Annahme geprüft. Sie hält nicht.
+
+### Messung 1 — Die zelluläre Glättung härtet die Welt nicht, sie planiert sie
+
+**Skript:** `scripts/probe_world_geometry.py` (100 Seeds: Testset A 7000–7049 + B 8000–8049)
+**Vorgehen:** `enableCellularSmoothing` temporär in `assets/base/game_config.json` gesetzt.
+Kein Rebuild nötig — `StoneforgeCoreEnv` liest die Config im **Konstruktor**
+(`src/python/py_module.cpp:44–48`), jedes neu gebaute Env übernimmt den Patch sofort.
+Die Rebuild-Warnung in CLAUDE.md ist an dieser Stelle zu vorsichtig.
+
+**Leitmetrik: Umwegfaktor = BFS-Distanz / Manhattan-Distanz.** Er misst direkt, ob es
+überhaupt etwas zu umrunden gibt. Bei 1,0 ist der kürzeste Weg die Luftlinie.
+
+| Bedingung | lösbar | Wanddichte | Manhattan Ø | BFS Ø | Umweg Ø | p90 |
+|---|---|---|---|---|---|---|
+| Glättung AUS (Status quo) | 100/100 | 0,238 | 36,8 | 40,0 | **1,099** | 1,254 |
+| Glättung AN (b=5 / s=4, 2 Iter.) | 100/100 | **0,037** | 40,1 | 40,1 | **1,001** | 1,000 |
+
+**Ergebnis:** Die Glättung radiert die Wände weg statt sie zu verdichten. Bei einer
+Ausgangsdichte von 24 % hat kaum ein Wandtile die geforderten fünf soliden Nachbarn, also
+stirbt fast jede Wand und keine wird geboren. Umwegfaktor 1,001 heißt: die Welt wird zur
+leeren Ebene. Hätten wir das aktiviert, wäre die Heuristik nicht auf 30 % gefallen, sondern
+auf nahezu 100 % gestiegen.
+
+### Messung 2 — Es gibt keinen reinen Config-Ausweg
+
+**Skript:** `scripts/probe_world_geometry.py --sweep` (Testset A, 50 Seeds)
+**Frage:** Hebt irgendeine Regelkombination den Umwegfaktor, ohne die Lösbarkeit zu zerstören?
+
+| Regel | lösbar | Wanddichte | BFS Ø | Umweg Ø | p90 |
+|---|---|---|---|---|---|
+| aus (Referenz) | 50/50 | 0,240 | 40,1 | 1,123 | 1,312 |
+| an, it=2 b=5 s=4 (JSON-Default) | 50/50 | 0,036 | 40,1 | 1,001 | 1,000 |
+| an, it=2 b=4 s=3 | 50/50 | 0,169 | 40,1 | 1,101 | 1,327 |
+| an, it=1 b=3 s=3 | 50/50 | 0,271 | 39,8 | 1,145 | 1,637 |
+| an, it=2 b=3 s=2 | 41/50 | 0,447 | 39,4 | 1,158 | 1,357 |
+| an, it=4 b=3 s=2 | 19/50 | 0,699 | 39,7 | 1,173 | 1,607 |
+| an, it=2 b=2 s=1 | **3/50** | 0,875 | 35,3 | 1,636 | 2,299 |
+
+**Ergebnis:** Ein harter Zielkonflikt. Jede Einstellung, die den Umwegfaktor spürbar hebt,
+zerstört die Lösbarkeit. Alles, was 50/50 lösbar bleibt, liegt beim Umweg im Rauschen der
+Referenz (1,145 gegen 1,123). Der Generator kann keine Welt bauen, die gleichzeitig schwer
+und zuverlässig lösbar ist.
+
+**Ursache:** `enableFloodFillValidation` und `enableMacroGraphPrecheck` stehen beide auf
+`false` (`game_config.json:23,25`). Die Stufen, die Konnektivität prüfen und erzwingen würden,
+sind aus. Der Automat zählt Nachbarn, er kennt keine Erreichbarkeit.
+
+**Konsequenz für die Planung:** Härtung ist kein Config-Flip. Sie verlangt Eingriffe in
+`World::sampleBaseTile()` (Basisdichte ist hartkodiert, world.cpp), dazu funktionierende
+Konnektivitätsvalidierung und Neuvalidierung — vor der ersten Trainingsstunde. Bei neun Tagen
+Restzeit verworfen.
+
+**Gewinn für die Arbeit:** Der Umwegfaktor **1,12** ist die quantitative Erklärung, warum ein
+Vierzeilen-Kompass 92 % erreicht und Gedächtnis in dieser Welt keinen Vorteil bringt. Der
+kürzeste Weg ist zwölf Prozent länger als die Luftlinie. Es gibt schlicht nichts zu umrunden.
+Das ersetzt die Behauptung „die Umgebung war zu einfach" durch eine Messung.
+
+### Messung 3 — Durchsatz: die 8-Stunden-Annahme gilt nur für das LSTM
+
+Gemessen mit `n_envs=16` (DummyVecEnv, wie v12), 8192 Steps, `OMP_NUM_THREADS=3`.
+
+| Algo | Parameter | Durchsatz | 2,2 M Steps (Training, ohne Eval) |
+|---|---|---|---|
+| `ppo` (MLP) | 250.629 | **5.989 Steps/s** | ~0,1 h |
+| `rppo` (LSTM) | 1.038.917 | 104 Steps/s | ~5,9 h |
+
+Faktor 58. Die 5,9 h des LSTM decken sich mit der protokollierten Laufzeit von 7h48m
+(v12 s1, `results.json`) plus Eval-Overhead. Beim MLP dominiert der periodische Eval die
+Wallclock, nicht das Training. **Folge:** Die aus Zeitgründen geplante Beschränkung auf n=3
+ist hinfällig, n=7 spiegelt die LSTM-Seite exakt.
+
+#### Änderung 1 — `--algo` für das Curriculum nachgerüstet
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** Das Skript war fest auf `RecurrentPPO` verdrahtet und kannte kein `--algo`.
+Eine gedächtnislose Kontrollgruppe auf **identischem** Curriculum war damit nicht messbar.
+Die Zahlen in Tabelle 9 vergleichen deshalb Umgebungsversionen statt Architekturen — für F2
+wertlos.
+**Lösung:** `--algo {rppo,ppo}` eingeführt, Auflösung über ein `ALGOS`-Dict. Curriculum,
+Swarm-Pool, Phasen, Gates, Eval-Protokoll und alle geteilten Hyperparameter bleiben identisch.
+Betroffen: Import, `PPO_KWARGS`, Modellkonstruktion, Phasen-Reload, Entropie-Annealing,
+`save_run_config`, `save_run_results`.
+
+| Parameter | `rppo` (LSTM) | `ppo` (MLP) | Begründung |
+|---|---|---|---|
+| `policy` | `MlpLstmPolicy` | `MlpPolicy` | die kontrollierte Variable: Gedächtnis |
+| `batch_size` | 8 | 256 | 8 ist eine Notlösung für den LSTM-Critic (v2026-07-07.4). Beim MLP wären das bei Rollout 256×16=4096 ganze 512 Gradientenschritte pro Epoche. 256 = 16 Minibatches, PPO-Standard. |
+| `policy_kwargs` | `lstm_hidden_size=256` | `net_arch=[256,256]` | spiegelt die Hidden-Size. Der SB3-Default `[64,64]` würde die Baseline über die Kapazität benachteiligen statt über das Gedächtnis. |
+| alles übrige | — | identisch | `n_steps`, `n_epochs`, `lr`, `gamma`, `gae_lambda`, `clip_range`, `ent_coef`, `vf_coef` |
+
+`--lstm-size` wirft jetzt einen Fehler, wenn es mit `--algo ppo` kombiniert wird.
+
+**Verifikation:** `scratchpad/smoke_mlp.py` prüft Konstruktion, `learn()`, Speichern und den
+Phasen-Reload mit gefilterten Kwargs (die Stelle, an der so ein Umbau typischerweise bricht),
+plus Gegenprobe, dass der LSTM-Pfad unverändert konstruiert. Bestanden.
+
+**Offenzulegende Einschränkung:** Das MLP hat 250.629 Parameter, das LSTM 1.038.917 — Faktor
+vier. Verliert das MLP, ist der Einwand „Kapazität statt Gedächtnis" zulässig. Bei
+Trainingskosten von Minuten pro Lauf lässt er sich mit einer zweiten MLP-Variante
+(`net_arch=[512,512]`, ~1 M Parameter) ausräumen.
+
+### Ergebnis (vorläufig, Lauf s1 in Arbeit)
+
+`models/ppo_mlp_curriculum_v12_s1`, Phase 1 (exit 5–12, die **leichteste** Phase):
+
+| Eval @ Steps | det | stoch |
+|---|---|---|
+| 24.992 | 0/50 (0,0 %) | 12/50 (24,0 %) |
+| 49.984 | 1/50 (2,0 %) | 27/50 (54,0 %) |
+| 149.952 | 1/50 (2,0 %) | 15/50 (30,0 %) |
+| 274.912 | 0/50 (0,0 %) | 15/50 (30,0 %) |
+| 424.864 | 0/50 (0,0 %) | 17/50 (34,0 %) |
+| 499.840 (Phasenende) | 0/50 (0,0 %) | 8/50 (16,0 %) |
+
+**Phase 1 abgeschlossen, bestes SR (stoch): 54,0 %.** LSTM v12 s1, gleiche Phase: **92,0 %.**
+Gate 0,85 klar verfehlt, volle 500 k Steps ausgeschöpft.
+
+Auffällig ist nicht nur das Niveau, sondern der **Verlauf**: Das Maximum von 54 % fällt auf
+Step 49.984, danach sinkt die SR und pendelt bis zum Phasenende zwischen 14 und 34 %.
+Neun Zehntel des Phasenbudgets haben die Politik verschlechtert. Deterministisch bleibt sie
+über den gesamten Lauf bei 0–2 %.
+
+Das gedächtnislose MLP scheitert deterministisch nahezu vollständig und kommt stochastisch
+nicht stabil über 30 %. Das passt zur erwarteten Signatur: ohne Gedächtnis erzeugt dieselbe
+Beobachtung dieselbe Aktion, die deterministische Politik läuft in Zyklen. Belastbar ist das
+erst mit n=7; ein Einzelsnapshot ist nach v2026-07-07.4 ausdrücklich **keine** Validierung.
+
+**Offen:** Seeds 2–7, danach Standard-Eval (Testset A/B, Cap 4000) mit Pfadeffizienz,
+optional die breite MLP-Kontrolle.
+
+### ⚠️ Befund — Die Pfadeffizienz rettet das F2-Argument NICHT
+
+**Auslöser:** Die Vermutung lautete, die Heuristik gewinne zwar bei der Erfolgsquote, das
+LSTM aber bei der Wegqualität. Gegen `logs/eval_results/baselines_and_models.json` geprüft.
+**Sie stimmt nicht.**
+
+| Politik | SR Testset A | Schritte Ø | Pfadeffizienz |
+|---|---|---|---|
+| Kompass ε=0,3 | 50,0 % | 399 | **0,158** |
+| Kompass ε=0,5 | 62,0 % | 466 | 0,142 |
+| Kompass ε=0,6 | 76,0 % | 485 | 0,130 |
+| Kompass ε=0,9 | 88,0 % | 1495 | 0,040 |
+| RecurrentPPO v12 s1–s7 | 56,0–88,0 % | 1197–1740 | **0,039–0,061** |
+
+Das trainierte Modell liegt bei der Pfadeffizienz auf dem Niveau des ε=0,9-Zufallslaufs und
+wird vom ε=0,3-Kompass um rund Faktor drei geschlagen. Es erkauft seine höhere Erfolgsquote
+durch mehr Herumlaufen, nicht durch bessere Wege. Die mittlere Episodenlänge (1197–1740
+Schritte bei einem BFS-Optimum von 40) bestätigt das.
+
+**Vorbehalt:** Die Effizienz mittelt nur über *erfolgreiche* Episoden. Der ε=0,3-Kompass
+schafft nur die Seeds, auf denen die Luftlinie ohnehin trägt — ein Selektionseffekt, der
+seinen Wert schönt. Er erklärt den Faktor drei aber nicht vollständig.
+
+**Konsequenz:** Die Pfadeffizienz taugt als *zusätzliche* Berichtsmetrik und entwertet die
+92-%-Schlagzeile der Heuristik (Effizienz 0,047). Als Beleg für einen Vorteil des Gedächtnisses
+taugt sie nicht. F2 muss über den MLP/LSTM-A/B beantwortet werden, nicht über die Wegqualität.
+
+#### Änderung 2 — Dokumentationsdrift aufgeräumt
+
+Beim Arbeiten sind sechs Widersprüche aufgefallen. Alle gegen Rohdaten und Code geprüft,
+alle bestätigt.
+
+| # | Fund | Status |
+|---|---|---|
+| 1 | CLAUDE.md nannte „Random 8 % / Kompass 89 %", `baselines.json` und die Doku sagen **5,2 % / 92,0 %** | korrigiert, Quelle benannt |
+| 2 | Das Inline-Snippet „Standardisierter Eval" in CLAUDE.md probierte nur `PPO`/`A2C`/`DQN` (**kein `RecurrentPPO`**) und rief `predict()` **ohne LSTM-Zustand** auf | entfernt, ersetzt durch Verweis auf `eval_baselines.py` |
+| 3 | `eval_baselines.py:12` verwies auf `scripts/eval_final.py` — existiert nicht | Verweis entfernt |
+| 4 | `train_curriculum.py` (Quelle **aller** berichtsfähigen Zahlen) fehlte im Strukturbaum, stattdessen war `train.py` als Trainingseinstieg gelistet | ergänzt und abgegrenzt |
+| 5 | `eval_hard_world.py` setzt `*WallThreshold`-Keys, die laut CLAUDE.md hartkodiert und entfernt sind | Warnblock im Code, als defekt markiert |
+| 6 | Fünf Eval-Skripte plus Inline-Snippet, kein kanonisches benannt | `eval_baselines.py` als kanonisch festgeschrieben |
+
+Befund 2 war der einzige mit echtem Notenrisiko: Wer in den letzten Tagen schnell eine Zahl
+nachmisst und das Snippet nimmt, bekommt für ein LSTM-Modell einen systematisch zu niedrigen
+Wert und trägt ihn in die Arbeit ein.
+
+#### Änderung 3 — Kurzfassung nennt jetzt das Ergebnis
+
+**Datei:** `docs/Projektdokumentation.tex`
+**Problem:** Die Kurzfassung enthielt **keine einzige Zahl und keinen Befund**. Sie endete mit
+„Was diese Arbeit daraus für die Bewertung solcher Agenten ableitet, zeigen die folgenden
+Kapitel." Ein Prüfer liest die Kurzfassung zuerst und erfuhr dort nichts.
+**Lösung:** Von 150 auf 285 Wörter erweitert. Nennt jetzt in dieser Reihenfolge: Z1 erfüllt
+(100 % Lösbarkeit über 3.150 Seeds, Determinismus), das Agentenergebnis (65,7 % ± 12,4 A /
+66,9 % ± 12,8 B, n=7, Holdout erfüllt, Testset verfehlt), den Bruch (Kompassheuristik 92 %,
+bei vergleichbarer SR dreimal wegeffizienter), die Ursache im Generator und den übertragbaren
+Beitrag. Der unbequeme Teil steht drin, nicht nur das Positive.
+
+**Zusätzlich:** Zwei verwaiste Abbildungen an den Text angebunden. `fig:v12endergebnis` — die
+zentrale Ergebnisgrafik — wurde im Fließtext **nie** referenziert, ebenso `fig:pcgpipeline`.
+
+**Verifikation:** `latexmk -pdf -halt-on-error` läuft mit Exit 0 durch, 69 Seiten, keine
+undefinierten Verweise, keine fehlenden Zitate. Mechanischer Gesamtcheck des Dokuments:
+90 Labels, 76 Verweise, 36 Zitate, **null tote Querverweise, null fehlende Bib-Einträge,
+null unzitierte Literatur**.
+
+### Bewertung des Dokumentstands (05.08.2026)
+
+Das Gutachten monierte Lücken, die das Dokument bereits schließt. Gegengeprüft:
+
+| Kritikpunkt | tatsächlicher Stand |
+|---|---|
+| „Tabelle 9 vergleicht alte mit neuen Umgebungen" | steht so im Absatz „Aussagekraft" (§\ref{sec:ablation}), mit vier Einschränkungen und dem Satz „Diese Gegenüberstellung ist *keine* kontrollierte Ablation" |
+| „Umgebung härten (Priorität 1)" | steht als Punkt 1 im Ausblick, präziser formuliert: Zielgröße ist „ein Betriebspunkt, an dem der Kompass-Zufallslauf einbricht, die Lösbarkeit aber bei 100 % bleibt" |
+| „MLP-Baseline fehlt" | als Einschränkung 5 benannt; wird durch die Läufe dieser Version geschlossen |
+| „F2 eindeutig beantworten" | F2 ist architekturneutral gestellt („Ob der Agent dafür ein Gedächtnis braucht, ist Teil der Frage und nicht ihre Voraussetzung") und mit „nicht entscheidbar" bereits sauber beantwortet |
+
+Der von Messung 2 dieser Version geforderte Betriebspunkt **existiert über die Config nicht**.
+Damit beantwortet diese Version Punkt 1 des Ausblicks negativ: Die Härtung braucht einen
+C++-Eingriff in `World::sampleBaseTile()` plus Konnektivitätsvalidierung, nicht nur ein Flag.
+Der vorgeschlagene Umbau der Arbeit in „Iteration 1 / Iteration 2" wurde **verworfen** — die
+bestehende Struktur (Ergebnis → Verhältnis beider Antworten → Einschränkungen → Ausblick)
+trägt den Befund bereits.
+
+---
+
 ## v2026-08-04.8 — Drittes Review: HP als totes Feature entdeckt, sieben Korrekturen
 
 **Kontext:** Drittes externes Review über das Gesamtdokument. Alle beanstandeten Punkte gegen
