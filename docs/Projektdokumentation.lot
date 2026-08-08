@@ -1,24 +1,23 @@
 \babel@toc {ngerman}{}\relax 
-\contentsline {table}{\numberline {1}{\ignorespaces Arbeitsteilung}}{4}{table.1}%
-\contentsline {table}{\numberline {2}{\ignorespaces Technologie-Stack.}}{17}{table.2}%
-\contentsline {table}{\numberline {3}{\ignorespaces Belegung einer Chunk-Zeile Feld für Feld}}{23}{table.3}%
-\contentsline {table}{\numberline {4}{\ignorespaces Biomabhängige Schwellwerte der Basisbelegung}}{23}{table.4}%
-\contentsline {table}{\numberline {5}{\ignorespaces Tile-Zusammensetzung der Eval-Welten}}{24}{table.5}%
-\contentsline {table}{\numberline {6}{\ignorespaces Aktive Mechanismen der Weltgenerierung}}{25}{table.6}%
-\contentsline {table}{\numberline {7}{\ignorespaces Regelsweep der zellulären Glättung}}{26}{table.7}%
-\contentsline {table}{\numberline {8}{\ignorespaces Aufbau der Observation (Env v11)}}{30}{table.8}%
-\contentsline {table}{\numberline {9}{\ignorespaces Reward-Komponenten (Env v11)}}{33}{table.9}%
-\contentsline {table}{\numberline {10}{\ignorespaces Curriculum in vier Phasen}}{37}{table.10}%
-\contentsline {table}{\numberline {11}{\ignorespaces Gemeinsame Basiskonfiguration aller Läufe}}{40}{table.11}%
-\contentsline {table}{\numberline {12}{\ignorespaces Bewertung der Plattform gegen die Anforderungen Z1}}{41}{table.12}%
-\contentsline {table}{\numberline {13}{\ignorespaces Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}}{42}{table.13}%
-\contentsline {table}{\numberline {14}{\ignorespaces Endergebnis der v12-Läufe über sieben Seeds}}{43}{table.14}%
-\contentsline {table}{\numberline {15}{\ignorespaces Gating-Bilanz der sieben v12-Läufe}}{44}{table.15}%
-\contentsline {table}{\numberline {16}{\ignorespaces Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}}{47}{table.16}%
-\contentsline {table}{\numberline {17}{\ignorespaces Erfolgsquote als Funktion des Episodenbudgets}}{48}{table.17}%
-\contentsline {table}{\numberline {18}{\ignorespaces Bilanz der dichten Reward-Terme}}{48}{table.18}%
-\contentsline {table}{\numberline {19}{\ignorespaces Varianten zur Schließung des Det/Stoch-Gaps}}{51}{table.19}%
-\contentsline {table}{\numberline {20}{\ignorespaces Temperatur-Sweep der Evaluation}}{53}{table.20}%
-\contentsline {table}{\numberline {21}{\ignorespaces Systemumgebung}}{58}{table.21}%
-\contentsline {table}{\numberline {22}{\ignorespaces Root-Cause-Analyse der fehlgeschlagenen Läufe v7--v9}}{62}{table.22}%
-\contentsline {table}{\numberline {23}{\ignorespaces Zeitleiste der RL-Entwicklung}}{69}{table.23}%
+\contentsline {table}{\numberline {1}{\ignorespaces Vergleich der Lösbarkeits- und Schwierigkeitssteuerung}}{4}{table.1}%
+\contentsline {table}{\numberline {2}{\ignorespaces Arbeitsteilung}}{6}{table.2}%
+\contentsline {table}{\numberline {3}{\ignorespaces Curriculum in vier Phasen}}{17}{table.3}%
+\contentsline {table}{\numberline {4}{\ignorespaces Gemeinsame Basiskonfiguration aller Läufe}}{19}{table.4}%
+\contentsline {table}{\numberline {5}{\ignorespaces Technologie-Stack}}{20}{table.5}%
+\contentsline {table}{\numberline {6}{\ignorespaces Belegung einer Chunk-Zeile Feld für Feld}}{25}{table.6}%
+\contentsline {table}{\numberline {7}{\ignorespaces Biomabhängige Schwellwerte der Basisbelegung}}{27}{table.7}%
+\contentsline {table}{\numberline {8}{\ignorespaces Tile-Zusammensetzung der Eval-Welten}}{27}{table.8}%
+\contentsline {table}{\numberline {9}{\ignorespaces Aktive Mechanismen der Weltgenerierung}}{28}{table.9}%
+\contentsline {table}{\numberline {10}{\ignorespaces Regelsweep der zellulären Glättung}}{29}{table.10}%
+\contentsline {table}{\numberline {11}{\ignorespaces Versionsverlauf von Umgebung und Training}}{32}{table.11}%
+\contentsline {table}{\numberline {12}{\ignorespaces Aufbau der Observation (Env v11)}}{33}{table.12}%
+\contentsline {table}{\numberline {13}{\ignorespaces Reward-Komponenten (Env v11)}}{36}{table.13}%
+\contentsline {table}{\numberline {14}{\ignorespaces Bewertung der Plattform gegen die Anforderungen Z1}}{38}{table.14}%
+\contentsline {table}{\numberline {15}{\ignorespaces Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}}{39}{table.15}%
+\contentsline {table}{\numberline {16}{\ignorespaces Endergebnis der v12-Läufe über sieben Seeds}}{40}{table.16}%
+\contentsline {table}{\numberline {17}{\ignorespaces Gating-Bilanz der sieben v12-Läufe}}{41}{table.17}%
+\contentsline {table}{\numberline {18}{\ignorespaces Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}}{42}{table.18}%
+\contentsline {table}{\numberline {19}{\ignorespaces Erfolgsquote als Funktion des Episodenbudgets}}{43}{table.19}%
+\contentsline {table}{\numberline {20}{\ignorespaces Bilanz der dichten Reward-Terme}}{43}{table.20}%
+\contentsline {table}{\numberline {21}{\ignorespaces Varianten zur Schließung des Det/Stoch-Gaps}}{45}{table.21}%
+\contentsline {table}{\numberline {22}{\ignorespaces Temperatur-Sweep der Evaluation}}{45}{table.22}%

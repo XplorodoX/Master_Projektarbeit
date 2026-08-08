@@ -15,16 +15,14 @@
     {2}{57.73862pt}\LT@entry 
     {2}{358.73561pt}}
 \@writefile{toc}{\contentsline {section}{Abkürzungs- und Symbolverzeichnis}{ix}{section*.7}\protected@file@percent }
-\citation{mnih2015dqn}
-\citation{cobbe2020procgen}
+\citation{shaker2016pcg}
+\citation{togelius2011search}
+\citation{sutton2018rl}
 \citation{kirk2023survey}
-\citation{cobbe2020procgen}
 \citation{risi2020increasing}
-\citation{kirk2023survey}
 \citation{cobbe2020procgen}
-\citation{procgen_repo}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Einleitung}{1}{section.1}\protected@file@percent }
-\newlabel{sec:einleitung}{{1}{1}{Einleitung}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Einleitung (gemeinsam)}{1}{section.1}\protected@file@percent }
+\newlabel{sec:einleitung}{{1}{1}{Einleitung (gemeinsam)}{section.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Motivation}{1}{subsection.1.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Die Aufgabe in Kürze}{1}{subsection.1.2}\protected@file@percent }
 \newlabel{sec:aufgabe_kurz}{{1.2}{1}{Die Aufgabe in Kürze}{subsection.1.2}{}}
@@ -32,455 +30,391 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Zielsetzung und Erfolgskriterien}{2}{subsection.1.4}\protected@file@percent }
 \newlabel{sec:ziele}{{1.4}{2}{Zielsetzung und Erfolgskriterien}{subsection.1.4}{}}
 \@writefile{toc}{\contentsline {paragraph}{Z1: Anforderungen an Spiel und Generator.}{2}{section*.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Z2: Schwellen für den Agenten.}{2}{section*.9}\protected@file@percent }
 \citation{henderson2018matters}
-\@writefile{toc}{\contentsline {paragraph}{Vorgehen.}{3}{section*.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}Aufbau der Arbeit}{3}{subsection.1.5}\protected@file@percent }
-\newlabel{sec:aufbau}{{1.5}{3}{Aufbau der Arbeit}{subsection.1.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Zur Versionsbezeichnung.}{3}{section*.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Zur Arbeitsteilung.}{3}{section*.12}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Arbeitsteilung}}{4}{table.1}\protected@file@percent }
-\newlabel{tab:arbeitsteilung}{{1}{4}{Arbeitsteilung}{table.1}{}}
-\citation{sutton2018rl}
-\citation{shaker2016pcg}
-\citation{shaker2016pcg}
-\citation{togelius2011search}
-\citation{shaker2016pcg}
-\citation{shaker2016pcg}
-\citation{shaker2016pcg}
-\citation{togelius2011search}
-\citation{shaker2016pcg}
-\citation{perlin1985image}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Grundlagen}{5}{section.2}\protected@file@percent }
-\newlabel{sec:grundlagen}{{2}{5}{Grundlagen}{section.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Prozedurale Weltgenerierung}{5}{subsection.2.1}\protected@file@percent }
-\newlabel{sec:g_pcg}{{2.1}{5}{Prozedurale Weltgenerierung}{subsection.2.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Begriff, Seed und Determinismus}{5}{subsubsection.2.1.1}\protected@file@percent }
-\newlabel{sec:pcg_generalisierung}{{2.1.1}{5}{Begriff, Seed und Determinismus}{subsubsection.2.1.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}Algorithmen der prozeduralen Weltgenerierung}{5}{subsubsection.2.1.2}\protected@file@percent }
-\newlabel{sec:pcg_algorithmen}{{2.1.2}{5}{Algorithmen der prozeduralen Weltgenerierung}{subsubsection.2.1.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Rauschbasierte Basisbelegung.}{5}{section*.13}\protected@file@percent }
-\citation{johnson2010cellular}
-\citation{cormen2009algorithms}
-\citation{cormen2009algorithms}
-\citation{shaker2016pcg}
-\citation{sutton2018rl}
-\@writefile{toc}{\contentsline {paragraph}{Zelluläre Automaten als Formgebung.}{6}{section*.14}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Graphentheoretische Erreichbarkeitsanalyse.}{6}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Heuristische Sicherheitsnetze und Metriken.}{6}{section*.16}\protected@file@percent }
-\citation{sutton2018rl}
-\citation{sutton2018rl}
-\citation{kaelbling1998pomdp}
-\citation{hausknecht2015drqn}
-\citation{kaelbling1998pomdp}
-\citation{kaelbling1998pomdp}
-\citation{singh1994pomdp}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Lernen unter partieller Beobachtbarkeit}{7}{subsection.2.2}\protected@file@percent }
-\newlabel{sec:g_rl}{{2.2}{7}{Lernen unter partieller Beobachtbarkeit}{subsection.2.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Reinforcement Learning und der Markov-Entscheidungsprozess}{7}{subsubsection.2.2.1}\protected@file@percent }
-\newlabel{sec:mdp}{{2.2.1}{7}{Reinforcement Learning und der Markov-Entscheidungsprozess}{subsubsection.2.2.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Agent-Umwelt-Interaktion im MDP}}{7}{figure.1}\protected@file@percent }
-\newlabel{fig:mdp_loop}{{1}{7}{Agent-Umwelt-Interaktion im MDP}{figure.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Partielle Beobachtbarkeit (POMDP)}{7}{subsubsection.2.2.2}\protected@file@percent }
-\newlabel{sec:pomdp}{{2.2.2}{7}{Partielle Beobachtbarkeit (POMDP)}{subsubsection.2.2.2}{}}
-\citation{mnih2015dqn}
-\citation{schulman2016gae}
-\citation{mnih2016a3c}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces MDP gegenüber POMDP}}{8}{figure.2}\protected@file@percent }
-\newlabel{fig:mdp_vs_pomdp}{{2}{8}{MDP gegenüber POMDP}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Partielle Beobachtbarkeit am Beispiel Stoneforge}}{8}{figure.3}\protected@file@percent }
-\newlabel{fig:pomdp_schema}{{3}{8}{Partielle Beobachtbarkeit am Beispiel Stoneforge}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}Wertbasierte Verfahren: Q-Learning und DQN}{8}{subsubsection.2.2.3}\protected@file@percent }
-\citation{schulman2017ppo}
-\citation{schulman2017ppo}
-\citation{schulman2017ppo}
-\citation{raffin2021stable}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.4}Policy-Gradient- und Actor-Critic-Verfahren}{9}{subsubsection.2.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.5}Proximal Policy Optimization (PPO)}{9}{subsubsection.2.2.5}\protected@file@percent }
-\newlabel{sec:ppo}{{2.2.5}{9}{Proximal Policy Optimization (PPO)}{subsubsection.2.2.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Wirkung des PPO-Clippings}}{9}{figure.4}\protected@file@percent }
-\newlabel{fig:ppo_clip}{{4}{9}{Wirkung des PPO-Clippings}{figure.4}{}}
-\citation{hochreiter1997lstm}
-\citation{hausknecht2015drqn}
-\citation{hausknecht2015drqn}
-\citation{hausknecht2015drqn}
-\citation{kapturowski2019r2d2}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.6}Rekurrente Politiken (LSTM)}{10}{subsubsection.2.2.6}\protected@file@percent }
-\newlabel{sec:lstm}{{2.2.6}{10}{Rekurrente Politiken (LSTM)}{subsubsection.2.2.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Rekurrente Politik über die Zeit}}{10}{figure.5}\protected@file@percent }
-\newlabel{fig:lstm_unrolled}{{5}{10}{Rekurrente Politik über die Zeit}{figure.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Prozedurale Welten im Reinforcement Learning}{10}{subsection.2.3}\protected@file@percent }
-\newlabel{sec:g_bridge}{{2.3}{10}{Prozedurale Welten im Reinforcement Learning}{subsection.2.3}{}}
-\citation{cobbe2020procgen}
-\citation{kirk2023survey}
-\citation{cobbe2020procgen}
-\citation{risi2020increasing}
-\citation{ghosh2021epistemic}
-\citation{ng1999policy}
-\citation{bengio2009curriculum}
-\citation{jiang2021plr}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Steuerung des Lernprozesses}{11}{subsection.2.4}\protected@file@percent }
-\newlabel{sec:g_steuerung}{{2.4}{11}{Steuerung des Lernprozesses}{subsection.2.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.4.1}Reward Shaping (PBRS)}{11}{subsubsection.2.4.1}\protected@file@percent }
-\newlabel{sec:pbrs}{{2.4.1}{11}{Reward Shaping (PBRS)}{subsubsection.2.4.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.4.2}Curriculum Learning}{11}{subsubsection.2.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Messen und Bewerten}{12}{subsection.2.5}\protected@file@percent }
-\newlabel{sec:g_messen}{{2.5}{12}{Messen und Bewerten}{subsection.2.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.1}Metriken einer Navigationsaufgabe}{12}{subsubsection.2.5.1}\protected@file@percent }
-\newlabel{sec:g_metriken}{{2.5.1}{12}{Metriken einer Navigationsaufgabe}{subsubsection.2.5.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Erfolgsquote.}{12}{section*.17}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Pfadeffizienz.}{12}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Betriebsarten.}{12}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Streuung, Konfidenz und die Zahl der Läufe}{12}{subsubsection.2.5.2}\protected@file@percent }
-\newlabel{sec:g_streuung}{{2.5.2}{12}{Streuung, Konfidenz und die Zahl der Läufe}{subsubsection.2.5.2}{}}
-\citation{henderson2018matters}
-\citation{kerr1998harking}
-\citation{pineau2021repro}
-\citation{kirk2023survey}
-\@writefile{toc}{\contentsline {paragraph}{Unsicherheit innerhalb eines Laufs.}{13}{section*.20}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Unsicherheit zwischen Läufen.}{13}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Vergleich zweier Gruppen.}{13}{section*.22}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Vorabfestlegung von Schwellen.}{13}{section*.23}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.3}Referenzpolitiken als Bezugspunkt}{13}{subsubsection.2.5.3}\protected@file@percent }
-\newlabel{sec:g_baselines}{{2.5.3}{13}{Referenzpolitiken als Bezugspunkt}{subsubsection.2.5.3}{}}
 \citation{chevalier2023minigrid}
 \citation{hafner2021crafter}
 \citation{cobbe2020procgen}
 \citation{togelius2011search}
 \citation{risi2020increasing}
+\@writefile{toc}{\contentsline {paragraph}{Z2: Schwellen für den Agenten.}{3}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Vorgehen.}{3}{section*.10}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Überblick über das Vorgehen}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:ueberblick}{{1}{3}{Überblick über das Vorgehen}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}Einordnung der Arbeit}{3}{subsection.1.5}\protected@file@percent }
+\newlabel{sec:relatedwork}{{1.5}{3}{Einordnung der Arbeit}{subsection.1.5}{}}
 \citation{shaker2016pcg}
 \citation{johnson2010cellular}
 \citation{chevalier2023minigrid}
+\citation{hafner2021crafter}
 \citation{cobbe2020procgen}
 \citation{procgen_repo}
-\citation{hafner2021crafter}
 \citation{johnson2010cellular}
 \citation{shaker2016pcg}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Einordnung in verwandte Arbeiten}{15}{section.3}\protected@file@percent }
-\newlabel{sec:relatedwork}{{3}{15}{Einordnung in verwandte Arbeiten}{section.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Weltgenerierung und der Preis des eigenen Generators.}{15}{section*.24}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Lösbarkeitsgarantie im Vergleich der Benchmarks.}{15}{section*.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Die Schwierigkeit steckt in der Struktur der Hindernisse.}{15}{section*.26}\protected@file@percent }
 \citation{hausknecht2015drqn}
 \citation{kapturowski2019r2d2}
-\citation{pleines2022recurrent}
 \citation{morad2023popgym}
-\citation{grigsby2024amago}
+\citation{pleines2022recurrent}
 \citation{bengio2009curriculum}
 \citation{jiang2021plr}
 \citation{pathak2017icm}
 \citation{burda2018rnd}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Vergleich der Lösbarkeits- und Schwierigkeitssteuerung}}{4}{table.1}\protected@file@percent }
+\newlabel{tab:relatedwork}{{1}{4}{Vergleich der Lösbarkeits- und Schwierigkeitssteuerung}{table.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Die Schwierigkeit steckt in der Struktur der Hindernisse.}{4}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Gedächtnis in teilbeobachtbaren Umgebungen.}{4}{section*.12}\protected@file@percent }
 \citation{cobbe2020procgen}
 \citation{hafner2021crafter}
-\@writefile{toc}{\contentsline {paragraph}{Gedächtnis in teilbeobachtbaren Umgebungen.}{16}{section*.27}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Curriculum und Exploration.}{16}{section*.28}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Zur Vergleichbarkeit der absoluten Zahlen.}{16}{section*.29}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Implementierung des Spiels Stoneforge}{17}{section.4}\protected@file@percent }
-\newlabel{sec:umgebung}{{4}{17}{Implementierung des Spiels Stoneforge}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Technologie-Stack}{17}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:technik}{{4.1}{17}{Technologie-Stack}{subsection.4.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Technologie-Stack.}}{17}{table.2}\protected@file@percent }
-\newlabel{tab:stack}{{2}{17}{Technologie-Stack}{table.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Die Bausteine: Tile, Chunk und Welt}{17}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:bausteine}{{4.2}{17}{Die Bausteine: Tile, Chunk und Welt}{subsection.4.2}{}}
-\@writefile{toc}{\contentsline {paragraph}{Das Tile.}{17}{section*.30}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Der Chunk.}{18}{section*.31}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Die Welt.}{18}{section*.32}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Warum das nicht nur elegant, sondern notwendig ist.}{18}{section*.33}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Der Weltgenerator}{18}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:weltgenerator}{{4.3}{18}{Der Weltgenerator}{subsection.4.3}{}}
-\newlabel{lst:genchunk}{{1}{18}{Die Generator-Pipeline eines Chunks}{lstlisting.1}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Die Generator-Pipeline eines Chunks}{18}{lstlisting.1}\protected@file@percent }
-\citation{steele2014splitmix}
-\@writefile{toc}{\contentsline {paragraph}{Woher der Zufall kommt.}{19}{section*.34}\protected@file@percent }
-\newlabel{lst:noise}{{2}{19}{Die Rauschfunktion des Generators}{lstlisting.2}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Die Rauschfunktion des Generators}{19}{lstlisting.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Hash-Rauschen gegenüber interpoliertem Wertrauschen}}{20}{figure.6}\protected@file@percent }
-\newlabel{fig:noisevergleich}{{6}{20}{Hash-Rauschen gegenüber interpoliertem Wertrauschen}{figure.6}{}}
-\citation{perlin1985image}
-\newlabel{lst:biomefield}{{3}{21}{Aufbau des Biomfelds}{lstlisting.3}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Aufbau des Biomfelds}{21}{lstlisting.3}\protected@file@percent }
-\newlabel{lst:basetile}{{4}{21}{Belegung eines einzelnen Feldes}{lstlisting.4}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}Belegung eines einzelnen Feldes}{21}{lstlisting.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Ein Chunk, Feld für Feld.}{22}{section*.37}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Belegung einer Chunk-Zeile Feld für Feld}}{23}{table.3}\protected@file@percent }
-\newlabel{tab:trace}{{3}{23}{Belegung einer Chunk-Zeile Feld für Feld}{table.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Die Pipeline an einer echten Welt.}{23}{section*.40}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Biomabhängige Schwellwerte der Basisbelegung}}{23}{table.4}\protected@file@percent }
-\newlabel{tab:biome}{{4}{23}{Biomabhängige Schwellwerte der Basisbelegung}{table.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Die Generator-Pipeline an einer echten Welt}}{24}{figure.7}\protected@file@percent }
-\newlabel{fig:worldgenreal}{{7}{24}{Die Generator-Pipeline an einer echten Welt}{figure.7}{}}
-\@writefile{toc}{\contentsline {paragraph}{Was am Ende tatsächlich im Weg steht.}{24}{section*.41}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Tile-Zusammensetzung der Eval-Welten}}{24}{table.5}\protected@file@percent }
-\newlabel{tab:tilecensus}{{5}{24}{Tile-Zusammensetzung der Eval-Welten}{table.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Nachbearbeitung und eine Grenze der Konfigurierbarkeit.}{24}{section*.42}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Pipeline der Weltgenerierung je Chunk}}{25}{figure.8}\protected@file@percent }
-\newlabel{fig:pcgpipeline}{{8}{25}{Pipeline der Weltgenerierung je Chunk}{figure.8}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Aktive Mechanismen der Weltgenerierung}}{25}{table.6}\protected@file@percent }
-\newlabel{tab:worldgen_aktiv}{{6}{25}{Aktive Mechanismen der Weltgenerierung}{table.6}{}}
-\@writefile{toc}{\contentsline {paragraph}{Eine Konsequenz für die Ergebnisse.}{25}{section*.43}\protected@file@percent }
-\citation{johnson2010cellular}
+\@writefile{toc}{\contentsline {paragraph}{Curriculum und Exploration.}{5}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Zur Vergleichbarkeit der absoluten Zahlen.}{5}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6}Aufbau der Arbeit}{5}{subsection.1.6}\protected@file@percent }
+\newlabel{sec:aufbau}{{1.6}{5}{Aufbau der Arbeit}{subsection.1.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Zur Versionsbezeichnung.}{5}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Zur Arbeitsteilung.}{5}{section*.16}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Arbeitsteilung}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:arbeitsteilung}{{2}{6}{Arbeitsteilung}{table.2}{}}
+\citation{sutton2018rl}
 \citation{shaker2016pcg}
-\@writefile{toc}{\contentsline {paragraph}{Wie offen die Welten sind, misst der Umwegfaktor.}{26}{section*.44}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Die naheliegende Reparatur funktioniert nicht.}{26}{section*.45}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Regelsweep der zellulären Glättung}}{26}{table.7}\protected@file@percent }
-\newlabel{tab:geometrieprobe}{{7}{26}{Regelsweep der zellulären Glättung}{table.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Exit-Platzierung und garantierte Lösbarkeit}{26}{subsection.4.4}\protected@file@percent }
-\newlabel{sec:loesbarkeit}{{4.4}{26}{Exit-Platzierung und garantierte Lösbarkeit}{subsection.4.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Warum das überhaupt eine Rolle spielt.}{26}{section*.46}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Der übliche Weg und warum wir ihn nicht gehen.}{27}{section*.47}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Stattdessen: den Exit aus dem Erreichbarkeitsbaum ziehen.}{27}{section*.48}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Die Falle: die Freiräumung erzeugt eine Abkürzung.}{27}{section*.49}\protected@file@percent }
-\newlabel{lst:exit}{{5}{27}{Exit-Platzierung mit virtueller Freiräumung}{lstlisting.5}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Exit-Platzierung mit virtueller Freiräumung}{27}{lstlisting.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Was garantiert ist und was nicht.}{28}{section*.50}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Belege.}{28}{section*.51}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Grafischer Client und Zuschaumodus}{28}{subsection.4.5}\protected@file@percent }
-\newlabel{sec:client}{{4.5}{28}{Grafischer Client und Zuschaumodus}{subsection.4.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients}}{29}{figure.9}\protected@file@percent }
-\newlabel{fig:player_client}{{9}{29}{Benutzeroberfläche des spielbaren C++-Clients}{figure.9}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Implementierung der Lernumgebung}{30}{section.5}\protected@file@percent }
-\newlabel{sec:rlumgebung}{{5}{30}{Implementierung der Lernumgebung}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Was der Agent davon sieht: POMDP-Charakter}{30}{subsection.5.1}\protected@file@percent }
-\newlabel{sec:pomdpchar}{{5.1}{30}{Was der Agent davon sieht: POMDP-Charakter}{subsection.5.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Umgebung, Beobachtung und Aktionen}{30}{subsection.5.2}\protected@file@percent }
-\newlabel{sec:envobs}{{5.2}{30}{Umgebung, Beobachtung und Aktionen}{subsection.5.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Aufbau der Observation (Env v11)}}{30}{table.8}\protected@file@percent }
-\newlabel{tab:obs}{{8}{30}{Aufbau der Observation (Env v11)}{table.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Die Schnittstelle: was bei \texttt  {reset()} und \texttt  {step()} tatsächlich passiert}{31}{subsection.5.3}\protected@file@percent }
-\newlabel{sec:schnittstelle}{{5.3}{31}{Die Schnittstelle: was bei \texttt {reset()} und \texttt {step()} tatsächlich passiert}{subsection.5.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Ein \texttt  {reset()} in vier Schritten.}{31}{section*.52}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Ein Detail, das lange Zeit die Messungen verfälscht hat.}{31}{section*.53}\protected@file@percent }
+\citation{shaker2016pcg}
+\citation{togelius2011search}
+\citation{shaker2016pcg}
+\citation{shaker2016pcg}
+\citation{shaker2016pcg}
+\citation{perlin1985image}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Grundlagen (gemeinsam)}{7}{section.2}\protected@file@percent }
+\newlabel{sec:grundlagen}{{2}{7}{Grundlagen (gemeinsam)}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Grundlagen der Weltgenerierung (Laurin)}{7}{subsection.2.1}\protected@file@percent }
+\newlabel{sec:g_pcg}{{2.1}{7}{Grundlagen der Weltgenerierung (Laurin)}{subsection.2.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Begriff, Seed und Determinismus}{7}{subsubsection.2.1.1}\protected@file@percent }
+\newlabel{sec:pcg_generalisierung}{{2.1.1}{7}{Begriff, Seed und Determinismus}{subsubsection.2.1.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}Algorithmen der prozeduralen Weltgenerierung}{7}{subsubsection.2.1.2}\protected@file@percent }
+\newlabel{sec:pcg_algorithmen}{{2.1.2}{7}{Algorithmen der prozeduralen Weltgenerierung}{subsubsection.2.1.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Rauschbasierte Basisbelegung.}{7}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Zelluläre Automaten als Formgebung.}{7}{section*.18}\protected@file@percent }
+\citation{johnson2010cellular}
+\citation{cormen2009algorithms}
+\citation{cormen2009algorithms}
+\citation{shaker2016pcg}
+\citation{sutton2018rl}
+\@writefile{toc}{\contentsline {paragraph}{Graphentheoretische Erreichbarkeitsanalyse.}{8}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Heuristische Sicherheitsnetze und Metriken.}{8}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Grundlagen des Reinforcement Learning (Florian)}{8}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:g_rl}{{2.2}{8}{Grundlagen des Reinforcement Learning (Florian)}{subsection.2.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Reinforcement Learning und der Markov-Entscheidungsprozess}{8}{subsubsection.2.2.1}\protected@file@percent }
+\newlabel{sec:mdp}{{2.2.1}{8}{Reinforcement Learning und der Markov-Entscheidungsprozess}{subsubsection.2.2.1}{}}
+\citation{sutton2018rl}
+\citation{sutton2018rl}
+\citation{kaelbling1998pomdp}
+\citation{hausknecht2015drqn}
+\citation{kaelbling1998pomdp}
+\citation{kaelbling1998pomdp}
+\citation{singh1994pomdp}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Agent-Umwelt-Interaktion im MDP}}{9}{figure.2}\protected@file@percent }
+\newlabel{fig:mdp_loop}{{2}{9}{Agent-Umwelt-Interaktion im MDP}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Partielle Beobachtbarkeit (POMDP)}{9}{subsubsection.2.2.2}\protected@file@percent }
+\newlabel{sec:pomdp}{{2.2.2}{9}{Partielle Beobachtbarkeit (POMDP)}{subsubsection.2.2.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces MDP gegenüber POMDP}}{9}{figure.3}\protected@file@percent }
+\newlabel{fig:mdp_vs_pomdp}{{3}{9}{MDP gegenüber POMDP}{figure.3}{}}
+\citation{mnih2015dqn}
+\citation{schulman2016gae}
+\citation{mnih2016a3c}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Partielle Beobachtbarkeit am Beispiel Stoneforge}}{10}{figure.4}\protected@file@percent }
+\newlabel{fig:pomdp_schema}{{4}{10}{Partielle Beobachtbarkeit am Beispiel Stoneforge}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}Wertbasierte Verfahren: Q-Learning und DQN}{10}{subsubsection.2.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.4}Policy-Gradient- und Actor-Critic-Verfahren}{10}{subsubsection.2.2.4}\protected@file@percent }
+\citation{schulman2017ppo}
+\citation{schulman2017ppo}
+\citation{schulman2017ppo}
+\citation{raffin2021stable}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.5}Proximal Policy Optimization (PPO)}{11}{subsubsection.2.2.5}\protected@file@percent }
+\newlabel{sec:ppo}{{2.2.5}{11}{Proximal Policy Optimization (PPO)}{subsubsection.2.2.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Wirkung des PPO-Clippings}}{11}{figure.5}\protected@file@percent }
+\newlabel{fig:ppo_clip}{{5}{11}{Wirkung des PPO-Clippings}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.6}Rekurrente Politiken (LSTM)}{11}{subsubsection.2.2.6}\protected@file@percent }
+\newlabel{sec:lstm}{{2.2.6}{11}{Rekurrente Politiken (LSTM)}{subsubsection.2.2.6}{}}
+\citation{hochreiter1997lstm}
+\citation{hausknecht2015drqn}
+\citation{hausknecht2015drqn}
+\citation{hausknecht2015drqn}
+\citation{kapturowski2019r2d2}
+\citation{cobbe2020procgen}
+\citation{kirk2023survey}
+\citation{cobbe2020procgen}
+\citation{risi2020increasing}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Rekurrente Politik über die Zeit}}{12}{figure.6}\protected@file@percent }
+\newlabel{fig:lstm_unrolled}{{6}{12}{Rekurrente Politik über die Zeit}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.7}Prozedurale Welten im Reinforcement Learning}{12}{subsubsection.2.2.7}\protected@file@percent }
+\newlabel{sec:g_bridge}{{2.2.7}{12}{Prozedurale Welten im Reinforcement Learning}{subsubsection.2.2.7}{}}
+\citation{ghosh2021epistemic}
 \citation{ng1999policy}
-\citation{ng1999policy}
-\citation{ng1999policy}
-\@writefile{toc}{\contentsline {paragraph}{Ein \texttt  {step()} in zwei Hälften.}{32}{section*.54}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Reward-Design}{32}{subsection.5.4}\protected@file@percent }
-\newlabel{sec:rewarddesign}{{5.4}{32}{Reward-Design}{subsection.5.4}{}}
-\newlabel{lst:pbrs}{{6}{32}{PBRS im Simulationskern}{lstlisting.6}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}PBRS im Simulationskern}{32}{lstlisting.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Luftlinien- gegenüber BFS-Potential an einer Sackgasse}}{33}{figure.10}\protected@file@percent }
-\newlabel{fig:potentialvergleich}{{10}{33}{Luftlinien- gegenüber BFS-Potential an einer Sackgasse}{figure.10}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Reward-Komponenten (Env v11)}}{33}{table.9}\protected@file@percent }
-\newlabel{tab:reward}{{9}{33}{Reward-Komponenten (Env v11)}{table.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Trainings-Pipeline}{34}{subsection.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Parallele Umgebungen.}{34}{section*.55}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Evaluation und Gating.}{34}{section*.56}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Absenkung der Exploration.}{34}{section*.57}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Seed-Pool.}{34}{section*.58}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Monitoring und Werkzeuge}{34}{subsection.5.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Architektur: gemeinsamer Simulationskern für Training und Client}}{35}{figure.11}\protected@file@percent }
-\newlabel{fig:architektur}{{11}{35}{Architektur: gemeinsamer Simulationskern für Training und Client}{figure.11}{}}
+\citation{bengio2009curriculum}
+\citation{jiang2021plr}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.8}Reward Shaping (PBRS)}{13}{subsubsection.2.2.8}\protected@file@percent }
+\newlabel{sec:pbrs}{{2.2.8}{13}{Reward Shaping (PBRS)}{subsubsection.2.2.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.9}Curriculum Learning}{13}{subsubsection.2.2.9}\protected@file@percent }
+\newlabel{sec:curriculum}{{2.2.9}{13}{Curriculum Learning}{subsubsection.2.2.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.10}Messen und Bewerten}{13}{subsubsection.2.2.10}\protected@file@percent }
+\newlabel{sec:g_messen}{{2.2.10}{13}{Messen und Bewerten}{subsubsection.2.2.10}{}}
+\citation{henderson2018matters}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.11}Metriken einer Navigationsaufgabe}{14}{subsubsection.2.2.11}\protected@file@percent }
+\newlabel{sec:g_metriken}{{2.2.11}{14}{Metriken einer Navigationsaufgabe}{subsubsection.2.2.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Erfolgsquote.}{14}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pfadeffizienz.}{14}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Betriebsarten.}{14}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.12}Streuung, Konfidenz und die Zahl der Läufe}{14}{subsubsection.2.2.12}\protected@file@percent }
+\newlabel{sec:g_streuung}{{2.2.12}{14}{Streuung, Konfidenz und die Zahl der Läufe}{subsubsection.2.2.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{Unsicherheit innerhalb eines Laufs.}{14}{section*.24}\protected@file@percent }
+\citation{kerr1998harking}
+\citation{pineau2021repro}
+\citation{kirk2023survey}
+\@writefile{toc}{\contentsline {paragraph}{Unsicherheit zwischen Läufen.}{15}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Vergleich zweier Gruppen.}{15}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Vorabfestlegung von Schwellen.}{15}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.13}Referenzpolitiken als Bezugspunkt}{15}{subsubsection.2.2.13}\protected@file@percent }
+\newlabel{sec:g_baselines}{{2.2.13}{15}{Referenzpolitiken als Bezugspunkt}{subsubsection.2.2.13}{}}
 \citation{schulman2017ppo}
 \citation{hochreiter1997lstm}
 \citation{raffin2021stable}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Methodik}{36}{section.6}\protected@file@percent }
-\newlabel{sec:methodik}{{6}{36}{Methodik}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Algorithmus}{36}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Begründung der Verfahrenswahl.}{36}{section*.59}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Zustandekommen der Konfiguration.}{36}{section*.60}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Curriculum}{36}{subsection.6.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Curriculum in vier Phasen}}{37}{table.10}\protected@file@percent }
-\newlabel{tab:curriculum}{{10}{37}{Curriculum in vier Phasen}{table.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Evaluationsprotokoll}{37}{subsection.6.3}\protected@file@percent }
-\newlabel{sec:evalprotokoll}{{6.3}{37}{Evaluationsprotokoll}{subsection.6.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Metrik.}{37}{section*.61}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Episodenlimit.}{37}{section*.62}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Seed-Trennung.}{37}{section*.63}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Methodik (gemeinsam)}{16}{section.3}\protected@file@percent }
+\newlabel{sec:methodikkapitel}{{3}{16}{Methodik (gemeinsam)}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Methodik der Weltgenerierung (Laurin)}{16}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:methodikwelt}{{3.1}{16}{Methodik der Weltgenerierung (Laurin)}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Methodik des RL-Trainings (Florian)}{16}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:methodik}{{3.2}{16}{Methodik des RL-Trainings (Florian)}{subsection.3.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Wahl des Lernverfahrens}{16}{subsubsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}Curriculum}{16}{subsubsection.3.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Ablauf des leistungsbasierten Curriculums}}{17}{figure.7}\protected@file@percent }
+\newlabel{fig:curriculum_ablauf}{{7}{17}{Ablauf des leistungsbasierten Curriculums}{figure.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Curriculum in vier Phasen}}{17}{table.3}\protected@file@percent }
+\newlabel{tab:curriculum}{{3}{17}{Curriculum in vier Phasen}{table.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}Evaluationsprotokoll}{17}{subsubsection.3.2.3}\protected@file@percent }
+\newlabel{sec:evalprotokoll}{{3.2.3}{17}{Evaluationsprotokoll}{subsubsection.3.2.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Metrik.}{17}{section*.28}\protected@file@percent }
 \citation{kapturowski2019r2d2}
 \citation{henderson2018matters}
-\@writefile{toc}{\contentsline {paragraph}{Betriebsarten.}{38}{section*.64}\protected@file@percent }
-\newlabel{lst:lstmstate}{{7}{38}{Zustandsführung der rekurrenten Politik im Eval}{lstlisting.7}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}Zustandsführung der rekurrenten Politik im Eval}{38}{lstlisting.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Aggregation über Läufe.}{38}{section*.65}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Entscheidungen auf Kurven, nicht auf Endpunkten.}{38}{section*.66}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Methodische Fallstricke der Evaluation}{38}{subsection.6.4}\protected@file@percent }
-\newlabel{sec:evalfallstricke}{{6.4}{38}{Methodische Fallstricke der Evaluation}{subsection.6.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Das Episodenlimit ist Teil der Metrik, nicht ihres Umfelds.}{38}{section*.67}\protected@file@percent }
-\citation{singh1994pomdp}
-\citation{ghosh2021epistemic}
 \citation{kerr1998harking}
-\@writefile{toc}{\contentsline {paragraph}{Ein einzelner Eval-Snapshot ist keine Validierung.}{39}{section*.68}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Eine hohe Erfolgsquote ist nicht automatisch aussagekräftig.}{39}{section*.69}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Herleitung der Erfolgsschwellen}{39}{subsection.6.5}\protected@file@percent }
-\newlabel{sec:kriterienrevision}{{6.5}{39}{Herleitung der Erfolgsschwellen}{subsection.6.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Zur Vorab-Festlegung.}{39}{section*.70}\protected@file@percent }
-\citation{pineau2021repro}
-\citation{henderson2018matters}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Versuchsaufbau}{40}{subsection.6.6}\protected@file@percent }
-\newlabel{sec:versuchsuebersicht}{{6.6}{40}{Versuchsaufbau}{subsection.6.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Gemeinsame Basiskonfiguration aller Läufe}}{40}{table.11}\protected@file@percent }
-\newlabel{tab:basiskonfig}{{11}{40}{Gemeinsame Basiskonfiguration aller Läufe}{table.11}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Evaluation}{41}{section.7}\protected@file@percent }
-\newlabel{sec:evaluation}{{7}{41}{Evaluation}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Bewertung der Plattform (Z1)}{41}{subsection.7.1}\protected@file@percent }
-\newlabel{sec:evalplattform}{{7.1}{41}{Bewertung der Plattform (Z1)}{subsection.7.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Bewertung der Plattform gegen die Anforderungen Z1}}{41}{table.12}\protected@file@percent }
-\newlabel{tab:z1}{{12}{41}{Bewertung der Plattform gegen die Anforderungen Z1}{table.12}{}}
-\@writefile{toc}{\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{41}{section*.71}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{42}{subsection.7.2}\protected@file@percent }
-\newlabel{sec:ablation}{{7.2}{42}{Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{subsection.7.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}}{42}{table.13}\protected@file@percent }
-\newlabel{tab:ablation}{{13}{42}{Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}{table.13}{}}
-\@writefile{toc}{\contentsline {paragraph}{Aussagekraft.}{42}{section*.72}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Endergebnis (v12, $n=7$)}{42}{subsection.7.3}\protected@file@percent }
-\newlabel{sec:endergebnis}{{7.3}{42}{Endergebnis (v12, $n=7$)}{subsection.7.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Lernkurve des historischen Referenzlaufs}}{43}{figure.12}\protected@file@percent }
-\newlabel{fig:lernkurve}{{12}{43}{Lernkurve des historischen Referenzlaufs}{figure.12}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Endergebnis der v12-Läufe über sieben Seeds}}{43}{table.14}\protected@file@percent }
-\newlabel{tab:v12}{{14}{43}{Endergebnis der v12-Läufe über sieben Seeds}{table.14}{}}
-\@writefile{toc}{\contentsline {paragraph}{Das Curriculum war faktisch budget- und nicht leistungsgesteuert.}{43}{section*.73}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Endergebnis v12 mit Streuung über sieben Läufe}}{44}{figure.13}\protected@file@percent }
-\newlabel{fig:v12endergebnis}{{13}{44}{Endergebnis v12 mit Streuung über sieben Läufe}{figure.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Gating-Bilanz der sieben v12-Läufe}}{44}{table.15}\protected@file@percent }
-\newlabel{tab:gating}{{15}{44}{Gating-Bilanz der sieben v12-Läufe}{table.15}{}}
-\@writefile{toc}{\contentsline {paragraph}{Der Weg von $n=3$ zu $n=7$ ist selbst ein Ergebnis.}{44}{section*.74}\protected@file@percent }
-\citation{henderson2018matters}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Trainingsverläufe der sieben v12-Läufe}}{45}{figure.14}\protected@file@percent }
-\newlabel{fig:v12kurven}{{14}{45}{Trainingsverläufe der sieben v12-Läufe}{figure.14}{}}
-\@writefile{toc}{\contentsline {paragraph}{Drei Alternativerklärungen wurden geprüft und ausgeschlossen.}{45}{section*.75}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Weitere Beobachtungen.}{46}{section*.76}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{46}{subsection.7.4}\protected@file@percent }
-\newlabel{sec:baselines}{{7.4}{46}{Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{subsection.7.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}}{47}{table.16}\protected@file@percent }
-\newlabel{tab:baselines}{{16}{47}{Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}{table.16}{}}
-\@writefile{toc}{\contentsline {paragraph}{Befund.}{47}{section*.77}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{47}{section*.78}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Erfolgsquote als Funktion des Episodenbudgets}}{48}{table.17}\protected@file@percent }
-\newlabel{tab:capsweep}{{17}{48}{Erfolgsquote als Funktion des Episodenbudgets}{table.17}{}}
-\@writefile{toc}{\contentsline {paragraph}{Was daraus folgt und was nicht.}{48}{section*.79}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{48}{section*.80}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Bilanz der dichten Reward-Terme}}{48}{table.18}\protected@file@percent }
-\newlabel{tab:rewardbilanz}{{18}{48}{Bilanz der dichten Reward-Terme}{table.18}{}}
-\citation{ng1999policy}
-\@writefile{toc}{\contentsline {paragraph}{Warum die PBRS-Summe nicht wegunabhängig ist.}{49}{section*.81}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Zwei Einschränkungen.}{49}{section*.82}\protected@file@percent }
 \citation{singh1994pomdp}
-\@writefile{toc}{\contentsline {paragraph}{Konsequenz für Folgearbeiten.}{50}{section*.83}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{50}{subsection.7.5}\protected@file@percent }
-\newlabel{sec:detstochgap}{{7.5}{50}{Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{subsection.7.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Erfolgsquote nach Startdistanz zum Exit}}{50}{figure.15}\protected@file@percent }
-\newlabel{fig:detgap}{{15}{50}{Erfolgsquote nach Startdistanz zum Exit}{figure.15}{}}
 \citation{ghosh2021epistemic}
+\newlabel{sec:evalfallstricke}{{3.2.3}{18}{Episodenlimit}{section*.29}{}}
+\@writefile{toc}{\contentsline {paragraph}{Episodenlimit.}{18}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Seed-Trennung.}{18}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Betriebsarten.}{18}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Aggregation und Kurvenvergleich.}{18}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.4}Versuchsaufbau}{18}{subsubsection.3.2.4}\protected@file@percent }
+\newlabel{sec:versuchsuebersicht}{{3.2.4}{18}{Versuchsaufbau}{subsubsection.3.2.4}{}}
+\newlabel{sec:kriterienrevision}{{3.2.4}{18}{Herkunft der Erfolgsschwellen}{section*.33}{}}
+\@writefile{toc}{\contentsline {paragraph}{Herkunft der Erfolgsschwellen.}{18}{section*.33}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Gemeinsame Basiskonfiguration aller Läufe}}{19}{table.4}\protected@file@percent }
+\newlabel{tab:basiskonfig}{{4}{19}{Gemeinsame Basiskonfiguration aller Läufe}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Implementierung (gemeinsam)}{20}{section.4}\protected@file@percent }
+\newlabel{sec:implementierung}{{4}{20}{Implementierung (gemeinsam)}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Implementierung des Spiels Stoneforge (Laurin)}{20}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:umgebung}{{4.1}{20}{Implementierung des Spiels Stoneforge (Laurin)}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Technologie-Stack}{20}{subsubsection.4.1.1}\protected@file@percent }
+\newlabel{sec:technik}{{4.1.1}{20}{Technologie-Stack}{subsubsection.4.1.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Technologie-Stack}}{20}{table.5}\protected@file@percent }
+\newlabel{tab:stack}{{5}{20}{Technologie-Stack}{table.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Die Bausteine: Tile, Chunk und Welt}{20}{subsubsection.4.1.2}\protected@file@percent }
+\newlabel{sec:bausteine}{{4.1.2}{20}{Die Bausteine: Tile, Chunk und Welt}{subsubsection.4.1.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Das Tile.}{21}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Der Chunk.}{21}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Die Welt.}{21}{section*.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Warum das nicht nur elegant, sondern notwendig ist.}{21}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Der Weltgenerator}{21}{subsubsection.4.1.3}\protected@file@percent }
+\newlabel{sec:weltgenerator}{{4.1.3}{21}{Der Weltgenerator}{subsubsection.4.1.3}{}}
+\newlabel{lst:genchunk}{{1}{21}{Die Generator-Pipeline eines Chunks}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Die Generator-Pipeline eines Chunks}{21}{lstlisting.1}\protected@file@percent }
+\citation{steele2014splitmix}
+\@writefile{toc}{\contentsline {paragraph}{Woher der Zufall kommt.}{22}{section*.38}\protected@file@percent }
+\newlabel{lst:noise}{{2}{22}{Die Rauschfunktion des Generators}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Die Rauschfunktion des Generators}{22}{lstlisting.2}\protected@file@percent }
+\citation{perlin1985image}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Hash-Rauschen gegenüber interpoliertem Wertrauschen}}{23}{figure.8}\protected@file@percent }
+\newlabel{fig:noisevergleich}{{8}{23}{Hash-Rauschen gegenüber interpoliertem Wertrauschen}{figure.8}{}}
+\newlabel{lst:biomefield}{{3}{24}{Aufbau des Biomfelds}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Aufbau des Biomfelds}{24}{lstlisting.3}\protected@file@percent }
+\newlabel{lst:basetile}{{4}{24}{Belegung eines einzelnen Feldes}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}Belegung eines einzelnen Feldes}{24}{lstlisting.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ein Chunk, Feld für Feld.}{25}{section*.41}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Belegung einer Chunk-Zeile Feld für Feld}}{25}{table.6}\protected@file@percent }
+\newlabel{tab:trace}{{6}{25}{Belegung einer Chunk-Zeile Feld für Feld}{table.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Die Pipeline an einer echten Welt.}{26}{section*.44}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Die Generator-Pipeline an einer echten Welt}}{26}{figure.9}\protected@file@percent }
+\newlabel{fig:worldgenreal}{{9}{26}{Die Generator-Pipeline an einer echten Welt}{figure.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{Was am Ende tatsächlich im Weg steht.}{26}{section*.45}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Biomabhängige Schwellwerte der Basisbelegung}}{27}{table.7}\protected@file@percent }
+\newlabel{tab:biome}{{7}{27}{Biomabhängige Schwellwerte der Basisbelegung}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Tile-Zusammensetzung der Eval-Welten}}{27}{table.8}\protected@file@percent }
+\newlabel{tab:tilecensus}{{8}{27}{Tile-Zusammensetzung der Eval-Welten}{table.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Pipeline der Weltgenerierung je Chunk}}{27}{figure.10}\protected@file@percent }
+\newlabel{fig:pcgpipeline}{{10}{27}{Pipeline der Weltgenerierung je Chunk}{figure.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{Nachbearbeitung und eine Grenze der Konfigurierbarkeit.}{27}{section*.46}\protected@file@percent }
+\citation{johnson2010cellular}
+\citation{shaker2016pcg}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Aktive Mechanismen der Weltgenerierung}}{28}{table.9}\protected@file@percent }
+\newlabel{tab:worldgen_aktiv}{{9}{28}{Aktive Mechanismen der Weltgenerierung}{table.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{Eine Konsequenz für die Ergebnisse.}{28}{section*.47}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Wie offen die Welten sind, misst der Umwegfaktor.}{28}{section*.48}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Die naheliegende Reparatur funktioniert nicht.}{28}{section*.49}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Regelsweep der zellulären Glättung}}{29}{table.10}\protected@file@percent }
+\newlabel{tab:geometrieprobe}{{10}{29}{Regelsweep der zellulären Glättung}{table.10}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.4}Exit-Platzierung und garantierte Lösbarkeit}{29}{subsubsection.4.1.4}\protected@file@percent }
+\newlabel{sec:loesbarkeit}{{4.1.4}{29}{Exit-Platzierung und garantierte Lösbarkeit}{subsubsection.4.1.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Warum das überhaupt eine Rolle spielt.}{29}{section*.50}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Der übliche Weg und warum wir ihn nicht gehen.}{29}{section*.51}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Stattdessen: den Exit aus dem Erreichbarkeitsbaum ziehen.}{29}{section*.52}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Die Falle: die Freiräumung erzeugt eine Abkürzung.}{30}{section*.53}\protected@file@percent }
+\newlabel{lst:exit}{{5}{30}{Exit-Platzierung mit virtueller Freiräumung}{lstlisting.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Exit-Platzierung mit virtueller Freiräumung}{30}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Was garantiert ist und was nicht.}{30}{section*.54}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Belege.}{31}{section*.55}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.5}Grafischer Client und Zuschaumodus}{31}{subsubsection.4.1.5}\protected@file@percent }
+\newlabel{sec:client}{{4.1.5}{31}{Grafischer Client und Zuschaumodus}{subsubsection.4.1.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Benutzeroberfläche des spielbaren C++-Clients}}{31}{figure.11}\protected@file@percent }
+\newlabel{fig:player_client}{{11}{31}{Benutzeroberfläche des spielbaren C++-Clients}{figure.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Implementierung der Lernumgebung (Florian)}{32}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:rlumgebung}{{4.2}{32}{Implementierung der Lernumgebung (Florian)}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Versionsverlauf}{32}{subsubsection.4.2.1}\protected@file@percent }
+\newlabel{sec:versionsverlauf}{{4.2.1}{32}{Versionsverlauf}{subsubsection.4.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Versionsverlauf von Umgebung und Training}}{32}{table.11}\protected@file@percent }
+\newlabel{tab:versionsverlauf}{{11}{32}{Versionsverlauf von Umgebung und Training}{table.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Was der Agent davon sieht: POMDP-Charakter}{32}{subsubsection.4.2.2}\protected@file@percent }
+\newlabel{sec:pomdpchar}{{4.2.2}{32}{Was der Agent davon sieht: POMDP-Charakter}{subsubsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Umgebung, Beobachtung und Aktionen}{32}{subsubsection.4.2.3}\protected@file@percent }
+\newlabel{sec:envobs}{{4.2.3}{32}{Umgebung, Beobachtung und Aktionen}{subsubsection.4.2.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Aufbau der Observation (Env v11)}}{33}{table.12}\protected@file@percent }
+\newlabel{tab:obs}{{12}{33}{Aufbau der Observation (Env v11)}{table.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.4}Die Schnittstelle: was bei \texttt  {reset()} und \texttt  {step()} tatsächlich passiert}{33}{subsubsection.4.2.4}\protected@file@percent }
+\newlabel{sec:schnittstelle}{{4.2.4}{33}{Die Schnittstelle: was bei \texttt {reset()} und \texttt {step()} tatsächlich passiert}{subsubsection.4.2.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Ein \texttt  {reset()} in vier Schritten.}{33}{section*.56}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ein Detail, das lange Zeit die Messungen verfälscht hat.}{34}{section*.57}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ein \texttt  {step()} in zwei Hälften.}{34}{section*.58}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.5}Reward-Design}{34}{subsubsection.4.2.5}\protected@file@percent }
+\newlabel{sec:rewarddesign}{{4.2.5}{34}{Reward-Design}{subsubsection.4.2.5}{}}
+\citation{ng1999policy}
+\citation{ng1999policy}
+\citation{ng1999policy}
+\newlabel{lst:pbrs}{{6}{35}{PBRS im Simulationskern}{lstlisting.6}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}PBRS im Simulationskern}{35}{lstlisting.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Luftlinien- gegenüber BFS-Potential an einer Sackgasse}}{35}{figure.12}\protected@file@percent }
+\newlabel{fig:potentialvergleich}{{12}{35}{Luftlinien- gegenüber BFS-Potential an einer Sackgasse}{figure.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Reward-Komponenten (Env v11)}}{36}{table.13}\protected@file@percent }
+\newlabel{tab:reward}{{13}{36}{Reward-Komponenten (Env v11)}{table.13}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.6}Trainings-Pipeline}{36}{subsubsection.4.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parallele Umgebungen.}{36}{section*.59}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Evaluation und Gating.}{36}{section*.60}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Absenkung der Exploration.}{36}{section*.61}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Seed-Pool.}{36}{section*.62}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.7}Monitoring und Werkzeuge}{37}{subsubsection.4.2.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Architektur: gemeinsamer Simulationskern für Training und Client}}{37}{figure.13}\protected@file@percent }
+\newlabel{fig:architektur}{{13}{37}{Architektur: gemeinsamer Simulationskern für Training und Client}{figure.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Evaluation (gemeinsam)}{38}{section.5}\protected@file@percent }
+\newlabel{sec:evaluation}{{5}{38}{Evaluation (gemeinsam)}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Bewertung der Plattform (Z1, Laurin)}{38}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:evalplattform}{{5.1}{38}{Bewertung der Plattform (Z1, Laurin)}{subsection.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Bewertung der Plattform gegen die Anforderungen Z1}}{38}{table.14}\protected@file@percent }
+\newlabel{tab:z1}{{14}{38}{Bewertung der Plattform gegen die Anforderungen Z1}{table.14}{}}
+\@writefile{toc}{\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{38}{section*.63}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Bewertung des Agenten (Z2, Florian)}{39}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:evalagent}{{5.2}{39}{Bewertung des Agenten (Z2, Florian)}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.1}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{39}{subsubsection.5.2.1}\protected@file@percent }
+\newlabel{sec:ablation}{{5.2.1}{39}{Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{subsubsection.5.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}}{39}{table.15}\protected@file@percent }
+\newlabel{tab:ablation}{{15}{39}{Gegenüberstellung: Gedächtnis gegenüber lokalem BFS-Orakel}{table.15}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.2}Endergebnis (v12, $n=7$)}{39}{subsubsection.5.2.2}\protected@file@percent }
+\newlabel{sec:endergebnis}{{5.2.2}{39}{Endergebnis (v12, $n=7$)}{subsubsection.5.2.2}{}}
+\citation{henderson2018matters}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Lernkurve des historischen Referenzlaufs}}{40}{figure.14}\protected@file@percent }
+\newlabel{fig:lernkurve}{{14}{40}{Lernkurve des historischen Referenzlaufs}{figure.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Endergebnis der v12-Läufe über sieben Seeds}}{40}{table.16}\protected@file@percent }
+\newlabel{tab:v12}{{16}{40}{Endergebnis der v12-Läufe über sieben Seeds}{table.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.3}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{40}{subsubsection.5.2.3}\protected@file@percent }
+\newlabel{sec:baselines}{{5.2.3}{40}{Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{subsubsection.5.2.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Endergebnis v12 mit Streuung über sieben Läufe}}{41}{figure.15}\protected@file@percent }
+\newlabel{fig:v12endergebnis}{{15}{41}{Endergebnis v12 mit Streuung über sieben Läufe}{figure.15}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Gating-Bilanz der sieben v12-Läufe}}{41}{table.17}\protected@file@percent }
+\newlabel{tab:gating}{{17}{41}{Gating-Bilanz der sieben v12-Läufe}{table.17}{}}
+\@writefile{toc}{\contentsline {paragraph}{Befund.}{41}{section*.64}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Trainingsverläufe der sieben v12-Läufe}}{42}{figure.16}\protected@file@percent }
+\newlabel{fig:v12kurven}{{16}{42}{Trainingsverläufe der sieben v12-Läufe}{figure.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}}{42}{table.18}\protected@file@percent }
+\newlabel{tab:baselines}{{18}{42}{Ungelernte Referenzpolitiken gegenüber dem trainierten Agenten}{table.18}{}}
+\@writefile{toc}{\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{42}{section*.65}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{42}{section*.66}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Erfolgsquote als Funktion des Episodenbudgets}}{43}{table.19}\protected@file@percent }
+\newlabel{tab:capsweep}{{19}{43}{Erfolgsquote als Funktion des Episodenbudgets}{table.19}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Bilanz der dichten Reward-Terme}}{43}{table.20}\protected@file@percent }
+\newlabel{tab:rewardbilanz}{{20}{43}{Bilanz der dichten Reward-Terme}{table.20}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.4}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{43}{subsubsection.5.2.4}\protected@file@percent }
+\newlabel{sec:detstochgap}{{5.2.4}{43}{Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{subsubsection.5.2.4}{}}
 \citation{ghosh2021epistemic}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Versuche zur Schließung des Det/Stoch-Gaps}{51}{subsection.7.6}\protected@file@percent }
-\newlabel{sec:gapexperimente}{{7.6}{51}{Versuche zur Schließung des Det/Stoch-Gaps}{subsection.7.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Varianten zur Schließung des Det/Stoch-Gaps}}{51}{table.19}\protected@file@percent }
-\newlabel{tab:iterationen}{{19}{51}{Varianten zur Schließung des Det/Stoch-Gaps}{table.19}{}}
+\citation{singh1994pomdp}
 \citation{pleines2022recurrent}
-\citation{ghosh2021epistemic}
-\@writefile{toc}{\contentsline {paragraph}{Aussagekraft.}{52}{section*.84}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Temperatur-Sweep der Evaluation}}{53}{table.20}\protected@file@percent }
-\newlabel{tab:temperatur}{{20}{53}{Temperatur-Sweep der Evaluation}{table.20}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Fazit und Ausblick}{54}{section.8}\protected@file@percent }
-\newlabel{sec:ausblick}{{8}{54}{Fazit und Ausblick}{section.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Ergebnis}{54}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{F1 (Weltgenerator): beantwortet.}{54}{section*.85}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{F2 (Navigation ohne Orakel): nicht entscheidbar.}{54}{section*.86}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Das Verhältnis beider Antworten.}{54}{section*.87}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Erfolgsquote nach Startdistanz zum Exit}}{44}{figure.17}\protected@file@percent }
+\newlabel{fig:detgap}{{17}{44}{Erfolgsquote nach Startdistanz zum Exit}{figure.17}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.5}Versuche zur Schließung des Det/Stoch-Gaps}{44}{subsubsection.5.2.5}\protected@file@percent }
+\newlabel{sec:gapexperimente}{{5.2.5}{44}{Versuche zur Schließung des Det/Stoch-Gaps}{subsubsection.5.2.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Varianten zur Schließung des Det/Stoch-Gaps}}{45}{table.21}\protected@file@percent }
+\newlabel{tab:iterationen}{{21}{45}{Varianten zur Schließung des Det/Stoch-Gaps}{table.21}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Temperatur-Sweep der Evaluation}}{45}{table.22}\protected@file@percent }
+\newlabel{tab:temperatur}{{22}{45}{Temperatur-Sweep der Evaluation}{table.22}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Fazit und Ausblick}{46}{section.6}\protected@file@percent }
+\newlabel{sec:ausblick}{{6}{46}{Fazit und Ausblick}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Ergebnis (gemeinsam)}{46}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{F1 (Weltgenerator): beantwortet.}{46}{section*.67}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{F2 (Navigation ohne Orakel): nicht entscheidbar.}{46}{section*.68}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Das Verhältnis beider Antworten.}{46}{section*.69}\protected@file@percent }
 \citation{henderson2018matters}
 \citation{ghosh2021epistemic}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Beiträge}{55}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Technisch.}{55}{section*.88}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Inhaltlich.}{55}{section*.89}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Methodisch.}{55}{section*.90}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Einschränkungen}{55}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Ausblick}{56}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Beiträge (gemeinsam)}{47}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Technisch.}{47}{section*.70}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Inhaltlich.}{47}{section*.71}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Methodisch.}{47}{section*.72}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Einschränkungen (gemeinsam)}{47}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Ausblick}{48}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.4.1}Härtung der Weltgenerierung (Laurin)}{48}{subsubsection.6.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.4.2}Weiterentwicklung des RL-Trainings (Florian)}{48}{subsubsection.6.4.2}\protected@file@percent }
 \citation{kapturowski2019r2d2}
 \citation{jiang2021plr}
 \citation{oh2018sil}
 \citation{grigsby2024amago}
 \citation{morad2023popgym}
-\citation{pineau2021repro}
-\citation{henderson2018matters}
-\citation{henderson2018matters}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Anhang: Reproduzierbarkeit}{58}{section.9}\protected@file@percent }
-\newlabel{sec:reproduzierbarkeit}{{9}{58}{Anhang: Reproduzierbarkeit}{section.9}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Systemumgebung}}{58}{table.21}\protected@file@percent }
-\newlabel{tab:sysumgebung}{{21}{58}{Systemumgebung}{table.21}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Eingesetzte Hilfsmittel}{59}{subsection.9.1}\protected@file@percent }
-\newlabel{sec:hilfsmittel}{{9.1}{59}{Eingesetzte Hilfsmittel}{subsection.9.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Software und Bibliotheken.}{59}{section*.91}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Literatur und Recherche.}{59}{section*.92}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Generative KI-Werkzeuge.}{59}{section*.93}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {10}Anhang: Entwicklungsverlauf von der Baseline zum LSTM-Agenten}{60}{section.10}\protected@file@percent }
-\newlabel{sec:entwicklung}{{10}{60}{Anhang: Entwicklungsverlauf von der Baseline zum LSTM-Agenten}{section.10}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Etappe 1 (Mai 2026): Baselines mit BFS-Orakel}{60}{subsection.10.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Etappe 2 (Juni 2026): Kernbeitrag, Navigation ohne Orakel}{60}{subsection.10.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Entwicklung über die Modellgenerationen}}{61}{figure.16}\protected@file@percent }
-\newlabel{fig:entwicklung}{{16}{61}{Entwicklung über die Modellgenerationen}{figure.16}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}Etappe 3 (13.--25.06.): Fehlkonfigurierte Hyperparameter und Root-Cause-Analyse}{61}{subsection.10.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Etappe 4 (06.07.2026): Umgebungsrevision v11 und Performance}{61}{subsection.10.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Root-Cause-Analyse der fehlgeschlagenen Läufe v7--v9}}{62}{table.22}\protected@file@percent }
-\newlabel{tab:rootcause}{{22}{62}{Root-Cause-Analyse der fehlgeschlagenen Läufe v7--v9}{table.22}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.5}Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{62}{subsection.10.5}\protected@file@percent }
-\newlabel{sec:etappe5}{{10.5}{62}{Etappe 5 (07.07.2026): Erster v11-Gesamtlauf, Monitoring-Redesign und Seed-Replay-Analyse}{subsection.10.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Lernkurve des ersten v11-Gesamtlaufs}}{62}{figure.17}\protected@file@percent }
-\newlabel{fig:v11kurve}{{17}{62}{Lernkurve des ersten v11-Gesamtlaufs}{figure.17}{}}
-\citation{jiang2021plr}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Live-Monitoring-Dashboard}}{63}{figure.18}\protected@file@percent }
-\newlabel{fig:livemap}{{18}{63}{Live-Monitoring-Dashboard}{figure.18}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.6}Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche vom Eval-Artefakt zur Batch-Größen-Korrektur}{64}{subsection.10.6}\protected@file@percent }
-\newlabel{sec:etappe6}{{10.6}{64}{Etappe 6 (07.07.2026, nachmittags/abends): Systematische Fehlersuche vom Eval-Artefakt zur Batch-Größen-Korrektur}{subsection.10.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Eval-Cap-Artefakt}}{64}{figure.19}\protected@file@percent }
-\newlabel{fig:capartefakt}{{19}{64}{Eval-Cap-Artefakt}{figure.19}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.7}Umgebungsrevision v11 (06.07.2026)}{65}{subsection.10.7}\protected@file@percent }
-\newlabel{sec:v11}{{10.7}{65}{Umgebungsrevision v11 (06.07.2026)}{subsection.10.7}{}}
-\citation{sb3docs}
-\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Batch-Größen-Forensik}}{66}{figure.20}\protected@file@percent }
-\newlabel{fig:batchvgl}{{20}{66}{Batch-Größen-Forensik}{figure.20}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Wirkung der BFS-basierten Exit-Platzierung}}{67}{figure.21}\protected@file@percent }
-\newlabel{fig:exitdist}{{21}{67}{Wirkung der BFS-basierten Exit-Platzierung}{figure.21}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.8}Performance-Analyse: Training beschleunigen}{67}{subsection.10.8}\protected@file@percent }
-\newlabel{sec:performance}{{10.8}{67}{Performance-Analyse: Training beschleunigen}{subsection.10.8}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.8.1}CPU schlägt Apple-GPU (MPS)}{67}{subsubsection.10.8.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Training-FPS nach Device und Batch-Größe}}{67}{figure.22}\protected@file@percent }
-\newlabel{fig:fps}{{22}{67}{Training-FPS nach Device und Batch-Größe}{figure.22}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.8.2}Batch-Größe: vermeintliche Validierung (06.07.), am Folgetag widerlegt}{68}{subsubsection.10.8.2}\protected@file@percent }
-\newlabel{sec:batchsize}{{10.8.2}{68}{Batch-Größe: vermeintliche Validierung (06.07.), am Folgetag widerlegt}{subsubsection.10.8.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Validierungslauf batch\_size=64}}{68}{figure.23}\protected@file@percent }
-\newlabel{fig:batchval}{{23}{68}{Validierungslauf batch\_size=64}{figure.23}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {10.9}Zeitleiste und Lessons Learned}{68}{subsection.10.9}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Zeitleiste der RL-Entwicklung}}{69}{table.23}\protected@file@percent }
-\newlabel{tab:timeline}{{23}{69}{Zeitleiste der RL-Entwicklung}{table.23}{}}
 \bibstyle{unsrt}
 \bibdata{references}
-\bibcite{mnih2015dqn}{1}
-\bibcite{cobbe2020procgen}{2}
-\bibcite{kirk2023survey}{3}
-\bibcite{risi2020increasing}{4}
-\bibcite{procgen_repo}{5}
-\bibcite{henderson2018matters}{6}
-\bibcite{sutton2018rl}{7}
-\bibcite{shaker2016pcg}{8}
-\bibcite{togelius2011search}{9}
-\bibcite{perlin1985image}{10}
-\bibcite{johnson2010cellular}{11}
-\bibcite{cormen2009algorithms}{12}
-\bibcite{kaelbling1998pomdp}{13}
-\bibcite{hausknecht2015drqn}{14}
-\bibcite{singh1994pomdp}{15}
-\@writefile{toc}{\contentsline {section}{Literaturverzeichnis}{71}{table.23}\protected@file@percent }
-\bibcite{schulman2016gae}{16}
-\bibcite{mnih2016a3c}{17}
-\bibcite{schulman2017ppo}{18}
-\bibcite{raffin2021stable}{19}
-\bibcite{hochreiter1997lstm}{20}
-\bibcite{kapturowski2019r2d2}{21}
-\bibcite{ghosh2021epistemic}{22}
-\bibcite{ng1999policy}{23}
-\bibcite{bengio2009curriculum}{24}
-\bibcite{jiang2021plr}{25}
-\bibcite{kerr1998harking}{26}
-\bibcite{pineau2021repro}{27}
-\bibcite{chevalier2023minigrid}{28}
-\bibcite{hafner2021crafter}{29}
-\bibcite{pleines2022recurrent}{30}
-\bibcite{morad2023popgym}{31}
-\bibcite{grigsby2024amago}{32}
-\bibcite{pathak2017icm}{33}
-\bibcite{burda2018rnd}{34}
-\bibcite{steele2014splitmix}{35}
-\bibcite{oh2018sil}{36}
-\bibcite{sb3docs}{37}
-\gdef \@abspage@last{82}
+\bibcite{shaker2016pcg}{1}
+\bibcite{togelius2011search}{2}
+\bibcite{sutton2018rl}{3}
+\bibcite{kirk2023survey}{4}
+\bibcite{risi2020increasing}{5}
+\bibcite{cobbe2020procgen}{6}
+\bibcite{henderson2018matters}{7}
+\bibcite{chevalier2023minigrid}{8}
+\bibcite{hafner2021crafter}{9}
+\bibcite{johnson2010cellular}{10}
+\bibcite{procgen_repo}{11}
+\bibcite{hausknecht2015drqn}{12}
+\bibcite{kapturowski2019r2d2}{13}
+\bibcite{morad2023popgym}{14}
+\bibcite{pleines2022recurrent}{15}
+\@writefile{toc}{\contentsline {section}{Literaturverzeichnis}{50}{Item.19}\protected@file@percent }
+\bibcite{bengio2009curriculum}{16}
+\bibcite{jiang2021plr}{17}
+\bibcite{pathak2017icm}{18}
+\bibcite{burda2018rnd}{19}
+\bibcite{perlin1985image}{20}
+\bibcite{cormen2009algorithms}{21}
+\bibcite{kaelbling1998pomdp}{22}
+\bibcite{singh1994pomdp}{23}
+\bibcite{mnih2015dqn}{24}
+\bibcite{schulman2016gae}{25}
+\bibcite{mnih2016a3c}{26}
+\bibcite{schulman2017ppo}{27}
+\bibcite{raffin2021stable}{28}
+\bibcite{hochreiter1997lstm}{29}
+\bibcite{ghosh2021epistemic}{30}
+\bibcite{ng1999policy}{31}
+\bibcite{kerr1998harking}{32}
+\bibcite{pineau2021repro}{33}
+\bibcite{steele2014splitmix}{34}
+\bibcite{oh2018sil}{35}
+\bibcite{grigsby2024amago}{36}
+\gdef \@abspage@last{61}

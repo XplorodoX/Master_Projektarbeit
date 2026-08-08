@@ -1,19 +1,23 @@
 \begin{thebibliography}{10}
 
-\bibitem{mnih2015dqn}
-Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
-  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
-  Ostrovski, et~al.
-\newblock Human-level control through deep reinforcement learning.
-\newblock {\em Nature}, 518(7540):529--533, 2015.
-\newblock \url{https://www.nature.com/articles/nature14236}.
+\bibitem{shaker2016pcg}
+Noor Shaker, Julian Togelius, and Mark~J. Nelson.
+\newblock {\em Procedural Content Generation in Games}.
+\newblock Computational Synthesis and Creative Systems. Springer, 2016.
 
-\bibitem{cobbe2020procgen}
-Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
-\newblock Leveraging procedural generation to benchmark reinforcement learning.
-\newblock In {\em International conference on machine learning}, pages
-  2048--2056. PMLR, 2020.
-\newblock \url{https://arxiv.org/abs/1912.01588}.
+\bibitem{togelius2011search}
+Julian Togelius, Georgios~N. Yannakakis, Kenneth~O. Stanley, and Cameron
+  Browne.
+\newblock Search-based procedural content generation: A taxonomy and survey.
+\newblock {\em IEEE Transactions on Computational Intelligence and AI in
+  Games}, 3(3):172--186, 2011.
+\newblock \url{https://ieeexplore.ieee.org/document/5963131}.
+
+\bibitem{sutton2018rl}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock {\em Reinforcement Learning: An Introduction}.
+\newblock MIT Press, Cambridge, MA, 2 edition, 2018.
+\newblock \url{http://incompleteideas.net/book/the-book-2nd.html}.
 
 \bibitem{kirk2023survey}
 Robert Kirk, Amy Zhang, Edward Grefenstette, and Tim Rockt{\"a}schel.
@@ -29,11 +33,12 @@ Sebastian Risi and Julian Togelius.
 \newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
 \newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
 
-\bibitem{procgen_repo}
-{OpenAI}.
-\newblock Procgen benchmark: Procedurally-generated game-like gym environments.
-\newblock Quellcode-Repository, 2020.
-\newblock \url{https://github.com/openai/procgen}.
+\bibitem{cobbe2020procgen}
+Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
+\newblock Leveraging procedural generation to benchmark reinforcement learning.
+\newblock In {\em International conference on machine learning}, pages
+  2048--2056. PMLR, 2020.
+\newblock \url{https://arxiv.org/abs/1912.01588}.
 
 \bibitem{henderson2018matters}
 Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
@@ -43,36 +48,92 @@ Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
   Intelligence}, volume~32, 2018.
 \newblock \url{https://arxiv.org/abs/1709.06560}.
 
-\bibitem{sutton2018rl}
-Richard~S. Sutton and Andrew~G. Barto.
-\newblock {\em Reinforcement Learning: An Introduction}.
-\newblock MIT Press, Cambridge, MA, 2 edition, 2018.
-\newblock \url{http://incompleteideas.net/book/the-book-2nd.html}.
+\bibitem{chevalier2023minigrid}
+Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, et~al.
+\newblock Minigrid \& miniworld: Modular \& customizable reinforcement learning
+  environments for goal-oriented tasks.
+\newblock {\em Advances in Neural Information Processing Systems}, 36, 2023.
+\newblock \url{https://arxiv.org/abs/2306.13831}.
 
-\bibitem{shaker2016pcg}
-Noor Shaker, Julian Togelius, and Mark~J. Nelson.
-\newblock {\em Procedural Content Generation in Games}.
-\newblock Computational Synthesis and Creative Systems. Springer, 2016.
-
-\bibitem{togelius2011search}
-Julian Togelius, Georgios~N. Yannakakis, Kenneth~O. Stanley, and Cameron
-  Browne.
-\newblock Search-based procedural content generation: A taxonomy and survey.
-\newblock {\em IEEE Transactions on Computational Intelligence and AI in
-  Games}, 3(3):172--186, 2011.
-\newblock \url{https://ieeexplore.ieee.org/document/5963131}.
-
-\bibitem{perlin1985image}
-Ken Perlin.
-\newblock An image synthesizer.
-\newblock In {\em Proceedings of the 12th Annual Conference on Computer
-  Graphics and Interactive Techniques (SIGGRAPH)}, pages 287--296. ACM, 1985.
+\bibitem{hafner2021crafter}
+Danijar Hafner.
+\newblock Benchmarking the spectrum of agent capabilities.
+\newblock {\em arXiv preprint arXiv:2109.06780}, 2021.
+\newblock \url{https://arxiv.org/abs/2109.06780}.
 
 \bibitem{johnson2010cellular}
 Lawrence Johnson, Georgios~N. Yannakakis, and Julian Togelius.
 \newblock Cellular automata for real-time generation of infinite cave levels.
 \newblock In {\em Proceedings of the 2010 Workshop on Procedural Content
   Generation in Games (PCGames)}, pages 1--4. ACM, 2010.
+
+\bibitem{procgen_repo}
+{OpenAI}.
+\newblock Procgen benchmark: Procedurally-generated game-like gym environments.
+\newblock Quellcode-Repository, 2020.
+\newblock \url{https://github.com/openai/procgen}.
+
+\bibitem{hausknecht2015drqn}
+Matthew Hausknecht and Peter Stone.
+\newblock Deep recurrent q-learning for partially observable mdps.
+\newblock {\em arXiv preprint arXiv:1507.06527}, 2015.
+\newblock \url{https://arxiv.org/abs/1507.06527}.
+
+\bibitem{kapturowski2019r2d2}
+Steven Kapturowski, Georg Ostrovski, John Quan, R{\'e}mi Munos, and Will
+  Dabney.
+\newblock Recurrent experience replay in distributed reinforcement learning.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2019.
+
+\bibitem{morad2023popgym}
+Steven Morad, Ryan Kortvelesy, Matteo Bettini, Stephan Liwicki, and Amanda
+  Prorok.
+\newblock {POPGym}: Benchmarking partially observable reinforcement learning.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2023.
+\newblock \url{https://arxiv.org/abs/2303.01859}.
+
+\bibitem{pleines2022recurrent}
+Marco Pleines, Matthias Pallasch, Frank Zimmer, and Mike Preuss.
+\newblock Generalization, mayhems and limits in recurrent proximal policy
+  optimization.
+\newblock {\em arXiv preprint arXiv:2205.11104}, 2022.
+\newblock \url{https://arxiv.org/abs/2205.11104}.
+
+\bibitem{bengio2009curriculum}
+Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
+\newblock Curriculum learning.
+\newblock In {\em Proceedings of the 26th Annual International Conference on
+  Machine Learning (ICML)}, pages 41--48, 2009.
+\newblock \url{https://dl.acm.org/doi/10.1145/1553374.1553380}.
+
+\bibitem{jiang2021plr}
+Minqi Jiang, Edward Grefenstette, and Tim Rockt{\"a}schel.
+\newblock Prioritized level replay.
+\newblock In {\em International Conference on Machine Learning (ICML)}, pages
+  4940--4950. PMLR, 2021.
+\newblock \url{https://arxiv.org/abs/2010.03934}.
+
+\bibitem{pathak2017icm}
+Deepak Pathak, Pulkit Agrawal, Alexei~A Efros, and Trevor Darrell.
+\newblock Curiosity-driven exploration by self-supervised prediction.
+\newblock In {\em International conference on machine learning}, pages
+  2778--2787. PMLR, 2017.
+\newblock \url{https://arxiv.org/abs/1705.05363}.
+
+\bibitem{burda2018rnd}
+Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
+\newblock Exploration by random network distillation.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2019.
+\newblock Preprint 2018, \url{https://arxiv.org/abs/1810.12894}.
+
+\bibitem{perlin1985image}
+Ken Perlin.
+\newblock An image synthesizer.
+\newblock In {\em Proceedings of the 12th Annual Conference on Computer
+  Graphics and Interactive Techniques (SIGGRAPH)}, pages 287--296. ACM, 1985.
 
 \bibitem{cormen2009algorithms}
 Thomas~H. Cormen, Charles~E. Leiserson, Ronald~L. Rivest, and Clifford Stein.
@@ -84,12 +145,6 @@ Leslie~Pack Kaelbling, Michael~L Littman, and Anthony~R Cassandra.
 \newblock Planning and acting in partially observable stochastic domains.
 \newblock {\em Artificial Intelligence}, 101(1--2):99--134, 1998.
 
-\bibitem{hausknecht2015drqn}
-Matthew Hausknecht and Peter Stone.
-\newblock Deep recurrent q-learning for partially observable mdps.
-\newblock {\em arXiv preprint arXiv:1507.06527}, 2015.
-\newblock \url{https://arxiv.org/abs/1507.06527}.
-
 \bibitem{singh1994pomdp}
 Satinder~P Singh, Tommi Jaakkola, and Michael~I Jordan.
 \newblock Learning without state-estimation in partially observable markovian
@@ -98,6 +153,14 @@ Satinder~P Singh, Tommi Jaakkola, and Michael~I Jordan.
   Machine Learning (ICML)}, pages 284--292, 1994.
 \newblock
   \url{https://www.cs.utexas.edu/~shivaram/readings/b2hd-SinghJJ1994.html}.
+
+\bibitem{mnih2015dqn}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
+  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
+  Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock {\em Nature}, 518(7540):529--533, 2015.
+\newblock \url{https://www.nature.com/articles/nature14236}.
 
 \bibitem{schulman2016gae}
 John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter
@@ -134,13 +197,6 @@ Sepp Hochreiter and J{\"u}rgen Schmidhuber.
 \newblock Long short-term memory.
 \newblock {\em Neural Computation}, 9(8):1735--1780, 1997.
 
-\bibitem{kapturowski2019r2d2}
-Steven Kapturowski, Georg Ostrovski, John Quan, R{\'e}mi Munos, and Will
-  Dabney.
-\newblock Recurrent experience replay in distributed reinforcement learning.
-\newblock In {\em International Conference on Learning Representations (ICLR)},
-  2019.
-
 \bibitem{ghosh2021epistemic}
 Dibya Ghosh, Jad Rahme, Aviral Kumar, Amy Zhang, Ryan~P Adams, and Sergey
   Levine.
@@ -157,20 +213,6 @@ Andrew~Y Ng, Daishi Harada, and Stuart Russell.
 \newblock In {\em Proceedings of the Sixteenth International Conference on
   Machine Learning (ICML)}, pages 278--287, 1999.
 
-\bibitem{bengio2009curriculum}
-Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
-\newblock Curriculum learning.
-\newblock In {\em Proceedings of the 26th Annual International Conference on
-  Machine Learning (ICML)}, pages 41--48, 2009.
-\newblock \url{https://dl.acm.org/doi/10.1145/1553374.1553380}.
-
-\bibitem{jiang2021plr}
-Minqi Jiang, Edward Grefenstette, and Tim Rockt{\"a}schel.
-\newblock Prioritized level replay.
-\newblock In {\em International Conference on Machine Learning (ICML)}, pages
-  4940--4950. PMLR, 2021.
-\newblock \url{https://arxiv.org/abs/2010.03934}.
-
 \bibitem{kerr1998harking}
 Norbert~L. Kerr.
 \newblock {HARKing}: Hypothesizing after the results are known.
@@ -184,56 +226,6 @@ Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
   the neurips 2019 reproducibility program).
 \newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
 \newblock \url{https://arxiv.org/abs/2003.12206}.
-
-\bibitem{chevalier2023minigrid}
-Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, et~al.
-\newblock Minigrid \& miniworld: Modular \& customizable reinforcement learning
-  environments for goal-oriented tasks.
-\newblock {\em Advances in Neural Information Processing Systems}, 36, 2023.
-\newblock \url{https://arxiv.org/abs/2306.13831}.
-
-\bibitem{hafner2021crafter}
-Danijar Hafner.
-\newblock Benchmarking the spectrum of agent capabilities.
-\newblock {\em arXiv preprint arXiv:2109.06780}, 2021.
-\newblock \url{https://arxiv.org/abs/2109.06780}.
-
-\bibitem{pleines2022recurrent}
-Marco Pleines, Matthias Pallasch, Frank Zimmer, and Mike Preuss.
-\newblock Generalization, mayhems and limits in recurrent proximal policy
-  optimization.
-\newblock {\em arXiv preprint arXiv:2205.11104}, 2022.
-\newblock \url{https://arxiv.org/abs/2205.11104}.
-
-\bibitem{morad2023popgym}
-Steven Morad, Ryan Kortvelesy, Matteo Bettini, Stephan Liwicki, and Amanda
-  Prorok.
-\newblock {POPGym}: Benchmarking partially observable reinforcement learning.
-\newblock In {\em International Conference on Learning Representations (ICLR)},
-  2023.
-\newblock \url{https://arxiv.org/abs/2303.01859}.
-
-\bibitem{grigsby2024amago}
-Jake Grigsby, Linxi Fan, and Yuke Zhu.
-\newblock {AMAGO}: Scalable in-context reinforcement learning for adaptive
-  agents.
-\newblock In {\em International Conference on Learning Representations (ICLR)},
-  2024.
-\newblock \url{https://arxiv.org/abs/2310.09971}.
-
-\bibitem{pathak2017icm}
-Deepak Pathak, Pulkit Agrawal, Alexei~A Efros, and Trevor Darrell.
-\newblock Curiosity-driven exploration by self-supervised prediction.
-\newblock In {\em International conference on machine learning}, pages
-  2778--2787. PMLR, 2017.
-\newblock \url{https://arxiv.org/abs/1705.05363}.
-
-\bibitem{burda2018rnd}
-Yuri Burda, Harrison Edwards, Amos Storkey, and Oleg Klimov.
-\newblock Exploration by random network distillation.
-\newblock In {\em International Conference on Learning Representations (ICLR)},
-  2019.
-\newblock Preprint 2018, \url{https://arxiv.org/abs/1810.12894}.
 
 \bibitem{steele2014splitmix}
 Guy~L. Steele, Doug Lea, and Christine~H. Flood.
@@ -249,12 +241,12 @@ Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
   3878--3887. PMLR, 2018.
 \newblock \url{https://arxiv.org/abs/1806.05635}.
 
-\bibitem{sb3docs}
-{Stable-Baselines3 Contributors}.
-\newblock Stable-baselines3 documentation: {PPO}, 2025.
-\newblock
-  \url{https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html},
-  abgerufen am 25.07.2026: \glqq PPO is meant to be run primarily on the CPU,
-  especially when you are not using a CNN\grqq.
+\bibitem{grigsby2024amago}
+Jake Grigsby, Linxi Fan, and Yuke Zhu.
+\newblock {AMAGO}: Scalable in-context reinforcement learning for adaptive
+  agents.
+\newblock In {\em International Conference on Learning Representations (ICLR)},
+  2024.
+\newblock \url{https://arxiv.org/abs/2310.09971}.
 
 \end{thebibliography}
