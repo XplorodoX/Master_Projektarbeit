@@ -2,6 +2,116 @@
 
 ---
 
+## v2026-08-08.2 — Early Stop und Seed-Pool vertieft, Versionsverlauf aus Florians Teil gelöst
+
+**Wer:** Florian.
+
+**Kontext:** Rückmeldung zu v2026-08-08.1: Die reset()/step()-Schnittstelle nahm zu viel
+Raum ein, während die eigentlich interessanten Trainingsregeln (Early Stop, Seed-Pool)
+nur als Dreizeiler-Aufzählung mitliefen. Zudem sollte der Versionsverlauf ganz aus
+Florians Unterkapitel heraus. Reine Überarbeitung von `docs/Projektdokumentation.tex`,
+kein Eingriff in Code, Modelle oder Messergebnisse.
+
+#### Änderung 1 — Neues Unterkapitel „Trainingsspezifische Sonderregeln"
+**Problem:** Early Stop und Seed-Pool standen als knappe Stichpunkte unter „Die
+Schnittstelle: reset() und step()", obwohl sie inhaltlich mehr hergeben als die
+Interface-Mechanik selbst.
+**Lösung:** Eigenes Unterkapitel 4.2.5 (`sec:sonderregeln`). Early Stop jetzt mit
+Durchsatz-Begründung (16 parallele Umgebungen), Truncation-statt-Terminal-Semantik und der
+Auslösequote (unter 3 % der trainierten Episoden, bereits vorher im Ausblick genannt).
+Seed-Pool jetzt mit beiden im Code vorhandenen Modi: Erfolgs-Modus (Standard aller
+v12-Läufe) gegenüber PLR-Modus (`--plr`, nicht Teil der v12-Konfiguration). Die
+Gegenüberstellung greift die bestehende, bisher nur in der Einordnung der Arbeit
+(Abschnitt 1.5, `sec:relatedwork`) geäußerte Kritik auf, dass der Standard-Modus die von
+Prioritized Level Replay vorgeschlagene Auswahlrichtung umkehrt.
+**Nebenfund:** Der Verweis dieser Kritikstelle zeigte auf `sec:technik` (Laurins
+Technologie-Stack) statt auf die Seed-Pool-Beschreibung — ein seit dem Kapitel-Split in
+v2026-08-06.3 stehen gebliebener Fehlverweis. Korrigiert auf `sec:sonderregeln`.
+
+#### Änderung 2 — Die Schnittstelle: reset() und step() entschlackt
+**Datei:** `docs/Projektdokumentation.tex`
+**Lösung:** Die Stichpunktliste (Revisit-Penalty/Early-Stop/Seed-Pool) und der
+abschließende Truncation-Absatz sind aus 4.2.4 heraus und nach 4.2.5 gewandert. 4.2.4
+beschreibt jetzt nur noch die Sprachgrenze und das Sequenzdiagramm.
+
+#### Änderung 3 — Versionsverlauf aus Florians Unterkapitel gelöst
+**Problem:** Der Versionsverlauf ist keine RL-spezifische Angelegenheit — die Tabelle wird
+von zwölf Stellen im Dokument zitiert, darunter Laurins Weltgenerator- und
+Z1-Bewertungsabschnitte. Trotzdem stand er als letztes Unterkapitel unter „Implementierung
+der Lernumgebung (Florian)".
+**Lösung:** Aus `\subsubsection` in Florians Teil zu einem eigenständigen
+`\subsection{Versionsverlauf (gemeinsam)}` (4.3) gemacht, gleichrangig neben 4.1 (Laurin)
+und 4.2 (Florian). Label `sec:versionsverlauf` unverändert, daher lösen alle bestehenden
+Verweise weiterhin korrekt auf. Kapitelübersicht in der Einleitung („Aufbau der Arbeit")
+entsprechend von zwei auf drei Abschnitte korrigiert.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 62 Seiten. Keine
+Zahl, kein Modellstand und kein Eval-Ergebnis wurde verändert oder neu behauptet.
+
+---
+
+## v2026-08-08.1 — RL-Implementierungskapitel inhaltlich neu geordnet und auf den finalen Stand fokussiert
+
+**Wer:** Florian.
+
+**Kontext:** Abschnitt 4.2 („Implementierung der Lernumgebung") stieg mit einem
+Versionsverlauf-Tabellenauszug ein, bevor überhaupt erklärt war, was Beobachtung,
+Schnittstelle oder Reward-Design sind. Mehrere Unterkapitel wiederholten außerdem, was das
+Grundlagenkapitel bereits erklärt hatte (POMDP, MDP-Tupel, PBRS-Beweis), und einzelne
+Absätze erzählten Debugging-Geschichten (Konfigurationsleck, Reset-Reihenfolge, alte
+β-Werte), statt den finalen Implementierungsstand zu beschreiben. Kein Eingriff in Code,
+Modelle oder Messergebnisse — reine Überarbeitung des Fließtexts in
+`docs/Projektdokumentation.tex`.
+
+#### Änderung 1 — Reihenfolge neu: Architektur zuerst, Versionsverlauf ans Ende
+**Problem:** Der Versionsverlauf (mit Begriffen wie „prozess-globales Konfigurationsleck",
+„Straf-Stacking") stand als erstes Unterkapitel vor jeder Begriffsklärung und wirkte wie ein
+falscher Einstieg in einen abgeschlossenen Kapitelteil, statt als Rückblick am Ende.
+**Lösung:** Neues Unterkapitel „Architektur der Implementierung" (mit dem bestehenden
+Komponentendiagramm) an den Anfang gezogen, gibt jetzt den Überblick vor den Details.
+Versionsverlauf ist dadurch automatisch zum letzten Unterkapitel geworden, gekürzt auf zwei
+Sätze plus Tabelle, mit Pointe auf dem berichtsfähigen v12-Endergebnis (65,7 % / 66,9 %)
+statt auf der Entwicklungsgeschichte.
+
+#### Änderung 2 — Duplikate zum Grundlagenkapitel entfernt
+**Problem:** „POMDP-Charakter" erklärte POMDP erneut vollständig samt Abbildungsbeschreibung,
+obwohl Abschnitt 2.2.2 das mit eigener Abbildung bereits getan hatte. Ebenso wiederholte
+„Umgebung, Beobachtung, Aktionen" die MDP-Tupel-Definition aus Abschnitt 2.2.1, und
+„Reward-Design" wiederholte den PBRS-Policy-Invarianz-Beweis aus Abschnitt 2.2.6.
+**Lösung:** Alle drei Stellen auf Verweise gekürzt, es bleibt jeweils nur der neue,
+implementierungsspezifische Teil stehen (konkrete Umsetzung statt Theorie).
+
+#### Änderung 3 — Monitoring-Unterkapitel gestrichen
+**Problem:** TensorBoard/`approx_kl`/WebSocket-Beschreibung war für die Forschungsfrage ohne
+Belang und lenkte von der Architektur ab.
+**Lösung:** Unterkapitel entfernt (`approx_kl` steht bereits im Abkürzungsverzeichnis,
+`explained_variance` bereits in den Grundlagen). Das Architektur-Diagramm, das dort stand,
+wurde nicht gelöscht, sondern an den Kapitelanfang verschoben (Änderung 1).
+
+#### Änderung 4 — Sequenzdiagramm für `step()` ergänzt
+**Datei:** `docs/Projektdokumentation.tex` (neue Abbildung `fig:sequence_step`)
+**Problem:** Der Ablauf eines `step()`-Aufrufs über Trainingsschleife → `StoneforgeWorldEnv`
+→ `StoneforgeCoreEnv` → `Simulation` stand nur als Fließtext da.
+**Lösung:** UML-artiges Sequenzdiagramm (vier Lifelines) ergänzt, Klassen- und
+Methodennamen gegen `python/stoneforge_env.py` und `src/python/py_module.cpp` geprüft, nicht
+frei erfunden.
+
+#### Änderung 5 — Algorithmenwahl in der Trainings-Pipeline ergänzt
+**Problem:** Dass dieselbe Pipeline über `--algo {rppo,ppo}` sowohl die LSTM-Politik als auch
+eine MLP-Kontrollgruppe auf identischem Curriculum trainieren kann, stand nirgends in Kapitel
+4 — dabei ist das der Mechanismus, der eine kontrollierte F2-Ablation erst ermöglicht
+(vgl. `--algo`-Nachrüstung in v2026-08-05.1).
+**Lösung:** Neuer Absatz „Algorithmenwahl" in Abschnitt 4.2.6, ausschließlich als
+Implementierungsfakt (Parameterunterschiede `policy`/`batch_size`/Netzgröße). Die MLP-Zahlen
+selbst wurden **bewusst nicht** ergänzt: Laut Changelog ist nur Seed 1 von 7 gelaufen, nur
+Phase 1, als „vorläufig" markiert — nicht Teil des berichtsfähigen Standes (Regel 2,
+`CLAUDE.md`).
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 62 Seiten. Keine
+Zahl, kein Modellstand und kein Eval-Ergebnis wurde verändert oder neu behauptet.
+
+---
+
 ## v2026-08-06.3 — Weltgenerator mit Code und Abbildungen erklärt, Implementierung in zwei Kapitel geteilt
 
 **Kontext:** Der Weltgenerator ist Laurins Kernbeitrag, wurde aber nur benannt statt erklärt.

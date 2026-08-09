@@ -11,7 +11,7 @@ Julian Togelius, Georgios~N. Yannakakis, Kenneth~O. Stanley, and Cameron
 \newblock Search-based procedural content generation: A taxonomy and survey.
 \newblock {\em IEEE Transactions on Computational Intelligence and AI in
   Games}, 3(3):172--186, 2011.
-\newblock \url{https://ieeexplore.ieee.org/document/5963131}.
+\newblock \url{https://doi.org/10.1109/TCIAIG.2011.2148116}.
 
 \bibitem{sutton2018rl}
 Richard~S. Sutton and Andrew~G. Barto.
@@ -31,7 +31,7 @@ Sebastian Risi and Julian Togelius.
 \newblock Increasing generality in machine learning through procedural content
   generation.
 \newblock {\em Nature Machine Intelligence}, 2(8):428--436, 2020.
-\newblock \url{https://www.nature.com/articles/s42256-020-0208-5}.
+\newblock \url{https://doi.org/10.1038/s42256-020-0208-z}.
 
 \bibitem{cobbe2020procgen}
 Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
@@ -135,10 +135,23 @@ Ken Perlin.
 \newblock In {\em Proceedings of the 12th Annual Conference on Computer
   Graphics and Interactive Techniques (SIGGRAPH)}, pages 287--296. ACM, 1985.
 
+\bibitem{quilez2008warp}
+I{\~n}igo Qu{\'i}lez.
+\newblock Domain warping.
+\newblock Artikel, 2008.
+\newblock \url{https://iquilezles.org/articles/warp/}.
+
 \bibitem{cormen2009algorithms}
 Thomas~H. Cormen, Charles~E. Leiserson, Ronald~L. Rivest, and Clifford Stein.
 \newblock {\em Introduction to Algorithms}.
 \newblock MIT Press, 3 edition, 2009.
+
+\bibitem{hart1968astar}
+Peter~E. Hart, Nils~J. Nilsson, and Bertram Raphael.
+\newblock A formal basis for the heuristic determination of minimum cost paths.
+\newblock {\em IEEE Transactions on Systems Science and Cybernetics},
+  4(2):100--107, 1968.
+\newblock \url{https://doi.org/10.1109/TSSC.1968.300136}.
 
 \bibitem{kaelbling1998pomdp}
 Leslie~Pack Kaelbling, Michael~L Littman, and Anthony~R Cassandra.
@@ -227,6 +240,14 @@ Joelle Pineau, Philippe Vincent-Lamarre, Koustuv Sinha, Vincent Larivi{\`e}re,
 \newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
 \newblock \url{https://arxiv.org/abs/2003.12206}.
 
+\bibitem{paszke2019pytorch}
+Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory
+  Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, et~al.
+\newblock Pytorch: An imperative style, high-performance deep learning library.
+\newblock In {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  volume~32, pages 8024--8035, 2019.
+\newblock \url{https://arxiv.org/abs/1912.01703}.
+
 \bibitem{steele2014splitmix}
 Guy~L. Steele, Doug Lea, and Christine~H. Flood.
 \newblock Fast splittable pseudorandom number generators.
@@ -234,19 +255,11 @@ Guy~L. Steele, Doug Lea, and Christine~H. Flood.
   Object Oriented Programming Systems Languages \& Applications (OOPSLA)},
   pages 453--472. ACM, 2014.
 
-\bibitem{oh2018sil}
-Junhyuk Oh, Yijie Guo, Satinder Singh, and Honglak Lee.
-\newblock Self-imitation learning.
-\newblock In {\em International Conference on Machine Learning (ICML)}, pages
-  3878--3887. PMLR, 2018.
-\newblock \url{https://arxiv.org/abs/1806.05635}.
-
-\bibitem{grigsby2024amago}
-Jake Grigsby, Linxi Fan, and Yuke Zhu.
-\newblock {AMAGO}: Scalable in-context reinforcement learning for adaptive
-  agents.
-\newblock In {\em International Conference on Learning Representations (ICLR)},
-  2024.
-\newblock \url{https://arxiv.org/abs/2310.09971}.
+\bibitem{brockman2016gym}
+Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
+  Jie Tang, and Wojciech Zaremba.
+\newblock Openai gym.
+\newblock {\em arXiv preprint arXiv:1606.01540}, 2016.
+\newblock \url{https://arxiv.org/abs/1606.01540}.
 
 \end{thebibliography}

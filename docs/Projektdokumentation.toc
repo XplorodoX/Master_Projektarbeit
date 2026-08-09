@@ -1,131 +1,127 @@
 \babel@toc {ngerman}{}\relax 
 \contentsline {section}{Kurzfassung}{ii}{section*.1}%
 \contentsline {section}{Eidesstattliche Erklärung}{iii}{section*.2}%
-\contentsline {section}{Erklärung zur Nutzung generativer KI}{iv}{section*.3}%
-\contentsline {section}{Abbildungsverzeichnis}{vii}{section*.5}%
-\contentsline {section}{Tabellenverzeichnis}{viii}{section*.6}%
-\contentsline {section}{Abkürzungs- und Symbolverzeichnis}{ix}{section*.7}%
+\contentsline {section}{Erklärung zur Nutzung generativer KI}{iv}{section*.5}%
+\contentsline {section}{Abbildungsverzeichnis}{vii}{section*.7}%
+\contentsline {section}{Tabellenverzeichnis}{viii}{section*.8}%
+\contentsline {section}{Abkürzungs- und Symbolverzeichnis}{ix}{section*.9}%
 \contentsline {section}{\numberline {1}Einleitung (gemeinsam)}{1}{section.1}%
 \contentsline {subsection}{\numberline {1.1}Motivation}{1}{subsection.1.1}%
 \contentsline {subsection}{\numberline {1.2}Die Aufgabe in Kürze}{1}{subsection.1.2}%
 \contentsline {subsection}{\numberline {1.3}Problemstellung und Forschungsfrage}{1}{subsection.1.3}%
 \contentsline {subsection}{\numberline {1.4}Zielsetzung und Erfolgskriterien}{2}{subsection.1.4}%
-\contentsline {paragraph}{Z1: Anforderungen an Spiel und Generator.}{2}{section*.8}%
-\contentsline {paragraph}{Z2: Schwellen für den Agenten.}{3}{section*.9}%
-\contentsline {paragraph}{Vorgehen.}{3}{section*.10}%
+\contentsline {paragraph}{Z1: Anforderungen an Spiel und Generator.}{2}{section*.10}%
+\contentsline {paragraph}{Z2: Schwellen für den Agenten.}{3}{section*.11}%
+\contentsline {paragraph}{Vorgehen.}{3}{section*.12}%
 \contentsline {subsection}{\numberline {1.5}Einordnung der Arbeit}{3}{subsection.1.5}%
-\contentsline {paragraph}{Die Schwierigkeit steckt in der Struktur der Hindernisse.}{4}{section*.11}%
-\contentsline {paragraph}{Gedächtnis in teilbeobachtbaren Umgebungen.}{4}{section*.12}%
-\contentsline {paragraph}{Curriculum und Exploration.}{5}{section*.13}%
-\contentsline {paragraph}{Zur Vergleichbarkeit der absoluten Zahlen.}{5}{section*.14}%
+\contentsline {paragraph}{Die Schwierigkeit steckt in der Struktur der Hindernisse.}{4}{section*.13}%
+\contentsline {paragraph}{Gedächtnis in teilbeobachtbaren Umgebungen.}{4}{section*.14}%
+\contentsline {paragraph}{Curriculum und Exploration.}{5}{section*.15}%
+\contentsline {paragraph}{Zur Vergleichbarkeit der absoluten Zahlen.}{5}{section*.16}%
 \contentsline {subsection}{\numberline {1.6}Aufbau der Arbeit}{5}{subsection.1.6}%
-\contentsline {paragraph}{Zur Versionsbezeichnung.}{5}{section*.15}%
-\contentsline {paragraph}{Zur Arbeitsteilung.}{5}{section*.16}%
+\contentsline {paragraph}{Zur Versionsbezeichnung.}{5}{section*.17}%
+\contentsline {paragraph}{Zur Arbeitsteilung.}{5}{section*.18}%
 \contentsline {section}{\numberline {2}Grundlagen (gemeinsam)}{7}{section.2}%
 \contentsline {subsection}{\numberline {2.1}Grundlagen der Weltgenerierung (Laurin)}{7}{subsection.2.1}%
 \contentsline {subsubsection}{\numberline {2.1.1}Begriff, Seed und Determinismus}{7}{subsubsection.2.1.1}%
 \contentsline {subsubsection}{\numberline {2.1.2}Algorithmen der prozeduralen Weltgenerierung}{7}{subsubsection.2.1.2}%
-\contentsline {paragraph}{Rauschbasierte Basisbelegung.}{7}{section*.17}%
-\contentsline {paragraph}{Zelluläre Automaten als Formgebung.}{7}{section*.18}%
-\contentsline {paragraph}{Graphentheoretische Erreichbarkeitsanalyse.}{8}{section*.19}%
-\contentsline {paragraph}{Heuristische Sicherheitsnetze und Metriken.}{8}{section*.20}%
+\contentsline {paragraph}{Rauschbasierte Basisbelegung.}{7}{section*.19}%
+\contentsline {paragraph}{Zelluläre Automaten als Formgebung.}{7}{section*.20}%
+\contentsline {paragraph}{Graphentheoretische Erreichbarkeitsanalyse.}{8}{section*.21}%
+\contentsline {paragraph}{Heuristische Sicherheitsnetze und Metriken.}{8}{section*.22}%
 \contentsline {subsection}{\numberline {2.2}Grundlagen des Reinforcement Learning (Florian)}{8}{subsection.2.2}%
 \contentsline {subsubsection}{\numberline {2.2.1}Reinforcement Learning und der Markov-Entscheidungsprozess}{8}{subsubsection.2.2.1}%
 \contentsline {subsubsection}{\numberline {2.2.2}Partielle Beobachtbarkeit (POMDP)}{9}{subsubsection.2.2.2}%
 \contentsline {subsubsection}{\numberline {2.2.3}Wertbasierte Verfahren: Q-Learning und DQN}{10}{subsubsection.2.2.3}%
 \contentsline {subsubsection}{\numberline {2.2.4}Policy-Gradient- und Actor-Critic-Verfahren}{10}{subsubsection.2.2.4}%
 \contentsline {subsubsection}{\numberline {2.2.5}Proximal Policy Optimization (PPO)}{11}{subsubsection.2.2.5}%
-\contentsline {subsubsection}{\numberline {2.2.6}Rekurrente Politiken (LSTM)}{11}{subsubsection.2.2.6}%
-\contentsline {subsubsection}{\numberline {2.2.7}Prozedurale Welten im Reinforcement Learning}{12}{subsubsection.2.2.7}%
+\contentsline {subsubsection}{\numberline {2.2.6}Rekurrente Politiken (LSTM)}{12}{subsubsection.2.2.6}%
+\contentsline {subsubsection}{\numberline {2.2.7}Prozedurale Welten im Reinforcement Learning}{13}{subsubsection.2.2.7}%
 \contentsline {subsubsection}{\numberline {2.2.8}Reward Shaping (PBRS)}{13}{subsubsection.2.2.8}%
 \contentsline {subsubsection}{\numberline {2.2.9}Curriculum Learning}{13}{subsubsection.2.2.9}%
-\contentsline {subsubsection}{\numberline {2.2.10}Messen und Bewerten}{13}{subsubsection.2.2.10}%
+\contentsline {subsubsection}{\numberline {2.2.10}Messen und Bewerten}{14}{subsubsection.2.2.10}%
 \contentsline {subsubsection}{\numberline {2.2.11}Metriken einer Navigationsaufgabe}{14}{subsubsection.2.2.11}%
-\contentsline {paragraph}{Erfolgsquote.}{14}{section*.21}%
-\contentsline {paragraph}{Pfadeffizienz.}{14}{section*.22}%
-\contentsline {paragraph}{Betriebsarten.}{14}{section*.23}%
+\contentsline {paragraph}{Erfolgsquote.}{14}{section*.23}%
+\contentsline {paragraph}{Pfadeffizienz.}{14}{section*.24}%
+\contentsline {paragraph}{Betriebsarten.}{14}{section*.25}%
 \contentsline {subsubsection}{\numberline {2.2.12}Streuung, Konfidenz und die Zahl der Läufe}{14}{subsubsection.2.2.12}%
-\contentsline {paragraph}{Unsicherheit innerhalb eines Laufs.}{14}{section*.24}%
-\contentsline {paragraph}{Unsicherheit zwischen Läufen.}{15}{section*.25}%
-\contentsline {paragraph}{Vergleich zweier Gruppen.}{15}{section*.26}%
-\contentsline {paragraph}{Vorabfestlegung von Schwellen.}{15}{section*.27}%
+\contentsline {paragraph}{Unsicherheit innerhalb eines Laufs.}{15}{section*.26}%
+\contentsline {paragraph}{Unsicherheit zwischen Läufen.}{15}{section*.27}%
+\contentsline {paragraph}{Vergleich zweier Gruppen.}{15}{section*.28}%
+\contentsline {paragraph}{Vorabfestlegung von Schwellen.}{15}{section*.29}%
 \contentsline {subsubsection}{\numberline {2.2.13}Referenzpolitiken als Bezugspunkt}{15}{subsubsection.2.2.13}%
-\contentsline {section}{\numberline {3}Methodik (gemeinsam)}{16}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Methodik der Weltgenerierung (Laurin)}{16}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Methodik des RL-Trainings (Florian)}{16}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {3.2.1}Wahl des Lernverfahrens}{16}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.2}Curriculum}{16}{subsubsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {3.2.3}Evaluationsprotokoll}{17}{subsubsection.3.2.3}%
-\contentsline {paragraph}{Metrik.}{17}{section*.28}%
-\contentsline {paragraph}{Episodenlimit.}{18}{section*.29}%
-\contentsline {paragraph}{Seed-Trennung.}{18}{section*.30}%
-\contentsline {paragraph}{Betriebsarten.}{18}{section*.31}%
-\contentsline {paragraph}{Aggregation und Kurvenvergleich.}{18}{section*.32}%
-\contentsline {subsubsection}{\numberline {3.2.4}Versuchsaufbau}{18}{subsubsection.3.2.4}%
-\contentsline {paragraph}{Herkunft der Erfolgsschwellen.}{18}{section*.33}%
-\contentsline {section}{\numberline {4}Implementierung (gemeinsam)}{20}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Implementierung des Spiels Stoneforge (Laurin)}{20}{subsection.4.1}%
-\contentsline {subsubsection}{\numberline {4.1.1}Technologie-Stack}{20}{subsubsection.4.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.2}Die Bausteine: Tile, Chunk und Welt}{20}{subsubsection.4.1.2}%
-\contentsline {paragraph}{Das Tile.}{21}{section*.34}%
-\contentsline {paragraph}{Der Chunk.}{21}{section*.35}%
-\contentsline {paragraph}{Die Welt.}{21}{section*.36}%
-\contentsline {paragraph}{Warum das nicht nur elegant, sondern notwendig ist.}{21}{section*.37}%
-\contentsline {subsubsection}{\numberline {4.1.3}Der Weltgenerator}{21}{subsubsection.4.1.3}%
-\contentsline {paragraph}{Woher der Zufall kommt.}{22}{section*.38}%
-\contentsline {paragraph}{Ein Chunk, Feld für Feld.}{25}{section*.41}%
-\contentsline {paragraph}{Die Pipeline an einer echten Welt.}{26}{section*.44}%
-\contentsline {paragraph}{Was am Ende tatsächlich im Weg steht.}{26}{section*.45}%
-\contentsline {paragraph}{Nachbearbeitung und eine Grenze der Konfigurierbarkeit.}{27}{section*.46}%
-\contentsline {paragraph}{Eine Konsequenz für die Ergebnisse.}{28}{section*.47}%
-\contentsline {paragraph}{Wie offen die Welten sind, misst der Umwegfaktor.}{28}{section*.48}%
-\contentsline {paragraph}{Die naheliegende Reparatur funktioniert nicht.}{28}{section*.49}%
-\contentsline {subsubsection}{\numberline {4.1.4}Exit-Platzierung und garantierte Lösbarkeit}{29}{subsubsection.4.1.4}%
-\contentsline {paragraph}{Warum das überhaupt eine Rolle spielt.}{29}{section*.50}%
-\contentsline {paragraph}{Der übliche Weg und warum wir ihn nicht gehen.}{29}{section*.51}%
-\contentsline {paragraph}{Stattdessen: den Exit aus dem Erreichbarkeitsbaum ziehen.}{29}{section*.52}%
-\contentsline {paragraph}{Die Falle: die Freiräumung erzeugt eine Abkürzung.}{30}{section*.53}%
-\contentsline {paragraph}{Was garantiert ist und was nicht.}{30}{section*.54}%
-\contentsline {paragraph}{Belege.}{31}{section*.55}%
-\contentsline {subsubsection}{\numberline {4.1.5}Grafischer Client und Zuschaumodus}{31}{subsubsection.4.1.5}%
-\contentsline {subsection}{\numberline {4.2}Implementierung der Lernumgebung (Florian)}{32}{subsection.4.2}%
-\contentsline {subsubsection}{\numberline {4.2.1}Versionsverlauf}{32}{subsubsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2}Was der Agent davon sieht: POMDP-Charakter}{32}{subsubsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.3}Umgebung, Beobachtung und Aktionen}{32}{subsubsection.4.2.3}%
-\contentsline {subsubsection}{\numberline {4.2.4}Die Schnittstelle: was bei \texttt {reset()} und \texttt {step()} tatsächlich passiert}{33}{subsubsection.4.2.4}%
-\contentsline {paragraph}{Ein \texttt {reset()} in vier Schritten.}{33}{section*.56}%
-\contentsline {paragraph}{Ein Detail, das lange Zeit die Messungen verfälscht hat.}{34}{section*.57}%
-\contentsline {paragraph}{Ein \texttt {step()} in zwei Hälften.}{34}{section*.58}%
-\contentsline {subsubsection}{\numberline {4.2.5}Reward-Design}{34}{subsubsection.4.2.5}%
-\contentsline {subsubsection}{\numberline {4.2.6}Trainings-Pipeline}{36}{subsubsection.4.2.6}%
-\contentsline {paragraph}{Parallele Umgebungen.}{36}{section*.59}%
-\contentsline {paragraph}{Evaluation und Gating.}{36}{section*.60}%
-\contentsline {paragraph}{Absenkung der Exploration.}{36}{section*.61}%
-\contentsline {paragraph}{Seed-Pool.}{36}{section*.62}%
-\contentsline {subsubsection}{\numberline {4.2.7}Monitoring und Werkzeuge}{37}{subsubsection.4.2.7}%
-\contentsline {section}{\numberline {5}Evaluation (gemeinsam)}{38}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Bewertung der Plattform (Z1, Laurin)}{38}{subsection.5.1}%
-\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{38}{section*.63}%
-\contentsline {subsection}{\numberline {5.2}Bewertung des Agenten (Z2, Florian)}{39}{subsection.5.2}%
-\contentsline {subsubsection}{\numberline {5.2.1}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{39}{subsubsection.5.2.1}%
-\contentsline {subsubsection}{\numberline {5.2.2}Endergebnis (v12, $n=7$)}{39}{subsubsection.5.2.2}%
-\contentsline {subsubsection}{\numberline {5.2.3}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{40}{subsubsection.5.2.3}%
-\contentsline {paragraph}{Befund.}{41}{section*.64}%
-\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{42}{section*.65}%
-\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{42}{section*.66}%
-\contentsline {subsubsection}{\numberline {5.2.4}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{43}{subsubsection.5.2.4}%
-\contentsline {subsubsection}{\numberline {5.2.5}Versuche zur Schließung des Det/Stoch-Gaps}{44}{subsubsection.5.2.5}%
-\contentsline {section}{\numberline {6}Fazit und Ausblick}{46}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Ergebnis (gemeinsam)}{46}{subsection.6.1}%
-\contentsline {paragraph}{F1 (Weltgenerator): beantwortet.}{46}{section*.67}%
-\contentsline {paragraph}{F2 (Navigation ohne Orakel): nicht entscheidbar.}{46}{section*.68}%
-\contentsline {paragraph}{Das Verhältnis beider Antworten.}{46}{section*.69}%
-\contentsline {subsection}{\numberline {6.2}Beiträge (gemeinsam)}{47}{subsection.6.2}%
-\contentsline {paragraph}{Technisch.}{47}{section*.70}%
-\contentsline {paragraph}{Inhaltlich.}{47}{section*.71}%
-\contentsline {paragraph}{Methodisch.}{47}{section*.72}%
-\contentsline {subsection}{\numberline {6.3}Einschränkungen (gemeinsam)}{47}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Ausblick}{48}{subsection.6.4}%
-\contentsline {subsubsection}{\numberline {6.4.1}Härtung der Weltgenerierung (Laurin)}{48}{subsubsection.6.4.1}%
-\contentsline {subsubsection}{\numberline {6.4.2}Weiterentwicklung des RL-Trainings (Florian)}{48}{subsubsection.6.4.2}%
-\contentsline {section}{Literaturverzeichnis}{50}{Item.19}%
+\contentsline {section}{\numberline {3}Methodik (gemeinsam)}{17}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Methodik der Weltgenerierung (Laurin)}{17}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Methodik des RL-Trainings (Florian)}{17}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Wahl des Lernverfahrens}{17}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Curriculum}{18}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Evaluationsprotokoll}{19}{subsubsection.3.2.3}%
+\contentsline {paragraph}{Metrik.}{19}{section*.30}%
+\contentsline {paragraph}{Episodenlimit.}{19}{section*.31}%
+\contentsline {paragraph}{Seed-Trennung.}{19}{section*.32}%
+\contentsline {paragraph}{Betriebsarten.}{19}{section*.33}%
+\contentsline {paragraph}{Wiederholungen.}{20}{section*.34}%
+\contentsline {paragraph}{Aggregation und Kurvenvergleich.}{20}{section*.35}%
+\contentsline {subsection}{\numberline {3.3}Revision von Forschungsfrage und Erfolgskriterium}{20}{subsection.3.3}%
+\contentsline {paragraph}{Forschungsfrage F2.}{20}{section*.36}%
+\contentsline {paragraph}{Erfolgsschwellen Z2.}{20}{section*.37}%
+\contentsline {section}{\numberline {4}Implementierung (gemeinsam)}{22}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Implementierung des Spiels Stoneforge (Laurin)}{22}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Technologie-Stack}{22}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Die Bausteine: Tile, Chunk und Welt}{22}{subsubsection.4.1.2}%
+\contentsline {paragraph}{Das Tile.}{22}{section*.38}%
+\contentsline {paragraph}{Der Chunk.}{23}{section*.39}%
+\contentsline {paragraph}{Die Welt.}{23}{section*.40}%
+\contentsline {paragraph}{Warum das nicht nur elegant, sondern notwendig ist.}{23}{section*.41}%
+\contentsline {subsubsection}{\numberline {4.1.3}Der Weltgenerator}{23}{subsubsection.4.1.3}%
+\contentsline {paragraph}{Woher der Zufall kommt.}{24}{section*.42}%
+\contentsline {paragraph}{Ein Chunk, Feld für Feld.}{27}{section*.45}%
+\contentsline {paragraph}{Die Pipeline an einer echten Welt.}{28}{section*.48}%
+\contentsline {paragraph}{Was am Ende tatsächlich im Weg steht.}{28}{section*.49}%
+\contentsline {paragraph}{Nachbearbeitung und eine Grenze der Konfigurierbarkeit.}{30}{section*.50}%
+\contentsline {paragraph}{Eine Konsequenz für die Ergebnisse.}{30}{section*.51}%
+\contentsline {paragraph}{Wie offen die Welten sind, misst der Umwegfaktor.}{30}{section*.52}%
+\contentsline {paragraph}{Die naheliegende Reparatur funktioniert nicht.}{31}{section*.53}%
+\contentsline {subsubsection}{\numberline {4.1.4}Exit-Platzierung und garantierte Lösbarkeit}{31}{subsubsection.4.1.4}%
+\contentsline {paragraph}{Warum das überhaupt eine Rolle spielt.}{31}{section*.54}%
+\contentsline {paragraph}{Der übliche Weg und warum er nicht gewählt wird.}{32}{section*.55}%
+\contentsline {paragraph}{Stattdessen: den Exit aus dem Erreichbarkeitsbaum ziehen.}{32}{section*.56}%
+\contentsline {paragraph}{Die Falle: die Freiräumung erzeugt eine Abkürzung.}{32}{section*.57}%
+\contentsline {paragraph}{Was garantiert ist und was nicht.}{33}{section*.58}%
+\contentsline {paragraph}{Belege.}{33}{section*.59}%
+\contentsline {subsubsection}{\numberline {4.1.5}Grafischer Client und Zuschaumodus}{34}{subsubsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.2}Implementierung der Lernumgebung (Florian)}{34}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Technologie-Stack}{35}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Architektur der Implementierung}{35}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Was der Agent davon sieht: POMDP-Charakter}{35}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Umgebung, Beobachtung und Aktionen}{36}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}Die Schnittstelle: reset() und step()}{36}{subsubsection.4.2.5}%
+\contentsline {subsubsection}{\numberline {4.2.6}Trainingsspezifische Sonderregeln: Early Stop und Seed-Pool}{37}{subsubsection.4.2.6}%
+\contentsline {paragraph}{Early Stop.}{37}{section*.60}%
+\contentsline {paragraph}{Seed-Pool (\glqq Swarm\grqq ).}{37}{section*.61}%
+\contentsline {subsubsection}{\numberline {4.2.7}Reward-Design}{38}{subsubsection.4.2.7}%
+\contentsline {subsubsection}{\numberline {4.2.8}Trainings-Pipeline}{39}{subsubsection.4.2.8}%
+\contentsline {paragraph}{Algorithmenwahl.}{40}{section*.62}%
+\contentsline {paragraph}{Parallele Umgebungen.}{40}{section*.63}%
+\contentsline {paragraph}{Evaluation und Gating.}{40}{section*.64}%
+\contentsline {paragraph}{Absenkung der Exploration.}{40}{section*.65}%
+\contentsline {subsection}{\numberline {4.3}Versionsverlauf (gemeinsam)}{41}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Evaluation (gemeinsam)}{42}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Bewertung der Plattform (Z1, Laurin)}{42}{subsection.5.1}%
+\contentsline {paragraph}{Was damit belegt ist: und was nicht.}{42}{section*.66}%
+\contentsline {subsection}{\numberline {5.2}Bewertung des Agenten (Z2, Florian)}{43}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Zentrale Gegenüberstellung: Gedächtnis statt lokalem Orakel}{43}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Endergebnis (v12, $n=7$)}{43}{subsubsection.5.2.2}%
+\contentsline {subsubsection}{\numberline {5.2.3}Ungelernte Referenzpolitiken und die Grenzen der Erfolgsquote}{44}{subsubsection.5.2.3}%
+\contentsline {paragraph}{Befund.}{46}{section*.67}%
+\contentsline {paragraph}{Kein Episodenbudget kehrt das Bild um.}{46}{section*.68}%
+\contentsline {paragraph}{Das Reward-Design verstärkt diesen Effekt.}{46}{section*.69}%
+\contentsline {subsubsection}{\numberline {5.2.4}Der Det/Stoch-Gap: Weglängen-Analyse und POMDP-Einordnung}{47}{subsubsection.5.2.4}%
+\contentsline {subsubsection}{\numberline {5.2.5}Versuche zur Schließung des Det/Stoch-Gaps}{48}{subsubsection.5.2.5}%
+\contentsline {section}{\numberline {6}Fazit und Ausblick}{50}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Fazit und Ausblick des Reinforcement-Learning-Teils (Florian)}{50}{subsection.6.1}%
+\contentsline {paragraph}{Fazit.}{50}{section*.70}%
+\contentsline {paragraph}{Einordnung.}{50}{section*.71}%
+\contentsline {paragraph}{Grenzen der Arbeit.}{50}{section*.72}%
+\contentsline {paragraph}{Ausblick.}{50}{section*.73}%
+\contentsline {section}{Literaturverzeichnis}{52}{section*.73}%
