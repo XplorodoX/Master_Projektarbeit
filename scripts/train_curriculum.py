@@ -92,8 +92,12 @@ RPPO_KWARGS = dict(
 #   batch_size: 8 ist eine Notlösung für den LSTM-Critic (CHANGELOG v2026-07-07.4)
 #     und wäre beim MLP mit Rollout 256×16=4096 grotesk (512 Gradientenschritte
 #     pro Epoche). 256 = 16 Minibatches/Epoche, PPO-Standard.
-#   net_arch: [256,256] spiegelt lstm_hidden_size=256. Der SB3-Default [64,64]
-#     würde die Baseline über die Kapazität benachteiligen statt über das Gedächtnis.
+#   net_arch: Das bisherige [256,256] war durch die bloße Kapazität des LSTM nicht
+#     fair; es liegt deutlich unter dem LSTM-Funktionsraum und verschiebt die
+#     Vergleichsbasis. Für die methodisch saubere F2-Ablation wird das MLP jetzt
+#     stark aufgebohrt ([512,512,512]), damit die Parameterzahl in die Nähe des
+#     LSTM-Modells kommt und der Vergleich um Gedächtnis statt um Kapazität geht.
+#     Die exakte Parameterzahl wird bei der Modellinitialisierung überprüft.
 PPO_KWARGS = dict(
     policy="MlpPolicy",
     n_steps=256,
@@ -105,7 +109,7 @@ PPO_KWARGS = dict(
     clip_range=0.2,
     ent_coef=0.05,
     vf_coef=0.5,
-    policy_kwargs=dict(net_arch=[256, 256]),
+    policy_kwargs=dict(net_arch=[512, 512, 512]),
     verbose=1,
     tensorboard_log="logs/tensorboard/",
 )

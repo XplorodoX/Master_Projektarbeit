@@ -1,6 +1,6 @@
 # Stoneforge RL — Ergebnistabelle
 
-*Automatisch generiert am 05.08.2026 — nicht manuell bearbeiten.*
+*Automatisch generiert am 12.08.2026 — nicht manuell bearbeiten.*
 *Quelle: `models/*/results.json` + `logs/eval_results/*.json`*
 
 Regenerieren: `python scripts/generate_results_table.py`
@@ -32,6 +32,7 @@ Regenerieren: `python scripts/generate_results_table.py`
 | ppo_mlp_curriculum_v12_s5  | ppo  | —         | 16     | 5-45 (curriculum) | —      | 100.0%                            | —                                 | 0h 17m 39s    | 05.08.2026 |
 | ppo_mlp_curriculum_v12_s6  | ppo  | —         | 16     | 5-45 (curriculum) | —      | 82.0%                             | —                                 | 0h 50m 43s    | 05.08.2026 |
 | ppo_mlp_curriculum_v12_s7  | ppo  | —         | 16     | 5-45 (curriculum) | —      | 88.0%                             | —                                 | 0h 26m 4s     | 05.08.2026 |
+| ppo_mlp_curriculum_v12_s8  | ppo  | —         | 16     | 5-45 (curriculum) | —      | 84.0%                             | —                                 | 0h 44m 48s    | 12.08.2026 |
 
 
 ---
@@ -477,5 +478,24 @@ Maximum im Verlauf (kein Endergebnis): 88.0% @ Step 599,808
 | 774,752   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=60%]       | 2026-08-05 14:00 |
 | 799,744   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=62%]       | 2026-08-05 14:00 |
 | 824,736   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=72%]       | 2026-08-05 14:01 |
+
+
+**ppo_mlp_curriculum_v12_s8** — 70 Eval-Punkte,
+Maximum im Verlauf (kein Endergebnis): 84.0% @ Step 524,832
+
+*(Zeige letzte 10 von 70 Einträgen)*
+
+| Step      | SR   | Erfolge | Label                                               | Zeitstempel      |
+| --------- | ---- | ------- | --------------------------------------------------- | ---------------- |
+| 1,499,520 | 0.0% | 0/50    | Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=52%] | 2026-08-12 12:58 |
+| 1,524,512 | 0.0% | 0/50    | Phase 3 (exit=25–45, eval 35–45) [det=0%|stoch=46%] | 2026-08-12 12:58 |
+| 574,816   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=68%]       | 2026-08-12 12:58 |
+| 599,808   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=70%]       | 2026-08-12 12:59 |
+| 624,800   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=46%]       | 2026-08-12 12:59 |
+| 649,792   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=68%]       | 2026-08-12 13:00 |
+| 674,784   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=72%]       | 2026-08-12 13:00 |
+| 699,776   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=72%]       | 2026-08-12 13:01 |
+| 724,768   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=76%]       | 2026-08-12 13:01 |
+| 749,760   | 0.0% | 0/50    | Phase 4 (Greedy Fine-Tune) [det=0%|stoch=74%]       | 2026-08-12 13:01 |
 
 

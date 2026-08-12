@@ -162,6 +162,7 @@ PPO_KWARGS = dict(
     clip_range=0.2,
     ent_coef=0.05,
     vf_coef=0.5,
+    policy_kwargs=dict(net_arch=[512, 512, 512]),
     verbose=1,
     tensorboard_log="logs/tensorboard/",
 )

@@ -1,0 +1,106 @@
+{
+  "phase1": {
+    "phase": 1,
+    "label": "Phase 1 (exit=5–12)",
+    "best_sr": 0.8,
+    "target_sr": 0.85,
+    "exit_range": "5-12",
+    "swarm_pool": {
+      "pool_size": 76,
+      "total_added": 76,
+      "total_sampled": 75
+    }
+  },
+  "_saved_at": "2026-08-12 13:01:50",
+  "phase2": {
+    "phase": 2,
+    "label": "Phase 2 (exit=12–25)",
+    "best_sr": 0.84,
+    "target_sr": 0.7,
+    "exit_range": "12-25",
+    "swarm_pool": {
+      "pool_size": 43,
+      "total_added": 119,
+      "total_sampled": 97
+    }
+  },
+  "phase3": {
+    "phase": 3,
+    "label": "Phase 3 (exit=25–45, eval 35–45)",
+    "best_sr": 0.0,
+    "target_sr": 0.7,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 485,
+      "total_added": 604,
+      "total_sampled": 402
+    }
+  },
+  "phase4": {
+    "phase": 4,
+    "label": "Phase 4 (Greedy Fine-Tune)",
+    "best_sr": 0.0,
+    "target_sr": 0.6,
+    "exit_range": "25-45",
+    "swarm_pool": {
+      "pool_size": 122,
+      "total_added": 726,
+      "total_sampled": 455
+    }
+  },
+  "algo": "ppo",
+  "training_duration": "0h 44m 48s",
+  "phases": [
+    {
+      "phase": 1,
+      "label": "Phase 1 (exit=5–12)",
+      "best_sr": 0.8,
+      "target_sr": 0.85,
+      "exit_range": "5-12",
+      "swarm_pool": {
+        "pool_size": 76,
+        "total_added": 76,
+        "total_sampled": 75
+      }
+    },
+    {
+      "phase": 2,
+      "label": "Phase 2 (exit=12–25)",
+      "best_sr": 0.84,
+      "target_sr": 0.7,
+      "exit_range": "12-25",
+      "swarm_pool": {
+        "pool_size": 43,
+        "total_added": 119,
+        "total_sampled": 97
+      }
+    },
+    {
+      "phase": 3,
+      "label": "Phase 3 (exit=25–45, eval 35–45)",
+      "best_sr": 0.0,
+      "target_sr": 0.7,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 485,
+        "total_added": 604,
+        "total_sampled": 402
+      }
+    },
+    {
+      "phase": 4,
+      "label": "Phase 4 (Greedy Fine-Tune)",
+      "best_sr": 0.0,
+      "target_sr": 0.6,
+      "exit_range": "25-45",
+      "swarm_pool": {
+        "pool_size": 122,
+        "total_added": 726,
+        "total_sampled": 455
+      }
+    }
+  ],
+  "best_sr_testset_a": 0.84,
+  "exit_range": "5-45 (curriculum)",
+  "final_model": "models/ppo_mlp_curriculum_v12_s8/best_model.zip"
+}

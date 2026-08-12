@@ -255,6 +255,9 @@ def generate_results_md() -> str:
         for fname in eval_files:
             with open(os.path.join(RESULTS_DIR, fname), encoding="utf-8") as f:
                 data = json.load(f)
+            # Skip files that are not dictionaries (e.g., world_geometry.json is a list)
+            if not isinstance(data, dict):
+                continue
             meta       = data.get("metadata", {})
             conditions = data.get("conditions", [])
             run_name   = data.get("name", fname[:-5])
