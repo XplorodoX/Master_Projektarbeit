@@ -2,6 +2,32 @@
 
 ---
 
+## v2026-08-12.9 — Kapitelverweise von Methodik bis Fazit ergänzt
+
+**Wer:** Florian.
+
+**Kontext:** Auf Wunsch Querverweise im Stil „Text (siehe Kapitel X.Y)" ergänzt, beginnend bei Kapitel 3 (Methodik) bis Kapitel 6 (Fazit und Ausblick). Kapitel 1 und 2 bewusst nicht angefasst.
+
+**Lösung:** Acht Stellen ergänzt beziehungsweise korrigiert, ausschließlich mit gegen das kompilierte Inhaltsverzeichnis geprüften Kapitelnummern:
+
+| Datei-Stelle | Bezug | Ziel |
+|---|---|---|
+| 3.1.1, Value-Noise-Erwähnung | zurück | Kapitel 2.1.2 |
+| 3.1.1, BFS-Erwähnung (Nachbearbeitung) | zurück | Kapitel 2.1.4 |
+| 3.2.2, POMDP-Modellierung | zurück | Kapitel 2.2 |
+| 3.2.2, PBRS-Erwähnung | zurück | Kapitel 2.2 |
+| 3.2.3, Curriculum-Voraussetzung („Kapitel~3.1" im Fließtext) | Stilfix | Kapitel 3.1, jetzt als Klammerverweis |
+| 4.1.1, Hash-Mixer-Intro | zurück | Kapitel 3.1.1 |
+| 4.1.3, Manhattan-Carver-Intro | zurück | Kapitel 3.1.2 |
+| 4.2.2, POMDP-Erwähnung (Sichtfenster) | zurück | Kapitel 2.2 |
+| 5.1.3, zelluläre Automaten (Lösungsansatz Biome) | zurück | Kapitel 2.1.3 |
+
+Nebenbei bei 4.2.2 ein „wir"-Rest entfernt (Style-Bruch, unpersönliche Form wiederhergestellt), da ohnehin am Satz gearbeitet wurde.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 77 Seiten.
+
+---
+
 ## v2026-08-12.8 — Laurins Fazit und Ausblick zur Weltgenerierung eingearbeitet
 
 **Wer:** Florian (Einarbeitung), Inhalt von Laurin.

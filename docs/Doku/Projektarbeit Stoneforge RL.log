@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  12 AUG 2026 17:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  12 AUG 2026 17:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1700,7 +1700,7 @@ unk-ti-on \T1/lmtt/m/n/10.95 carveGuaranteedPath \T1/lmr/m/n/10.95 star-
  []
 
 [27] [28]
-<Bilder/lakes.PNG, id=784, 404.712pt x 516.12825pt>
+<Bilder/lakes.PNG, id=783, 404.712pt x 516.12825pt>
 File: Bilder/lakes.PNG Graphic file (type png)
 <use Bilder/lakes.PNG>
 Package pdftex.def Info: Bilder/lakes.PNG  used on input line 1177.
@@ -1914,7 +1914,7 @@ L3 programming layer <2026-01-19>
 Here is how much of TeX's memory you used:
  45116 strings out of 467525
  1025738 string characters out of 5418982
- 2142534 words of memory out of 5000000
+ 2141534 words of memory out of 5000000
  72569 multiletter control sequences out of 15000+600000
  717490 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1937,7 +1937,7 @@ cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/tex
 mf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/f
 onts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "Projektarbeit Stoneforge RL.pdf" (77 pages, 3649227 bytes).
+Output written on "Projektarbeit Stoneforge RL.pdf" (77 pages, 3649377 bytes).
 PDF statistics:
  1863 PDF objects out of 2073 (max. 8388607)
  1676 compressed objects within 17 object streams
