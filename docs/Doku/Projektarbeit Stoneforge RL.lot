@@ -7,10 +7,10 @@
 \contentsline {table}{\numberline {3.3}{\ignorespaces Diagnose- und Interventionsmatrix der aufgetretenen Trainingsinstabilitäten}}{18}{table.caption.33}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {4.1}{\ignorespaces Eingesetzte Werkzeuge des RL-Trainings}}{36}{table.caption.51}%
-\contentsline {table}{\numberline {4.2}{\ignorespaces Allgemeine Hyperparameter des PPO-Optimierers}}{41}{table.caption.52}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Allgemeine Hyperparameter des PPO-Optimierers}}{43}{table.caption.52}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces Übersicht der Performancemessungen und Benchmarks des Generierungs- und Simulationssystems.}}{44}{table.caption.54}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Belegte Wirkung einzelner Parameterentscheidungen}}{50}{table.caption.65}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces Übersicht der Performancemessungen und Benchmarks des Generierungs- und Simulationssystems.}}{46}{table.caption.54}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Belegte Wirkung einzelner Parameterentscheidungen}}{53}{table.caption.65}%
 \addvspace {10\p@ }
 \def \@chapapp {\appendixname }
 \addvspace {10\p@ }

@@ -2,6 +2,97 @@
 
 ---
 
+## v2026-08-12.4 — Vier Evaluations-Abbildungen mit reproduzierbarem Skript neu erzeugt
+
+**Wer:** Florian.
+
+**Kontext:** Für `eval_erfolgsquote.png`, `eval_pfadeffizienz.png`, `eval_zielkonflikt.png` und `eval_det_stoch.png` war kein Erzeugungsskript im Repository auffindbar (vermutlich ad-hoc gebaut). Stichprobenartiges Pixel-Sampling der Balkenfarben zeigte zudem, dass die Zahlen in diesen vier Abbildungen aus `baselines_and_models.json` stammten (nicht-kanonisch, siehe `v2026-08-12.3`) statt aus der in `CLAUDE.md` als Berichtsfähiger Stand geführten Quelle — Random A z. B. 10,0 % im alten Bild gegenüber 5,2 % kanonisch.
+
+#### Änderung 1 — `scripts/plot_eval_results.py` neu angelegt
+**Datei:** `scripts/plot_eval_results.py` (neu)
+**Lösung:** Erzeugt alle vier Abbildungen aus denselben, im Skriptkopf dokumentierten Quellen: `logs/eval_results/baselines.json` für Random/Kompass, die Sieben-Seed-Tabelle aus `v2026-07-17` für LSTM (kanonisch laut Regel 2), der verifizierte Lauf aus `v2026-08-12.2` für MLP. Farben per Pixel-Sampling aus den bisherigen Abbildungen übernommen, damit der Stil über beide Bearbeitungsstände hinweg konsistent bleibt.
+
+#### Änderung 2 — MLP-Datenpunkt in `eval_pfadeffizienz.png` und `eval_zielkonflikt.png` ergänzt
+**Problem:** Beide Abbildungen enthielten bislang keinen MLP-Wert, weil bis `v2026-08-12.2` keine standardisierte MLP-Pfadeffizienz vorlag.
+**Lösung:** MLP-Balken (0,067) beziehungsweise MLP-Punktwolke plus Mittelwert-Diamant ergänzt. Label-Offsets im Zielkonflikt-Diagramm mussten nachjustiert werden, da die ursprünglichen Positionen (für ein einzelnes Diamant-Symbol kalibriert) beim zweiten Diamanten zu überlappenden Beschriftungen führten — im ersten Renderdurchlauf bemerkt, korrigiert, Diagramm neu erzeugt und visuell geprüft.
+
+#### Änderung 3 — Alle vier Abbildungen auf kanonische Zahlen umgestellt
+**Lösung:** `eval_erfolgsquote.png` und `eval_det_stoch.png` zeigen jetzt LSTM 65,7 %/29,1 % (statt 68,6 %) und den korrekten MLP-Wert (33,5 %/0,0 %) aus derselben Quelle wie der Fließtext (siehe `v2026-08-12.3`, Änderung 1) — Fließtext und Abbildungen widersprechen sich damit nicht mehr.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 69 Seiten.
+
+---
+
+## v2026-08-12.3 — Kanonische Zahl vereinheitlicht, Platzhalter-Listings ersetzt, `train_curriculum.py`-Regression zurückgenommen
+
+**Wer:** Florian.
+
+**Kontext:** Nach v2026-08-12.2 folgten drei weitere, unabhängig entdeckte Probleme, alle im Zusammenhang mit der parallel laufenden Editor/Copilot-Session, deren Commits (`968a9c2`, `b14cd05`) bereits auf `origin/main` liegen.
+
+#### Änderung 1 — LSTM-Zahl im Fließtext auf den kanonischen Stand vereinheitlicht
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Problem:** Die gesamte RL-Evaluation und das Fazit zitierten durchgehend 65,7\,% durch nirgends verwendet — stattdessen stand überall 68,6\,% ± 10,9 (Spannweite 56,0–88,0\,%). Recherche im Changelog-Verlauf ergab: 65,7\,% ± 12,4 / 66,9\,% ± 12,8 stammt aus dem sorgfältig dokumentierten n=7-Lauf vom 17.07.2026 (volle Seed-Tabelle, 95\,%-CI) und ist seither die in `CLAUDE.md` als „Berichtsfähiger Stand" geführte Zahl. 68,6\,% stammt dagegen aus einer späteren, unabhängigen Zweitmessung (`baselines_and_models.json`, ca. 25.07.2026) derselben sieben Checkpoints — beide Zahlen sind gültige Messungen, aber laut Projektregel 2 ist nur die erste zitierfähig. Der Vorfall ist nicht neu: Der gleiche Musters (mehrere valide, leicht unterschiedliche Nachmessungen derselben Checkpoints) ist im Changelog bereits zweimal dokumentiert und aufgelöst worden (Befund 10, `v2026-07-25.x`; Aufstockung n=3→n=7, `v2026-07-17`). Die frisch verifizierte Zahl aus Änderung 1 in v2026-08-12.2 (64,6\,%/68,8\,%) wurde deshalb bewusst **nicht** zur neuen kanonischen Zahl erklärt, obwohl sie ebenfalls plausibel ist — das würde exakt die Nummernkonkurrenz fortsetzen, die Projektregel 2 verhindern soll.
+**Lösung:** Alle vier Vorkommen von 68,6\,% auf 65,7\,% korrigiert, Standardabweichung 10,9 auf 12,4, Spannweite 56,0–88,0\,% auf die tatsächliche Seed-Spannweite des kanonischen Laufs (50,0–84,0\,%). Folgeableitung (Abstand LSTM/MLP stochastisch) von „rund 35" auf „rund 32 Prozentpunkte" nachgerechnet (65,7 − 33,5 = 32,2).
+
+#### Änderung 2 — Fünf Platzhalter-Listings durch echten Quellcode ersetzt
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Problem:** Listings 4.12–4.16 (Beobachtungsvektor, Modellinstanziierung, Curriculum-Gating, Reward-Shaping, Baseline-Policy) waren durchgehend als „Platzhalter für wörtlichen Code" markiert, mit TODO-Kommentaren, die exakte Zeilenbereiche in den Quelldateien nannten.
+**Lösung:** Alle fünf gegen den tatsächlichen Quellcode geprüft und ersetzt: `python/stoneforge_env.py` (`_normalize`), `scripts/train_curriculum.py` (`RPPO_KWARGS`/`PPO_KWARGS`, `PHASES`, `CurriculumEvalCallback._on_step`), `src/core/simulation.cpp` (`Simulation::computeReward`), `scripts/eval_baselines.py` (`CompassPolicy`). Captions entsprechend auf den tatsächlichen Dateipfad umgestellt, TODO-Kommentare entfernt.
+
+#### Änderung 3 — `net_arch`-Regression in `PPO_KWARGS` zurückgenommen
+**Datei:** `scripts/train_curriculum.py`
+**Problem:** Commit `b14cd05` (parallele Session) hat `PPO_KWARGS["policy_kwargs"]["net_arch"]` still von `[256, 256]` auf `[512, 512, 512]` umgestellt und damit die "offizielle" Trainingskonfiguration für die MLP-Kontrollgruppe verändert — ohne Changelog-Eintrag, ohne Abgleich mit den dokumentierten n=7-Modellen. Die Arbeit dokumentiert 250.629 Parameter (`[256,256]`), ein Re-Run von `train_curriculum.py --algo ppo` hätte ab diesem Commit ein anderes Netz erzeugt als das, was in Kapitel 5 beschrieben ist.
+**Lösung:** Zurückgesetzt auf `[256, 256]`. Die kapazitätsangeglichene Variante bleibt als Limitation dokumentiert (siehe `v2026-08-12.2`, Änderung 2), nicht als stillschweigend geänderter Standard.
+
+| Parameter | Commit `b14cd05` | Zurückgesetzt auf | Begründung |
+|-----------|-------------------|--------------------|------------|
+| `PPO_KWARGS.policy_kwargs.net_arch` | `[512, 512, 512]` | `[256, 256]` | Entspricht den dokumentierten n=7-Modellen (250.629 Parameter); Entscheidung gegen Neutraining wurde in dieser Session bereits getroffen |
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 69 Seiten.
+
+**Offen, nicht Teil dieser Änderung:** Vier Abbildungen (u. a. Pfadeffizienz- und Zielkonflikt-Diagramm) enthalten noch keinen MLP-Datenpunkt, da für das MLP bislang keine standardisierte Pfadeffizienz vorlag — die liegt jetzt vor (siehe v2026-08-12.2). Kein Erzeugungsskript für diese Abbildungen im Repository auffindbar (vermutlich ad-hoc erzeugt); Neuerstellung nicht ohne Rücksprache begonnen.
+
+---
+
+## v2026-08-12.2 — Regression in `ModelPolicy` behoben, LSTM- und MLP-Zeilen neu verifiziert
+
+**Wer:** Florian.
+
+**Kontext:** Änderung 1 aus v2026-08-12.1 hat beim Nachrüsten der MLP-Unterstützung in `ModelPolicy` einen Bug eingeführt, der die LSTM-Erkennung stillschweigend zerstört hat. Der Fehler wurde entdeckt, weil ein Nachtrag zur Doku-Überarbeitung aus einer parallel laufenden Session (Editor/Copilot) auf Basis der dadurch bereits kontaminierten `baselines.json` einen radikalen Kurswechsel der Kernaussage vorschlug (LSTM angeblich nur noch ~6 % statt der dokumentierten 65,7 %/66,9 %). Vor jeder Änderung an Kurzfassung, Abstract oder Fazit wurde die Diskrepanz aufgeklärt, wie es Regel 5 (`CLAUDE.md`, Bekannte Fallstricke) verlangt.
+
+#### Änderung 1 — LSTM-Erkennung in `ModelPolicy` repariert
+**Datei:** `scripts/eval_baselines.py`
+**Problem:** `self.recurrent = hasattr(model, "policy") and hasattr(model.policy, "lstm")` prüft ein Attribut, das bei `sb3_contrib.RecurrentPPO` nicht existiert — die tatsächlichen Attribute heißen `lstm_actor`/`lstm_critic`. Dadurch wurden seit Commit `968a9c2` alle sieben LSTM-Modelle als zustandslos behandelt und ohne LSTM-Zustand ausgewertet, exakt der Fehler, den dieses Skript laut eigenem Docstring vermeiden soll ("man misst ein Gedächtnismodell ohne Gedächtnis"). Verifiziert über direktes Laden eines v12-Modells: `hasattr(m.policy, "lstm")` → `False`, `hasattr(m.policy, "lstm_actor")` → `True`.
+**Lösung:** Prüfung auf `hasattr(model.policy, "lstm_actor")` umgestellt.
+
+| Parameter | vorher | nachher | Begründung |
+|-----------|--------|---------|------------|
+| `ModelPolicy.recurrent`-Check | `hasattr(model.policy, "lstm")` | `hasattr(model.policy, "lstm_actor")` | Attributname stimmte nicht mit `sb3_contrib` überein, LSTM-Modelle liefen seit Commit `968a9c2` ohne Zustand |
+
+**Ergebnis (voller Standard-Eval, Seeds 7000–7049/8000–8049, Exit 35–45, Cap 4000, 5 Wiederholungen, n=7 je Architektur, `s8` ausgeschlossen — kein Teil des dokumentierten Protokolls, kein Changelog-Eintrag für dieses Experiment vorhanden):
+
+| Modell | Testset A | Testset B |
+|--------|-----------|-----------|
+| RecurrentPPO (LSTM, v12, n=7) | 64,6 % ± 10,1 | 68,8 % ± 15,5 |
+| PPO (MLP, v12, n=7) | 33,5 % ± 25,5 | 35,8 % ± 30,5 |
+
+Die LSTM-Zeile bestätigt den bisherigen berichtsfähigen Stand (65,7 % ± 12,4 / 66,9 % ± 12,8) innerhalb der für stochastische Politiken erwarteten Streuung zwischen unabhängigen Wiederholungen. **Die in der parallelen Session gemeldeten ~6 % waren ausschließlich der Bug, kein neuer Befund.** Die MLP-Zeile ersetzt die in v2026-08-12.1 dokumentierten Werte (33,7 % ± 28,7 / 38,6 % ± 32,3) durch eine erneut unabhängig gemessene, intern konsistente Reihe aus demselben Lauf wie die LSTM-Bestätigung. Zusätzlich liegt für das MLP-Modell erstmals eine Pfadeffizienz vor: 0,067 (Ø 1084 Schritte) gegenüber 0,053 beim LSTM (Ø 1425 Schritte) — höher als beim LSTM, aber laut Kapitel 5 (Selektionseffekt bei geringer Erfolgsquote) nicht direkt als bessere Wegfindung zu lesen.
+
+`logs/eval_results/baselines.json` wurde mit dem verifizierten Lauf überschrieben (vorherige Version vom 12.08. vormittags enthielt die kaputten LSTM-Werte).
+
+**Offener Punkt, nicht Teil dieser Änderung:** Im Fließtext von `docs/Doku/Projektarbeit Stoneforge RL.tex` steht an mehreren Stellen (Erfolgsquote-Kapitel, Fazit) eine LSTM-Zahl von 68,6 % ± 10,9 (Testset A, stochastisch), die von der in `CLAUDE.md` als kanonisch geführten Zahl (65,7 % ± 12,4) abweicht — Herkunft dieser 68,6 % bislang nicht zurückverfolgt, vermutlich ein älterer, separat entstandener Eval-Stand. Nicht in dieser Änderung korrigiert, da die Abweichung klein und beide Werte plausibel im Streuungsbereich liegen; vor der Abgabe sollte trotzdem geklärt werden, welcher Lauf tatsächlich zitiert wird.
+
+**Nicht berichtsfähig:** `models/ppo_mlp_curriculum_v12_s8` (`net_arch=[512,512,512]`, batch_size unverändert bei 256) — achter, nicht im n=7-Protokoll vorgesehener Seed, ohne Changelog-Eintrag entstanden. Eigenes `results.json` weist für Phase 3 und 4 (die eval-relevante Distanz 25–45) `best_sr = 0.0` aus. Wird hier ausdrücklich nicht in den berichtsfähigen Stand aufgenommen.
+
+#### Änderung 2 — Tex-Kapitel an verifizierte MLP-Zahlen angeglichen
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Problem:** Der Text zur Erfolgsquote (Abschnitt „Erfolgsquote der trainierten Verfahren") und das Fazit (Abschnitt „Diskussion der Ergebnisse") verwiesen noch auf den Stand vor dem standardisierten MLP-Testset-A/B-Lauf: fehlender Testset-A-Lauf als methodische Einschränkung, veraltete Zwischenevaluations-Zahlen (38,3 % ± 28,6 statt 33,5 % ± 25,5), fehlender Pfadeffizienz-Wert für das MLP.
+**Lösung:** Beide Stellen auf die verifizierten Zahlen aus Änderung 1 umgestellt, Pfadeffizienz-Vergleich ergänzt (inklusive Einordnung über den Selektionseffekt). Zusätzlich neuer Absatz in Abschnitt~5 (Wirksamkeit der Hyperparameter) sowie neuer vierter Ausblick-Punkt: Die rund vierfache Parameter-Differenz zwischen LSTM (1.038.917) und MLP (250.629) wird als Einschränkung der Vergleichbarkeit benannt, der gemessene LSTM-Vorsprung lässt sich damit nicht sauber von der reinen Netzkapazität trennen. Keine Neutrainierung angesetzt (Entscheidung gegen ein kapazitätsangeglichenes Retraining aus Zeitgründen zwei Tage vor Abgabe).
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 69 Seiten.
+
+---
+
 ## v2026-08-12.1 — MLP-Kontrollgruppe im kanonischen Eval-Protokoll nachgemessen
 
 **Wer:** Florian.

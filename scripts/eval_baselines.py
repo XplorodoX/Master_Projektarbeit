@@ -92,7 +92,7 @@ class ModelPolicy:
         self.model = model
         self.deterministic = deterministic
         self.name = name
-        self.recurrent = hasattr(model, "policy") and hasattr(model.policy, "lstm")
+        self.recurrent = hasattr(model, "policy") and hasattr(model.policy, "lstm_actor")
 
     def reset(self):
         if self.recurrent:

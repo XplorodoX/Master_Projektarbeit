@@ -1464,24 +1464,32 @@ Wir verwenden \texttt{sb3-contrib} als direkte Ergänzung zum Stable-Baselines3-
 \label{sec:impl_rl_env}
 Damit ein RL-Framework überhaupt mit unserer C++-Welt kommunizieren kann, benötigen wir einen standardisierten Übersetzer. Diese Aufgabe übernimmt die Python-Klasse \texttt{StoneforgeWorldEnv}. Sie implementiert die bekannte \texttt{gymnasium}-Schnittstelle mit \texttt{reset()} und \texttt{step()}, wandelt die Aktionen des Agenten in Simulationsschritte um und baut aus dem Spielzustand den Beobachtungsvektor zusammen. 
 
-% TODO: Hier wörtlichen Quellcode aus Environment-Klasse (Zeilen 175-290) einfügen
-\begin{lstlisting}[language=Python, caption={Aufbau des Beobachtungsvektors (Platzhalter für wörtlichen Code)}, label={lst:env_observation}]
-# Der Vektor umfasst exakt 229 Dimensionen:
-# [ Gitter (225) | HP | exitDx | exitDy | step_frac ]
-class StoneforgeWorldEnv(gym.Env):
-    # ...
-    def _build_observation(self):
-        window = self._sim.observe(self._radius)        
-        tiles = window.astype(np.float32).ravel() / TILE_CODE_MAX
-        
-        extras = np.array([                             
-            self._sim.hitpoints() / MAX_HP,
-            np.clip(self._sim.exit_dx() / 64.0, -1.0, 1.0),
-            np.clip(self._sim.exit_dy() / 64.0, -1.0, 1.0),
-            self._sim.steps_taken() / self._step_limit,
-        ], dtype=np.float32)
-        
-        return np.concatenate([tiles, extras])
+\begin{lstlisting}[language=Python, caption={Aufbau des Beobachtungsvektors, \texttt{python/stoneforge\_env.py}}, label={lst:env_observation}]
+def _normalize(self, raw: list[int]) -> np.ndarray:
+    arr = np.asarray(raw, dtype=np.float32)
+    gs = self._gs
+    arr[:gs]   /= 30.0                                   # grid tiles
+    arr[gs]    /= 10.0                                   # hp
+    arr[gs+1]  /= 100.0                                  # energy
+    arr[gs+2]   = np.clip(arr[gs+2], 0.0, 64.0) / 64.0 # inventory
+    arr[gs+3]  /= 64.0                                   # exitDx
+    arr[gs+4]  /= 64.0                                   # exitDy
+    step_frac   = np.float32(self._step_count / self._max_steps)
+
+    if not self.use_visited_mask:
+        extras = []
+        if self.use_step_frac:
+            extras.append(step_frac)
+        # ... (use_visit_count, use_last_action_reward: in der v12-Konfiguration deaktiviert)
+
+        if not self.include_energy_inventory:
+            # Energie (gs+1) und Inventar (gs+2) entfernen: [grid | hp | exitDx | exitDy]
+            arr = np.concatenate([arr[:gs + 1], arr[gs + 3:]])
+        return np.concatenate([arr] + [
+            np.atleast_1d(np.float32(e)) if np.isscalar(e) else e
+            for e in extras
+        ])
+    # ... (CNN-Variante mit Visited-Mask: in der v12-Konfiguration nicht aktiv)
 \end{lstlisting}
 
 Die in Listing~\ref{lst:env_observation} definierte Struktur gießt unsere Problemformulierung in Code:
@@ -1496,23 +1504,34 @@ Die in Listing~\ref{lst:env_observation} definierte Struktur gießt unsere Probl
 \label{sec:impl_rl_netze}
 Um beide Ansätze vergleichen zu können, erhalten sowohl die MLP- als auch die LSTM-Policy exakt den gleichen Beobachtungsvektor und Aktionsraum präsentiert. Beim Aufbau der Netze und den Batch-Größen zeigt der Quellcode jedoch eine bewusste Asymmetrie.
 
-% TODO: Hier wörtlichen Quellcode aus Trainingsskript (Zeilen 70-113) einfügen
-\begin{lstlisting}[language=Python, caption={Instanziierung der Modelle mit asymmetrischen Parametern (Platzhalter für wörtlichen Code)}, label={lst:modelle}]
-lstm_ppo = RecurrentPPO(
-    "MlpLstmPolicy", env,
-    n_steps=256, n_epochs=10, batch_size=8,
-    policy_kwargs=dict(
-        n_lstm_layers=1, lstm_hidden_size=256, 
-        shared_lstm=False, enable_critic_lstm=True
-    ),
-    # ...
+\begin{lstlisting}[language=Python, caption={Instanziierung der Modelle mit asymmetrischen Parametern, \texttt{scripts/train\_curriculum.py}}, label={lst:modelle}]
+RPPO_KWARGS = dict(
+    policy="MlpLstmPolicy",
+    n_steps=256,
+    batch_size=8,         # batch=64 destabilisiert den Critic (CHANGELOG v2026-07-07.4)
+    n_epochs=10,
+    learning_rate=3e-4,
+    gamma=0.999, gae_lambda=0.95, clip_range=0.2,
+    ent_coef=0.05, vf_coef=0.5,
+    policy_kwargs=dict(n_lstm_layers=1, lstm_hidden_size=256, shared_lstm=False,
+                       enable_critic_lstm=True),
+    verbose=1, tensorboard_log="logs/tensorboard/",
 )
 
-mlp_ppo = PPO(
-    "MlpPolicy", env,
-    n_steps=256, n_epochs=10, batch_size=256,
+# Gedächtnislose Kontrollgruppe für F2 (--algo ppo). Alles außer den
+# architekturspezifischen Parametern ist mit RPPO_KWARGS identisch.
+#   net_arch: [256,256] spiegelt lstm_hidden_size=256. Der SB3-Default [64,64]
+#     würde die Baseline über die Kapazität benachteiligen statt über das Gedächtnis.
+PPO_KWARGS = dict(
+    policy="MlpPolicy",
+    n_steps=256,
+    batch_size=256,
+    n_epochs=10,
+    learning_rate=3e-4,
+    gamma=0.999, gae_lambda=0.95, clip_range=0.2,
+    ent_coef=0.05, vf_coef=0.5,
     policy_kwargs=dict(net_arch=[256, 256]),
-    # ...
+    verbose=1, tensorboard_log="logs/tensorboard/",
 )
 \end{lstlisting}
 
@@ -1529,14 +1548,34 @@ Wie im Code (Listing~\ref{lst:modelle}) erkennbar, unterscheiden sich die Verfah
 \label{sec:impl_rl_pipeline}
 Das Training erfolgt in vier fließenden Phasen. Wir starten das Training beim Phasenwechsel nicht neu, das Modell trainiert nahtlos weiter. Der Wechsel in die nächste Phase (Gating) ist dabei nicht rein leistungsbasiert, sondern nutzt eine duale Abbruchbedingung.
 
-% TODO: Hier wörtlichen Quellcode aus Trainingsskript (Zeilen 53-68 & 421 ff.) einfügen
-\begin{lstlisting}[language=Python, caption={Curriculum-Phasen mit dualen Abbruchbedingungen (Platzhalter für wörtlichen Code)}, label={lst:curriculum_gating}]
+\begin{lstlisting}[language=Python, caption={Curriculum-Phasen mit dualen Abbruchbedingungen, \texttt{scripts/train\_curriculum.py}}, label={lst:curriculum_gating}]
 PHASES = [
-    Phase(train_dist=(5, 12), eval_dist=(5, 12), budget=500_000, target_sr=0.85),
-    Phase(train_dist=(12, 25), eval_dist=(12, 25), budget=500_000, target_sr=0.70),
-    Phase(train_dist=(25, 45), eval_dist=(35, 45), budget=1_000_000, target_sr=0.70),
-    Phase(train_dist=(25, 45), eval_dist=(35, 45), budget=200_000, target_sr=0.60),
+    {"exit_min":  5, "exit_max": 12, "max_steps":   500_000, "target_sr": 0.85,
+     "eval_min":  5, "eval_max": 12,  "label": "Phase 1 (exit=5-12)",
+     "gate_metric": "stoch", "eval_max_steps": 4000},
+    {"exit_min": 12, "exit_max": 25, "max_steps":   500_000, "target_sr": 0.70,
+     "eval_min": 12, "eval_max": 25,  "label": "Phase 2 (exit=12-25)",
+     "gate_metric": "stoch", "eval_max_steps": 4000},
+    {"exit_min": 25, "exit_max": 45, "max_steps": 1_000_000, "target_sr": 0.70,
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 3 (exit=25-45, eval 35-45)",
+     "gate_metric": "det", "eval_max_steps": 4000},
+    {"exit_min": 25, "exit_max": 45, "max_steps":   200_000, "target_sr": 0.60,
+     "eval_min": 35, "eval_max": 45,  "label": "Phase 4 (Greedy Fine-Tune)",
+     "gate_metric": "det", "eval_max_steps": 4000, "ent_coef_override": 0.0001},
 ]
+
+# Callback: stoppt eine Phase vorzeitig bei erreichter Ziel-SR, sonst laeuft
+# model.learn(total_timesteps=phase["max_steps"]) bis zum Budgetlimit durch.
+def _on_step(self) -> bool:
+    if self.n_calls % self.eval_freq == 0:
+        sr = self._run_eval()
+        if sr >= self.target_sr:
+            self.consecutive_successes += 1
+            if self.consecutive_successes >= 2:
+                return False  # Training stoppen, naechste Phase starten
+        else:
+            self.consecutive_successes = 0
+    return True
 \end{lstlisting}
 
 Die Tabelle und Listing~\ref{lst:curriculum_gating} zeigen zwei Besonderheiten der Implementierung:
@@ -1553,21 +1592,39 @@ Um dem Agenten den Übergang in schwerere Phasen zu erleichtern, senken wir den 
 \label{sec:impl_rl_reward}
 Unsere Belohnungsstruktur ist direkt in den performanten C++-Simulationskern eingewoben (mit Ausnahme einer Anti-Stuck-Strafe auf der Python-Seite). Entgegen früheren Entwurfsstadien wurde die Strafen-Struktur massiv entschlackt, da sich zeigte, dass sich aufsummierende Strafen (Penalty-Stacking) das Erkundungsverhalten des Agenten unterdrückten. 
 
-% TODO: Hier wörtlichen Quellcode aus Simulationskern (Zeilen 1459-1525) einfügen!
-\begin{lstlisting}[language=C++, caption={Berechnung des Rewards und Shaping-Terms im C++-Kern (Platzhalter für wörtlichen Code)}, label={lst:reward_shaping}]
-// Ausschnitt aus der Reward-Berechnung in C++
-float reward = 0.0f;
-reward -= 0.01f; // Grundstrafe pro Schritt
+\begin{lstlisting}[language=C++, caption={Berechnung des Rewards und Shaping-Terms, \texttt{src/core/simulation.cpp}}, label={lst:reward_shaping}]
+float reward = -0.01F;
 
-if (is_new_tile) reward += 0.02f;
-if (action == WAIT) reward -= 0.04f;
-// ... (Schaden und Zwei-Schritt-Schleife)
-
-if (reached_exit) {
-    return 100.0f + shaping; // Terminal Reward
-} else if (timeout) {
-    return -10.0f;
+if (newTileVisited) {
+    reward += 0.02F;
 }
+if (idleAction) {
+    reward -= 0.04F;
+}
+const int damage = std::max(0, hpBefore - hp_);
+reward -= static_cast<float>(damage) * 0.5F;
+
+if (positionLoop) {
+    reward -= 0.05F;
+}
+
+// Potential Based Reward Shaping (PBRS): Phi(s) = -BFS(s) / PBRS_MAX_DIST
+constexpr float PBRS_MAX_DIST = 128.0F;
+constexpr float PBRS_GAMMA = 0.999F;   // Shaping-Discount = RL-Discount
+constexpr float PBRS_BETA = 2.5F;      // +0.01 netto pro Tile Fortschritt bei d=40
+
+const float phi_prev = -static_cast<float>(previousDistance) / PBRS_MAX_DIST;
+const float phi_cur  = -static_cast<float>(currentDistance) / PBRS_MAX_DIST;
+const float shaping  = PBRS_GAMMA * phi_cur - phi_prev;
+reward += PBRS_BETA * shaping;
+
+if (reachedExit) {
+    reward += 100.0F;
+}
+if (done_ && !reachedExit) {
+    reward -= 10.0F;
+}
+return reward;
 \end{lstlisting}
 
 Die konkreten Zahlenwerte aus Listing~\ref{lst:reward_shaping} sind hart im Code verankert:
@@ -1585,17 +1642,25 @@ Das Herzstück bildet jedoch das \textbf{Potential Based Reward Shaping (PBRS)},
 \label{sec:impl_rl_baselines}
 Um unsere trainierten RL-Modelle bewerten zu können, brauchen wir ungelernte Referenzwerte (Baselines). Diese greifen direkt auf die Spiellogik zu und erfordern keine Trainingsphase. 
 
-% TODO: Hier wörtlichen Quellcode aus Baseline-Skript (Zeilen 58-86) einfügen!
-\begin{lstlisting}[language=Python, caption={Aktionswahl der Referenzverfahren (Platzhalter für wörtlichen Code)}, label={lst:baselines}]
-# Auszug aus der Kompass-Heuristik
-def compass_policy(obs, rng, epsilon):
-    if rng.random() < epsilon:
-        return int(rng.integers(0, 4))
-        
-    dx, dy = float(obs[IDX_DX]), float(obs[IDX_DY])
-    if abs(dx) > abs(dy):
-        return RIGHT if dx > 0 else LEFT
-    return DOWN if dy > 0 else UP
+\begin{lstlisting}[language=Python, caption={Aktionswahl der Referenzverfahren, \texttt{scripts/eval\_baselines.py}}, label={lst:baselines}]
+class CompassPolicy:
+    """eps-verrauschter Greedy-Lauf entlang des Luftlinien-Kompasses."""
+
+    def __init__(self, eps: float, seed: int = 0) -> None:
+        self.eps = eps
+        self.rng = np.random.default_rng(seed)
+        self.name = f"Kompass-Zufallslauf (eps={eps:g})"
+
+    def reset(self) -> None:
+        return None
+
+    def __call__(self, obs, ctx):
+        if self.rng.random() < self.eps:
+            return int(self.rng.integers(4)), None
+        dx, dy = float(obs[IDX_DX]), float(obs[IDX_DY])
+        if abs(dx) > abs(dy):
+            return (RIGHT if dx > 0 else LEFT), None
+        return (DOWN if dy > 0 else UP), None
 \end{lstlisting}
 
 Die Baselines aus Listing~\ref{lst:baselines} offenbaren ein extrem wichtiges technisches Detail:
@@ -1766,11 +1831,11 @@ Die Erfolgsquote ist die zentrale Metrik zur Beurteilung, ob ein Verfahren die N
     \label{fig:eval_sr}
 \end{figure}
 
-Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 68,6\,\%. Über die sieben Durchläufe hinweg liegt die Standardabweichung bei 10,9 Prozentpunkten, die Einzelwerte schwanken zwischen 56,0\,\% und 88,0\,\%. Im deterministischen Modus bricht die Leistung massiv ein: Die Quote fällt auf magere 29,1\,\% $\pm$ 7,4.
+Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 65,7\,\%. Über die sieben Durchläufe hinweg liegt die Standardabweichung bei 12,4 Prozentpunkten, die Einzelwerte schwanken zwischen 50,0\,\% und 84,0\,\%. Im deterministischen Modus bricht die Leistung massiv ein: Die Quote fällt auf magere 29,1\,\% $\pm$ 8,0.
 
-Beim MLP-PPO-Verfahren fällt das Bild noch dramatischer aus, allerdings mit einer methodischen Einschränkung: Für das MLP-Modell liegt kein standardisierter Testset-A-Lauf vor (siehe Abschnitt~\ref{sec:methodik_protokoll}), die hier berichteten Zahlen stammen direkt aus den Zwischenevaluationen des Trainings. Stochastisch ausgewertet kommt das MLP-Modell auf 38,3\,\%, mit einer enormen Streuung von 28,6 Prozentpunkten. Deterministisch ausgewertet scheitert das Netz vollständig: Über alle sieben Läufe und alle 70 Messpunkte der späten Trainingsphasen hinweg liegt die Erfolgsquote bei exakt 0,0\,\%.
+Beim MLP-PPO-Verfahren fällt das Bild schwächer aus als beim LSTM. Unter dem identischen Standardprotokoll (siehe Abschnitt~\ref{sec:methodik_protokoll}) erreicht das Modell stochastisch ausgewertet auf Testset A 33,5\,\% $\pm$ 25,5 und auf Testset B 35,8\,\% $\pm$ 30,5. Die Streuung zwischen den sieben Seeds fällt damit mehr als doppelt so hoch aus wie beim LSTM, die Einzelwerte auf Testset A reichen von 4,0\,\% bis 65,2\,\%. Deterministisch ausgewertet scheitert das Netz vollständig: Über alle sieben Läufe und alle 70 Messpunkte der späten Trainingsphasen hinweg liegt die Erfolgsquote bei exakt 0,0\,\%. Dieser deterministische Wert stammt weiterhin aus den Zwischenevaluationen des Trainings, da das kanonische Protokoll aktuell ausschließlich den stochastischen Modus misst.
 
-Der Systemvergleich fällt damit eindeutig aus: Die rekurrente LSTM-Architektur schlägt das gedächtnislose MLP-Netz deutlich. Im deterministischen Modus ist der Unterschied absolut, knapp jede dritte Episode gelöst gegenüber keiner einzigen. Im stochastischen Modus schrumpft der Vorsprung zwar auf rund 30 Prozentpunkte, und die starken Schwankungen des MLP-Modells sorgen für Überschneidungen. Das LSTM bleibt dennoch das klar überlegene Verfahren.
+Der Systemvergleich fällt damit eindeutig aus: Die rekurrente LSTM-Architektur schlägt das gedächtnislose MLP-Netz deutlich. Im deterministischen Modus ist der Unterschied absolut, knapp jede dritte Episode gelöst gegenüber keiner einzigen. Im stochastischen Modus schrumpft der Vorsprung zwar auf rund 32 Prozentpunkte, und die starken Schwankungen des MLP-Modells sorgen für Überschneidungen einzelner Läufe. Das LSTM bleibt dennoch das klar überlegene Verfahren, wobei Abschnitt~\ref{sec:eval_hyperparameter} diesen Vorsprung noch einordnet.
 
 \subsection{Pfadeffizienz derselben Verfahren}
 \label{sec:eval_eff}
@@ -1783,7 +1848,7 @@ Nur am Ausgang anzukommen, reicht als Bewertungskriterium nicht aus, wichtig ist
     \label{fig:eval_eff}
 \end{figure}
 
-Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten. Das trainierte LSTM-Modell benötigt für eine erfolgreiche Episode dagegen durchschnittlich 1429 Schritte, das entspricht einer Pfadeffizienz von lediglich 0,049. Der Agent läuft damit im Schnitt einen Weg, der mehr als 35-mal so lang ist wie nötig. Für das MLP-Modell liegt mangels Testset-A-Lauf kein vergleichbarer Wert vor.
+Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten. Das trainierte LSTM-Modell benötigt für eine erfolgreiche Episode dagegen durchschnittlich 1429 Schritte, das entspricht einer Pfadeffizienz von lediglich 0,049. Der Agent läuft damit im Schnitt einen Weg, der mehr als 35-mal so lang ist wie nötig. Für das MLP-Modell liegt inzwischen ein vergleichbarer Wert vor: Bei durchschnittlich 1084 Schritten je erfolgreicher Episode ergibt sich eine Pfadeffizienz von 0,067 und damit ein höherer Wert als beim LSTM. Dieser Befund ist mit Vorsicht zu lesen, da die Kennzahl nur über die erfolgreichen Episoden gemittelt wird, wie der folgende Absatz zum Selektionseffekt zeigt: Bei einer Erfolgsquote von nur 33,5\,\% löst das MLP-Modell bevorzugt die leichten Seeds, was die Effizienz künstlich anhebt.
 
 Aufschlussreich wird der Blick auf die Referenzverfahren aus Abschnitt~\ref{sec:methodik_baselines}. Der ungelernte Kompass-Agent mit einem Zufallsanteil von $\varepsilon=0{,}3$ erreicht eine Effizienz von 0,158 und ist damit gut dreimal so wegeffizient wie das trainierte LSTM-Netz, auch wenn er dabei eine knapp 19 Prozentpunkte niedrigere Erfolgsquote in Kauf nimmt. Das überraschendere Ergebnis liefert der $\varepsilon=0{,}8$-Kompass: Er übertrifft das trainierte Modell nicht nur bei der Erfolgsquote, sondern mit einer Pfadeffizienz von 0,081 gleichzeitig auch bei der Weglänge.
 
@@ -1817,7 +1882,7 @@ Um das Geleistete ins Verhältnis zu setzen, trägt Abbildung~\ref{fig:eval_trad
 
 Die fünf Varianten der Kompass-Heuristik aus Abschnitt~\ref{sec:methodik_baselines} ziehen im Diagramm eine zusammenhängende Kurve: Je höher der Zufallsanteil $\varepsilon$ bis zu $0{,}8$, desto höher die Erfolgsquote, aber desto geringer die Pfadeffizienz. Auffällig ist die Position des trainierten Modells: Es liegt vollständig unterhalb dieser Heuristik-Kurve.
 
-Besonders hart fällt der direkte Vergleich mit dem $\varepsilon=0{,}8$-Kompass aus. Dieser schlägt das LSTM-Netzwerk doppelt: bei der Erfolgsquote mit 94,0\,\% gegenüber 68,6\,\% und bei der Effizienz mit 0,081 gegenüber 0,049. Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
+Besonders hart fällt der direkte Vergleich mit dem $\varepsilon=0{,}8$-Kompass aus. Dieser schlägt das LSTM-Netzwerk doppelt: bei der Erfolgsquote mit 94,0\,\% gegenüber 65,7\,\% und bei der Effizienz mit 0,081 gegenüber 0,049. Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
 
 Dass ein kartenblindes Verfahren ohne Trainingsphase zuverlässiger und direkter ins Ziel findet als ein Agent, der über 2,2 Millionen Zeitschritte optimiert wurde, ist die zentrale Pointe dieser Auswertung. Das ändert nichts daran, dass das LSTM besser lernt als das MLP. Für die Beurteilung, wie leistungsfähig Reinforcement Learning für dieses spezifische Problem tatsächlich ist, bleibt es jedoch ein starker Dämpfer.
 
@@ -1847,6 +1912,8 @@ Aus diesen Daten lassen sich zwei Erkenntnisse ableiten. Erstens wird das Traini
 
 Eine Leerstelle bleibt die Netzgröße (siehe Abschnitt~\ref{sec:impl_rl_netze}). Die rekurrente Schicht mit 256 Einheiten wurde nie in einer sauberen Ablationsstudie gegen andere Größen getestet. Ein Versuch mit 512 Einheiten sah zwischenzeitlich vielversprechend aus, lief jedoch nie durch das Testset. Welche Größe hier tatsächlich optimal wäre, lässt sich aus den vorliegenden Daten nicht seriös beantworten.
 
+Damit eng verwandt ist eine Einschränkung der Vergleichbarkeit zwischen den beiden Architekturen selbst. Wie in Abschnitt~\ref{sec:impl_rl_netze} dargestellt, besitzt das LSTM-Modell mit 1.038.917 Parametern gut viermal so viele trainierbare Gewichte wie das MLP-Modell mit 250.629 Parametern, da beide Netze mit dem in der Bibliothek vorgesehenen Standardaufbau trainiert wurden und nicht mit kapazitätsangeglichenen Architekturen. Der in Abschnitt~\ref{sec:eval_sr} gemessene Vorsprung des LSTM ließe sich daher nicht allein auf die Rekurrenz zurückführen, sondern könnte teilweise auch aus der schlicht größeren Netzkapazität stammen. Ein Modellvergleich mit angeglichener Parameterzahl müsste in einer eigenen Ablationsstudie erfolgen, was im Rahmen dieser Arbeit aus Zeitgründen ausgeklammert werden soll. Der zentrale Befund, dass die Kompass-Heuristik beide trainierten Verfahren bei Erfolgsquote und Pfadeffizienz übertrifft (siehe Abschnitt~\ref{sec:eval_einordnung}), bleibt von dieser Einschränkung unberührt, da er unabhängig vom internen Architekturvergleich zwischen LSTM und MLP gilt.
+
 Zum Schluss zeigt das Curriculum (siehe Abschnitt~\ref{sec:impl_rl_pipeline}) ungeschminkt die Grenzen des Modells: In den Trainingsphasen 3 und 4 sollte der Agent bestimmte Erfolgsquoten von 70\,\% und 60\,\% erreichen, um die Phase regulär abzuschließen. In keinem der sieben Läufe ist das gelungen. Die Phasen endeten ausschließlich, weil das feste Schrittbudget aufgebraucht war. Die gewünschte Zielleistung lag außerhalb dessen, was die Architektur auf dieser Distanz leisten konnte.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1869,9 +1936,9 @@ Die biomabhängigen Wanddichten zwischen 7\,\% und 25\,\% steuern demnach nicht,
 Für die erste Teilfrage gilt daher: Die Spielwelt ist fair und lösbar, aber architektonisch erzwungen, nicht parametrisch ausbalanciert.
 
 \subsection*{Teilfrage 2: Wahl des Trainingsverfahrens}
-Die zweite Teilfrage zielte auf das RL-Verfahren mit der höchsten Erfolgsquote und den effizientesten Wegen. Unter den trainierten Ansätzen fällt die Antwort eindeutig zugunsten der rekurrenten Architektur aus. Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 68,6\,\% ($\pm$ 10,9), das MLP-PPO-Modell landet bei 38,3\,\% ($\pm$ 28,6) (siehe Abbildung~\ref{fig:eval_sr}). Deterministisch ausgewertet stehen 29,1\,\% beim LSTM gegen exakt 0,0\,\% beim MLP.
+Die zweite Teilfrage zielte auf das RL-Verfahren mit der höchsten Erfolgsquote und den effizientesten Wegen. Unter den trainierten Ansätzen fällt die Antwort eindeutig zugunsten der rekurrenten Architektur aus. Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 65,7\,\% ($\pm$ 12,4), das MLP-PPO-Modell landet bei 33,5\,\% ($\pm$ 25,5) (siehe Abbildung~\ref{fig:eval_sr}). Deterministisch ausgewertet stehen 29,1\,\% beim LSTM gegen exakt 0,0\,\% beim MLP.
 
-Bemerkenswert ist besonders dieser deterministische Absturz: Ohne Zufallsanteil löst das gedächtnislose MLP-Verfahren in der Zielphase keine einzige Episode (siehe Abbildung~\ref{fig:eval_det}). Stochastisch schrumpft der Abstand zwar auf rund 30 Prozentpunkte, der Vorteil eines verborgenen Gedächtniszustands bleibt jedoch offensichtlich. Mit der partiellen Beobachtbarkeit kommt das LSTM-Netz deutlich besser zurecht.
+Bemerkenswert ist besonders dieser deterministische Absturz: Ohne Zufallsanteil löst das gedächtnislose MLP-Verfahren in der Zielphase keine einzige Episode (siehe Abbildung~\ref{fig:eval_det}). Stochastisch schrumpft der Abstand zwar auf rund 32 Prozentpunkte, der Vorteil eines verborgenen Gedächtniszustands bleibt jedoch offensichtlich. Mit der partiellen Beobachtbarkeit kommt das LSTM-Netz deutlich besser zurecht. Wie in Abschnitt~\ref{sec:eval_hyperparameter} eingeordnet, ist dieser Vorsprung allerdings nicht sauber von der reinen Netzkapazität zu trennen, da das LSTM gut viermal so viele Parameter besitzt wie das MLP.
 
 Hinsichtlich der Wegeffizienz fällt die Bilanz der trainierten Modelle dagegen ernüchternd aus (siehe Abbildung~\ref{fig:eval_eff}). Für eine erfolgreiche Episode benötigt das trainierte Modell im Schnitt 1429 Schritte, das rechnerische Optimum für den kürzesten Weg liegt bei 40,1 Schritten. Daraus ergibt sich eine Pfadeffizienz von 0,049, die selbst von trivialen Referenzheuristiken um mehr als das Dreifache übertroffen wird. Das beste trainierte Verfahren gewinnt zwar unter den gelernten Ansätzen die Erfolgsquote, scheitert aber an der Wegfindung.
 
@@ -1881,7 +1948,7 @@ Der Blick auf die Hyperparameter liefert eine klare Erkenntnis (siehe Abschnitt~
 \label{sec:fazit_gesamt}
 Beide Projektteile, die Entwicklung der prozeduralen Welt und das Training der Agenten, sind für sich genommen funktional und abgeschlossen. Der eigentliche Ertrag der Arbeit liegt jedoch nicht in diesen Einzelergebnissen, sondern in ihrem Zusammenspiel.
 
-Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 94,0\,\% Erfolgsquote gegenüber 68,6\,\% und eine Pfadeffizienz von 0,081 gegenüber 0,049 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
+Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 94,0\,\% Erfolgsquote gegenüber 65,7\,\% und eine Pfadeffizienz von 0,081 gegenüber 0,049 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
 
 Genau hier greifen die beiden Teile der Arbeit ineinander. Der garantierte Lösungskorridor wird achsparallel generiert, zuerst entlang der einen, dann entlang der anderen Achse (siehe Abschnitt~\ref{sec:umsetzung_pathing}). Die simple Kompass-Heuristik bewegt sich nach exakt demselben Muster. Es drängt sich der Schluss auf, dass die strukturelle Lösbarkeitsgarantie aus der Weltgenerierung präzise diejenige Wegstruktur in die Karte fräst, die das ungelernte Verfahren instinktiv ausnutzt. Ein perfektes Schloss für einen sehr simplen Schlüssel entsteht damit unbeabsichtigt.
 
@@ -1898,6 +1965,8 @@ Aus den Erkenntnissen und methodischen Einschränkungen der Arbeit ergeben sich 
 \textbf{2. Analyse der Determinismus-Lücke:} Offen bleibt, warum die Modelle stochastisch so viel besser abschneiden als deterministisch (siehe Abschnitt~\ref{sec:eval_determinismus}). Naheliegend ist die Vermutung, dass der Agent in lokale Optima gerät, etwa Zwei-Schritt-Schleifen in Sackgassen, aus denen ihn nur der Zufallsanteil beim Ziehen aus der Aktionsverteilung befreit. Eine visuelle Analyse der tatsächlich gelaufenen Trajektorien könnte zeigen, ob das Modell den Zufall nutzt, um Sackgassen zu entkommen, oder ob es das begrenzte Sichtfenster iterativ \glqq abtastet\grqq.
 
 \textbf{3. Echte Schwierigkeitskalibrierung:} Der direkte Einfluss der Welt-Parameter, etwa Wanddichte, Chunk-Größe und Biom-Verteilung, auf die RL-Metriken bleibt in dieser Arbeit ausgeklammert, weil der Fokus auf dem Vergleich der Trainingsverfahren lag und nicht auf einer Parameterstudie der Weltgenerierung. Eine systematische Variation dieser Werte gegenüber der erreichten Erfolgsquote könnte die erste Teilfrage von einer reinen Aussage über Lösbarkeit zu einer Metrik für Schwierigkeit weiterentwickeln.
+
+\textbf{4. Kapazitätsangeglichene Ablationsstudie:} Wie in Abschnitt~\ref{sec:eval_hyperparameter} benannt, unterscheiden sich LSTM- und MLP-Modell nicht nur in der Rekurrenz, sondern auch in der Parameterzahl. Zukünftige Arbeiten müssten beide Architekturen auf eine vergleichbare Parameterzahl bringen, um den Anteil der Rekurrenz am gemessenen Vorsprung sauber vom Anteil der reinen Netzkapazität zu trennen.
 
 
 % ---------- Literaturverzeichnis ----------------------------------
