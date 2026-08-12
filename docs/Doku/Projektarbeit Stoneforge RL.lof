@@ -5,7 +5,7 @@
 \contentsline {figure}{\numberline {2.2}{\ignorespaces Domain Warping -- derselbe Rauschausschnitt unverzerrt und verzerrt, eigene Darstellung.}}{6}{figure.caption.14}%
 \contentsline {figure}{\numberline {2.3}{\ignorespaces Zellulärer Automat -- Rauschgitter vor und nach vier Glättungsiterationen, eigene Darstellung.}}{7}{figure.caption.15}%
 \contentsline {figure}{\numberline {2.4}{\ignorespaces Breitensuche -- Distanzfeld vom Startpunkt und daraus resultierender kürzester Pfad, eigene Darstellung.}}{8}{figure.caption.17}%
-\contentsline {figure}{\numberline {2.5}{\ignorespaces Interaktionsschleife zwischen Agent und Umgebung.}}{8}{figure.caption.19}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Interaktionsschleife zwischen Agent und Umgebung.}}{9}{figure.caption.19}%
 \contentsline {figure}{\numberline {2.6}{\ignorespaces Vergleich zwischen vollständiger und partieller Beobachtbarkeit.}}{9}{figure.caption.21}%
 \contentsline {figure}{\numberline {2.7}{\ignorespaces Veranschaulichung des Potentialfelds $\Phi (s)$ und der daraus resultierenden formenden Belohnung entlang eines Beispielpfads.}}{10}{figure.caption.23}%
 \contentsline {figure}{\numberline {2.8}{\ignorespaces Darstellung der Clipped Surrogate Objective von PPO.}}{11}{figure.caption.26}%

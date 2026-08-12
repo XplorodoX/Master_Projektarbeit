@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex Projektarbeit Stoneforge RL"] 1786541961.1154 "Projektarbeit Stoneforge RL.aux" "Projektarbeit Stoneforge RL.bbl" "Projektarbeit Stoneforge RL" 1786541966.47194 0
+["bibtex Projektarbeit Stoneforge RL"] 1786546315.88943 "Projektarbeit Stoneforge RL.aux" "Projektarbeit Stoneforge RL.bbl" "Projektarbeit Stoneforge RL" 1786546321.17677 0
   "./literatur.bib" 1786525937.61045 5683 8ca8c80b5eedb3471a77f81dffee91c0 ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "Projektarbeit Stoneforge RL.aux" 1786541966.01641 75272 fe79be3963238bd665038be094545b9f "pdflatex"
+  "Projektarbeit Stoneforge RL.aux" 1786546320.75415 75273 26e9b52756fcf27682d6297b8b62ec89 "pdflatex"
   (generated)
   "Projektarbeit Stoneforge RL.bbl"
   "Projektarbeit Stoneforge RL.blg"
   (rewritten before read)
-["pdflatex"] 1786541961.23217 "Projektarbeit Stoneforge RL.tex" "Projektarbeit Stoneforge RL.pdf" "Projektarbeit Stoneforge RL" 1786541966.47223 0
+["pdflatex"] 1786546316.00885 "Projektarbeit Stoneforge RL.tex" "Projektarbeit Stoneforge RL.pdf" "Projektarbeit Stoneforge RL" 1786546321.17705 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1254269338 2375 baa924870cfb487815765f9094cf3728 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1202520719 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc" 1202520719 2840 216e6e45ad352e2456e1149f28885bee ""
@@ -316,13 +316,13 @@
   "Bilder/rekurrente_policy_schema.png" 1786525937.59279 125452 cc85b34630389833d41f8b9a663aec5c ""
   "Bilder/rl_interaktionsschleife.png" 1786525937.59392 34226 140254f110dd41405dc33cc4dea894ea ""
   "Bilder/steppe.PNG" 1786525937.59423 106831 9dbdbe11fac700950ea816863a18cbef ""
-  "Projektarbeit Stoneforge RL.aux" 1786541966.01641 75272 fe79be3963238bd665038be094545b9f "pdflatex"
-  "Projektarbeit Stoneforge RL.bbl" 1786541961.22808 6328 fc0a35828207269c383970ae533a9666 "bibtex Projektarbeit Stoneforge RL"
-  "Projektarbeit Stoneforge RL.lof" 1786541966.03168 4101 2f3a01e74d97b5e23445f861451e592b "pdflatex"
-  "Projektarbeit Stoneforge RL.lol" 1786541966.03177 2910 f676ec0d57818eaeff50c300d522e6f1 "pdflatex"
-  "Projektarbeit Stoneforge RL.lot" 1786541966.03174 1222 85d48c99b13079c5c387a76585d8dcba "pdflatex"
-  "Projektarbeit Stoneforge RL.tex" 1786541573.00402 152061 be84252653e9bb34ce472bf7dedf9b48 ""
-  "Projektarbeit Stoneforge RL.toc" 1786541966.03152 11190 86880400a2b33bec08d9a89baf21b5fe "pdflatex"
+  "Projektarbeit Stoneforge RL.aux" 1786546320.75415 75273 26e9b52756fcf27682d6297b8b62ec89 "pdflatex"
+  "Projektarbeit Stoneforge RL.bbl" 1786546316.00436 6328 fc0a35828207269c383970ae533a9666 "bibtex Projektarbeit Stoneforge RL"
+  "Projektarbeit Stoneforge RL.lof" 1786546320.76814 4101 edf6b81df18815d03b9a245b5e8fddb4 "pdflatex"
+  "Projektarbeit Stoneforge RL.lol" 1786546320.7682 2910 f676ec0d57818eaeff50c300d522e6f1 "pdflatex"
+  "Projektarbeit Stoneforge RL.lot" 1786546320.76817 1222 85d48c99b13079c5c387a76585d8dcba "pdflatex"
+  "Projektarbeit Stoneforge RL.tex" 1786545893.50748 155508 a399a4519fe850df5e75db645c6cdcc4 ""
+  "Projektarbeit Stoneforge RL.toc" 1786546320.76802 11191 1d9534ae9d7662767ca941a100b51a0e "pdflatex"
   (generated)
   "Projektarbeit Stoneforge RL.aux"
   "Projektarbeit Stoneforge RL.lof"

@@ -1,11 +1,17 @@
-"""Verhaltensanalyse des trainierten PPO-Agenten.
+"""Verhaltensanalyse des trainierten Agenten.
 
 Zeigt pro Episode: Position-Trajektorie, BFS-Distanz, Reward, gewählte vs. optimale Aktion.
 Erkennt Loops (↑↓-Fallen), Stagnation und Fortschritt.
 
+--algo rppo laedt RecurrentPPO (sb3_contrib) und fuehrt den LSTM-Zustand ueber die
+Episode korrekt mit (state/episode_start) -- ohne das wuerde ein Gedaechtnismodell
+ohne Gedaechtnis analysiert, derselbe Fehler wie bei eval_baselines.py vor dessen
+Fix (siehe CHANGELOG v2026-08-12.2).
+
 Aufruf:
     python scripts/analyze_agent.py [--seeds 7000,7001,7002] [--model models/ppo_baseline/best_model.zip]
     python scripts/analyze_agent.py --exit-min 5 --exit-max 12 --model models/ppo_baseline/best_model.zip
+    python scripts/analyze_agent.py --algo rppo --model models/ppo_lstm_curriculum_v12_s1/best_model.zip --deterministic
 """
 from __future__ import annotations
 
@@ -22,7 +28,8 @@ sys.path.insert(0, os.path.join(_ROOT, "build"))
 sys.path.insert(0, os.path.join(_ROOT, "python"))
 
 from stable_baselines3 import PPO, DQN
-from stoneforge_env import StoneforgeWorldEnv
+from sb3_contrib import RecurrentPPO
+from stoneforge_env import StoneforgeWorldEnv, env_kwargs_for_model
 
 ACTION_NAMES = {0: "↑", 1: "↓", 2: "←", 3: "→"}
 BFS_DIR_NAMES = ["cur", "↑", "↓", "←", "→"]
@@ -40,7 +47,8 @@ def optimal_action_from_bfs(env: StoneforgeWorldEnv) -> int:
 
 
 def analyze_episode(model, env: StoneforgeWorldEnv, seed: int, max_steps: int = 200,
-                    verbose: bool = True) -> dict:
+                    verbose: bool = True, deterministic: bool = True,
+                    recurrent: bool = False) -> dict:
     obs, _ = env.reset(seed=seed)
 
     positions = []
@@ -54,6 +62,8 @@ def analyze_episode(model, env: StoneforgeWorldEnv, seed: int, max_steps: int = 
     step = 0
     reached = False
     recent_pos = deque(maxlen=6)
+    lstm_state = None
+    episode_start = np.ones((1,), dtype=bool)
 
     while not done and step < max_steps:
         pos = env.core.player_pos()
@@ -70,8 +80,15 @@ def analyze_episode(model, env: StoneforgeWorldEnv, seed: int, max_steps: int = 
             action = opt_action
         elif isinstance(model, RandomPolicy):
             action = int(model.rng.integers(0, 4))
+        elif recurrent:
+            action, lstm_state = model.predict(
+                obs, state=lstm_state, episode_start=episode_start,
+                deterministic=deterministic,
+            )
+            action = int(action)
+            episode_start = np.zeros((1,), dtype=bool)
         else:
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs, deterministic=deterministic)
             action = int(action)
         actions_taken.append(action)
 
@@ -136,6 +153,8 @@ def analyze_episode(model, env: StoneforgeWorldEnv, seed: int, max_steps: int = 
         "max_repeats": max_repeats,
         "loop_count": len(loop_positions),
         "action_counts": dict(action_counts),
+        "positions": positions,
+        "loop_positions": loop_positions,
     }
 
 
@@ -156,29 +175,35 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--model", default=None,
                    help="Pfad zu einem SB3-Modell (.zip). Leer → BFS-Greedy Oracle.")
-    p.add_argument("--algo", choices=["ppo", "dqn"], default="ppo")
+    p.add_argument("--algo", choices=["ppo", "dqn", "rppo"], default="ppo")
     p.add_argument("--policy", choices=["model", "bfs", "random"], default=None,
                    help="Welche Policy? (default: model wenn --model angegeben, sonst bfs)")
     p.add_argument("--seeds", default="7000,7001,7002,7003,7004")
     p.add_argument("--exit-min", type=int, default=5)
     p.add_argument("--exit-max", type=int, default=12)
     p.add_argument("--max-steps", type=int, default=200)
+    p.add_argument("--deterministic", action="store_true",
+                   help="Deterministisch (Argmax) statt stochastisch auswerten.")
     args = p.parse_args()
 
     seeds = [int(s) for s in args.seeds.split(",")]
+    recurrent = args.algo == "rppo"
 
     # Policy auswählen
+    env_kwargs = {}
     if args.model:
         print(f"Lade Modell: {args.model}")
-        ModelClass = PPO if args.algo == "ppo" else DQN
+        ModelClass = {"ppo": PPO, "dqn": DQN, "rppo": RecurrentPPO}[args.algo]
         try:
-            model = ModelClass.load(args.model)
+            model = ModelClass.load(args.model, device="cpu")
             policy_name = f"{args.algo.upper()} model"
+            env_kwargs = env_kwargs_for_model(model)
         except Exception as e:
             print(f"  Fehler beim Laden: {e}")
             print("  Fallback: BFS-Greedy Oracle")
             model = BfsGreedyPolicy()
             policy_name = "BFS-Greedy Oracle (Fallback)"
+            recurrent = False
     else:
         chosen = args.policy or "bfs"
         if chosen == "bfs":
@@ -187,13 +212,15 @@ def main():
         else:
             model = RandomPolicy()
             policy_name = "Random Policy"
-    print(f"Policy: {policy_name}")
+        recurrent = False
+    print(f"Policy: {policy_name} ({'deterministisch' if args.deterministic else 'stochastisch'})")
 
-    env = StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max)
+    env = StoneforgeWorldEnv(exit_min=args.exit_min, exit_max=args.exit_max, **env_kwargs)
 
     results = []
     for seed in seeds:
-        r = analyze_episode(model, env, seed, max_steps=args.max_steps, verbose=True)
+        r = analyze_episode(model, env, seed, max_steps=args.max_steps, verbose=True,
+                             deterministic=args.deterministic, recurrent=recurrent)
         results.append(r)
 
     # Zusammenfassung

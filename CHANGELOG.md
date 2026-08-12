@@ -2,6 +2,44 @@
 
 ---
 
+## v2026-08-12.6 — Statistische Einordnung, Trajektorienanalyse und Kapitel-2/3-Brücke ergänzt
+
+**Wer:** Florian.
+
+**Kontext:** Rückmeldung zur Zwischenbewertung (1,7 statt 1,0–1,3): Drei der fünf genannten Lücken ließen sich ohne neue Trainingsläufe oder Eingriffe in Laurins Teil schließen — die vierte (Kausalhypothese zum Kompass-Vorteil) und fünfte (Related-Work-Vertiefung) wurden bewusst nicht angegangen, siehe Begründung unten.
+
+#### Änderung 1 — Statistische Einordnung von LSTM gegen MLP
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`, Abschnitt 5.2.1
+**Problem:** Die Standardabweichungen (12,4 LSTM, 25,5 MLP bei n=7) wurden nirgends gegen die Möglichkeit geprüft, dass der Unterschied im Stichprobenrauschen verschwindet.
+**Lösung:** Welch-Test und Mann-Whitney-U-Test auf die sieben Erfolgsquoten je Verfahren (Testset A und B, stochastisch) nachgerechnet. Ergebnis: Testset A signifikant ($t(8{,}7)=3{,}00$, $p=0{,}016$; $U=41$, $p=0{,}038$; Cohens $d=1{,}6$), Testset B schwächer ($p=0{,}038$ Welch, $p=0{,}053$ Mann-Whitney). Neuer Absatz in Abschnitt 5.2.1, inklusive Hinweis, dass sich überschneidende Einzel-Konfidenzintervalle und ein signifikanter Unterschied im Differenz-Konfidenzintervall nicht widersprechen.
+
+#### Änderung 2 — `analyze_agent.py` um RecurrentPPO-Unterstützung erweitert, Trajektorienanalyse zur Determinismus-Lücke
+**Datei:** `scripts/analyze_agent.py`
+**Problem:** Das Skript unterstützte nur `PPO`/`DQN`, kein `RecurrentPPO` — exakt derselbe Fehlerklasse wie bei `eval_baselines.py` vor `v2026-08-12.2` (kein LSTM-Zustand über `predict()` geführt).
+**Lösung:** `--algo rppo` ergänzt (Import `RecurrentPPO`, `state`/`episode_start` korrekt durch die Episode geführt, `env_kwargs_for_model` für den richtigen Obs-Shape), `--deterministic`-Flag ergänzt.
+
+**Ergebnis (20 Seeds Testset A, Modell `v12_s1`, Distanz 35–45, Schrittlimit 1500 statt der vollen 4000 aus Zeitgründen — Einzelmodell, keine n=7-Aussage):**
+
+| Modus | BFS-Optimalausrichtung | Ø mehrfach besuchte Positionen | Extremfall |
+|-------|------------------------|-------------------------------|------------|
+| Deterministisch | 16,2 % | 58,5 | eine Position 161× besucht |
+| Stochastisch | 23,4 % | 90,3 | — |
+
+Die anfängliche Ausblick-Hypothese reiner Zwei-Schritt-Schleifen war zu einfach: Der stochastische Modus zeigt im Schnitt *mehr* wiederholt besuchte Positionen (kurze Vor-und-Zurück-Bewegungen durch den Zufallsanteil), aber die deterministische Politik steckt in Einzelfällen extremer fest und richtet sich seltener BFS-optimal aus. Neuer Absatz in Abschnitt 5.2.3, Ausblick-Punkt 2 entsprechend von offener Frage zu teilweise beantwortet mit neu benanntem Restumfang (alle sieben Modelle, volles Schrittbudget) umformuliert.
+
+#### Änderung 3 — Brücke zwischen Kapitel 2 (Grundlagen) und der Systemkonfiguration
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`, Abschnitt 2.1.3 und 2.1.4
+**Problem:** Zelluläre Automaten und BFS-Erreichbarkeitsprüfung werden in Kapitel 2 ausführlich hergeleitet, sind laut Tabelle 3.1 im ausgelieferten System aber deaktiviert — ohne Verweis darauf wirkt ein Teil der Grundlagenarbeit wie Leerlauf.
+**Lösung:** Je ein Absatz ergänzt: Bei zellulären Automaten der Hinweis, dass sie die algorithmische Alternative zum tatsächlich verwendeten Manhattan-Fallback markieren (daher relevant, obwohl inaktiv). Bei BFS die Klarstellung, dass sie nicht tot ist, sondern als Distanzfeld für Reward Shaping (Abschnitt 4.2.4) und Pfadeffizienz-Metrik (Abschnitt 5.2.2) weiterlebt — nur ihre ursprünglich motivierte Rolle (Lösbarkeitsprüfung bei der Weltgenerierung) ist deaktiviert.
+
+**Nicht umgesetzt:**
+- **Kausalhypothese zum Kompass-Vorteil** (zweiter Weltgenerator ohne Manhattan-Fallback): Eingriff in `src/`, Laurins Teil, mehrtägiges Experiment. Nicht ohne Absprache und nicht in der verbleibenden Zeit.
+- **Related-Work-Vertiefung**: Risiko, Differenzierungsaussagen zu zitierten Arbeiten (PCGRL, POPGym) ohne erneute genaue Lektüre zu erfinden. Zurückgestellt.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 75 Seiten.
+
+---
+
 ## v2026-08-12.5 — Kapitel 2 (Grundlagen) umstrukturiert und mit vier neuen Schema-Abbildungen versehen
 
 **Wer:** Florian.
