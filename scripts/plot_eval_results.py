@@ -52,7 +52,7 @@ plt.rcParams.update({
 # ---------------------------------------------------------------- Daten
 # Random / Kompass: logs/eval_results/baselines.json, Testset A
 RANDOM_SR, RANDOM_EFF = 5.2, 0.021
-COMPASS_SR = {0.3: 50.0, 0.4: 60.4, 0.5: 71.6, 0.6: 76.8, 0.8: 88.8, 0.9: 92.0}
+COMPASS_SR = {0.3: 52.0, 0.4: 60.4, 0.5: 71.6, 0.6: 76.8, 0.8: 88.8, 0.9: 92.0}
 COMPASS_EFF = {0.3: 0.177, 0.4: 0.153, 0.5: 0.150, 0.6: 0.138, 0.8: 0.094, 0.9: 0.047}
 
 # LSTM, Testset A, n=7 (CHANGELOG v2026-07-17, kanonisch laut CLAUDE.md)

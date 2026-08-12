@@ -2,6 +2,33 @@
 
 ---
 
+## v2026-08-12.7 — Kompass-Zahlenwiderspruch (Abbildung vs. Fließtext) behoben, Eidesstattliche Erklärung korrigiert
+
+**Wer:** Florian.
+
+**Kontext:** Letzter Korrekturdurchgang vor Abgabe (14.08.). Zwei unabhängige Funde geprüft und behoben.
+
+#### Änderung 1 — Kompass-Zahlen zwischen Abbildung und Fließtext vereinheitlicht
+**Problem:** Fließtext nannte für den $\varepsilon=0{,}8$-Kompass 94,0\,%/0,081 und für $\varepsilon=0{,}3$ eine Effizienz von 0,158 — Abbildungen 5.2/5.3 zeigten 88,8\,%/0,094 beziehungsweise 0,177. Gegen `logs/eval_results/baselines.json` (kanonisch) geprüft: Die Abbildungen sind richtig, der Fließtext zitierte einen älteren, nicht-kanonischen Auswertungsstand.
+**Nebenfund beim Prüfen:** `scripts/plot_eval_results.py` selbst hatte `COMPASS_SR[0.3]` hart auf `50.0` statt der tatsächlichen `52.0` aus `baselines.json` gesetzt (Tippfehler bei der manuellen Übertragung) — betraf nur den SR-Wert, nicht die Effizienz. Ebenfalls korrigiert, Abbildungen neu erzeugt.
+
+| Wert | Vorher (Text) | Nachher | Quelle |
+|------|---------------|---------|--------|
+| SR $\varepsilon=0{,}8$ | 94,0 % | 88,8 % | `baselines.json` |
+| Effizienz $\varepsilon=0{,}8$ | 0,081 | 0,094 | `baselines.json` |
+| Effizienz $\varepsilon=0{,}3$ | 0,158 | 0,177 | `baselines.json` |
+| SR-Abstand LSTM/$\varepsilon=0{,}3$ | „knapp 19 Prozentpunkte" | „knapp 14 Prozentpunkte" | 65,7 − 52,0 = 13,7 |
+
+Drei Fundstellen im Fließtext (Abschnitt 5.2.2, 5.2.4, Fazit) korrigiert, `scripts/plot_eval_results.py` gefixt, alle vier Abbildungen neu erzeugt.
+
+#### Änderung 2 — Eidesstattliche Erklärung an tatsächliche Gliederung angepasst
+**Problem:** Verwies auf „Abschnitte 5.6 bis 5.10" und „Kapitel 7" — im tatsächlichen Dokument endet Kapitel 5 bei 5.2.5, Kapitel 7 existiert nicht (der Anhang läuft über `\appendix` mit Buchstaben-Nummerierung). Vermutlich Rest einer früheren, in `CLAUDE.md` als Vorschlag skizzierten Gliederung, die beim tatsächlichen Aufbau (Autorenteile als Unterabschnitte 3.1/3.2, 4.1/4.2, 5.1/5.2 statt eigener Kapitel) nicht mehr passt.
+**Lösung:** Gegen die echte Gliederung geprüft und korrigiert auf: Kapitel 3.1, 4.1 sowie Abschnitt 5.1 (Laurin), Kapitel 3.2, 4.2 sowie Abschnitt 5.2 (Florian), Kapitel 1, 2 und 6 gemeinsam.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 75 Seiten.
+
+---
+
 ## v2026-08-12.6 — Statistische Einordnung, Trajektorienanalyse und Kapitel-2/3-Brücke ergänzt
 
 **Wer:** Florian.

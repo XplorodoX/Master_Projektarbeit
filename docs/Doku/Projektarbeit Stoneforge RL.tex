@@ -261,9 +261,9 @@ Form keiner anderen Prüfungsbehörde vorgelegt.
 
 \bigskip
 Da die Arbeit von zwei Autoren gemeinsam erstellt wurde, wird zusätzlich
-erklärt, dass Kapitel~3.1, 4.1 sowie die Abschnitte~5.2 bis~5.5 von Laurin~\dots{}
-und Kapitel~3.2, 4.2 sowie die Abschnitte~5.6 bis~5.10 von Florian~\dots{}
-verfasst wurden; die gemeinsamen Kapitel~1, 2, 5.1, 6 und~7 entstanden in
+erklärt, dass Kapitel~3.1, 4.1 sowie Abschnitt~5.1 von Laurin~\dots{}
+und Kapitel~3.2, 4.2 sowie Abschnitt~5.2 von Florian~\dots{}
+verfasst wurden; die gemeinsamen Kapitel~1, 2 und~6 entstanden in
 gemeinsamer Autorenschaft. % TODO: Aufteilung final mit Prüfungsamt abgleichen
 
 \vspace{2.5cm}
@@ -1891,7 +1891,7 @@ Nur am Ausgang anzukommen, reicht als Bewertungskriterium nicht aus, wichtig ist
 
 Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten. Das trainierte LSTM-Modell benötigt für eine erfolgreiche Episode dagegen durchschnittlich 1429 Schritte, das entspricht einer Pfadeffizienz von lediglich 0,049. Der Agent läuft damit im Schnitt einen Weg, der mehr als 35-mal so lang ist wie nötig. Für das MLP-Modell liegt inzwischen ein vergleichbarer Wert vor: Bei durchschnittlich 1084 Schritten je erfolgreicher Episode ergibt sich eine Pfadeffizienz von 0,067 und damit ein höherer Wert als beim LSTM. Dieser Befund ist mit Vorsicht zu lesen, da die Kennzahl nur über die erfolgreichen Episoden gemittelt wird, wie der folgende Absatz zum Selektionseffekt zeigt: Bei einer Erfolgsquote von nur 33,5\,\% löst das MLP-Modell bevorzugt die leichten Seeds, was die Effizienz künstlich anhebt.
 
-Aufschlussreich wird der Blick auf die Referenzverfahren aus Abschnitt~\ref{sec:methodik_baselines}. Der ungelernte Kompass-Agent mit einem Zufallsanteil von $\varepsilon=0{,}3$ erreicht eine Effizienz von 0,158 und ist damit gut dreimal so wegeffizient wie das trainierte LSTM-Netz, auch wenn er dabei eine knapp 19 Prozentpunkte niedrigere Erfolgsquote in Kauf nimmt. Das überraschendere Ergebnis liefert der $\varepsilon=0{,}8$-Kompass: Er übertrifft das trainierte Modell nicht nur bei der Erfolgsquote, sondern mit einer Pfadeffizienz von 0,081 gleichzeitig auch bei der Weglänge.
+Aufschlussreich wird der Blick auf die Referenzverfahren aus Abschnitt~\ref{sec:methodik_baselines}. Der ungelernte Kompass-Agent mit einem Zufallsanteil von $\varepsilon=0{,}3$ erreicht eine Effizienz von 0,177 und ist damit gut dreimal so wegeffizient wie das trainierte LSTM-Netz, auch wenn er dabei eine knapp 14 Prozentpunkte niedrigere Erfolgsquote in Kauf nimmt. Das überraschendere Ergebnis liefert der $\varepsilon=0{,}8$-Kompass: Er übertrifft das trainierte Modell nicht nur bei der Erfolgsquote, sondern mit einer Pfadeffizienz von 0,094 gleichzeitig auch bei der Weglänge.
 
 Ein leichter Selektionseffekt ist hierbei zu berücksichtigen: In die Pfadeffizienz fließen nur jene Episoden ein, bei denen der Ausgang gefunden wurde. Verfahren, die oft scheitern, wobei die gescheiterten Versuche meist sehr lange Irrwege sind, stehen dadurch statistisch etwas besser da, als sie eigentlich sind. Das erklärt den starken Kompass jedoch nicht vollständig. Die bittere Erkenntnis bleibt: Das Training führt zwar ans Ziel, aber alles andere als auf direktem Weg.
 
@@ -1925,7 +1925,7 @@ Um das Geleistete ins Verhältnis zu setzen, trägt Abbildung~\ref{fig:eval_trad
 
 Die fünf Varianten der Kompass-Heuristik aus Abschnitt~\ref{sec:methodik_baselines} ziehen im Diagramm eine zusammenhängende Kurve: Je höher der Zufallsanteil $\varepsilon$ bis zu $0{,}8$, desto höher die Erfolgsquote, aber desto geringer die Pfadeffizienz. Auffällig ist die Position des trainierten Modells: Es liegt vollständig unterhalb dieser Heuristik-Kurve.
 
-Besonders hart fällt der direkte Vergleich mit dem $\varepsilon=0{,}8$-Kompass aus. Dieser schlägt das LSTM-Netzwerk doppelt: bei der Erfolgsquote mit 94,0\,\% gegenüber 65,7\,\% und bei der Effizienz mit 0,081 gegenüber 0,049. Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
+Besonders hart fällt der direkte Vergleich mit dem $\varepsilon=0{,}8$-Kompass aus. Dieser schlägt das LSTM-Netzwerk doppelt: bei der Erfolgsquote mit 88,8\,\% gegenüber 65,7\,\% und bei der Effizienz mit 0,094 gegenüber 0,049. Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
 
 Dass ein kartenblindes Verfahren ohne Trainingsphase zuverlässiger und direkter ins Ziel findet als ein Agent, der über 2,2 Millionen Zeitschritte optimiert wurde, ist die zentrale Pointe dieser Auswertung. Das ändert nichts daran, dass das LSTM besser lernt als das MLP. Für die Beurteilung, wie leistungsfähig Reinforcement Learning für dieses spezifische Problem tatsächlich ist, bleibt es jedoch ein starker Dämpfer.
 
@@ -1991,7 +1991,7 @@ Der Blick auf die Hyperparameter liefert eine klare Erkenntnis (siehe Abschnitt~
 \label{sec:fazit_gesamt}
 Beide Projektteile, die Entwicklung der prozeduralen Welt und das Training der Agenten, sind für sich genommen funktional und abgeschlossen. Der eigentliche Ertrag der Arbeit liegt jedoch nicht in diesen Einzelergebnissen, sondern in ihrem Zusammenspiel.
 
-Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 94,0\,\% Erfolgsquote gegenüber 65,7\,\% und eine Pfadeffizienz von 0,081 gegenüber 0,049 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
+Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 88,8\,\% Erfolgsquote gegenüber 65,7\,\% und eine Pfadeffizienz von 0,094 gegenüber 0,049 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
 
 Genau hier greifen die beiden Teile der Arbeit ineinander. Der garantierte Lösungskorridor wird achsparallel generiert, zuerst entlang der einen, dann entlang der anderen Achse (siehe Abschnitt~\ref{sec:umsetzung_pathing}). Die simple Kompass-Heuristik bewegt sich nach exakt demselben Muster. Es drängt sich der Schluss auf, dass die strukturelle Lösbarkeitsgarantie aus der Weltgenerierung präzise diejenige Wegstruktur in die Karte fräst, die das ungelernte Verfahren instinktiv ausnutzt. Ein perfektes Schloss für einen sehr simplen Schlüssel entsteht damit unbeabsichtigt.
 
