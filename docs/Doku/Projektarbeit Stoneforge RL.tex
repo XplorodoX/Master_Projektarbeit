@@ -482,27 +482,29 @@ Unser Ansatz lässt sich in bestehende Arbeiten einordnen, die sich mit gitterba
 \chapter{Grundlagen}
 \label{chap:grundlagen}
 
-\section{Grundlagen der prozeduralen Weltengenerierung}
-\label{chap:grundlagen_procedural}
+Dieses Kapitel legt die theoretischen und mathematischen Grundlagen für beide Teile der Arbeit. Zunächst behandelt Abschnitt~\ref{sec:grundlagen_procedural} die Grundlagen der prozeduralen Weltgenerierung, von deterministischem Zufall über Rauschverfahren bis zur graphentheoretischen Erreichbarkeitsanalyse. Im Anschluss folgen in Abschnitt~\ref{sec:grundlagen_rl} die Grundlagen des Reinforcement Learning.
 
-Dieses Kapitel legt die theoretischen und mathematischen Grundlagen für die prozedurale Generierung virtueller Spielwelten dar. Unter prozeduraler Generierung versteht man Verfahren, bei denen digitale Inhalte nicht manuell durch Designer erstellt, sondern algorithmisch zur Laufzeit berechnet werden. Dies ermöglicht die Erzeugung sehr großer oder theoretisch unendlicher Spielwelten bei geringem Speicherbedarf.
+\section{Grundlagen der prozeduralen Weltgenerierung}
+\label{sec:grundlagen_procedural}
 
-\section{Deterministischer Zufall und Pseudozufallszahlen}
+Unter prozeduraler Generierung versteht man Verfahren, bei denen digitale Inhalte nicht manuell durch Designer erstellt, sondern algorithmisch zur Laufzeit berechnet werden. Dies ermöglicht die Erzeugung sehr großer oder theoretisch unendlicher Spielwelten bei geringem Speicherbedarf. Die folgenden Abschnitte bauen aufeinander auf: Zunächst wird die deterministische Zufallsgrundlage behandelt (Abschnitt~\ref{sec:grundlagen_zufall}), darauf aufbauend die daraus abgeleiteten Rauschverfahren (Abschnitt~\ref{sec:grundlagen_noise}) und deren nachträgliche Glättung (Abschnitt~\ref{sec:grundlagen_ca}). Den Abschluss bildet die graphentheoretische Absicherung der Spielbarkeit (Abschnitt~\ref{sec:grundlagen_erreichbarkeit}).
+
+\subsection{Deterministischer Zufall und Pseudozufallszahlen}
 \label{sec:grundlagen_zufall}
 
-In der Informatik ist echter Zufall (\textit{True Randomness}) ohne spezielle Hardware-Schnittstellen schwer zu realisieren. Stattdessen kommen Pseudozufallszahlengeneratoren (\textit{Pseudo-Random Number Generators}, PRNG) zum Einsatz. Ein wesentliches Merkmal für die Weltengenerierung ist der Determininismus:
+In der Informatik ist echter Zufall (\textit{True Randomness}) ohne spezielle Hardware-Schnittstellen schwer zu realisieren. Stattdessen kommen Pseudozufallszahlengeneratoren (\textit{Pseudo-Random Number Generators}, PRNG) zum Einsatz. Ein wesentliches Merkmal für die Weltgenerierung ist der Determinismus:
 
 \begin{itemize}
     \item \textbf{Seed (Startwert):} Ein PRNG erzeugt eine deterministische Zahlenfolge basierend auf einem initialen Eingabewert (Seed). Bei identischem Seed erzeugt der Algorithmus jedes Mal exakt dieselbe Zahlenfolge.
     \item \textbf{Hash- und Mix-Funktionen:} Um räumliche Daten (wie zweidimensionale Koordinaten $(x, y)$) unabhängig von einem fortlaufenden Zustand abzufragen, werden häufig zustandslose Hash-Funktionen genutzt. Diese bilden Raumkoordinaten, den Seed und ein optionales \textit{Salt} (ein zusätzlicher Offset zur Unterscheidung verschiedener Abfragen) auf einen pseudozufälligen Wert im Intervall $[0, 1]$ ab.
 \end{itemize}
 
-\section{Gradienten- und Value-Noise-Verfahren}
+\subsection{Gradienten- und Value-Noise-Verfahren}
 \label{sec:grundlagen_noise}
 
 Die direkte Verwendung unkorrelierter Pseudozufallswerte für benachbarte Raumpunkte führt zu einer ungeordneten Struktur (weißes Rauschen). Für die Simulation natürlicher Landschaften werden daher \textit{Coherent-Noise}-Verfahren genutzt, bei denen nahe beieinander liegende Punkte ähnliche Werte aufweisen.
 
-\subsection{Value Noise und Interpolation}
+\subsubsection{Value Noise und Interpolation}
 Beim \textit{Value Noise} werden an den Knotenpunkten eines regulären Gitters pseudozufällige Skalarwerte bestimmt. Die Werte für Punkte innerhalb einer Gitterzelle berechnen sich anschließend durch Interpolation der umliegenden Knotenwerte.
 
 Um stetige Übergänge ohne harte Kanten an den Zellgrenzen zu gewährleisten, wird der Interpolationsparameter $t \in [0, 1]$ vor der linearen Interpolation (\textit{Lerp}) durch eine S-förmige Glättungsfunktion (\textit{Smoothstep}) transformiert:
@@ -511,9 +513,18 @@ Um stetige Übergänge ohne harte Kanten an den Zellgrenzen zu gewährleisten, w
 S(t) = 3t^2 - 2t^3
 \end{equation}
 
+Abbildung~\ref{fig:grundlagen_value_noise} stellt beide Interpolationsvarianten an denselben pseudozufälligen Knotenwerten gegenüber. Der Unterschied zeigt sich am deutlichsten an den Knoten selbst: Die lineare Variante bildet dort sichtbare Knicke, während die Smoothstep-Kurve glatt hindurchläuft.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Bilder/grundlagen_value_noise.png}
+    \caption{Value Noise -- lineare gegen Smoothstep-Interpolation zwischen denselben Knotenwerten, eigene Darstellung.}
+    \label{fig:grundlagen_value_noise}
+\end{figure}
+
 Im zweidimensionalen Raum erfolgt die Überlagerung der Interpolationen entlang beider Achsen mittels bilinearer Interpolation.
 
-\subsection{Domain Warping und fraktale Akkumulation}
+\subsubsection{Domain Warping und fraktale Akkumulation}
 Um die typischen Raster-Artefakte einfacher Gitterstrukturen zu vermeiden, werden fortgeschrittene Techniken eingesetzt:
 
 \begin{itemize}
@@ -525,22 +536,46 @@ Um die typischen Raster-Artefakte einfacher Gitterstrukturen zu vermeiden, werde
     Dies führt zu organischen Verformungen und eliminiert visuelle Gitterlinien.
 \end{itemize}
 
-\section{Zelluläre Automaten zur Gefügeglättung}
+Abbildung~\ref{fig:grundlagen_domain_warping} zeigt denselben Rauschausschnitt mit und ohne Domain Warping. Die verzerrte Variante rechts löst die diagonalen Vorzugsrichtungen des unverzerrten Rauschens auf und wirkt dadurch weniger regelmäßig.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Bilder/grundlagen_domain_warping.png}
+    \caption{Domain Warping -- derselbe Rauschausschnitt unverzerrt und verzerrt, eigene Darstellung.}
+    \label{fig:grundlagen_domain_warping}
+\end{figure}
+
+\subsection{Zelluläre Automaten zur Gefügeglättung}
 \label{sec:grundlagen_ca}
 
 Zelluläre Automaten (\textit{Cellular Automata}) bestehen aus Zellen, die diskrete Zustände (z.\,B. \textit{Wand} oder \textit{Freiraum}) annehmen können. In diskreten Zeitschritten aktualisiert jede Zelle ihren Zustand basierend auf einer lokalen Übergangsfunktion, welche die Zustände ihrer Nachbarschaft berücksichtigt.
 
-Häufig wird hierbei die Moore-Nachbarschaft verwendet, welche die 8 direkt angrenzenden Zellen (horizontal, vertikal und diagonal) umfasst. Durch gezielte Geburts- und Überlebensregeln (\textit{Birth/Survival Rules}) lassen sich aus verrauschten Initialzuständen zusammenhängende, natürliche Höhlen- und Klippenstrukturen erzeugen.
+Häufig wird hierbei die Moore-Nachbarschaft verwendet, welche die 8 direkt angrenzenden Zellen (horizontal, vertikal und diagonal) umfasst. Durch gezielte Geburts- und Überlebensregeln (\textit{Birth/Survival Rules}) lassen sich aus verrauschten Initialzuständen zusammenhängende, natürliche Höhlen- und Klippenstrukturen erzeugen. Abbildung~\ref{fig:grundlagen_ca} zeigt diesen Effekt an einem unabhängigen Beispielgitter mit der auch in der Projektkonfiguration hinterlegten Regel B5/S4 (Geburt ab 5, Überleben ab 4 Nachbarwänden): Aus unstrukturiertem Rauschen entstehen nach wenigen Iterationen zusammenhängende Flächen.
 
-\section{Graphentheoretische Erreichbarkeitsanalyse}
-\label{sec:grundlagen_bfs}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Bilder/grundlagen_zellulaere_automaten.png}
+    \caption{Zellulärer Automat -- Rauschgitter vor und nach vier Glättungsiterationen, eigene Darstellung.}
+    \label{fig:grundlagen_ca}
+\end{figure}
+
+\subsection{Graphentheoretische Erreichbarkeitsanalyse}
+\label{sec:grundlagen_erreichbarkeit}
 
 Ein zentrales Kriterium prozeduraler Welten ist die Sicherstellung der Spielbarkeit, insbesondere die Vermeidung unlösbarer Level-Zustände (\textit{Deadlocks}).
 
-\subsection{Breitensuche (Breadth-First Search, BFS)}
-Zur Analyse der Konnektivität wird das Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen als Knoten und Nachbarschaftsbeziehungen als Kanten dargestellt werden. Die Breitensuche (BFS) traversiert den Graphen ebenenweise vom Startknoten aus. Sie eignet sich zur Prüfung der Erreichbarkeit eines Zielknotens sowie zur Bestimmung des kürzesten Pfades auf ungewichten Gittern.
+\subsubsection{Breitensuche (Breadth-First Search, BFS)}
+\label{sec:grundlagen_bfs}
+Zur Analyse der Konnektivität wird das Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen als Knoten und Nachbarschaftsbeziehungen als Kanten dargestellt werden. Die Breitensuche (BFS) traversiert den Graphen ebenenweise vom Startknoten aus. Sie eignet sich zur Prüfung der Erreichbarkeit eines Zielknotens sowie zur Bestimmung des kürzesten Pfades auf ungewichten Gittern. Abbildung~\ref{fig:grundlagen_bfs} veranschaulicht das resultierende Distanzfeld an einem Beispielgitter: Jede Ebene entspricht einem BFS-Schritt vom Start aus, der kürzeste Pfad zum Ziel ergibt sich durch Rückverfolgung der jeweils näher liegenden Nachbarzelle.
 
-\subsection{Heuristische Validierung und Korrekturverfahren}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\textwidth]{Bilder/grundlagen_bfs.png}
+    \caption{Breitensuche -- Distanzfeld vom Startpunkt und daraus resultierender kürzester Pfad, eigene Darstellung.}
+    \label{fig:grundlagen_bfs}
+\end{figure}
+
+\subsubsection{Heuristische Validierung und Korrekturverfahren}
 Da die exakte graphenbasierte Validierung bei großen Chunks rechenintensiv sein kann, werden in der Praxis häufig kombinierte Ansätze gewählt:
 \begin{itemize}
     \item \textbf{Manhattan-Distanz:} Die Distanz zwischen zwei Punkten $(x_1, y_1)$ und $(x_2, y_2)$ auf einem orthogonalen Gitter berechnet sich nach:

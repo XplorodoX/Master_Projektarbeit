@@ -3,9 +3,9 @@
 \contentsline {chapter}{Kurzfassung}{IV}{chapter*.2}%
 \contentsline {chapter}{Abstract}{V}{chapter*.3}%
 \contentsline {chapter}{\nonumberline Abbildungsverzeichnis}{IX}{chapter*.5}%
-\contentsline {chapter}{\nonumberline Tabellenverzeichnis}{X}{chapter*.6}%
-\contentsline {chapter}{\nonumberline Quelltextverzeichnis}{XI}{chapter*.7}%
-\contentsline {chapter}{Abkürzungsverzeichnis}{XII}{chapter*.8}%
+\contentsline {chapter}{\nonumberline Tabellenverzeichnis}{XI}{chapter*.6}%
+\contentsline {chapter}{\nonumberline Quelltextverzeichnis}{XII}{chapter*.7}%
+\contentsline {chapter}{Abkürzungsverzeichnis}{XIII}{chapter*.8}%
 \contentsline {chapter}{\numberline {1}Einleitung}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Motivation}{1}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Problemstellung}{1}{section.1.2}%
@@ -16,98 +16,98 @@
 \contentsline {section}{\numberline {1.5}Abgrenzung}{2}{section.1.5}%
 \contentsline {section}{\numberline {1.6}Verwandte Arbeiten}{3}{section.1.6}%
 \contentsline {chapter}{\numberline {2}Grundlagen}{4}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Grundlagen der prozeduralen Weltengenerierung}{4}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Deterministischer Zufall und Pseudozufallszahlen}{4}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Gradienten- und Value-Noise-Verfahren}{4}{section.2.3}%
-\contentsline {subsection}{\numberline {2.3.1}Value Noise und Interpolation}{4}{subsection.2.3.1}%
-\contentsline {subsection}{\numberline {2.3.2}Domain Warping und fraktale Akkumulation}{5}{subsection.2.3.2}%
-\contentsline {section}{\numberline {2.4}Zelluläre Automaten zur Gefügeglättung}{5}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Graphentheoretische Erreichbarkeitsanalyse}{5}{section.2.5}%
-\contentsline {subsection}{\numberline {2.5.1}Breitensuche (Breadth-First Search, BFS)}{6}{subsection.2.5.1}%
-\contentsline {subsection}{\numberline {2.5.2}Heuristische Validierung und Korrekturverfahren}{6}{subsection.2.5.2}%
-\contentsline {section}{\numberline {2.6}Grundlagen des Reinforcement Learning}{6}{section.2.6}%
-\contentsline {paragraph}{\nonumberline Partially Observable Markov Decision Processes (POMDP)}{6}{paragraph*.12}%
-\contentsline {paragraph}{\nonumberline Potential Based Reward Shaping (PBRS)}{7}{paragraph*.14}%
-\contentsline {paragraph}{\nonumberline Curriculum Learning}{8}{paragraph*.16}%
-\contentsline {paragraph}{\nonumberline Proximal Policy Optimization (PPO)}{8}{paragraph*.17}%
-\contentsline {paragraph}{\nonumberline Rekurrente Neuronale Netze (RNN)}{9}{paragraph*.19}%
-\contentsline {paragraph}{\nonumberline Long Short Term Memory (LSTM)}{9}{paragraph*.20}%
-\contentsline {paragraph}{\nonumberline Deep Q Networks (DQN)}{10}{paragraph*.22}%
-\contentsline {subsection}{\numberline {2.6.1}Die Gymnasium-Schnittstelle (ehemals OpenAI Gym)}{11}{subsection.2.6.1}%
-\contentsline {chapter}{\numberline {3}Methodik}{13}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Methodik der Weltgenerierung}{13}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Methodische Grundlagen}{13}{subsection.3.1.1}%
-\contentsline {subsubsection}{\nonumberline Pseudozufall und Rauscherzeugung}{13}{subsubsection*.24}%
-\contentsline {subsubsection}{\nonumberline Domain Warping und fraktaler Noise}{13}{subsubsection*.25}%
-\contentsline {subsubsection}{\nonumberline Nachbearbeitung und Validierung}{13}{subsubsection*.26}%
-\contentsline {subsection}{\numberline {3.1.2}Heuristiken und Regeln}{14}{subsection.3.1.2}%
-\contentsline {subsubsection}{\nonumberline Biome und Schwellenwerte}{14}{subsubsection*.27}%
-\contentsline {subsubsection}{\nonumberline Freiräume und Fallback-Pfade}{14}{subsubsection*.28}%
-\contentsline {subsection}{\numberline {3.1.3}Systemkonfiguration}{14}{subsection.3.1.3}%
-\contentsline {section}{\numberline {3.2}Methodik des RL-Trainings}{14}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Auswahl der zu vergleichenden Trainingsverfahren}{15}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Problemformulierung: Zustand, Aktionsraum und Reward}{15}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Curriculum Konzept und Schnittstelle zur Weltgenerierung}{16}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Definition der Baselines}{16}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Trainings- und Evaluationsprotokoll}{17}{subsection.3.2.5}%
-\contentsline {subsection}{\numberline {3.2.6}Validierungsstrategie und Umgang mit Trainingsinstabilitäten}{18}{subsection.3.2.6}%
-\contentsline {chapter}{\numberline {4}Umsetzung und technische Realisierung}{19}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Implementierung der Weltgenerierung}{19}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Implementierung der Rauscherzeugung und des Koordinaten-Hashings}{19}{subsection.4.1.1}%
-\contentsline {subsubsection}{\nonumberline Deterministischer Hash-Mixer}{19}{subsubsection*.34}%
-\contentsline {subsubsection}{\nonumberline Variablen und Datenstrukturen}{20}{subsubsection*.35}%
-\contentsline {subsection}{\numberline {4.1.2}Biomeinteilung und Objekt-Placement}{21}{subsection.4.1.2}%
-\contentsline {subsubsection}{\nonumberline Implementierung der Kachelauswertung}{21}{subsubsection*.36}%
-\contentsline {subsubsection}{\nonumberline Logik und Priorisierung der Kachelzuweisung}{22}{subsubsection*.37}%
-\contentsline {subsection}{\numberline {4.1.3}Topologische Sicherheits-Fallbacks und Spawn-Freiräume}{23}{subsection.4.1.3}%
-\contentsline {subsubsection}{\nonumberline Implementierung des Manhattan-Carvers und der Freiradien}{23}{subsubsection*.38}%
-\contentsline {subsubsection}{\nonumberline Funktionsweise und Ausführungsreihenfolge}{25}{subsubsection*.39}%
-\contentsline {subsection}{\numberline {4.1.4}Generierung von Gewässern und dynamische Strand-Derivation}{25}{subsection.4.1.4}%
-\contentsline {subsubsection}{\nonumberline Mathematische Seen-Maskierung (\texttt {lakeMaskAt})}{25}{subsubsection*.40}%
-\contentsline {subsubsection}{\nonumberline Prozedurale Strand-Derivation im Renderer}{26}{subsubsection*.41}%
-\contentsline {subsection}{\numberline {4.1.5}Chunk-Speicherarchitektur und prozedurales Biome-Blending}{28}{subsection.4.1.5}%
-\contentsline {subsubsection}{\nonumberline Bedarfsgesteuerte Chunk-Datenstruktur (\texttt {Lazy Generation})}{28}{subsubsection*.43}%
-\contentsline {subsubsection}{\nonumberline Visuelle Biome-Transformation und weiche Übergänge}{29}{subsubsection*.45}%
-\contentsline {subsection}{\numberline {4.1.6}Prozedurale Struktur-Platzierung und dynamisches Gegner-Spawning}{31}{subsection.4.1.6}%
-\contentsline {subsubsection}{\nonumberline Statische Geländestrukturen in der Chunk-Generierung}{31}{subsubsection*.46}%
-\contentsline {subsubsection}{\nonumberline Dynamisches Gegner-Spawning und Lokale Verfolgung}{32}{subsubsection*.47}%
-\contentsline {subsection}{\numberline {4.1.7}Spieler-Bewegung, Kollisionsabfrage und Kampfdynamik}{33}{subsection.4.1.7}%
-\contentsline {subsubsection}{\nonumberline Kollisionsprüfungen und Passierbarkeits-Matrix}{33}{subsubsection*.48}%
-\contentsline {subsubsection}{\nonumberline Client-seitige Terrain-Verlangsamung (Wasser-Mechanik)}{34}{subsubsection*.49}%
-\contentsline {subsubsection}{\nonumberline Flächenbasiertes Kampfsystem und Proximity Damage}{34}{subsubsection*.50}%
-\contentsline {section}{\numberline {4.2}Implementierung des RL-Trainings}{35}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Technologie-Stack}{35}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Anbindung der Spielumgebung und Aufbau der Beobachtung}{36}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Netzwerkarchitekturen: Asymmetrie zwischen LSTM- und MLP-Policy}{37}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}Trainingspipeline und duales Curriculum-Gating}{38}{subsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.2.5}Reward-Shaping und Distanzfeld}{40}{subsection.4.2.5}%
-\contentsline {subsection}{\numberline {4.2.6}Umsetzung der Baselines: Die wandblinde Kompass-Heuristik}{41}{subsection.4.2.6}%
-\contentsline {subsection}{\numberline {4.2.7}Vollständige Hyperparameter-Konfiguration}{42}{subsection.4.2.7}%
-\contentsline {chapter}{\numberline {5}Evaluation}{44}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Evaluation der Weltgenerierung}{44}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}Visuelle Ergebnisse und Biome-Gradients}{44}{subsection.5.1.1}%
-\contentsline {subsection}{\numberline {5.1.2}Synthese der Spielelemente}{44}{subsection.5.1.2}%
-\contentsline {subsection}{\numberline {5.1.3}Artefaktanalyse: Das Phänomen des Biome-Swallowing}{45}{subsection.5.1.3}%
-\contentsline {subsection}{\numberline {5.1.4}Lösungsansätze für kleine Biome}{45}{subsection.5.1.4}%
-\contentsline {subsection}{\numberline {5.1.5}Performance-Evaluation und Benchmarking}{46}{subsection.5.1.5}%
-\contentsline {subsubsection}{\nonumberline Generierungsgeschwindigkeit und Lazy Loading}{46}{subsubsection*.55}%
-\contentsline {subsubsection}{\nonumberline Simulationsschritt und Frame-Proxy}{46}{subsubsection*.56}%
-\contentsline {subsubsection}{\nonumberline Speichereffizienz der Hash-Map-Architektur}{46}{subsubsection*.57}%
-\contentsline {subsubsection}{\nonumberline Determinismus und Reproduzierbarkeit}{47}{subsubsection*.58}%
-\contentsline {subsection}{\numberline {5.1.6}Kritische Diskussion und Limitationen}{47}{subsection.5.1.6}%
-\contentsline {subsubsection}{\nonumberline Vorteile der Architektur}{47}{subsubsection*.59}%
-\contentsline {subsubsection}{\nonumberline Identifizierte Schwachstellen und Limitationen}{47}{subsubsection*.60}%
-\contentsline {section}{\numberline {5.2}Evaluation des RL-Trainings}{48}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Erfolgsquote der trainierten Verfahren}{48}{subsection.5.2.1}%
-\contentsline {subsection}{\numberline {5.2.2}Pfadeffizienz derselben Verfahren}{49}{subsection.5.2.2}%
-\contentsline {subsection}{\numberline {5.2.3}Die Determinismus-Lücke}{50}{subsection.5.2.3}%
-\contentsline {subsection}{\numberline {5.2.4}Einordnung gegenüber den Referenzpunkten}{51}{subsection.5.2.4}%
-\contentsline {subsection}{\numberline {5.2.5}Wirksamkeit der Hyperparameter}{52}{subsection.5.2.5}%
-\contentsline {chapter}{\numberline {6}Fazit und Ausblick}{54}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Diskussion der Ergebnisse}{54}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Fazit}{55}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Ausblick}{56}{section.6.3}%
-\contentsline {chapter}{Literaturverzeichnis}{57}{section*.66}%
+\contentsline {section}{\numberline {2.1}Grundlagen der prozeduralen Weltgenerierung}{4}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Deterministischer Zufall und Pseudozufallszahlen}{4}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Gradienten- und Value-Noise-Verfahren}{4}{subsection.2.1.2}%
+\contentsline {subsubsection}{\nonumberline Value Noise und Interpolation}{5}{subsubsection*.11}%
+\contentsline {subsubsection}{\nonumberline Domain Warping und fraktale Akkumulation}{5}{subsubsection*.13}%
+\contentsline {subsection}{\numberline {2.1.3}Zelluläre Automaten zur Gefügeglättung}{6}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Graphentheoretische Erreichbarkeitsanalyse}{7}{subsection.2.1.4}%
+\contentsline {subsubsection}{\nonumberline Breitensuche (Breadth-First Search, BFS)}{7}{subsubsection*.16}%
+\contentsline {subsubsection}{\nonumberline Heuristische Validierung und Korrekturverfahren}{7}{subsubsection*.18}%
+\contentsline {section}{\numberline {2.2}Grundlagen des Reinforcement Learning}{8}{section.2.2}%
+\contentsline {paragraph}{\nonumberline Partially Observable Markov Decision Processes (POMDP)}{9}{paragraph*.20}%
+\contentsline {paragraph}{\nonumberline Potential Based Reward Shaping (PBRS)}{9}{paragraph*.22}%
+\contentsline {paragraph}{\nonumberline Curriculum Learning}{9}{paragraph*.24}%
+\contentsline {paragraph}{\nonumberline Proximal Policy Optimization (PPO)}{10}{paragraph*.25}%
+\contentsline {paragraph}{\nonumberline Rekurrente Neuronale Netze (RNN)}{11}{paragraph*.27}%
+\contentsline {paragraph}{\nonumberline Long Short Term Memory (LSTM)}{11}{paragraph*.28}%
+\contentsline {paragraph}{\nonumberline Deep Q Networks (DQN)}{12}{paragraph*.30}%
+\contentsline {subsection}{\numberline {2.2.1}Die Gymnasium-Schnittstelle (ehemals OpenAI Gym)}{12}{subsection.2.2.1}%
+\contentsline {chapter}{\numberline {3}Methodik}{15}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Methodik der Weltgenerierung}{15}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Methodische Grundlagen}{15}{subsection.3.1.1}%
+\contentsline {subsubsection}{\nonumberline Pseudozufall und Rauscherzeugung}{15}{subsubsection*.32}%
+\contentsline {subsubsection}{\nonumberline Domain Warping und fraktaler Noise}{15}{subsubsection*.33}%
+\contentsline {subsubsection}{\nonumberline Nachbearbeitung und Validierung}{15}{subsubsection*.34}%
+\contentsline {subsection}{\numberline {3.1.2}Heuristiken und Regeln}{16}{subsection.3.1.2}%
+\contentsline {subsubsection}{\nonumberline Biome und Schwellenwerte}{16}{subsubsection*.35}%
+\contentsline {subsubsection}{\nonumberline Freiräume und Fallback-Pfade}{16}{subsubsection*.36}%
+\contentsline {subsection}{\numberline {3.1.3}Systemkonfiguration}{16}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}Methodik des RL-Trainings}{16}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Auswahl der zu vergleichenden Trainingsverfahren}{17}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Problemformulierung: Zustand, Aktionsraum und Reward}{17}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Curriculum Konzept und Schnittstelle zur Weltgenerierung}{18}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Definition der Baselines}{18}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Trainings- und Evaluationsprotokoll}{19}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Validierungsstrategie und Umgang mit Trainingsinstabilitäten}{20}{subsection.3.2.6}%
+\contentsline {chapter}{\numberline {4}Umsetzung und technische Realisierung}{21}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Implementierung der Weltgenerierung}{21}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Implementierung der Rauscherzeugung und des Koordinaten-Hashings}{21}{subsection.4.1.1}%
+\contentsline {subsubsection}{\nonumberline Deterministischer Hash-Mixer}{21}{subsubsection*.42}%
+\contentsline {subsubsection}{\nonumberline Variablen und Datenstrukturen}{22}{subsubsection*.43}%
+\contentsline {subsection}{\numberline {4.1.2}Biomeinteilung und Objekt-Placement}{23}{subsection.4.1.2}%
+\contentsline {subsubsection}{\nonumberline Implementierung der Kachelauswertung}{23}{subsubsection*.44}%
+\contentsline {subsubsection}{\nonumberline Logik und Priorisierung der Kachelzuweisung}{24}{subsubsection*.45}%
+\contentsline {subsection}{\numberline {4.1.3}Topologische Sicherheits-Fallbacks und Spawn-Freiräume}{25}{subsection.4.1.3}%
+\contentsline {subsubsection}{\nonumberline Implementierung des Manhattan-Carvers und der Freiradien}{25}{subsubsection*.46}%
+\contentsline {subsubsection}{\nonumberline Funktionsweise und Ausführungsreihenfolge}{27}{subsubsection*.47}%
+\contentsline {subsection}{\numberline {4.1.4}Generierung von Gewässern und dynamische Strand-Derivation}{27}{subsection.4.1.4}%
+\contentsline {subsubsection}{\nonumberline Mathematische Seen-Maskierung (\texttt {lakeMaskAt})}{27}{subsubsection*.48}%
+\contentsline {subsubsection}{\nonumberline Prozedurale Strand-Derivation im Renderer}{28}{subsubsection*.49}%
+\contentsline {subsection}{\numberline {4.1.5}Chunk-Speicherarchitektur und prozedurales Biome-Blending}{30}{subsection.4.1.5}%
+\contentsline {subsubsection}{\nonumberline Bedarfsgesteuerte Chunk-Datenstruktur (\texttt {Lazy Generation})}{30}{subsubsection*.51}%
+\contentsline {subsubsection}{\nonumberline Visuelle Biome-Transformation und weiche Übergänge}{31}{subsubsection*.53}%
+\contentsline {subsection}{\numberline {4.1.6}Prozedurale Struktur-Platzierung und dynamisches Gegner-Spawning}{33}{subsection.4.1.6}%
+\contentsline {subsubsection}{\nonumberline Statische Geländestrukturen in der Chunk-Generierung}{33}{subsubsection*.54}%
+\contentsline {subsubsection}{\nonumberline Dynamisches Gegner-Spawning und Lokale Verfolgung}{34}{subsubsection*.55}%
+\contentsline {subsection}{\numberline {4.1.7}Spieler-Bewegung, Kollisionsabfrage und Kampfdynamik}{35}{subsection.4.1.7}%
+\contentsline {subsubsection}{\nonumberline Kollisionsprüfungen und Passierbarkeits-Matrix}{35}{subsubsection*.56}%
+\contentsline {subsubsection}{\nonumberline Client-seitige Terrain-Verlangsamung (Wasser-Mechanik)}{36}{subsubsection*.57}%
+\contentsline {subsubsection}{\nonumberline Flächenbasiertes Kampfsystem und Proximity Damage}{36}{subsubsection*.58}%
+\contentsline {section}{\numberline {4.2}Implementierung des RL-Trainings}{37}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Technologie-Stack}{37}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Anbindung der Spielumgebung und Aufbau der Beobachtung}{38}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Netzwerkarchitekturen: Asymmetrie zwischen LSTM- und MLP-Policy}{39}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Trainingspipeline und duales Curriculum-Gating}{40}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}Reward-Shaping und Distanzfeld}{42}{subsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.2.6}Umsetzung der Baselines: Die wandblinde Kompass-Heuristik}{43}{subsection.4.2.6}%
+\contentsline {subsection}{\numberline {4.2.7}Vollständige Hyperparameter-Konfiguration}{44}{subsection.4.2.7}%
+\contentsline {chapter}{\numberline {5}Evaluation}{46}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Evaluation der Weltgenerierung}{46}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Visuelle Ergebnisse und Biome-Gradients}{46}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Synthese der Spielelemente}{46}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Artefaktanalyse: Das Phänomen des Biome-Swallowing}{47}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Lösungsansätze für kleine Biome}{47}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {5.1.5}Performance-Evaluation und Benchmarking}{48}{subsection.5.1.5}%
+\contentsline {subsubsection}{\nonumberline Generierungsgeschwindigkeit und Lazy Loading}{48}{subsubsection*.63}%
+\contentsline {subsubsection}{\nonumberline Simulationsschritt und Frame-Proxy}{48}{subsubsection*.64}%
+\contentsline {subsubsection}{\nonumberline Speichereffizienz der Hash-Map-Architektur}{48}{subsubsection*.65}%
+\contentsline {subsubsection}{\nonumberline Determinismus und Reproduzierbarkeit}{49}{subsubsection*.66}%
+\contentsline {subsection}{\numberline {5.1.6}Kritische Diskussion und Limitationen}{49}{subsection.5.1.6}%
+\contentsline {subsubsection}{\nonumberline Vorteile der Architektur}{49}{subsubsection*.67}%
+\contentsline {subsubsection}{\nonumberline Identifizierte Schwachstellen und Limitationen}{49}{subsubsection*.68}%
+\contentsline {section}{\numberline {5.2}Evaluation des RL-Trainings}{50}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Erfolgsquote der trainierten Verfahren}{50}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Pfadeffizienz derselben Verfahren}{51}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Die Determinismus-Lücke}{52}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Einordnung gegenüber den Referenzpunkten}{53}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.5}Wirksamkeit der Hyperparameter}{54}{subsection.5.2.5}%
+\contentsline {chapter}{\numberline {6}Fazit und Ausblick}{56}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Diskussion der Ergebnisse}{56}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Fazit}{57}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Ausblick}{58}{section.6.3}%
+\contentsline {chapter}{Literaturverzeichnis}{59}{section*.74}%
 \def \@chapapp {\appendixname }
-\contentsline {chapter}{\numberline {A}Anhang}{59}{appendix.A}%
+\contentsline {chapter}{\numberline {A}Anhang}{61}{appendix.A}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

@@ -2,6 +2,25 @@
 
 ---
 
+## v2026-08-12.5 — Kapitel 2 (Grundlagen) umstrukturiert und mit vier neuen Schema-Abbildungen versehen
+
+**Wer:** Florian.
+
+**Kontext:** Der Weltgenerierungs-Teil von Kapitel 2 bestand aus fünf einzelnen `\section`-Ebenen (eine davon nur ein Absatz lang, faktisch eine verwaiste Kapiteleinleitung), während der RL-Teil direkt daneben alles in eine einzige Section mit `\paragraph`-Ebenen packte — uneinheitliche Gliederungstiefe, keine Kapiteleinleitung, kein Signposting. Zudem enthielt der Weltgenerierungs-Teil keine einzige Abbildung, während der RL-Teil sechs hat.
+
+#### Änderung 1 — Gliederung vereinheitlicht
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Lösung:** Die fünf `\section`-Ebenen zu einer `\section{Grundlagen der prozeduralen Weltgenerierung}` mit vier `\subsection`-Ebenen zusammengefasst (Zufall, Noise, Zelluläre Automaten, Erreichbarkeit), Value-Noise/Domain-Warping sowie BFS/Heuristische Validierung darunter als `\subsubsection`. Damit spiegelt Kapitel 2 jetzt exakt die Zweiteilung des Gesamtdokuments (Weltgenerierung/RL). Die verwaiste Ein-Satz-Section wurde zur Kapiteleinleitung mit Signposting. Alle bestehenden Labels erhalten, der eine externe Verweis (`sec:grundlagen_bfs`, aus dem Pfadeffizienz-Kapitel) löst weiterhin korrekt auf. Nebenbei zwei Fundstellen korrigiert: Tippfehler „Determininismus", Begriffsinkonsistenz „Weltengenerierung"/„Weltgenerierung" innerhalb des Abschnitts.
+
+#### Änderung 2 — Vier Schema-Abbildungen ergänzt
+**Datei:** `scripts/plot_grundlagen_figures.py` (neu), vier PNGs in `docs/Doku/Bilder/`
+**Problem:** „Kein Kapitel ohne Abbildung" war für den Weltgenerierungs-Teil von Kapitel 2 nicht erfüllt.
+**Lösung:** Vier Konzept-Illustrationen erzeugt, analog zu den bereits vorhandenen RL-Grundlagen-Schemata (PPO-Clipping, PBRS-Potentialfeld): Value-Noise-Interpolation (linear gegen Smoothstep an denselben Knotenwerten), Domain Warping (Rauschausschnitt unverzerrt/verzerrt), zellulärer Automat (Rauschgitter vor/nach Glättung, mit der auch in der Projektkonfiguration hinterlegten Regel B5/S4), BFS-Distanzfeld mit kürzestem Pfad. Alle vier sind eigenständig implementierte, pädagogisch motivierte Illustrationen der Algorithmen, keine Messdaten aus dem Projekt — wie bei den bestehenden RL-Schemata ist das für Konzeptabbildungen zulässig, anders als bei Ergebnisdiagrammen. Jede Abbildung im Fließtext angekündigt und ausgewertet, Bildunterschrift je ein Satz.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 71 Seiten (vorher 69).
+
+---
+
 ## v2026-08-12.4 — Vier Evaluations-Abbildungen mit reproduzierbarem Skript neu erzeugt
 
 **Wer:** Florian.
