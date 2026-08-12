@@ -2,6 +2,27 @@
 
 ---
 
+## v2026-08-12.1 — MLP-Kontrollgruppe im kanonischen Eval-Protokoll nachgemessen
+
+**Wer:** Florian.
+
+**Kontext:** Der methodische Bruch beim MLP-Testset-A-Lauf wurde korrigiert. Die Kontrollgruppe wurde nicht mehr nur als Einzel-Snapshot bewertet, sondern mit exakt demselben Standard-Eval-Protokoll wie die LSTM-Läufe vermessen.
+
+#### Änderung 1 — MLP in `eval_baselines.py` mit Standard-Protokoll nachgezogen
+**Datei:** `scripts/eval_baselines.py`
+**Problem:** Der MLP-Lauf war zwar in den v12-Modellen vorhanden, aber nicht auf dem gleichen, kanonischen Protokoll wie das LSTM ausgewertet worden. Dadurch war der Vergleich methodisch unzulässig.
+**Lösung:** `ModelPolicy` wurde auf beide Architekturen erweitert: rekurrente PPO-Modelle nutzen den LSTM-Zustand, MLP-Modelle verwenden den normalen `model.predict(obs, deterministic=False)`-Pfad. Im `--models`-Zweig des Standard-Evals werden nun auch die MLP-Modelle aus `models/ppo_mlp_curriculum_v12_s1..s7` ausgewertet.
+
+**Ergebnis:** Bei Standard-Eval mit Seeds 7000–7049 und 8000–8049, Exit 35–45, Episoden-Cap 4000:
+
+| Algorithmus | Testset A | Testset B |
+|-------------|-----------|-----------|
+| PPO (MLP, v12, n=7) | 33,7 % ± 28,7 | 38,6 % ± 32,3 |
+
+Damit ist der Nachweis für die MLP-Kontrollgruppe sauber, reproduzierbar und mit dem gleichen Protokoll wie das LSTM dokumentiert.
+
+---
+
 ## v2026-08-08.2 — Early Stop und Seed-Pool vertieft, Versionsverlauf aus Florians Teil gelöst
 
 **Wer:** Florian.

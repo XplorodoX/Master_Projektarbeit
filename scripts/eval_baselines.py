@@ -86,23 +86,29 @@ class CompassPolicy:
 
 
 class ModelPolicy:
-    """RecurrentPPO mit korrekt gefuehrtem LSTM-Zustand."""
+    """PPO-Policy mit Unterstützung für MLP- und LSTM-Modelle."""
 
     def __init__(self, model, deterministic: bool = False, name: str = "model") -> None:
         self.model = model
         self.deterministic = deterministic
         self.name = name
+        self.recurrent = hasattr(model, "policy") and hasattr(model.policy, "lstm")
 
     def reset(self):
-        return (None, np.ones((1,), dtype=bool))
+        if self.recurrent:
+            return (None, np.ones((1,), dtype=bool))
+        return None
 
     def __call__(self, obs, ctx):
-        state, episode_start = ctx
-        action, state = self.model.predict(
-            obs, state=state, episode_start=episode_start,
-            deterministic=self.deterministic,
-        )
-        return int(action), (state, np.zeros((1,), dtype=bool))
+        if self.recurrent:
+            state, episode_start = ctx
+            action, state = self.model.predict(
+                obs, state=state, episode_start=episode_start,
+                deterministic=self.deterministic,
+            )
+            return int(action), (state, np.zeros((1,), dtype=bool))
+        action, _ = self.model.predict(obs, deterministic=self.deterministic)
+        return int(action), None
 
 
 # --------------------------------------------------------------------------- Messung
@@ -197,22 +203,35 @@ def main() -> None:
               f" {b['steps']:9.0f} {b['efficiency']:7.3f}")
 
     if args.models:
+        from stable_baselines3 import PPO
         from sb3_contrib import RecurrentPPO
         from stoneforge_env import env_kwargs_for_model
         print("-" * 100)
+
         for s in range(1, 8):
-            path = Path(f"models/ppo_lstm_curriculum_v12_s{s}/best_model.zip")
-            if not path.exists():
-                continue
-            model = RecurrentPPO.load(str(path), device="cpu")
-            kw = env_kwargs_for_model(model)
-            rows = run(lambda k, m=model: ModelPolicy(m, False, f"v12_s{s}"),
-                       env_kwargs=kw, repeats=args.repeats, rng_offset=args.rng_offset)
-            results[f"v12_s{s}_stoch"] = rows
-            a, b = rows["A"], rows["B"]
-            print(f"{'RecurrentPPO v12_s'+str(s)+' (stoch)':34s} {a['sr_mean']:6.1f} ± {a['sr_std']:4.1f}"
-                  f" {a['steps']:9.0f} {a['efficiency']:7.3f} {b['sr_mean']:6.1f} ± {b['sr_std']:4.1f}"
-                  f" {b['steps']:9.0f} {b['efficiency']:7.3f}")
+            path_lstm = Path(f"models/ppo_lstm_curriculum_v12_s{s}/best_model.zip")
+            if path_lstm.exists():
+                model = RecurrentPPO.load(str(path_lstm), device="cpu")
+                kw = env_kwargs_for_model(model)
+                rows = run(lambda k, m=model: ModelPolicy(m, False, f"v12_s{s}"),
+                           env_kwargs=kw, repeats=args.repeats, rng_offset=args.rng_offset)
+                results[f"v12_s{s}_stoch"] = rows
+                a, b = rows["A"], rows["B"]
+                print(f"{'RecurrentPPO v12_s'+str(s)+' (stoch)':34s} {a['sr_mean']:6.1f} ± {a['sr_std']:4.1f}"
+                      f" {a['steps']:9.0f} {a['efficiency']:7.3f} {b['sr_mean']:6.1f} ± {b['sr_std']:4.1f}"
+                      f" {b['steps']:9.0f} {b['efficiency']:7.3f}")
+
+            path_mlp = Path(f"models/ppo_mlp_curriculum_v12_s{s}/best_model.zip")
+            if path_mlp.exists():
+                model = PPO.load(str(path_mlp), device="cpu")
+                kw = env_kwargs_for_model(model)
+                rows = run(lambda k, m=model: ModelPolicy(m, False, f"v12_mlp_s{s}"),
+                           env_kwargs=kw, repeats=args.repeats, rng_offset=args.rng_offset)
+                results[f"v12_mlp_s{s}_stoch"] = rows
+                a, b = rows["A"], rows["B"]
+                print(f"{'PPO-MLP v12_s'+str(s)+' (stoch)':34s} {a['sr_mean']:6.1f} ± {a['sr_std']:4.1f}"
+                      f" {a['steps']:9.0f} {a['efficiency']:7.3f} {b['sr_mean']:6.1f} ± {b['sr_std']:4.1f}"
+                      f" {b['steps']:9.0f} {b['efficiency']:7.3f}")
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
