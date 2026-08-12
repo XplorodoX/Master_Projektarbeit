@@ -1,0 +1,25 @@
+\babel@toc {ngerman}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Interaktionsschleife zwischen Agent und Umgebung.}}{7}{figure.caption.11}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Vergleich zwischen vollständiger und partieller Beobachtbarkeit.}}{7}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Veranschaulichung des Potentialfelds $\Phi (s)$ und der daraus resultierenden formenden Belohnung entlang eines Beispielpfads.}}{8}{figure.caption.15}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Darstellung der Clipped Surrogate Objective von PPO.}}{9}{figure.caption.18}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Funktionsweise einer rekurrenten Policy im Vergleich zu einer zustandslosen Policy.}}{10}{figure.caption.21}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Zusammenspiel von Replay Buffer und Target Network in der DQN Architektur.}}{11}{figure.caption.23}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Struktur des vierphasigen Curriculum-Trainings mit Steigerung der Exit-Distanz}}{16}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Entscheidungsregel und ausgewertete Parameter der $\varepsilon $-Kompass-Heuristik}}{17}{figure.caption.32}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Nahaufnahme einer prozedural generierten Seenstruktur mit organischer, rauschbasierter Uferlinie und dynamisch abgeleitetem Strand-Overlay an den Begehbarkeitsgrenzen. Quelle: Eigene Darstellung (Screenshot des Prototyps).}}{27}{figure.caption.42}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Vergleichende Darstellung von vier der sieben implementierten Biome anhand von Screenshots des Prototyps. Die unterschiedlichen Untergrund-Farbpaletten sowie Objekt- und Hindernisdichten ergeben sich aus den biomspezifischen Schwellenwerten (\texttt {wallThreshold}, \texttt {oreThreshold}, \texttt {treeThreshold}) aus Abschnitt~\ref {sec:umsetzung_biome}. Quelle: Eigene Darstellung (Screenshots des Prototyps).}}{29}{figure.caption.44}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Visualisierung der generierten Spielwelt mit dynamischer Beleuchtung/Sichtfeld, organischen Seenstrukturen, Strandbereichen und biomabhängigen Kacheltypen. Quelle: Eigene Darstellung (Screenshot des Prototyps, Debug-Overlay entfernt).}}{42}{figure.caption.53}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Evaluation -- Erfolgsquote der trainierten Verfahren und der Referenzpunkte auf Testset A, eigene Darstellung.}}{47}{figure.caption.61}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Evaluation -- Pfadeffizienz der Verfahren in derselben Achsenordnung, eigene Darstellung.}}{48}{figure.caption.62}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Evaluation -- Erfolgsquote desselben Modellstands in deterministischer und stochastischer Auswertung, eigene Darstellung.}}{49}{figure.caption.63}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Evaluation -- Erfolgsquote gegen Pfadeffizienz für alle Verfahren, eigene Darstellung.}}{49}{figure.caption.64}%
+\addvspace {10\p@ }
+\def \@chapapp {\appendixname }
+\addvspace {10\p@ }
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

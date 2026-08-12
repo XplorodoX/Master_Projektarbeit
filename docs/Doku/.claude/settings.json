@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(latexmk -pdf -interaction=nonstopmode -halt-on-error \"Projektarbeit Stoneforge RL.tex\")",
+      "Bash(grep -i \"File .* not found\\\\|Fatal error\\\\|Missing \\\\$\" /tmp/latexmk_out5.log)",
+      "Bash(grep -n -B2 -A2 \"Missing \\\\$\" \"Projektarbeit Stoneforge RL.log\")",
+      "Bash(grep -n \"Fatal error\\\\|Missing \\\\$\\\\|no output PDF\" \"Projektarbeit Stoneforge RL.log\")",
+      "Bash(awk -F: '$1>800 && $1<1420')"
+    ]
+  }
+}

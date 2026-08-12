@@ -1,0 +1,133 @@
+\begin{thebibliography}{17}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bengio et~al.(2009)Bengio, Louradour, Collobert, and
+  Weston]{bengio2009curriculum}
+Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
+\newblock Curriculum learning.
+\newblock In \emph{Proceedings of the 26th Annual International Conference on
+  Machine Learning (ICML)}, pages 41--48, 2009.
+
+\bibitem[Brockman et~al.(2016)Brockman, Cheung, Pettersson, Schneider,
+  Schulman, Tang, and Zaremba]{brockman2016openai}
+Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
+  Jie Tang, and Wojciech Zaremba.
+\newblock Openai gym, 2016.
+
+\bibitem[Chevalier-Boisvert et~al.(2023)Chevalier-Boisvert, Dai, Markese,
+  Willems, Pal, Castro, and Sogaard]{chevalier2023minigrid}
+Maxime Chevalier-Boisvert, Bolun Dai, Mark Markese, Lucas Willems, Suman Pal,
+  Pablo~Samuel Castro, and Anders Sogaard.
+\newblock Minigrid \& babyai: Core architectures for rl in environments with
+  sparse rewards and partial observability.
+\newblock \emph{arXiv preprint arXiv:2306.13831}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2306.13831}.
+
+\bibitem[Cobbe et~al.(2020)Cobbe, Hesse, Hilton, and
+  Schulman]{cobbe2020procgen}
+Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
+\newblock Leveraging procedural generation to benchmark reinforcement learning.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, pages
+  2048--2056. PMLR, 2020.
+\newblock URL \url{https://proceedings.mlr.press/v119/cobbe20a.html}.
+
+\bibitem[Hafner(2021)]{hafner2021crafter}
+Danijar Hafner.
+\newblock Benchmarking the spectrum of agent capabilities.
+\newblock \emph{arXiv preprint arXiv:2109.06780}, 2021.
+\newblock URL \url{https://arxiv.org/abs/2109.06780}.
+
+\bibitem[Hausknecht and Stone(2015)]{hausknecht2015deep}
+Matthew Hausknecht and Peter Stone.
+\newblock Deep recurrent q-learning for partially observable mdps.
+\newblock In \emph{2015 AAAI Fall Symposium Series}, 2015.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter1997long}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+
+\bibitem[Kaelbling et~al.(1998)Kaelbling, Littman, and
+  Cassandra]{kaelbling1998planning}
+Leslie~Pack Kaelbling, Michael~L. Littman, and Anthony~R. Cassandra.
+\newblock Planning and acting in partially observable stochastic domains.
+\newblock \emph{Artificial Intelligence}, 101\penalty0 (1-2):\penalty0 99--134,
+  1998.
+
+\bibitem[Khalifa et~al.(2020)Khalifa, Bontrager, Earle, and
+  Togelius]{khalifa2020pcgrl}
+Ahmed Khalifa, Philip Bontrager, Sam Earle, and Julian Togelius.
+\newblock Pcgrl: Procedural content generation via reinforcement learning.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence and Interactive Digital Entertainment (AIIDE)}, volume~16, pages
+  95--101, 2020.
+\newblock URL \url{https://arxiv.org/abs/2001.09212}.
+
+\bibitem[Mnih et~al.(2015)Mnih, Kavukcuoglu, Silver, Rusu, Veness, Bellemare,
+  Graves, Riedmiller, Fidjeland, Ostrovski, et~al.]{mnih2015human}
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
+  Marc~G Bellemare, Alex Graves, Martin Riedmiller, Andreas~K Fidjeland, Georg
+  Ostrovski, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock \emph{Nature}, 518\penalty0 (7540):\penalty0 529--533, 2015.
+
+\bibitem[Morad et~al.(2023)Morad, Kortvelesy, Matteo, Li, and
+  Amor]{morad2023popgym}
+Steven Morad, Ryan Kortvelesy, V.~Matteo, S.~Li, and H.~Amor.
+\newblock Popgym: Benchmarking partially observable reinforcement learning.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.01859}.
+
+\bibitem[Narvekar et~al.(2020)Narvekar, Peng, Leonetti, Sinapov, Taylor, and
+  Stone]{narvekar2020curriculum}
+Sanmit Narvekar, Bei Peng, Matteo Leonetti, Jivko Sinapov, Matthew~E. Taylor,
+  and Peter Stone.
+\newblock Curriculum learning for reinforcement learning domains: A framework
+  and survey.
+\newblock \emph{The Journal of Machine Learning Research (JMLR)}, 21\penalty0
+  (1):\penalty0 7382--7431, 2020.
+
+\bibitem[Ng et~al.(1999)Ng, Harada, and Russell]{ng1999policy}
+Andrew~Y. Ng, Daishi Harada, and Stuart Russell.
+\newblock Policy invariance under reward transformations: Theory and
+  application to reward shaping.
+\newblock In \emph{Proceedings of the Sixteenth International Conference on
+  Machine Learning (ICML)}, volume~99, pages 278--287, 1999.
+
+\bibitem[Raffin et~al.(2021)Raffin, Hill, Gleave, Kanervisto, Ernest, and
+  Dormann]{raffin2021stable}
+Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Scott Ernest, and
+  Noah Dormann.
+\newblock Stable-baselines3: Reliable reinforcement learning implementations.
+\newblock \emph{Journal of Machine Learning Research}, 22\penalty0
+  (268):\penalty0 1--8, 2021.
+
+\bibitem[Schulman et~al.(2017)Schulman, Wolski, Dhariwal, Radford, and
+  Klimov]{schulman2017proximal}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock \emph{arXiv preprint arXiv:1707.06347}, 2017.
+
+\bibitem[Sutton and Barto(2018)]{sutton2018reinforcement}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock \emph{Reinforcement Learning: An Introduction}.
+\newblock MIT press, Cambridge, Massachusetts, 2 edition, 2018.
+
+\bibitem[Towers et~al.(2023)Towers, Terry, Kwiatkowski, Balis, Cola, Deleu,
+  Goulão, Kallinteris, KG, Krimmel, Perez-Vicente, Pierré, Schulhoff, Tai,
+  Shen, and Younis]{towers2023gymnasium}
+Mark Towers, J.~K. Terry, Ariel Kwiatkowski, John~U. Balis, Gianluca Cola,
+  Tristan Deleu, Manuel Goulão, Andreas Kallinteris, Arjun KG, Markus Krimmel,
+  Rodrigo Perez-Vicente, Andrea Pierré, Sander Schulhoff, Jun~Jet Tai, Andrew
+  Tan~Jin Shen, and Omar~G. Younis.
+\newblock Gymnasium: A standard interface for reinforcement learning
+  environments, 2023.
+\newblock URL \url{https://github.com/Farama-Foundation/Gymnasium}.
+\newblock Version 0.29.1.
+
+\end{thebibliography}
