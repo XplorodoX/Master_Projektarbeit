@@ -106,8 +106,12 @@
 \contentsline {chapter}{\numberline {6}Fazit und Ausblick}{57}{chapter.6}%
 \contentsline {section}{\numberline {6.1}Diskussion der Ergebnisse}{57}{section.6.1}%
 \contentsline {section}{\numberline {6.2}Fazit}{58}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Beitrag der Weltgenerierung (Laurin)}{58}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Gesamtbild (gemeinsam)}{59}{subsection.6.2.2}%
 \contentsline {section}{\numberline {6.3}Ausblick}{59}{section.6.3}%
-\contentsline {chapter}{Literaturverzeichnis}{60}{section*.74}%
+\contentsline {subsection}{\numberline {6.3.1}Weltgenerierung (Laurin)}{60}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.3.2}Reinforcement Learning (Florian)}{60}{subsection.6.3.2}%
+\contentsline {chapter}{Literaturverzeichnis}{62}{section*.74}%
 \def \@chapapp {\appendixname }
-\contentsline {chapter}{\numberline {A}Anhang}{62}{appendix.A}%
+\contentsline {chapter}{\numberline {A}Anhang}{64}{appendix.A}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

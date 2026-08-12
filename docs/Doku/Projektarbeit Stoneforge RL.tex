@@ -1989,6 +1989,22 @@ Der Blick auf die Hyperparameter liefert eine klare Erkenntnis (siehe Abschnitt~
 
 \section{Fazit}
 \label{sec:fazit_gesamt}
+
+\subsection{Beitrag der Weltgenerierung (Laurin)}
+\label{sec:fazit_weltgenerierung}
+Im Rahmen dieser Arbeit wurde ein vollständiges, hochperformantes System zur prozeduralen Generierung unendlicher 2D-Spielwelten auf Basis von C++ und Raylib entworfen und implementiert.
+
+\begin{itemize}
+    \item \textbf{Synthese aus Rauschen und Pfadgarantie:} Durch die Kombination mehrstufiger \textit{Value-Noise}-Gitter mit dem maßgeschneiderten, geglätteten \textit{Manhattan-Carver} konnte der Zielkonflikt zwischen organisch wirkenden Landschaften und deterministisch garantierter Begehbarkeit gelöst werden. Unlösbare Welt-Instanzen werden systematisch ausgeschlossen.
+    \item \textbf{Hohe Speicher- und Laufzeiteffizienz:} Die Architektur nutzt eine bedarfsgesteuerte Chunk-Verwaltung (\textit{Lazy Loading}) mit einer $8 \times 8$-Kachelstruktur in Kombination mit einer spärlich besetzten Hash-Map (\texttt{std::unordered\_map}). Die Benchmarks bestätigen eine Chunk-Generierungszeit von durchschnittlich $13{,}12\,\mu\text{s}$ und einen minimalen Initialspeicherbedarf von ca. $162\,\text{KiB}$.
+    \item \textbf{Visuelle und funktionale Kohärenz:} Das Entkoppeln der logischen Datenhaltung von der visuellen Darstellung ermöglichte dynamische Effekte wie stufenloses \textit{Biome Blending} sowie das nahtlose Ableiten von Strand-Overlays an Seen-Rändern im Render-Pfad, ohne den Speicheraufwand pro Chunk zu erhöhen.
+    \item \textbf{Vollständiger Determinismus:} Mit einer Abweichungsquote von $0{,}0000\,\%$ bei über $500.000$ verglichenen Kacheln konnte die exakte Reproduzierbarkeit der Weltgenerierung über individuelle Welt-Seeds nachgewiesen werden.
+\end{itemize}
+
+Die gestellten Anforderungen an Verlässlichkeit, Performanz und Ästhetik wurden damit vollumfänglich erfüllt.
+
+\subsection{Gesamtbild (gemeinsam)}
+\label{sec:fazit_gesamtbild}
 Beide Projektteile, die Entwicklung der prozeduralen Welt und das Training der Agenten, sind für sich genommen funktional und abgeschlossen. Der eigentliche Ertrag der Arbeit liegt jedoch nicht in diesen Einzelergebnissen, sondern in ihrem Zusammenspiel.
 
 Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 88,8\,\% Erfolgsquote gegenüber 65,7\,\% und eine Pfadeffizienz von 0,094 gegenüber 0,049 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
@@ -2001,7 +2017,21 @@ Für die anfängliche Fragestellung bedeutet das: LSTM-PPO bleibt der Gewinner u
 
 \section{Ausblick}
 \label{sec:fazit_ausblick}
-Aus den Erkenntnissen und methodischen Einschränkungen der Arbeit ergeben sich drei Ansatzpunkte für weiterführende Projekte.
+Aus den Erkenntnissen und methodischen Einschränkungen beider Projektteile ergeben sich Ansatzpunkte für weiterführende Arbeiten, im Folgenden getrennt nach Weltgenerierung und Reinforcement Learning betrachtet.
+
+\subsection{Weltgenerierung (Laurin)}
+\label{sec:ausblick_weltgenerierung}
+Aus den in Abschnitt~\ref{sec:ergebnisse_diskussion} identifizierten Limitationen sowie den erweiterten Möglichkeiten prozeduraler Spielewelten leiten sich folgende Ansatzpunkte für zukünftige Entwicklungen ab:
+
+\begin{enumerate}
+    \item \textbf{Dynamisches Chunk-Unloading (LRU-Cache):} Um bei extrem langen Spielsitzungen ein unbegrenztes Wachstum der Chunk-Map zu verhindern, sollte der Speicher um eine \textit{Least-Recently-Used} (LRU) Entladestrategie erweitert werden. Nicht mehr sichtbare Chunks außerhalb des Spieler-Umkreises können so sicher aus dem RAM entfernt oder auf Datenträger ausgelagert werden.
+    \item \textbf{Verbesserung der Pfad-Ästhetik (\textit{A*-Guided Carving}):} Der aktuelle Manhattan-Carver neigt stellenweise zu rechtwinkligen „L-Shapes“. Eine Integration eines A*-Algorithmus mit geglätteter Kostenfunktion (\textit{Bézierte-Gänge} oder Diagonalschneiden) könnte die Wegführung noch organischer in das Noise-Terrain einbetten.
+    \item \textbf{Nicht-lineares Biome-Blending:} Zur Vermeidung des \textit{Biome-Swallowing}-Effekts bei $1 \times 1$-Kleinbiomen soll die Farbmischungsmatrix dahingehend angepasst werden, dass der zentrale Chunk ein höheres Eigengewicht erhält oder Biome vorab über zelluläre Automaten geclustert werden.
+    \item \textbf{Vertikalität und Multi-Layer-Welten:} Die Erweiterung des 2D-Rasters um eine vereinfachte Höhendimension ($Z$-Ebene) würde das Hinzufügen von unterirdischen Höhlensystemen, mehrstöckigen Dungeons oder fließenden Gewässern (Flüsse) ermöglichen.
+\end{enumerate}
+
+\subsection{Reinforcement Learning (Florian)}
+\label{sec:ausblick_rl}
 
 \textbf{1. Isolierung der Pfadgarantie:} Die Hypothese, dass die Kompass-Heuristik die achsparallele Generierung ausnutzt, müsste experimentell bewiesen werden. Zukünftige Arbeiten sollten die Lösbarkeit über organische, irreguläre Pfadfindungsalgorithmen sicherstellen, da sich der wahre Leistungsunterschied zwischen Heuristik und RL-Agent erst isolieren lässt, wenn die Umgebung keine offensichtliche Geometrie mehr aufweist (vgl. Listing~\ref{lst:manhattan_carver}).
 
