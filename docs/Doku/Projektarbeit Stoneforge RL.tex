@@ -703,45 +703,45 @@ Dieses Kapitel beschreibt die Architektur der prozeduralen Weltengenerierung. Da
 Die Generierung nutzt einen initialen Seed als Basis für alle pseudozufälligen Operationen, um Welten reproduzierbar zu berechnen.
 
 \subsubsection{Pseudozufall und Rauscherzeugung}
-Zur zustandslosen Berechnung von Raumkoordinaten $(x, y)$ transformiert eine Hash-Funktion die Koordinaten, den Welt-Seed und ein Salt in einen normalisierten Zufallswert im Intervall $[0, 1]$ (\texttt{world.cpp}, Z.~111–120).
+Zur zustandslosen Berechnung von Raumkoordinaten $(x, y)$ transformiert eine Hash-Funktion die Koordinaten, den Welt-Seed und ein Salt in einen normalisierten Zufallswert im Intervall $[0, 1]$.
 
-Für zusammenhängende Strukturen wird ein \textit{Value-Noise}-Verfahren verwendet (\texttt{world.cpp}, Z.~131), dessen theoretische Grundlage bereits vorgestellt wurde (siehe Kapitel~2.1.2). Die Werte der vier Eckpunkte einer Gitterzelle werden ermittelt und bilinear interpoliert (\texttt{world.cpp}, Z.~149). Zur Kantenenglättung wird der Interpolationsparameter $t \in [0, 1]$ zuvor über die Smoothstep-Funktion transformiert:
+Für zusammenhängende Strukturen wird ein \textit{Value-Noise}-Verfahren verwendet, dessen theoretische Grundlage bereits vorgestellt wurde (siehe Kapitel~2.1.2). Die Werte der vier Eckpunkte einer Gitterzelle werden ermittelt und bilinear interpoliert. Zur Kantenenglättung wird der Interpolationsparameter $t \in [0, 1]$ zuvor über die Smoothstep-Funktion transformiert:
 
 \begin{equation}
 S(t) = 3t^2 - 2t^3
 \end{equation}
 
 \subsubsection{Domain Warping und fraktaler Noise}
-Um sichtbare Rasterstrukturen des quadratischen Gitters zu brechen, verzerrt ein vorgeschaltetes Rauschen die Eingangskoordinaten (\textit{Domain Warping}; \texttt{world.cpp}, Z.~163). Mehrere Rauschfunktionen unterschiedlicher Frequenzen und Amplituden werden aufaddiert (fraktaler Noise), um feiner strukturierte Umgebungen zu erzeugen (\texttt{world.cpp}, Z.~167).
+Um sichtbare Rasterstrukturen des quadratischen Gitters zu brechen, verzerrt ein vorgeschaltetes Rauschen die Eingangskoordinaten (\textit{Domain Warping}). Zusätzlich werden mehrere Rauschfunktionen unterschiedlicher Frequenzen und Amplituden aufaddiert (fraktaler Noise), um feiner strukturierte Umgebungen zu erzeugen.
 
 \subsubsection{Nachbearbeitung und Validierung}
-Die generierten Chunks können optional mittels zellulärer Automaten nachbearbeitet werden (\texttt{world.cpp}, Z.~487). Die Geburts- und Überlebensregeln der Moore-Nachbarschaft werden über die Konfiguration gesteuert (\texttt{game\_config.cpp}, Z.~155).
+Die generierten Chunks können optional mittels zellulärer Automaten nachbearbeitet werden. Die Geburts- und Überlebensregeln der Moore-Nachbarschaft werden dabei über die Konfiguration gesteuert.
 
-Zur topologischen Prüfung dient eine Breitensuche (Breadth-First Search, BFS) (siehe Kapitel~2.1.4). Sie verifiziert die Erreichbarkeit innerhalb des Chunks (\texttt{world.cpp}, Z.~555) sowie valide Ausgänge in einem definierten Distanzring (\texttt{world.cpp}, Z.~328).
+Zur topologischen Prüfung dient eine Breitensuche (Breadth-First Search, BFS) (siehe Kapitel~2.1.4). Sie verifiziert die Erreichbarkeit innerhalb des Chunks sowie valide Ausgänge in einem definierten Distanzring.
 
 \subsection{Heuristiken und Regeln}
 \label{sec:heuristiken}
 
 \subsubsection{Biome und Schwellenwerte}
-Die Welt wird über ein Binning des Rauschergebnisses in festen Intervallen von $\frac{1}{7}$ in sieben Biome unterteilt (\texttt{world.cpp}, Z.~173). Biomspezifische Schwellenwerte steuern das Platzieren von Hindernissen, Erzen und Vegetation (\texttt{world.cpp}, Z.~412).
+Die Welt wird über ein Binning des Rauschergebnisses in festen Intervallen von $\frac{1}{7}$ in sieben Biome unterteilt. Biomspezifische Schwellenwerte steuern das Platzieren von Hindernissen, Erzen und Vegetation.
 
 Gewässer entstehen durch eine gewichtete Linearkombination zweier Rauschfunktionen:
 \begin{equation}
 \text{Score} = 0,75 \cdot a + 0,25 \cdot b
 \end{equation}
-Zellen mit einem Wert über $0,86$ werden als Wasser markiert (\texttt{world.cpp}, Z.~308).
+Zellen mit einem Wert über $0,86$ werden als Wasser markiert.
 
 \subsubsection{Freiräume und Fallback-Pfade}
-Um unspielbare Zustände zu vermeiden, gräbt ein Fallback-Algorithmus bei Bedarf einen direkten Manhattan-Pfad (zuerst X-, dann Y-Achse) in die Karte (\texttt{world.cpp}, Z.~655). Feste Radien um Spawn- und Zielpunkte verhindern das Blockieren der Start- und Endpositionen (\texttt{world.cpp}, Z.~20, Z.~677).
+Um unspielbare Zustände zu vermeiden, gräbt ein Fallback-Algorithmus bei Bedarf einen direkten Manhattan-Pfad (zuerst X-, dann Y-Achse) in die Karte. Feste Radien um Spawn- und Zielpunkte verhindern zusätzlich das Blockieren der Start- und Endpositionen.
 
-Point-of-Interest-Strukturen werden mit einer Wahrscheinlichkeit von $P = 0,10$ pro Chunk platziert (\texttt{world.cpp}, Z.~219). Ihre Form basiert auf biomspezifischen $5 \times 5$ ASCII-Matrizen (\texttt{world.cpp}, Z.~239).
+Point-of-Interest-Strukturen werden mit einer Wahrscheinlichkeit von $P = 0,10$ pro Chunk platziert. Ihre Form basiert auf biomspezifischen $5 \times 5$ ASCII-Matrizen.
 
 \subsection{Systemkonfiguration}
 \label{sec:konfiguration}
 
-Die Parameter \texttt{coldBiomeMax} und \texttt{warmBiomeMax} in \texttt{game\_config.cpp} (Z.~124) werden zwar eingelesen, sind jedoch durch das feste $\frac{1}{7}$-Binning funktional obsolet.
+Die Parameter \texttt{coldBiomeMax} und \texttt{warmBiomeMax} werden zwar eingelesen, sind jedoch durch das feste $\frac{1}{7}$-Binning funktional obsolet.
 
-Der aktuelle Standard-Betriebsmodus laut \texttt{game\_config.json}:
+Der aktuelle Standard-Betriebsmodus laut Konfigurationsdatei:
 
 \begin{table}[h!]
 \centering
@@ -870,7 +870,7 @@ Um diese Risiken systematisch im Blick zu behalten, wurde der Trainingsprozess a
 \chapter{Umsetzung und technische Realisierung}
 \label{chap:umsetzung}
 
-Dieses Kapitel beschreibt die praktische Implementierung des im vorherigen Kapitel vorgestellten Konzepts zur prozeduralen Weltengenerierung. Die Realisierung erfolgt in der Programmiersprache C++ innerhalb der Kernkomponente \texttt{world.cpp}. Das Hauptziel der Implementierung besteht darin, eine performante, deterministische und speichereffiziente Erzeugung von Welt-Chunks zur Laufzeit zu gewährleisten.
+Dieses Kapitel beschreibt die praktische Implementierung des im vorherigen Kapitel vorgestellten Konzepts zur prozeduralen Weltengenerierung. Die Realisierung erfolgt in der Programmiersprache C++ innerhalb der Kernkomponente der Weltgenerierung. Das Hauptziel der Implementierung besteht darin, eine performante, deterministische und speichereffiziente Erzeugung von Welt-Chunks zur Laufzeit zu gewährleisten.
 
 Dazu werden nachfolgend die zentralen Softwarebausteine – von der mathematischen Rauscherzeugung über die biomspezifische Zuweisung bis hin zu den topologischen Sicherheits- und Pfad-Algorithmen – anhand relevanter Quellcode-Ausschnitte und deren Datenstrukturen detailliert erläutert.
 
@@ -1085,7 +1085,7 @@ Die in Listing~\ref{lst:manhattan_carver} gezeigte Pfadsicherung folgt einem kla
 
 \begin{enumerate}
     \item \textbf{Freiradienen-Erzeugung (Quadratischer Bereich):} Sowohl um die Spawn-Koordinate \texttt{spawn\_} als auch um die Exit-Koordinate \texttt{exit\_} wird über verschachtelte Schleifen ein quadratischer Radius der Größe \texttt{cfg.spawnClearRadius} bzw. \texttt{cfg.exitClearRadius} vollständig freigeräumt (\texttt{TileType::Empty}). Dies stellt sicher, dass der Spieler ohne Kollisionsprobleme starten kann.
-    \item \textbf{Schalterbasierte Pfadfreischaltung (\texttt{forceGuaranteedPath}):} Die Pfadgenerierung wird rein konfigurationsbasiert über das Flag \texttt{cfg.forceGuaranteedPath} gesteuert (welches laut \texttt{game\_config.json} standardmäßig aktiviert ist).
+    \item \textbf{Schalterbasierte Pfadfreischaltung (\texttt{forceGuaranteedPath}):} Die Pfadgenerierung wird rein konfigurationsbasiert über das Flag \texttt{cfg.forceGuaranteedPath} gesteuert (welches standardmäßig aktiviert ist).
     \item \textbf{Orthogonale Manhattan-Trassierung:} Die Funktion \texttt{carveGuaranteedPath} startet am Punkt \texttt{spawn\_} und schlägt schrittweise einen absolut freien Korridor in die Umgebung. Die Abfolge ist fest auf die Orthogonalen festgelegt:
     \begin{itemize}
         \item Zunächst wird der $x$-Wert der aktuellen Position schrittweise an \texttt{exit\_.x} angeglichen und dabei jede betroffene Zelle auf \texttt{TileType::Empty} gesetzt.
@@ -1100,7 +1100,7 @@ Die in Listing~\ref{lst:manhattan_carver} gezeigte Pfadsicherung folgt einem kla
 Die Erzeugung von Seen und deren optischer Übergangszone (Strände) erfordert eine Entkopplung der logischen Weltrepräsentation von der visuellen Darstellung. Während Gewässer als harte Kollisions- bzw. Freiräume im Weltmodell definiert sind, entstehen Strände dynamisch über Nachbarschaftsauswertungen im Render-Pfad.
 
 \subsubsection{Mathematische Seen-Maskierung (\texttt{lakeMaskAt})}
-Gewässer dürfen im Gegensatz zu einzelnen Bäumen oder Hindernissen nicht als vereinzelte Pixel-Fehler erscheinen, sondern müssen als zusammenhängende, organische Binnengewässer im Terrain hervortreten. Dazu verwendet die Funktion \texttt{lakeMaskAt} in \texttt{world.cpp} niederfrequentes Rauschen (\textit{Low-Frequency Noise}).
+Gewässer dürfen im Gegensatz zu einzelnen Bäumen oder Hindernissen nicht als vereinzelte Pixel-Fehler erscheinen, sondern müssen als zusammenhängende, organische Binnengewässer im Terrain hervortreten. Dazu verwendet die Funktion \texttt{lakeMaskAt} niederfrequentes Rauschen (\textit{Low-Frequency Noise}).
 
 \begin{lstlisting}[language=C++, caption={Low-Frequency-Value-Noise für zusammenhängende Gewässermasken in \texttt{world.cpp}}, label={lst:lake_mask}]
 bool World::lakeMaskAt(int worldX, int worldY) const {
@@ -1301,7 +1301,7 @@ Color RenderEngine::biomeTintAtTile(int worldX, int worldY) const {
 Die Besiedlung der prozeduralen Spielwelt teilt sich architektonisch in zwei grundlegende Subsysteme: statische, biomabhängige Geländestrukturen (Landmarken), die direkt in das Raster der Chunks integriert werden, sowie ein dynamisches, entitätsbasiertes Gegner-Spawnsystem (\textit{Lazy Mob Spawning}), das über die Simulationsschleife gesteuert wird.
 
 \subsubsection{Statische Geländestrukturen in der Chunk-Generierung}
-Strukturen wie Ruinen, Felsformationen oder spezielle Biomsymbole sind keine eigenständigen Dynamic-Entities, sondern werden als spezielle Kacheltypen (\texttt{TileType::StructureGrassland}, \texttt{TileType::StructureMountain} etc.) während der Erzeugung eines Chunks in \texttt{world.cpp} deterministisch eingebrannt.
+Strukturen wie Ruinen, Felsformationen oder spezielle Biomsymbole sind keine eigenständigen Dynamic-Entities, sondern werden als spezielle Kacheltypen (\texttt{TileType::StructureGrassland}, \texttt{TileType::StructureMountain} etc.) während der Erzeugung eines Chunks deterministisch eingebrannt.
 
 \begin{lstlisting}[language=C++, caption={Biomabhängige Struktur-Platzierung bei der Chunk-Generierung in \texttt{world.cpp}}, label={lst:structure_spawning}]
 void World::generateChunkTiles(Chunk& chunk) {
@@ -1331,7 +1331,7 @@ void World::generateChunkTiles(Chunk& chunk) {
 Wie in Listing~\ref{lst:structure_spawning} zu sehen ist, entscheidet ein deterministisches Rauschen mit einer Wahrscheinlichkeit von circa 10\,\%, ob ein Chunk eine Landmarke erhält. Die Position und der konkrete Typ richten sich nach dem \texttt{biomeTag}. So erzeugt Biom 3 (Bergland) beispielsweise alpine Felsstrukturen, während Biom 2 (Wüste) Ruinen-Muster stempelt. Chunks mit Spieler-Spawn oder Ausgang werden explizit von der Struktur-Generierung ausgenommen.
 
 \subsubsection{Dynamisches Gegner-Spawning und Lokale Verfolgung}
-Im Gegensatz zu Terrain-Objekten entstehen Gegner (\textit{Mobs}) nicht vorab bei der Chunk-Generierung, sondern werden lazily in \texttt{simulation.cpp} erzeugt, sobald der Spieler sich neuen Chunks nähert.
+Im Gegensatz zu Terrain-Objekten entstehen Gegner (\textit{Mobs}) nicht vorab bei der Chunk-Generierung, sondern werden lazily erzeugt, sobald der Spieler sich neuen Chunks nähert.
 
 \begin{lstlisting}[language=C++, caption={Lazy Mob-Spawning und lokale Bewegungslogik in \texttt{simulation.cpp}}, label={lst:mob_spawning}]
 void Simulation::updateMobSpawns() {
@@ -1379,7 +1379,7 @@ void Simulation::trySpawnMobInChunk(int cx, int cy) {
 \subsection{Spieler-Bewegung, Kollisionsabfrage und Kampfdynamik}
 \label{sec:umsetzung_movement_combat}
 
-Die Interaktion des Spielers mit der prozedural erzeugten Spielwelt erfolgt über ein diskretes, grid-basiertes Koordinatensystem. Bewegung, Terrain-Restriktionen und Kampfhandlungen werden deterministisch innerhalb der Simulations-Engine (\texttt{simulation.cpp}) ausgewertet, während spezifische Umgebungs-Effekte (wie Wasserverlangsamung) im Client-Render-Pfad moduliert werden.
+Die Interaktion des Spielers mit der prozedural erzeugten Spielwelt erfolgt über ein diskretes, grid-basiertes Koordinatensystem. Bewegung, Terrain-Restriktionen und Kampfhandlungen werden deterministisch innerhalb der Simulations-Engine ausgewertet, während spezifische Umgebungs-Effekte (wie Wasserverlangsamung) im Client-Render-Pfad moduliert werden.
 
 \subsubsection{Kollisionsprüfungen und Passierbarkeits-Matrix}
 Ein Bewegungsschritt entspricht exakt der Verschiebung um eine Einheit auf dem diskreten Kachelraster. Vor jeder Positionsaktualisierung evaluiert die Methode \texttt{tryMove()} das Ziel-Feld $(x', y')$.
@@ -1850,7 +1850,7 @@ Die empirischen und visuellen Befunde belegen, dass die entwickelte Architektur 
 \begin{itemize}
     \item \textbf{Geometrische Künstlichkeit des Manhattan-Carvers:} Da der Pfad-Einkerber Kacheln entlang rechtwinkliger Koordinatendifferenzen aufbricht, neigt die Logik zur Bildung auffälliger „L-Shapes“ (rechtwinklige Gänge). In offenem Terrain (z.\,B. Wiese oder Wüste) wirken diese harten $90^\circ$-Achsenbrüche stellenweise unnatürlich und brechen die organische Anmutung der Noise-Generierung.
     \item \textbf{Beschränkung auf flaches 2D-Raster:} Das System arbeitet auf einem rein zweidimensionalen Gitter. Echte Höhenunterschiede, Plateaus, Höhlensysteme auf mehreren Ebenen oder Verdeckungslogiken (z.\,B. Rampen oder Brücken) können ohne Erweiterung um ein $Z$-Achsengitter oder Iso-Layer nicht abgebildet werden.
-    \item \textbf{Unbegrenztes RAM-Wachstum ohne Chunk-Unloading:} Obwohl der Einstiegsspeicherbedarf minimal ist, besitzt der aktuelle Chunk-Cache in \texttt{world.cpp} keinen Entlademechanismus (z.\,B. \textit{Least Recently Used} / LRU-Unloading). Besucht ein Spieler in einer extrem langen Sitzung hunderttausende Chunks, wächst die \texttt{unordered\_map} kontinuierlich an.
+    \item \textbf{Unbegrenztes RAM-Wachstum ohne Chunk-Unloading:} Obwohl der Einstiegsspeicherbedarf minimal ist, besitzt der aktuelle Chunk-Cache keinen Entlademechanismus (z.\,B. \textit{Least Recently Used} / LRU-Unloading). Besucht ein Spieler in einer extrem langen Sitzung hunderttausende Chunks, wächst die \texttt{unordered\_map} kontinuierlich an.
     \item \textbf{Farb-Absorption bei Kleinbiomen (\textit{Biome-Swallowing}):} Wie in Abschnitt~\ref{sec:ergebnisse_visuell} analysiert, führt das räumlich gewichtete \textit{Biome Blending} über $3 \times 3$ Chunks dazu, dass isolierte Einzel-Chunks ($1 \times 1$) farblich von ihren dominanten Nachbarbiomen überstrahlt werden.
 \end{itemize}
 

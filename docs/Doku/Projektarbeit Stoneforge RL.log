@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 14:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 14:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1546,13 +1546,6 @@ OT1/lmr/m/n/10.95 (\OML/lmm/m/it/10.95 x; y\OT1/lmr/m/n/10.95 )$ \T1/lmr/m/n/10
 .95 trans-for-miert ei-ne Hash-Funktion
  []
 
-
-Overfull \hbox (16.0371pt too wide) in paragraph at lines 708--709
-[]\T1/lmr/m/n/10.95 Für zu-sam-men-hän-gen-de Struk-tu-ren wird ein \T1/lmr/m/i
-t/10.95 Value-Noise\T1/lmr/m/n/10.95 -Verfahren ver-wen-det (\T1/lmtt/m/n/10.95
- world.cpp\T1/lmr/m/n/10.95 ,
- []
-
 [15
 
 ] [16] [17]
@@ -1954,7 +1947,7 @@ cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/tex
 mf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/f
 onts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3653349 bytes).
+Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3653119 bytes).
 PDF statistics:
  1912 PDF objects out of 2073 (max. 8388607)
  1723 compressed objects within 18 object streams

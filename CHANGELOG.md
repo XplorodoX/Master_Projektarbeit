@@ -2,6 +2,20 @@
 
 ---
 
+## v2026-08-12.13 — Dateipfade aus dem Fließtext entfernt, Redundanz 3.1/4.1 dadurch entschärft
+
+**Wer:** Florian.
+
+**Kontext:** Rückmeldung nannte zwei verbliebene Punkte: Dateipfade im Fließtext und eine inhaltliche Redundanz zwischen Methodik (3.1) und Implementierung (4.1) der Weltgenerierung. Beim Prüfen zeigte sich derselbe Zusammenhang wie schon beim „Wir"-Fund: Die eigentliche Ursache der Redundanz ist, dass Abschnitt 3.1 durchgehend `(\texttt{world.cpp}, Z.~XXX)`-Zeilenverweise im Fließtext führte und dadurch selbst schon auf Implementierungsniveau schrieb, statt auf der methodischen Ebene zu bleiben, die Kapitel 3 von Kapitel 4 unterscheiden soll.
+
+**Lösung:** 18 Fließtext-Stellen von wörtlichen Dateiverweisen befreit (`world.cpp`, `game_config.cpp`, `game_config.json`, `simulation.cpp`), überwiegend in Abschnitt 3.1 (9 Stellen), die übrigen verteilt auf den Einstieg von 4.1 sowie vereinzelte Fundstellen in 4.1 und 5.1.6. Dabei nur die Referenz entfernt, keine fachliche Aussage verändert. Listing-Captions (`caption={... in \texttt{world.cpp}}`) unverändert gelassen — laut Stilregel für Code-Listings ausdrücklich zulässig. Ebenso die „Referenz"-Spalte der Konfigurationsstatus-Tabelle (Tabelle 3.2) unverändert gelassen: eine strukturierte technische Referenzangabe in einer Tabelle ist keine Quellenangabe im Fließtext.
+
+**Redundanz 3.1/4.1:** Nicht strukturell zusammengelegt (beide Kapitel folgen einer bewussten, bereits dokumentierten Trennung von Konzept und Implementierung, siehe `v2026-08-06.3`). Durch den Wegfall der Zeilenverweise liest sich 3.1 jetzt spürbar abstrakter und grenzt sich klarer von 4.1s codenaher Darstellung ab, ohne das Risiko einer größeren Umstrukturierung zwei Tage vor Abgabe einzugehen.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 78 Seiten.
+
+---
+
 ## v2026-08-12.12 — „Wir"-Form vollständig entfernt (Kapitel 1 und 4.2, nicht nur 1.4/1.5)
 
 **Wer:** Florian.
