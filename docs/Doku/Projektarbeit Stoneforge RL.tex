@@ -601,7 +601,7 @@ Das Reinforcement Learning (RL) ist ein Teilbereich des maschinellen Lernens, be
     \label{fig:rl_interaktion}
 \end{figure}
 
-\paragraph{Partially Observable Markov Decision Processes (POMDP)}
+\subsection{Partially Observable Markov Decision Processes (POMDP)}
 Die Standarddefinition des MDP geht von vollständiger Beobachtbarkeit aus. Der Agent kennt somit stets den exakten aktuellen Zustand $s$ der Umgebung. In vielen realen Szenarien ist diese Annahme jedoch nicht erfüllt, da Sensordaten verrauscht oder Informationen verborgen sein können. Für solche Problemstellungen wird das Konzept zum \textit{Partially Observable Markov Decision Process} (POMDP) erweitert. In einem POMDP hat der Agent keinen direkten Zugriff auf den wahren Zustand $s \in S$, sondern erhält lediglich eine Beobachtung $o \in \Omega$, die gemäß einer Beobachtungswahrscheinlichkeit $O(o \mid s, a)$ erzeugt wird (siehe Abbildung \ref{fig:mdp_pomdp}). Um dennoch optimale Entscheidungen treffen zu können, muss der Agent einen sogenannten \glqq Belief State\grqq{} (Überzeugungszustand) pflegen. Dieser stellt eine Wahrscheinlichkeitsverteilung über alle möglichen wahren Zustände der Umgebung dar und wird nach jeder neuen Aktion und Beobachtung kontinuierlich aktualisiert \citep{kaelbling1998planning}.
 
 \begin{figure}[htbp]
@@ -611,7 +611,7 @@ Die Standarddefinition des MDP geht von vollständiger Beobachtbarkeit aus. Der 
     \label{fig:mdp_pomdp}
 \end{figure}
 
-\paragraph{Potential Based Reward Shaping (PBRS)}
+\subsection{Potential Based Reward Shaping (PBRS)}
 Eine zentrale Herausforderung im Reinforcement Learning sind verzögerte oder spärliche Belohnungen (Sparse Rewards), bei denen der Agent nur sehr selten ein positives Feedback erhält. Um den Lernprozess zu beschleunigen, wird häufig \textit{Reward Shaping} angewendet, bei dem das ursprüngliche Belohnungssignal durch zusätzliche, dichtere Zwischenbelohnungen angereichert wird. Die allgemeine Theorie des \textit{Potential Based Reward Shaping} (PBRS) löst dabei das Problem, dass naive Anpassungen der Belohnungsfunktion das eigentliche Ziel des Agenten verfälschen könnten (sogenanntes Reward Hacking). PBRS stellt mathematisch sicher, dass die optimale Policy des ursprünglichen MDPs trotz der zusätzlichen Belohnungen strikt erhalten bleibt. Dies wird erreicht, indem die formende Belohnung $F(s, a, s')$ als Differenz einer Potenzialfunktion $\Phi$ zwischen dem Folgezustand und dem aktuellen Zustand definiert wird (vergleiche Abbildung \ref{fig:pbrs_potential}): $F(s, a, s') = \gamma \Phi(s') - \Phi(s)$. Diese Funktion gibt dem Agenten kontinuierliches Feedback basierend auf seinem \glqq Abstand\grqq{} zum Ziel \citep{ng1999policy}.
 
 \begin{figure}[htbp]
@@ -621,10 +621,10 @@ Eine zentrale Herausforderung im Reinforcement Learning sind verzögerte oder sp
     \label{fig:pbrs_potential}
 \end{figure}
 
-\paragraph{Curriculum Learning}
+\subsection{Curriculum Learning}
 Wenn Aufgaben für einen untrainierten RL Agenten zu komplex sind, schlägt das Lernen oft vollständig fehl, da der Agent rein durch zufällige Exploration keine Lösung findet. Das allgemeine Prinzip des \textit{Curriculum Learning} greift dieses Problem auf, indem es sich an der menschlichen Pädagogik orientiert: Anstatt dem Agenten sofort die finale, hochkomplexe Aufgabe zu stellen, wird der Lernprozess strukturiert. Der Agent trainiert zunächst auf stark vereinfachten Versionen der Aufgabe. Sobald er diese beherrscht, wird der Schwierigkeitsgrad der Umgebung oder der Aufgabenstellung schrittweise erhöht, bis die Zieldomäne erreicht ist. Diese methodische Abfolge (das Curriculum) beschleunigt nicht nur die Konvergenz des Lernalgorithmus erheblich, sondern ermöglicht es oft erst, dass der Agent für sehr komplexe Problemstellungen überhaupt eine optimale Policy findet \citep{bengio2009curriculum, narvekar2020curriculum}.
 
-\paragraph{Proximal Policy Optimization (PPO)}
+\subsection{Proximal Policy Optimization (PPO)}
 Proximal Policy Optimization (PPO) gehört zur Familie der Policy Gradient Methoden und wurde von \citet{schulman2017proximal} als Weiterentwicklung etablierter Verfahren wie der Trust Region Policy Optimization (TRPO) eingeführt. Der zentrale Vorteil von PPO liegt in der Balance zwischen einfacher Implementierung, hoher Stichprobeneffizienz (Sample Efficiency) und Trainingsstabilität. Während herkömmliche Methoden des Policy Gradient bei zu großen Aktualisierungsschritten destabilisieren und die erlernte Verhaltensregel ruinieren können, führt PPO eine sogenannte Clippingfunktion (\textit{Clipped Surrogate Objective}) ein (vergleiche Abbildung \ref{fig:ppo_clip}). Diese Zielfunktion beschränkt die Änderungen der Policy zwischen zwei aufeinanderfolgenden Trainingsschritten auf ein definiertes Intervall, meist parametrisiert durch einen Hyperparameter $\epsilon$ (zum Beispiel $[1-\epsilon, 1+\epsilon]$). Dadurch wird mathematisch verhindert, dass der Agent seine Strategie in einem einzelnen Updateschritt zu drastisch ändert. Dies führt zu einer monotoneren Verbesserung und einem wesentlich robusteren Lernverhalten, ohne den hohen rechnerischen Aufwand, der bei TRPO für die Berechnung der Kullback Leibler Divergenz anfällt \citep{schulman2017proximal}.
 
 \begin{figure}[htbp]
@@ -634,10 +634,10 @@ Proximal Policy Optimization (PPO) gehört zur Familie der Policy Gradient Metho
     \label{fig:ppo_clip}
 \end{figure}
 
-\paragraph{Rekurrente Neuronale Netze (RNN)}
+\subsection{Rekurrente Neuronale Netze (RNN)}
 Wie in der Definition der POMDPs beschrieben, kann ein Agent in Umgebungen mit partieller Beobachtbarkeit den wahren Zustand nicht aus einer einzelnen, isolierten Beobachtung ableiten. Um dieses Problem zu überwinden, muss der Agent auf vergangene Beobachtungen zurückgreifen können, wofür rekurrente neuronale Netze (RNNs) eingesetzt werden. Im Gegensatz zu zustandslosen Netzwerken (Feedforward Netzen) besitzen RNNs einen internen Speicher, der bei jedem Zeitschritt basierend auf der aktuellen Eingabe und dem vorherigen Zustand aktualisiert wird. Durch diesen impliziten Gedächtnisaufbau kann das Netzwerk die verborgenen Zustandsinformationen eines POMDPs aus der Historie der Beobachtungen näherungsweise rekonstruieren. Eine rekurrente Policy ist somit in der Lage, auch dann optimale Entscheidungen zu treffen, wenn das aktuelle Beobachtungssignal allein keine eindeutige Zustandsschätzung zulässt \citep{hausknecht2015deep}. Ein grundlegendes Problem einfacher RNNs ist jedoch das Phänomen des verschwindenden Gradienten (\textit{Vanishing Gradient}), wodurch das Netzwerk große Schwierigkeiten hat, Abhängigkeiten über längere Zeiträume stabil zu erlernen.
 
-\paragraph{Long Short Term Memory (LSTM)}
+\subsection{Long Short Term Memory (LSTM)}
 Um das Problem des verschwindenden Gradienten zu lösen, bildet die \textit{Long Short Term Memory} Architektur die fundamentale Basis für moderne rekurrente Netze. Sie wurde von \citet{hochreiter1997long} entwickelt und stellt eine spezialisierte Form von RNNs dar. LSTMs nutzen ein System aus dedizierten Speicherzellen und Gatingmechanismen (Input Gates, Output Gates und Forget Gates). Diese Struktur ermöglicht es dem Netzwerk gezielt zu steuern, welche relevanten Informationen über lange Zeitreihen hinweg gespeichert, aktualisiert oder vergessen werden sollen. Für das Reinforcement Learning ist dies von entscheidender Bedeutung: Der Agent kann dadurch wichtige Ereignisse, die viele Schritte in der Vergangenheit liegen, verlustfrei in seinem Gedächtnis behalten und für aktuelle Entscheidungen heranziehen (siehe Abbildung \ref{fig:rnn_policy}). Die Integration von LSTM Zellen ermöglicht es dem Agenten somit, Sequenzen von Beobachtungen über die Zeit effektiv zu aggregieren und komplexe Aufgaben in unvollständig beobachtbaren Umgebungen erfolgreich zu lösen \citep{hochreiter1997long, hausknecht2015deep}.
 
 \begin{figure}[htbp]
@@ -647,7 +647,7 @@ Um das Problem des verschwindenden Gradienten zu lösen, bildet die \textit{Long
     \label{fig:rnn_policy}
 \end{figure}
 
-\paragraph{Deep Q Networks (DQN)}
+\subsection{Deep Q Networks (DQN)}
 Deep Q Networks (DQN) stellen einen entscheidenden Meilenstein in der Entwicklung des modernen Reinforcement Learning dar und wurden maßgeblich durch \citet{mnih2015human} geprägt. Im Gegensatz zu den zuvor beschriebenen Methoden des Policy Gradient handelt es sich bei DQN um einen wertebasierten Ansatz. Anstatt die Policy direkt zu parametrisieren, approximiert ein tiefes neuronales Netz die sogenannte Q Funktion (Action Value Funktion). Diese Funktion schätzt die erwartete kumulierte Belohnung für eine spezifische Aktion in einem bestimmten Zustand. Da die Kombination von klassischem Q Learning mit nichtlinearen Funktionsapproximatoren wie neuronalen Netzen historisch oft zu starker Instabilität und Divergenz im Lernverhalten führte, führte DQN zwei zentrale Innovationen ein (siehe Abbildung \ref{fig:dqn_architektur}). Zum einen das \textit{Experience Replay}, bei dem vergangene Interaktionen des Agenten kontinuierlich in einem Ringpuffer gespeichert und während des Trainings in zufälligen Batches wiederverwendet werden. Dies bricht die zeitliche Korrelation der Trainingsdaten auf und glättet die Datenverteilung. Zum anderen wird ein separates \textit{Target Network} genutzt, dessen Parameter im Gegensatz zum primären Netzwerk nur periodisch aktualisiert werden. Dies hält die Zielwerte für die Fehlerberechnung über mehrere Trainingsschritte hinweg konstant und verhindert Aufschaukelungseffekte. Durch diese beiden Mechanismen ermöglichte DQN erstmals das stabile Erlernen komplexer Verhaltensstrategien direkt aus hochdimensionalen Beobachtungen \citep{mnih2015human}.
 
 \begin{figure}[htbp]

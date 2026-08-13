@@ -2,6 +2,18 @@
 
 ---
 
+## v2026-08-12.11 — RL-Grundlagen im Inhaltsverzeichnis sichtbar gemacht
+
+**Wer:** Florian.
+
+**Problem:** Die sieben RL-Konzepte in Abschnitt 2.2 (POMDP, PBRS, Curriculum Learning, PPO, RNN, LSTM, DQN) standen als `\paragraph{}` — eine Gliederungsebene tiefer als `tocdepth` in dieser Dokumentklasse (`scrreprt`, Standardwert 3 = Subsubsection) erfasst. Dadurch erschienen sie nicht im Inhaltsverzeichnis, während die parallele Struktur in Abschnitt 2.1 (Weltgenerierung, dort als `\subsubsection` gesetzt) korrekt sichtbar war.
+**Geprüft, aber verworfen:** `\setcounter{tocdepth}{4}` global anzuheben — hätte zwei fachfremde `\paragraph`-Befehle in Kapitel 1 (Zeile 433, 436, rhetorische Einleitungssätze, keine echten Überschriften) ungewollt mit ins Inhaltsverzeichnis gezogen.
+**Lösung:** Alle sieben `\paragraph{}` auf `\subsection{}` angehoben, wodurch Abschnitt 2.2 jetzt dieselbe Gliederungstiefe wie 2.1 nutzt (2.2.1 bis 2.2.8, letzterer die bereits vorhandene Gymnasium-Schnittstelle).
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, alle acht Unterabschnitte im Inhaltsverzeichnis sichtbar (Seite VI/VII), 78 Seiten.
+
+---
+
 ## v2026-08-12.10 — Zitationsprüfung Kapitel 2: Weltgenerierungs-Teil hatte keine einzige Quelle
 
 **Wer:** Florian.

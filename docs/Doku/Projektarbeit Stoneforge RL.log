@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 12:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 12:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1323,7 +1323,7 @@ M- und MLP-Policy[][] [][]
  []
 
 Package babel Info: 'ngerman' activates 'german' shorthands.
-(babel)             Reported on input line 113.
+(babel)             Reported on input line 105.
 [7])
 \tf@toc=\write4
 \openout4 = `"Projektarbeit Stoneforge RL.toc"'.
@@ -1450,7 +1450,7 @@ lls-zah-len-ge-ne-ra-to-ren (\T1/lmr/m/it/10.95 Pseudo-Random
 [4
 
 ]
-<Bilder/grundlagen_value_noise.png, id=383, 624.4128pt x 381.5856pt>
+<Bilder/grundlagen_value_noise.png, id=397, 624.4128pt x 381.5856pt>
 File: Bilder/grundlagen_value_noise.png Graphic file (type png)
 <use Bilder/grundlagen_value_noise.png>
 Package pdftex.def Info: Bilder/grundlagen_value_noise.png  used on input line 
@@ -1464,20 +1464,20 @@ ie Ein-gangs-ko-or-di-na-ten $\OT1/lmr/m/n/10.95 (\OML/lmm/m/it/10.95 x; y\OT1/
 lmr/m/n/10.95 )$ \T1/lmr/m/n/10.95 ei-ner Rausch-
  []
 
-<Bilder/grundlagen_domain_warping.png, id=397, 630.1944pt x 351.59355pt>
+<Bilder/grundlagen_domain_warping.png, id=411, 630.1944pt x 351.59355pt>
 File: Bilder/grundlagen_domain_warping.png Graphic file (type png)
 <use Bilder/grundlagen_domain_warping.png>
 Package pdftex.def Info: Bilder/grundlagen_domain_warping.png  used on input li
 ne 543.
 (pdftex.def)             Requested size: 362.77525pt x 202.3954pt.
 [6 <./Bilder/grundlagen_domain_warping.png>]
-<Bilder/grundlagen_zellulaere_automaten.png, id=412, 630.1944pt x 351.59355pt>
+<Bilder/grundlagen_zellulaere_automaten.png, id=426, 630.1944pt x 351.59355pt>
 File: Bilder/grundlagen_zellulaere_automaten.png Graphic file (type png)
 <use Bilder/grundlagen_zellulaere_automaten.png>
 Package pdftex.def Info: Bilder/grundlagen_zellulaere_automaten.png  used on in
 put line 559.
 (pdftex.def)             Requested size: 362.77525pt x 202.3954pt.
-<Bilder/grundlagen_bfs.png, id=418, 479.8728pt x 428.5611pt>
+<Bilder/grundlagen_bfs.png, id=432, 479.8728pt x 428.5611pt>
 File: Bilder/grundlagen_bfs.png Graphic file (type png)
 <use Bilder/grundlagen_bfs.png>
 Package pdftex.def Info: Bilder/grundlagen_bfs.png  used on input line 577.
@@ -1486,14 +1486,14 @@ Package pdftex.def Info: Bilder/grundlagen_bfs.png  used on input line 577.
 Underfull \vbox (badness 3019) has occurred while \output is active []
 
  [7 <./Bilder/grundlagen_zellulaere_automaten.png>]
-<Bilder/rl_interaktionsschleife.png, id=428, 466.1415pt x 156.1032pt>
+<Bilder/rl_interaktionsschleife.png, id=442, 466.1415pt x 156.1032pt>
 File: Bilder/rl_interaktionsschleife.png Graphic file (type png)
 <use Bilder/rl_interaktionsschleife.png>
 Package pdftex.def Info: Bilder/rl_interaktionsschleife.png  used on input line
  599.
 (pdftex.def)             Requested size: 362.77525pt x 121.49083pt.
  [8 <./Bilder/grundlagen_bfs.png>]
-<Bilder/mdp_pomdp_vergleich.png, id=439, 601.2864pt x 291.2481pt>
+<Bilder/mdp_pomdp_vergleich.png, id=453, 601.2864pt x 291.2481pt>
 File: Bilder/mdp_pomdp_vergleich.png Graphic file (type png)
 <use Bilder/mdp_pomdp_vergleich.png>
 Package pdftex.def Info: Bilder/mdp_pomdp_vergleich.png  used on input line 609
@@ -1501,7 +1501,7 @@ Package pdftex.def Info: Bilder/mdp_pomdp_vergleich.png  used on input line 609
 (pdftex.def)             Requested size: 362.77525pt x 175.71901pt.
 
 [9 <./Bilder/rl_interaktionsschleife.png> <./Bilder/mdp_pomdp_vergleich.png>]
-<Bilder/pbrs_potentialfeld.png, id=452, 540.5796pt x 385.56046pt>
+<Bilder/pbrs_potentialfeld.png, id=464, 540.5796pt x 385.56046pt>
 File: Bilder/pbrs_potentialfeld.png Graphic file (type png)
 <use Bilder/pbrs_potentialfeld.png>
 Package pdftex.def Info: Bilder/pbrs_potentialfeld.png  used on input line 619.
@@ -1515,28 +1515,25 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 620.
 
 [10 <./Bilder/pbrs_potentialfeld.png>]
-<Bilder/ppo_clipped_objective.png, id=469, 709.6914pt x 298.83646pt>
+<Bilder/ppo_clipped_objective.png, id=479, 709.6914pt x 298.83646pt>
 File: Bilder/ppo_clipped_objective.png Graphic file (type png)
 <use Bilder/ppo_clipped_objective.png>
 Package pdftex.def Info: Bilder/ppo_clipped_objective.png  used on input line 6
 32.
 (pdftex.def)             Requested size: 362.77525pt x 152.75568pt.
  [11 <./Bilder/ppo_clipped_objective.png>]
-<Bilder/rekurrente_policy_schema.png, id=484, 642.4803pt x 425.30894pt>
+<Bilder/rekurrente_policy_schema.png, id=492, 642.4803pt x 425.30894pt>
 File: Bilder/rekurrente_policy_schema.png Graphic file (type png)
 <use Bilder/rekurrente_policy_schema.png>
 Package pdftex.def Info: Bilder/rekurrente_policy_schema.png  used on input lin
 e 645.
 (pdftex.def)             Requested size: 362.77525pt x 240.15074pt.
  [12 <./Bilder/rekurrente_policy_schema.png>]
-<Bilder/dqn_architektur.png, id=497, 545.6385pt x 404.712pt>
+<Bilder/dqn_architektur.png, id=504, 545.6385pt x 404.712pt>
 File: Bilder/dqn_architektur.png Graphic file (type png)
 <use Bilder/dqn_architektur.png>
 Package pdftex.def Info: Bilder/dqn_architektur.png  used on input line 655.
 (pdftex.def)             Requested size: 362.77525pt x 269.0807pt.
-
-Underfull \vbox (badness 1365) has occurred while \output is active []
-
  [13 <./Bilder/dqn_architektur.png>]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 673.
@@ -1559,12 +1556,12 @@ t/10.95 Value-Noise\T1/lmr/m/n/10.95 -Verfahren ver-wen-det (\T1/lmtt/m/n/10.95
 [15
 
 ] [16] [17]
-<Bilder/curriculum_phasen.png, id=536, 709.33005pt x 221.8689pt>
+<Bilder/curriculum_phasen.png, id=543, 709.33005pt x 221.8689pt>
 File: Bilder/curriculum_phasen.png Graphic file (type png)
 <use Bilder/curriculum_phasen.png>
 Package pdftex.def Info: Bilder/curriculum_phasen.png  used on input line 804.
 (pdftex.def)             Requested size: 362.77525pt x 113.47325pt.
-<Bilder/epsilon_kompass_schema.png, id=538, 678.97665pt x 425.30894pt>
+<Bilder/epsilon_kompass_schema.png, id=545, 678.97665pt x 425.30894pt>
 File: Bilder/epsilon_kompass_schema.png Graphic file (type png)
 <use Bilder/epsilon_kompass_schema.png>
 Package pdftex.def Info: Bilder/epsilon_kompass_schema.png  used on input line 
@@ -1708,13 +1705,13 @@ unk-ti-on \T1/lmtt/m/n/10.95 carveGuaranteedPath \T1/lmr/m/n/10.95 star-
  []
 
 [27] [28]
-<Bilder/lakes.PNG, id=793, 404.712pt x 516.12825pt>
+<Bilder/lakes.PNG, id=800, 404.712pt x 516.12825pt>
 File: Bilder/lakes.PNG Graphic file (type png)
 <use Bilder/lakes.PNG>
 Package pdftex.def Info: Bilder/lakes.PNG  used on input line 1177.
 (pdftex.def)             Requested size: 133.86414pt x 170.71652pt.
  [29 <./Bilder/lakes.PNG>] [30]
-<Bilder/forest biome.PNG, id=858, 684.75826pt x 560.69475pt>
+<Bilder/forest biome.PNG, id=865, 684.75826pt x 560.69475pt>
 File: Bilder/forest biome.PNG Graphic file (type png)
 <use Bilder/forest biome.PNG>
 Package pdftex.def Info: Bilder/forest biome.PNG  used on input line 1231.
@@ -1724,17 +1721,17 @@ Underfull \hbox (badness 2626) in paragraph at lines 1232--1232
 []\T1/lmr/bx/n/9 (a) |\T1/lmr/m/n/9 Wald-Biom: ho-he Baum-dich-te, ge-rin-ge
  []
 
-<Bilder/steppe.PNG, id=859, 334.24875pt x 350.5095pt>
+<Bilder/steppe.PNG, id=866, 334.24875pt x 350.5095pt>
 File: Bilder/steppe.PNG Graphic file (type png)
 <use Bilder/steppe.PNG>
 Package pdftex.def Info: Bilder/steppe.PNG  used on input line 1237.
 (pdftex.def)             Requested size: 149.23239pt x 156.49014pt.
-<Bilder/mountain biome.PNG, id=860, 325.81725pt x 356.532pt>
+<Bilder/mountain biome.PNG, id=867, 325.81725pt x 356.532pt>
 File: Bilder/mountain biome.PNG Graphic file (type png)
 <use Bilder/mountain biome.PNG>
 Package pdftex.def Info: Bilder/mountain biome.PNG  used on input line 1245.
 (pdftex.def)             Requested size: 143.01201pt x 156.49014pt.
-<Bilder/biome desert.PNG, id=861, 458.31226pt x 404.10976pt>
+<Bilder/biome desert.PNG, id=868, 458.31226pt x 404.10976pt>
 File: Bilder/biome desert.PNG Graphic file (type png)
 <use Bilder/biome desert.PNG>
 Package pdftex.def Info: Bilder/biome desert.PNG  used on input line 1251.
@@ -1795,7 +1792,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 1734--1734
 
 [44] [45]
 chapter 5.
-<Bilder/game_preview_clean.png, id=1232, 2553.54pt x 1006.76125pt>
+<Bilder/game_preview_clean.png, id=1239, 2553.54pt x 1006.76125pt>
 File: Bilder/game_preview_clean.png Graphic file (type png)
 <use Bilder/game_preview_clean.png>
 Package pdftex.def Info: Bilder/game_preview_clean.png  used on input line 1757
@@ -1853,27 +1850,27 @@ me-Swallowing\T1/lmr/bx/n/10.95 ): \T1/lmr/m/n/10.95 Wie in Ab-schnitt [][]5.1.
 1[][]
  []
 
-<Bilder/eval_erfolgsquote.png, id=1266, 993.7125pt x 487.8225pt>
+<Bilder/eval_erfolgsquote.png, id=1273, 993.7125pt x 487.8225pt>
 File: Bilder/eval_erfolgsquote.png Graphic file (type png)
 <use Bilder/eval_erfolgsquote.png>
 Package pdftex.def Info: Bilder/eval_erfolgsquote.png  used on input line 1868.
 
 (pdftex.def)             Requested size: 418.2537pt x 205.32321pt.
 [50] [51 <./Bilder/eval_erfolgsquote.png>]
-<Bilder/eval_pfadeffizienz.png, id=1280, 755.58286pt x 493.96545pt>
+<Bilder/eval_pfadeffizienz.png, id=1287, 755.58286pt x 493.96545pt>
 File: Bilder/eval_pfadeffizienz.png Graphic file (type png)
 <use Bilder/eval_pfadeffizienz.png>
 Package pdftex.def Info: Bilder/eval_pfadeffizienz.png  used on input line 1887
 .
 (pdftex.def)             Requested size: 384.1096pt x 251.11255pt.
  [52 <./Bilder/eval_pfadeffizienz.png>]
-<Bilder/eval_det_stoch.png, id=1288, 805.8105pt x 549.9747pt>
+<Bilder/eval_det_stoch.png, id=1295, 805.8105pt x 549.9747pt>
 File: Bilder/eval_det_stoch.png Graphic file (type png)
 <use Bilder/eval_det_stoch.png>
 Package pdftex.def Info: Bilder/eval_det_stoch.png  used on input line 1904.
 (pdftex.def)             Requested size: 362.77525pt x 247.6038pt.
  [53 <./Bilder/eval_det_stoch.png>]
-<Bilder/eval_zielkonflikt.png, id=1295, 718.72514pt x 551.4201pt>
+<Bilder/eval_zielkonflikt.png, id=1303, 718.72514pt x 551.4201pt>
 File: Bilder/eval_zielkonflikt.png Graphic file (type png)
 <use Bilder/eval_zielkonflikt.png>
 Package pdftex.def Info: Bilder/eval_zielkonflikt.png  used on input line 1921.
@@ -1926,10 +1923,10 @@ L3 programming layer <2026-01-19>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 45137 strings out of 467525
- 1026214 string characters out of 5418982
- 2141773 words of memory out of 5000000
- 72584 multiletter control sequences out of 15000+600000
+ 45144 strings out of 467525
+ 1026277 string characters out of 5418982
+ 2141869 words of memory out of 5000000
+ 72591 multiletter control sequences out of 15000+600000
  717490 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  108i,20n,107p,11232b,2266s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1951,10 +1948,10 @@ cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/tex
 mf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/f
 onts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3652628 bytes).
+Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3653358 bytes).
 PDF statistics:
- 1883 PDF objects out of 2073 (max. 8388607)
- 1695 compressed objects within 17 object streams
+ 1912 PDF objects out of 2073 (max. 8388607)
+ 1723 compressed objects within 18 object streams
  789 named destinations out of 1000 (max. 500000)
- 736 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 792 words of extra memory for PDF output out of 10000 (max. 10000000)
 
