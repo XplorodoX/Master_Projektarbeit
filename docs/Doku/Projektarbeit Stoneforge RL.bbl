@@ -1,4 +1,4 @@
-\begin{thebibliography}{17}
+\begin{thebibliography}{22}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -35,6 +35,12 @@ Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
   2048--2056. PMLR, 2020.
 \newblock URL \url{https://proceedings.mlr.press/v119/cobbe20a.html}.
 
+\bibitem[Cormen et~al.(2009)Cormen, Leiserson, Rivest, and
+  Stein]{clrs2009algorithms}
+Thomas~H. Cormen, Charles~E. Leiserson, Ronald~L. Rivest, and Clifford Stein.
+\newblock \emph{Introduction to Algorithms}.
+\newblock MIT Press, Cambridge, Massachusetts, 3 edition, 2009.
+
 \bibitem[Hafner(2021)]{hafner2021crafter}
 Danijar Hafner.
 \newblock Benchmarking the spectrum of agent capabilities.
@@ -50,6 +56,14 @@ Matthew Hausknecht and Peter Stone.
 Sepp Hochreiter and J{\"u}rgen Schmidhuber.
 \newblock Long short-term memory.
 \newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+
+\bibitem[Johnson et~al.(2010)Johnson, Yannakakis, and
+  Togelius]{johnson2010cellular}
+Lawrence Johnson, Georgios~N. Yannakakis, and Julian Togelius.
+\newblock Cellular automata for real-time generation of infinite cave levels.
+\newblock In \emph{Proceedings of the 2010 Workshop on Procedural Content
+  Generation in Games (PCGames '10)}. ACM, 2010.
+\newblock URL \url{https://doi.org/10.1145/1814256.1814266}.
 
 \bibitem[Kaelbling et~al.(1998)Kaelbling, Littman, and
   Cassandra]{kaelbling1998planning}
@@ -99,6 +113,19 @@ Andrew~Y. Ng, Daishi Harada, and Stuart Russell.
 \newblock In \emph{Proceedings of the Sixteenth International Conference on
   Machine Learning (ICML)}, volume~99, pages 278--287, 1999.
 
+\bibitem[Perlin(1985)]{perlin1985image}
+Ken Perlin.
+\newblock An image synthesizer.
+\newblock \emph{ACM SIGGRAPH Computer Graphics}, 19\penalty0 (3):\penalty0
+  287--296, 1985.
+\newblock URL \url{https://doi.org/10.1145/325165.325247}.
+
+\bibitem[Quilez()]{quilez_warp}
+Inigo Quilez.
+\newblock Warping - {D}omain distortion.
+\newblock URL \url{https://iquilezles.org/articles/warp/}.
+\newblock Online-Artikel, ohne festes Publikationsdatum, Zugriff am 13.08.2026.
+
 \bibitem[Raffin et~al.(2021)Raffin, Hill, Gleave, Kanervisto, Ernest, and
   Dormann]{raffin2021stable}
 Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Scott Ernest, and
@@ -112,6 +139,14 @@ Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Scott Ernest, and
 John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
 \newblock Proximal policy optimization algorithms.
 \newblock \emph{arXiv preprint arXiv:1707.06347}, 2017.
+
+\bibitem[Steele et~al.(2014)Steele, Lea, and Flood]{steele2014splitmix}
+Guy~L. Steele, Doug Lea, and Christine~H. Flood.
+\newblock Fast splittable pseudorandom number generators.
+\newblock In \emph{Proceedings of the 2014 ACM International Conference on
+  Object Oriented Programming Systems Languages \& Applications (OOPSLA '14)},
+  pages 453--472. ACM, 2014.
+\newblock URL \url{https://doi.org/10.1145/2660193.2660195}.
 
 \bibitem[Sutton and Barto(2018)]{sutton2018reinforcement}
 Richard~S. Sutton and Andrew~G. Barto.

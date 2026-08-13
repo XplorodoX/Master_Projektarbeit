@@ -496,7 +496,7 @@ In der Informatik ist echter Zufall (\textit{True Randomness}) ohne spezielle Ha
 
 \begin{itemize}
     \item \textbf{Seed (Startwert):} Ein PRNG erzeugt eine deterministische Zahlenfolge basierend auf einem initialen Eingabewert (Seed). Bei identischem Seed erzeugt der Algorithmus jedes Mal exakt dieselbe Zahlenfolge.
-    \item \textbf{Hash- und Mix-Funktionen:} Um räumliche Daten (wie zweidimensionale Koordinaten $(x, y)$) unabhängig von einem fortlaufenden Zustand abzufragen, werden häufig zustandslose Hash-Funktionen genutzt. Diese bilden Raumkoordinaten, den Seed und ein optionales \textit{Salt} (ein zusätzlicher Offset zur Unterscheidung verschiedener Abfragen) auf einen pseudozufälligen Wert im Intervall $[0, 1]$ ab.
+    \item \textbf{Hash- und Mix-Funktionen:} Um räumliche Daten (wie zweidimensionale Koordinaten $(x, y)$) unabhängig von einem fortlaufenden Zustand abzufragen, werden häufig zustandslose Hash-Funktionen genutzt, etwa nach dem Vorbild schneller, splittbarer Mix-Konstruktionen wie \textit{SplitMix} \citep{steele2014splitmix}. Diese bilden Raumkoordinaten, den Seed und ein optionales \textit{Salt} (ein zusätzlicher Offset zur Unterscheidung verschiedener Abfragen) auf einen pseudozufälligen Wert im Intervall $[0, 1]$ ab.
 \end{itemize}
 
 \subsection{Gradienten- und Value-Noise-Verfahren}
@@ -505,7 +505,7 @@ In der Informatik ist echter Zufall (\textit{True Randomness}) ohne spezielle Ha
 Die direkte Verwendung unkorrelierter Pseudozufallswerte für benachbarte Raumpunkte führt zu einer ungeordneten Struktur (weißes Rauschen). Für die Simulation natürlicher Landschaften werden daher \textit{Coherent-Noise}-Verfahren genutzt, bei denen nahe beieinander liegende Punkte ähnliche Werte aufweisen.
 
 \subsubsection{Value Noise und Interpolation}
-Beim \textit{Value Noise} werden an den Knotenpunkten eines regulären Gitters pseudozufällige Skalarwerte bestimmt. Die Werte für Punkte innerhalb einer Gitterzelle berechnen sich anschließend durch Interpolation der umliegenden Knotenwerte.
+Beim \textit{Value Noise} werden an den Knotenpunkten eines regulären Gitters pseudozufällige Skalarwerte bestimmt. Die Werte für Punkte innerhalb einer Gitterzelle berechnen sich anschließend durch Interpolation der umliegenden Knotenwerte. Das Grundprinzip kohärenten, gitterbasierten Rauschens für die Bildsynthese geht auf die Arbeit von \citet{perlin1985image} zurück.
 
 Um stetige Übergänge ohne harte Kanten an den Zellgrenzen zu gewährleisten, wird der Interpolationsparameter $t \in [0, 1]$ vor der linearen Interpolation (\textit{Lerp}) durch eine S-förmige Glättungsfunktion (\textit{Smoothstep}) transformiert:
 
@@ -529,7 +529,7 @@ Um die typischen Raster-Artefakte einfacher Gitterstrukturen zu vermeiden, werde
 
 \begin{itemize}
     \item \textbf{Multi-Frequency / Fraktaler Noise:} Durch die Addition mehrerer Rauschfunktionen unterschiedlicher Frequenzen (Oktaven) und Amplituden lassen sich fraktalähnliche, hochdetaillierte Strukturen erzeugen. Niedrige Frequenzen steuern großflächige Formen (z.\,B. Kontinente), während hohe Frequenzen feine Details (z.\,B. Felsstrukturen) ergänzen.
-    \item \textbf{Domain Warping:} Hierbei werden die Eingangskoordinaten $(x, y)$ einer Rauschfunktion selbst durch den Ausgangswert einer anderen Rauschfunktion verzerrt:
+    \item \textbf{Domain Warping} \citep{quilez_warp}: Hierbei werden die Eingangskoordinaten $(x, y)$ einer Rauschfunktion selbst durch den Ausgangswert einer anderen Rauschfunktion verzerrt:
     \begin{equation}
     f_{\text{warped}}(x, y) = f(x + g(x, y), y + h(x, y))
     \end{equation}
@@ -550,7 +550,7 @@ Abbildung~\ref{fig:grundlagen_domain_warping} zeigt denselben Rauschausschnitt m
 
 Zelluläre Automaten (\textit{Cellular Automata}) bestehen aus Zellen, die diskrete Zustände (z.\,B. \textit{Wand} oder \textit{Freiraum}) annehmen können. In diskreten Zeitschritten aktualisiert jede Zelle ihren Zustand basierend auf einer lokalen Übergangsfunktion, welche die Zustände ihrer Nachbarschaft berücksichtigt.
 
-Häufig wird hierbei die Moore-Nachbarschaft verwendet, welche die 8 direkt angrenzenden Zellen (horizontal, vertikal und diagonal) umfasst. Durch gezielte Geburts- und Überlebensregeln (\textit{Birth/Survival Rules}) lassen sich aus verrauschten Initialzuständen zusammenhängende, natürliche Höhlen- und Klippenstrukturen erzeugen. Abbildung~\ref{fig:grundlagen_ca} zeigt diesen Effekt an einem unabhängigen Beispielgitter mit der auch in der Projektkonfiguration hinterlegten Regel B5/S4 (Geburt ab 5, Überleben ab 4 Nachbarwänden): Aus unstrukturiertem Rauschen entstehen nach wenigen Iterationen zusammenhängende Flächen.
+Häufig wird hierbei die Moore-Nachbarschaft verwendet, welche die 8 direkt angrenzenden Zellen (horizontal, vertikal und diagonal) umfasst. Durch gezielte Geburts- und Überlebensregeln (\textit{Birth/Survival Rules}) lassen sich aus verrauschten Initialzuständen zusammenhängende, natürliche Höhlen- und Klippenstrukturen erzeugen, wie es für die prozedurale Erzeugung von Höhlenlevels bereits gezeigt wurde \citep{johnson2010cellular}. Abbildung~\ref{fig:grundlagen_ca} zeigt diesen Effekt an einem unabhängigen Beispielgitter mit der auch in der Projektkonfiguration hinterlegten Regel B5/S4 (Geburt ab 5, Überleben ab 4 Nachbarwänden): Aus unstrukturiertem Rauschen entstehen nach wenigen Iterationen zusammenhängende Flächen.
 
 Im ausgelieferten Konfigurationsstand ist diese Nachbearbeitung deaktiviert (siehe Tabelle~\ref{tab:config_status}). Sie wird hier dennoch als Grundlage behandelt, weil sie die naheliegende algorithmische Alternative zum tatsächlich verwendeten Manhattan-Fallback markiert (siehe Abschnitt~\ref{sec:grundlagen_erreichbarkeit}) und dessen Auswahl erst vor diesem Hintergrund einordbar wird.
 
@@ -568,7 +568,7 @@ Ein zentrales Kriterium prozeduraler Welten ist die Sicherstellung der Spielbark
 
 \subsubsection{Breitensuche (Breadth-First Search, BFS)}
 \label{sec:grundlagen_bfs}
-Zur Analyse der Konnektivität wird das Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen als Knoten und Nachbarschaftsbeziehungen als Kanten dargestellt werden. Die Breitensuche (BFS) traversiert den Graphen ebenenweise vom Startknoten aus. Sie eignet sich zur Prüfung der Erreichbarkeit eines Zielknotens sowie zur Bestimmung des kürzesten Pfades auf ungewichten Gittern. Abbildung~\ref{fig:grundlagen_bfs} veranschaulicht das resultierende Distanzfeld an einem Beispielgitter: Jede Ebene entspricht einem BFS-Schritt vom Start aus, der kürzeste Pfad zum Ziel ergibt sich durch Rückverfolgung der jeweils näher liegenden Nachbarzelle.
+Zur Analyse der Konnektivität wird das Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen als Knoten und Nachbarschaftsbeziehungen als Kanten dargestellt werden. Die Breitensuche (BFS) traversiert den Graphen ebenenweise vom Startknoten aus \citep{clrs2009algorithms}. Sie eignet sich zur Prüfung der Erreichbarkeit eines Zielknotens sowie zur Bestimmung des kürzesten Pfades auf ungewichten Gittern. Abbildung~\ref{fig:grundlagen_bfs} veranschaulicht das resultierende Distanzfeld an einem Beispielgitter: Jede Ebene entspricht einem BFS-Schritt vom Start aus, der kürzeste Pfad zum Ziel ergibt sich durch Rückverfolgung der jeweils näher liegenden Nachbarzelle.
 
 Im ausgelieferten Konfigurationsstand dient die Breitensuche nicht mehr der Lösbarkeitsprüfung bei der Weltgenerierung (siehe Tabelle~\ref{tab:config_status}), da diese Rolle vollständig vom Manhattan-Fallback übernommen wird. Sie bleibt jedoch an anderer Stelle aktiv: als Distanzfeld für das Reward Shaping im RL-Training (Abschnitt~\ref{sec:impl_rl_reward}) und als Bezugsgröße der Pfadeffizienz-Metrik in der Evaluation (Abschnitt~\ref{sec:eval_eff}).
 

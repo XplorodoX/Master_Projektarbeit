@@ -2,6 +2,33 @@
 
 ---
 
+## v2026-08-12.10 — Zitationsprüfung Kapitel 2: Weltgenerierungs-Teil hatte keine einzige Quelle
+
+**Wer:** Florian.
+
+**Kontext:** Kritische Prüfung, ob alle Aussagen in Kapitel 2 (Grundlagen) mit echten Quellen belegt sind, angefordert.
+
+**Befund:** Abschnitt 2.2 (Grundlagen des Reinforcement Learning) ist vollständig und korrekt zitiert — jede Prüfung einzeln gegen die tatsächliche Quelle verifiziert: MDP/Policy/Reward → `sutton2018reinforcement` (Sutton & Barto, das kanonische RL-Lehrbuch, korrekt), POMDP/Belief State → `kaelbling1998planning` (korrekt, exakt das seminale POMDP-Paper), PBRS-Formel → `ng1999policy` (korrekt, Formel im Text entspricht der Originalarbeit), Curriculum Learning → `bengio2009curriculum` + `narvekar2020curriculum` (korrekt gepaart), PPO → `schulman2017proximal` (korrekt), LSTM → `hochreiter1997long` (korrekt, Originalarbeit), DQN → `mnih2015human` (korrekt, Nature-Paper), Gym/Gymnasium → `brockman2016openai` + `towers2023gymnasium` (Jahreszahlen und Übergabe an die Farama Foundation stimmen).
+
+Abschnitt 2.1 (Grundlagen der prozeduralen Weltgenerierung) hatte dagegen über den gesamten Abschnitt hinweg **keinen einzigen Beleg** — Value Noise, Smoothstep, Domain Warping, zelluläre Automaten zur Höhlengenerierung und Breitensuche wurden alle als etablierte Verfahren dargestellt, ohne eine einzige Quelle zu nennen.
+
+#### Änderung — Fünf echte Quellen recherchiert, verifiziert und ergänzt
+**Methode:** Jede Quelle einzeln über Websuche gegen Titel, Autoren, Jahr und Venue geprüft, keine aus dem Gedächtnis eingetragen. Dabei einen Fehler im ersten Rechercheversuch selbst abgefangen: SplitMix wurde zunächst fälschlich Steele/Lea/**Vigna** zugeordnet, die Suche zeigte die tatsächlichen Autoren Steele/Lea/**Flood** (OOPSLA 2014).
+
+| Stelle | Ergänzte Quelle | Beleg für |
+|---|---|---|
+| 2.1.1, Hash-/Mix-Funktionen | `steele2014splitmix` (Steele, Lea, Flood, OOPSLA 2014) | SplitMix-artige Mix-Konstruktion |
+| 2.1.2, Value Noise | `perlin1985image` (Perlin, SIGGRAPH 1985) | Grundprinzip kohärenten Gitter-Rauschens |
+| 2.1.2, Domain Warping | `quilez_warp` (Quilez, Online-Artikel) | Namensgebende Standardquelle der Technik in der Grafik-Community; kein festes Datum auffindbar, daher mit Zugriffsdatum statt Jahr eingetragen |
+| 2.1.3, Zelluläre Automaten | `johnson2010cellular` (Johnson, Yannakakis, Togelius, PCGames 2010) | Exakt einschlägiges Paper zu CA-Höhlengenerierung |
+| 2.1.4, Breitensuche | `clrs2009algorithms` (Cormen/Leiserson/Rivest/Stein, 3. Auflage 2009) | Standard-Algorithmenlehrbuch |
+
+**Bewusst nicht zitiert:** Die Manhattan-Distanz-Formel — zu elementar, um eine Quelle zu rechtfertigen (vergleichbar mit einer Grundrechenart).
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 22 statt 17 Literatureinträge, 78 Seiten.
+
+---
+
 ## v2026-08-12.9 — Kapitelverweise von Methodik bis Fazit ergänzt
 
 **Wer:** Florian.
