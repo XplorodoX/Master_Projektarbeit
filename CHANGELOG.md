@@ -2,6 +2,20 @@
 
 ---
 
+## v2026-08-12.12 — „Wir"-Form vollständig entfernt (Kapitel 1 und 4.2, nicht nur 1.4/1.5)
+
+**Wer:** Florian.
+
+**Kontext:** Rückmeldung nannte den Stilbruch „wir"-Form in 1.4/1.5. Vollständiger Scan über das gesamte Dokument (`grep`) zeigte einen größeren Umfang: Auch Abschnitt 1.3 (eine Paragraph-Überschrift), 1.6 (Verwandte Arbeiten) und der komplette Implementierungsabschnitt 4.2 (Implementierung des RL-Trainings) waren durchgehend in „wir"/„unser"-Form geschrieben, im Bruch zur unpersönlichen Form des restlichen Dokuments.
+
+**Lösung:** 26 Stellen auf Passiv/Modalverb beziehungsweise unpersönliche Nominalisierung umgestellt („wir recherchieren" → „es wird recherchiert", „unsere Trainingspipeline" → „die Trainingspipeline", „wir verwenden" → „verwendet wird" usw.). Fachlicher Inhalt an keiner Stelle verändert, ausschließlich Umformulierung. Abschließender Scan über das gesamte Dokument bestätigt: keine Treffer für „wir", „unser" oder „uns" mehr.
+
+**Zweiter Punkt aus der Rückmeldung geprüft:** Die Begründung, warum zelluläre Automaten und BFS in 2.1.3/2.1.4 trotz Deaktivierung im Endsystem als Grundlage behandelt werden, war bereits in `v2026-08-12.3` ergänzt worden (Zeilen 555, 573) — keine weitere Änderung nötig, die Rückmeldung bezog sich vermutlich auf einen älteren Lesestand.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen, 78 Seiten.
+
+---
+
 ## v2026-08-12.11 — RL-Grundlagen im Inhaltsverzeichnis sichtbar gemacht
 
 **Wer:** Florian.

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 12:58
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  13 AUG 2026 14:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1777,15 +1777,21 @@ Underfull \hbox (badness 2134) in paragraph at lines 1491--1491
  []
 
 
-Overfull \hbox (14.08504pt too wide) in paragraph at lines 1500--1501
-[]\T1/lmr/m/n/10.95 Wir ver-wen-den \T1/lmtt/m/n/10.95 sb3-contrib \T1/lmr/m/n/
-10.95 als di-rek-te Er-gän-zung zum Stable-Baselines3-Kernframework.
+Overfull \hbox (16.74287pt too wide) in paragraph at lines 1500--1501
+[]\T1/lmr/m/n/10.95 Verwendet wird \T1/lmtt/m/n/10.95 sb3-contrib \T1/lmr/m/n/1
+0.95 als di-rek-te Er-gän-zung zum Stable-Baselines3-Kernframework.
  []
 
-[37] (/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+[37]
+Overfull \hbox (33.9672pt too wide) in paragraph at lines 1504--1505
+\T1/lmr/m/n/10.95 dar-di-sier-ter Über-set-zer nö-tig. Die-se Auf-ga-be über-ni
+mmt die Python-Klasse \T1/lmtt/m/n/10.95 StoneforgeWorldEnv\T1/lmr/m/n/10.95 .
+ []
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-)
-[38] [39] [40] [41] [42] [43]
+) [38]
+[39] [40] [41] [42] [43]
 Underfull \hbox (badness 10000) in paragraph at lines 1734--1734
 []|\T1/lmr/m/n/10.95 Episoden-
  []
@@ -1925,7 +1931,7 @@ L3 programming layer <2026-01-19>
 Here is how much of TeX's memory you used:
  45144 strings out of 467525
  1026277 string characters out of 5418982
- 2141869 words of memory out of 5000000
+ 2141822 words of memory out of 5000000
  72591 multiletter control sequences out of 15000+600000
  717490 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1948,7 +1954,7 @@ cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/tex
 mf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/f
 onts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3653358 bytes).
+Output written on "Projektarbeit Stoneforge RL.pdf" (78 pages, 3653349 bytes).
 PDF statistics:
  1912 PDF objects out of 2073 (max. 8388607)
  1723 compressed objects within 18 object streams

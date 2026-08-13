@@ -433,7 +433,7 @@ Das Ziel der Arbeit ist es, eine eigene prozedurale 2D-Spielwelt zu bauen und da
 \paragraph{Daraus ergibt sich die zentrale Hauptfrage:}
 Wie muss eine prozedural generierte 2D-Spielwelt aufgebaut sein und welche RL-Algorithmen erzielen darin die besten Ergebnisse bei der Navigation?
 
-\paragraph{Konkret unterteilen wir das in zwei Teilfragen:}
+\paragraph{Konkret gliedert sich dies in zwei Teilfragen:}
 
 \begin{itemize}
     \item \textbf{Weltdesign:} Welche Parameter (wie Wanddichte oder Kartengröße) machen die Welt fair und für den Agenten lösbar?
@@ -443,36 +443,36 @@ Wie muss eine prozedural generierte 2D-Spielwelt aufgebaut sein und welche RL-Al
 \section{Vorgehen und Methodik}
 \label{sec:vorgehen}
 
-Unser Vorgehen ist in vier Schritte aufgeteilt:
+Das Vorgehen gliedert sich in vier Schritte:
 
 \begin{enumerate}
-    \item \textbf{Recherche zu Weltgenerierung und RL-Algorithmen:} Zuerst recherchieren wir, wie eine prozedurale Generierung sinnvoll aufgebaut sein sollte und welche Algorithmen sich eignen, um zufällige, aber immer lösbare 2D-Welten zu erzeugen. Parallel dazu schauen wir uns an, welche RL-Algorithmen für Navigationsaufgaben mit eingeschränkter Sicht überhaupt infrage kommen.
-    \item \textbf{Prototyping der Spielumgebung:} Auf dieser Basis bauen wir einen ersten Prototyp der Spielwelt. Diesen verbessern wir iterativ, bis Parameter wie Kartengröße, Wanddichte und die Sichtweite des Agenten gut zusammenpassen und die Level fair bleiben.
-    \item \textbf{Training der RL-Agenten:} Sobald die Spielumgebung stabil steht, setzen wir die ausgewählten RL-Algorithmen darauf an, trainieren sie und passen die Hyperparameter Schritt für Schritt an.
-    \item \textbf{Evaluation und Auswertung:} Zum Schluss testen wir die fertig trainierten Agenten auf vielen neu generierten Leveln. Wir erfassen die Ergebnisse – wie die Erfolgsquote und die Pfadeffizienz – systematisch und vergleichen die Verfahren miteinander.
+    \item \textbf{Recherche zu Weltgenerierung und RL-Algorithmen:} Zunächst wird recherchiert, wie eine prozedurale Generierung sinnvoll aufgebaut sein sollte und welche Algorithmen sich eignen, um zufällige, aber immer lösbare 2D-Welten zu erzeugen. Parallel dazu wird untersucht, welche RL-Algorithmen für Navigationsaufgaben mit eingeschränkter Sicht überhaupt infrage kommen.
+    \item \textbf{Prototyping der Spielumgebung:} Auf dieser Basis entsteht ein erster Prototyp der Spielwelt. Dieser wird iterativ verbessert, bis Parameter wie Kartengröße, Wanddichte und die Sichtweite des Agenten gut zusammenpassen und die Level fair bleiben.
+    \item \textbf{Training der RL-Agenten:} Sobald die Spielumgebung stabil steht, werden die ausgewählten RL-Algorithmen darauf trainiert und die Hyperparameter Schritt für Schritt angepasst.
+    \item \textbf{Evaluation und Auswertung:} Zum Schluss werden die fertig trainierten Agenten auf vielen neu generierten Leveln getestet. Die Ergebnisse, etwa Erfolgsquote und Pfadeffizienz, werden systematisch erfasst und die Verfahren miteinander verglichen.
 \end{enumerate}
 
 \section{Abgrenzung}
 \label{sec:abgrenzung}
 
-Damit der Rahmen der Projektarbeit überschaubar bleibt, grenzen wir folgende Punkte bewusst ab:
+Damit der Rahmen der Projektarbeit überschaubar bleibt, werden folgende Punkte bewusst ausgeklammert:
 
 \begin{itemize}
-    \item \textbf{Fokus auf die eigene Spielwelt:} Wir untersuchen ausschließlich unsere selbst entwickelte 2D-Gitterwelt. Eine Übertragbarkeit auf 3D-Umgebungen oder andere externe Benchmarks testen wir nicht.
-    \item \textbf{Kein RL für die Weltgenerierung:} Reinforcement Learning wird bei uns nur für das Navigationsverhalten des Agenten eingesetzt. Die Spielwelt selbst wird über feste, klassische Algorithmen erzeugt (kein gelerntes Weltdesign).
-    \item \textbf{Begrenzte Parameterstudie:} Wir führen keine unendliche Testreihe über alle denkbaren Kombinationen aus Wanddichten oder Kartengrößen durch, sondern konzentrieren uns auf die ausgewählten RL-Verfahren und praxisnahe Welteinstellungen.
+    \item \textbf{Fokus auf die eigene Spielwelt:} Untersucht wird ausschließlich die selbst entwickelte 2D-Gitterwelt. Eine Übertragbarkeit auf 3D-Umgebungen oder andere externe Benchmarks wird nicht geprüft.
+    \item \textbf{Kein RL für die Weltgenerierung:} Reinforcement Learning wird ausschließlich für das Navigationsverhalten des Agenten eingesetzt. Die Spielwelt selbst wird über feste, klassische Algorithmen erzeugt (kein gelerntes Weltdesign).
+    \item \textbf{Begrenzte Parameterstudie:} Auf eine erschöpfende Testreihe über alle denkbaren Kombinationen aus Wanddichten oder Kartengrößen wird verzichtet; der Fokus liegt auf den ausgewählten RL-Verfahren und praxisnahen Welteinstellungen.
 \end{itemize}
 
 \section{Verwandte Arbeiten}
 \label{sec:verwandte_arbeiten}
 
-Unser Ansatz lässt sich in bestehende Arbeiten einordnen, die sich mit gitterbasierten Spielwelten und prozeduraler Generierung für Reinforcement Learning beschäftigen:
+Der eigene Ansatz lässt sich in bestehende Arbeiten einordnen, die sich mit gitterbasierten Spielwelten und prozeduraler Generierung für Reinforcement Learning beschäftigen:
 
 \begin{itemize}
-    \item \textbf{Gitterbasierte Testwelten (MiniGrid \& Crafter):} Umgebungen wie \textit{MiniGrid} \cite{chevalier2023minigrid} oder \textit{Crafter} \cite{hafner2021crafter} verfolgen ein ganz ähnliches Prinzip wie unser Projekt. Sie bieten leichtgewichtige 2D-Gitterwelten, in denen der Agent oft nur einen begrenzten Ausschnitt der Karte sieht und einfache Navigations- oder Sammelaufgaben lösen muss.
-    \item \textbf{Generalisierung durch prozedurale Level (Procgen):} Der \textit{Procgen Benchmark} \cite{cobbe2020procgen} untersucht gezielt, wie gut RL-Agenten auf immer wieder neu generierten Leveln verallgemeinern. Das bestätigt unsere Grundidee, dass prozedurale Welten verhindern, dass ein Agent feste Pfade einfach nur auswendig lernt.
-    \item \textbf{Partielle Beobachtbarkeit und Gedächtnis (POPGym):} Besonders nah an unserem RL-Teil ist \textit{POPGym} \cite{morad2023popgym}. Die Autoren untersuchen dort ganz gezielt Umgebungen mit eingeschränkter Sicht (partielle Beobachtbarkeit) und vergleichen, wie sich Modelle mit Gedächtnis (rekurrente Policies) gegen Modelle ohne Gedächtnis schlagen. Das ist exakt der Ansatz, den wir auch für den Vergleich unserer Trainingsverfahren übernehmen.
-    \item \textbf{Abgrenzung zu gelerntem Weltdesign (PCGRL):} In Arbeiten wie \textit{PCGRL} \cite{khalifa2020pcgrl} wird Reinforcement Learning eingesetzt, um das Generieren von Spielwelten selbst zu erlernen. Davon grenzen wir uns klar ab: Bei uns bleibt die Erzeugung der Spielwelt fest über eigene Algorithmen programmiert, und das RL-Verfahren dient ausschließlich dazu, das Navigationsverhalten des Agenten zu trainieren.
+    \item \textbf{Gitterbasierte Testwelten (MiniGrid \& Crafter):} Umgebungen wie \textit{MiniGrid} \cite{chevalier2023minigrid} oder \textit{Crafter} \cite{hafner2021crafter} verfolgen ein ganz ähnliches Prinzip wie das vorliegende Projekt. Sie bieten leichtgewichtige 2D-Gitterwelten, in denen der Agent oft nur einen begrenzten Ausschnitt der Karte sieht und einfache Navigations- oder Sammelaufgaben lösen muss.
+    \item \textbf{Generalisierung durch prozedurale Level (Procgen):} Der \textit{Procgen Benchmark} \cite{cobbe2020procgen} untersucht gezielt, wie gut RL-Agenten auf immer wieder neu generierten Leveln verallgemeinern. Das bestätigt die Grundidee dieser Arbeit, dass prozedurale Welten verhindern, dass ein Agent feste Pfade einfach nur auswendig lernt.
+    \item \textbf{Partielle Beobachtbarkeit und Gedächtnis (POPGym):} Besonders nah am RL-Teil dieser Arbeit ist \textit{POPGym} \cite{morad2023popgym}. Die Autoren untersuchen dort ganz gezielt Umgebungen mit eingeschränkter Sicht (partielle Beobachtbarkeit) und vergleichen, wie sich Modelle mit Gedächtnis (rekurrente Policies) gegen Modelle ohne Gedächtnis schlagen. Das ist exakt der Ansatz, der auch für den Vergleich der Trainingsverfahren in dieser Arbeit übernommen wird.
+    \item \textbf{Abgrenzung zu gelerntem Weltdesign (PCGRL):} In Arbeiten wie \textit{PCGRL} \cite{khalifa2020pcgrl} wird Reinforcement Learning eingesetzt, um das Generieren von Spielwelten selbst zu erlernen. Davon grenzt sich diese Arbeit klar ab: Die Erzeugung der Spielwelt bleibt fest über eigene Algorithmen programmiert, das RL-Verfahren dient ausschließlich dazu, das Navigationsverhalten des Agenten zu trainieren.
 \end{itemize}
 
 
@@ -1473,11 +1473,11 @@ void Simulation::useAction() {
 % RL
 \section{Implementierung des RL-Trainings}
 \label{sec:impl_rl}
-Nachdem die technische Grundlage unserer Spielumgebung gelegt wurde, widmen wir uns nun der Umsetzung des eigentlichen RL-Trainings. In diesem Abschnitt geht es primär um das \glqq Wie\grqq: Wir schauen uns konkrete Code-Architekturen, Werte und Implementierungsdetails an. Die methodischen Gründe für diese Entscheidungen – das \glqq Warum\grqq\ – werden an dieser Stelle vorausgesetzt. Maßgeblich für alle hier genannten Werte und Logiken ist ausschließlich der implementierte Quellcode.
+Nachdem die technische Grundlage der Spielumgebung gelegt wurde, widmet sich dieser Abschnitt der Umsetzung des eigentlichen RL-Trainings. Es geht primär um das \glqq Wie\grqq: Im Mittelpunkt stehen konkrete Code-Architekturen, Werte und Implementierungsdetails. Die methodischen Gründe für diese Entscheidungen – das \glqq Warum\grqq\ – werden an dieser Stelle vorausgesetzt. Maßgeblich für alle hier genannten Werte und Logiken ist ausschließlich der implementierte Quellcode.
 
 \subsection{Technologie-Stack}
 \label{sec:impl_rl_stack}
-Unsere gesamte Trainingspipeline ist in Python geschrieben. Um dennoch die Performance unseres C++-Simulationskerns zu nutzen, greifen wir über ein kompiliertes Modul darauf zu. Tabelle~\ref{tab:rl_stack} gibt einen kurzen Überblick über die verwendeten Werkzeuge.
+Die gesamte Trainingspipeline ist in Python geschrieben. Um dennoch die Performance des C++-Simulationskerns zu nutzen, erfolgt der Zugriff über ein kompiliertes Modul. Tabelle~\ref{tab:rl_stack} gibt einen kurzen Überblick über die verwendeten Werkzeuge.
 
 \begin{table}[htbp]
     \centering
@@ -1497,11 +1497,11 @@ Unsere gesamte Trainingspipeline ist in Python geschrieben. Um dennoch die Perfo
     \end{tabular}
 \end{table}
 
-Wir verwenden \texttt{sb3-contrib} als direkte Ergänzung zum Stable-Baselines3-Kernframework. Der Grund dafür ist pragmatisch: Das Standard-Framework bringt von Haus aus keine rekurrente Policy mit. Genau diese benötigen wir aber für unseren LSTM-Ansatz (RecurrentPPO). Obwohl das Framework auch Algorithmen wie DQN und A2C anbietet, konzentrieren wir uns beim Training ausschließlich auf den Vergleich von PPO und RecurrentPPO. Um den Durchsatz zu maximieren, simulieren wir konstant 16 Instanzen der Umgebung parallel.
+Verwendet wird \texttt{sb3-contrib} als direkte Ergänzung zum Stable-Baselines3-Kernframework. Der Grund dafür ist pragmatisch: Das Standard-Framework bringt von Haus aus keine rekurrente Policy mit, die aber für den LSTM-Ansatz (RecurrentPPO) benötigt wird. Obwohl das Framework auch Algorithmen wie DQN und A2C anbietet, konzentriert sich das Training ausschließlich auf den Vergleich von PPO und RecurrentPPO. Um den Durchsatz zu maximieren, laufen konstant 16 Instanzen der Umgebung parallel.
 
 \subsection{Anbindung der Spielumgebung und Aufbau der Beobachtung}
 \label{sec:impl_rl_env}
-Damit ein RL-Framework überhaupt mit unserer C++-Welt kommunizieren kann, benötigen wir einen standardisierten Übersetzer. Diese Aufgabe übernimmt die Python-Klasse \texttt{StoneforgeWorldEnv}. Sie implementiert die bekannte \texttt{gymnasium}-Schnittstelle mit \texttt{reset()} und \texttt{step()}, wandelt die Aktionen des Agenten in Simulationsschritte um und baut aus dem Spielzustand den Beobachtungsvektor zusammen. 
+Damit ein RL-Framework überhaupt mit der C++-Welt kommunizieren kann, ist ein standardisierter Übersetzer nötig. Diese Aufgabe übernimmt die Python-Klasse \texttt{StoneforgeWorldEnv}. Sie implementiert die bekannte \texttt{gymnasium}-Schnittstelle mit \texttt{reset()} und \texttt{step()}, wandelt die Aktionen des Agenten in Simulationsschritte um und baut aus dem Spielzustand den Beobachtungsvektor zusammen. 
 
 \begin{lstlisting}[language=Python, caption={Aufbau des Beobachtungsvektors, \texttt{python/stoneforge\_env.py}}, label={lst:env_observation}]
 def _normalize(self, raw: list[int]) -> np.ndarray:
@@ -1531,7 +1531,7 @@ def _normalize(self, raw: list[int]) -> np.ndarray:
     # ... (CNN-Variante mit Visited-Mask: in der v12-Konfiguration nicht aktiv)
 \end{lstlisting}
 
-Die in Listing~\ref{lst:env_observation} definierte Struktur gießt unsere Problemformulierung in Code:
+Die in Listing~\ref{lst:env_observation} definierte Struktur gießt die Problemformulierung in Code:
 
 \begin{itemize}
     \item \textbf{\texttt{observation\_space}:} Ein \texttt{Box}-Raum mit exakt 229 Dimensionen. Er besteht aus dem lokalen $15 \times 15$-Raster (225 Kacheln) um den Agenten herum sowie vier Zusatzmerkmalen: Den aktuellen Trefferpunkten, den beiden normierten Richtungskomponenten zum Ausgang (\texttt{exitDx}, \texttt{exitDy}) und dem Anteil des verbrauchten Schrittbudgets. Vormals geplante Werte wie Energie oder Inventar wurden als irrelevante, tote Merkmale bewusst entfernt.
@@ -1585,7 +1585,7 @@ Wie im Code (Listing~\ref{lst:modelle}) erkennbar, unterscheiden sich die Verfah
 
 \subsection{Trainingspipeline und duales Curriculum-Gating}
 \label{sec:impl_rl_pipeline}
-Das Training erfolgt in vier fließenden Phasen. Wir starten das Training beim Phasenwechsel nicht neu, das Modell trainiert nahtlos weiter. Der Wechsel in die nächste Phase (Gating) ist dabei nicht rein leistungsbasiert, sondern nutzt eine duale Abbruchbedingung.
+Das Training erfolgt in vier fließenden Phasen. Beim Phasenwechsel wird das Training nicht neu gestartet, das Modell trainiert nahtlos weiter. Der Wechsel in die nächste Phase (Gating) ist dabei nicht rein leistungsbasiert, sondern nutzt eine duale Abbruchbedingung.
 
 \begin{lstlisting}[language=Python, caption={Curriculum-Phasen mit dualen Abbruchbedingungen, \texttt{scripts/train\_curriculum.py}}, label={lst:curriculum_gating}]
 PHASES = [
@@ -1625,11 +1625,11 @@ Die Tabelle und Listing~\ref{lst:curriculum_gating} zeigen zwei Besonderheiten d
     \item \textbf{Doppelrolle der Metrik:} Die gemessene Erfolgsquote beendet nicht nur (potenziell) die Phase, sie fungiert gleichzeitig als Metrik für die Auswahl und Speicherung des besten Modell-Checkpoints.
 \end{itemize}
 
-Um dem Agenten den Übergang in schwerere Phasen zu erleichtern, senken wir den Entropie-Koeffizienten (\texttt{ent\_coef}) in Phase 3 über $500\,000$ Schritte stetig von $0{,}05$ auf $0{,}001$ ab (Annealing). In Phase 4 bleibt er fix bei $0{,}0001$, wodurch der Agent von einem explorativen nahezu vollständig in ein deterministisches Verhalten übergeht.
+Um dem Agenten den Übergang in schwerere Phasen zu erleichtern, wird der Entropie-Koeffizient (\texttt{ent\_coef}) in Phase 3 über $500\,000$ Schritte stetig von $0{,}05$ auf $0{,}001$ abgesenkt (Annealing). In Phase 4 bleibt er fix bei $0{,}0001$, wodurch der Agent von einem explorativen nahezu vollständig in ein deterministisches Verhalten übergeht.
 
 \subsection{Reward-Shaping und Distanzfeld}
 \label{sec:impl_rl_reward}
-Unsere Belohnungsstruktur ist direkt in den performanten C++-Simulationskern eingewoben (mit Ausnahme einer Anti-Stuck-Strafe auf der Python-Seite). Entgegen früheren Entwurfsstadien wurde die Strafen-Struktur massiv entschlackt, da sich zeigte, dass sich aufsummierende Strafen (Penalty-Stacking) das Erkundungsverhalten des Agenten unterdrückten. 
+Die Belohnungsstruktur ist direkt in den performanten C++-Simulationskern eingewoben (mit Ausnahme einer Anti-Stuck-Strafe auf der Python-Seite). Entgegen früheren Entwurfsstadien wurde die Strafen-Struktur massiv entschlackt, da sich zeigte, dass sich aufsummierende Strafen (Penalty-Stacking) das Erkundungsverhalten des Agenten unterdrückten. 
 
 \begin{lstlisting}[language=C++, caption={Berechnung des Rewards und Shaping-Terms, \texttt{src/core/simulation.cpp}}, label={lst:reward_shaping}]
 float reward = -0.01F;
@@ -1679,7 +1679,7 @@ Das Herzstück bildet jedoch das \textbf{Potential Based Reward Shaping (PBRS)},
 
 \subsection{Umsetzung der Baselines: Die wandblinde Kompass-Heuristik}
 \label{sec:impl_rl_baselines}
-Um unsere trainierten RL-Modelle bewerten zu können, brauchen wir ungelernte Referenzwerte (Baselines). Diese greifen direkt auf die Spiellogik zu und erfordern keine Trainingsphase. 
+Um die trainierten RL-Modelle bewerten zu können, braucht es ungelernte Referenzwerte (Baselines). Diese greifen direkt auf die Spiellogik zu und erfordern keine Trainingsphase. 
 
 \begin{lstlisting}[language=Python, caption={Aktionswahl der Referenzverfahren, \texttt{scripts/eval\_baselines.py}}, label={lst:baselines}]
 class CompassPolicy:
@@ -1714,7 +1714,7 @@ Dies macht die Kompass-Heuristik de facto \textbf{wandblind}. Sie nutzt keine Pf
 
 \subsection{Vollständige Hyperparameter-Konfiguration}
 \label{sec:impl_rl_parameter}
-Um die vollständige Reproduzierbarkeit zu gewährleisten, sind in Tabelle~\ref{tab:parameter_training} alle verbleibenden, fest im Code verankerten Hyperparameter für den Optimierer (PPO) sowie die generellen Testbedingungen aufgeführt. Wir stoppen Episoden regulär nach einem Limit von 4000 Schritten ab. Zusätzlich erzwingt das System einen Early-Stop, wenn der Agent 256 Schritte lang keine positive Belohnung sammelt. Um Varianzen durch die Generierung auszugleichen, mitteln wir die Ergebnisse über sieben unterschiedliche Zufallssaaten (Seeds).
+Um die vollständige Reproduzierbarkeit zu gewährleisten, sind in Tabelle~\ref{tab:parameter_training} alle verbleibenden, fest im Code verankerten Hyperparameter für den Optimierer (PPO) sowie die generellen Testbedingungen aufgeführt. Episoden werden regulär nach einem Limit von 4000 Schritten gestoppt. Zusätzlich erzwingt das System einen Early-Stop, wenn der Agent 256 Schritte lang keine positive Belohnung sammelt. Um Varianzen durch die Generierung auszugleichen, werden die Ergebnisse über sieben unterschiedliche Zufallssaaten (Seeds) gemittelt.
 
 \begin{table}[htbp]
     \centering
