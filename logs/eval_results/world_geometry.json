@@ -1,0 +1,24 @@
+[
+  {
+    "label": "Glaettung AUS",
+    "solvable": 100,
+    "n": 100,
+    "wall_density": 0.2376870824763971,
+    "manhattan_mean": 36.81,
+    "bfs_mean": 40.03,
+    "detour_mean": 1.098790912494081,
+    "detour_p90": 1.2544117647058828,
+    "detour_max": 1.6666666666666667
+  },
+  {
+    "label": "AN it=2 b=5 s=4",
+    "solvable": 100,
+    "n": 100,
+    "wall_density": 0.037417978187351014,
+    "manhattan_mean": 40.07,
+    "bfs_mean": 40.09,
+    "detour_mean": 1.0005263157894737,
+    "detour_p90": 1.0,
+    "detour_max": 1.0526315789473684
+  }
+]

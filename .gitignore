@@ -16,13 +16,18 @@ logs/runtime/
 logs/game.log
 logs/game.pid
 
+# ── logs/: nur die dokumentierten, reproduzierbarkeitsrelevanten Unterordner
+# tracken (eval_results/, tensorboard/, README.md), Rest (ad-hoc stdout-Logs
+# einzelner Trainingsläufe) ignorieren. Siehe logs/README.md.
+logs/*
+!logs/README.md
+!logs/eval_results/
+!logs/tensorboard/
+
 # ── Trainings-Artefakte (große Binaries) ────────────────────────────────────
 # models/ wird NICHT ignoriert — Modelle sollen ins Repo (für Reproduzierbarkeit)
 # Einzelne veraltete Pfade:
 checkpoints/
-
-# ── TensorBoard-Logs (groß, optional ignorieren) ─────────────────────────────
-# logs/tensorboard/    ← auskommentiert: TB-Logs WERDEN getrackt
 
 # ── macOS ────────────────────────────────────────────────────────────────────
 .DS_Store
@@ -36,6 +41,5 @@ best_models_ppo/
 best_models_ppo_*/
 ppo_stoneforge_model.zip
 dqn_stoneforge_model.zip
-logs/
 PokemonRedExperiments-master/
 OLD/

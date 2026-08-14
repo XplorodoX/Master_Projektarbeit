@@ -1,0 +1,22 @@
+BFS-Optimum der Testsets (mittlere kuerzeste Weglaenge):
+  Testset A: min 35 / Ø 40.1 / max 45
+  Testset B: min 35 / Ø 40.0 / max 45
+
+Politik                                    A: SR  Schritte  Effiz.         B: SR  Schritte  Effiz.
+----------------------------------------------------------------------------------------------------
+Random (uniform)                     10.0 ±  0.0      2232   0.022   16.0 ±  0.0      1834   0.030
+Kompass-Zufallslauf (eps=0.3)        50.0 ±  0.0       399   0.158   56.0 ±  0.0       487   0.173
+Kompass-Zufallslauf (eps=0.5)        62.0 ±  0.0       466   0.142   72.0 ±  0.0       444   0.168
+Kompass-Zufallslauf (eps=0.6)        76.0 ±  0.0       485   0.130   82.0 ±  0.0       595   0.108
+Kompass-Zufallslauf (eps=0.8)        94.0 ±  0.0       716   0.081   86.0 ±  0.0       615   0.103
+Kompass-Zufallslauf (eps=0.9)        88.0 ±  0.0      1495   0.040   92.0 ±  0.0      1162   0.048
+----------------------------------------------------------------------------------------------------
+RecurrentPPO v12_s1 (stoch)          70.0 ±  0.0      1304   0.056   66.0 ±  0.0      1102   0.063
+RecurrentPPO v12_s2 (stoch)          78.0 ±  0.0      1365   0.056   66.0 ±  0.0      1172   0.055
+RecurrentPPO v12_s3 (stoch)          70.0 ±  0.0      1197   0.048   86.0 ±  0.0      1239   0.059
+RecurrentPPO v12_s4 (stoch)          88.0 ±  0.0      1460   0.041   78.0 ±  0.0      1055   0.059
+RecurrentPPO v12_s5 (stoch)          62.0 ±  0.0      1596   0.039   74.0 ±  0.0      1244   0.057
+RecurrentPPO v12_s6 (stoch)          56.0 ±  0.0      1740   0.043   68.0 ±  0.0      1869   0.040
+RecurrentPPO v12_s7 (stoch)          56.0 ±  0.0      1343   0.061   52.0 ±  0.0      1295   0.064
+
+Gespeichert: logs/eval_results/baselines_and_models.json
