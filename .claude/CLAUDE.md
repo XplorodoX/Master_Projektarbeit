@@ -104,10 +104,22 @@ Env-Versionen sind nicht vergleichbar. Berichtsfähig ist ausschließlich der v1
 
 ### Trainierte Modelle (v12, `models/ppo_lstm_curriculum_v12_s1..s7`)
 
-| Testset | Success Rate |
-|---------|--------------|
-| A (Seeds 7000–7049) | 65,7 % ± 12,4 (stochastisch) |
-| B (Holdout, 8000–8049) | 66,9 % ± 12,8 (stochastisch) |
+Quelle: `logs/eval_results/baselines.json` (5-Wiederholungs-Protokoll) — dieselbe
+Datei und Messkampagne wie MLP-Kontrollgruppe und ungelernte Referenzen.
+
+| Modell | Testset | Success Rate |
+|--------|---------|--------------|
+| LSTM (RecurrentPPO) | A (Seeds 7000–7049) | 64,6 % ± 10,1 (stochastisch) |
+| LSTM (RecurrentPPO) | B (Holdout, 8000–8049) | 68,8 % ± 15,5 (stochastisch) |
+| MLP (PPO) | A (Seeds 7000–7049) | 33,5 % ± 25,5 (stochastisch) |
+| MLP (PPO) | B (Holdout, 8000–8049) | 35,8 % ± 30,5 (stochastisch) |
+
+Die früher kanonischen LSTM-Werte 65,7 % ± 12,4 / 66,9 % ± 12,8 stammten aus dem
+Einzelmessungs-Lauf vom 17.07.2026 (kein 5-Wiederholungs-Protokoll) und mischten sich
+in der Arbeit mit MLP-Werten aus der späteren Kampagne. Vereinheitlicht am 14.08.2026,
+siehe CHANGELOG v2026-08-14.2. Die deterministische LSTM-Zusatzmessung
+(29,1 % ± 8,0 A / 32,6 % ± 12,7 B, Einzelmessung auf den Testset-Seeds) bleibt
+unverändert gültig und wird als solche gekennzeichnet.
 
 ### Ungelernte Referenzen
 
@@ -123,10 +135,13 @@ Projektdokumentation. Korrigiert am 05.08.2026 gegen die Rohdaten.
 
 ### Die Pfadeffizienz rettet das Ergebnis nicht
 
-v12 liegt bei 0,039–0,061 und damit auf dem Niveau des ε=0,9-Zufallslaufs (0,040).
-Der ε=0,3-Kompass erreicht 0,158 und ist rund dreimal wegeffizienter als das trainierte
-Modell. Das LSTM erkauft seine höhere Erfolgsquote durch mehr Herumlaufen, nicht durch
-bessere Wege. Quelle: `logs/eval_results/baselines_and_models.json`.
+v12 (LSTM) liegt im Mittel bei 0,053 (Einzelläufe 0,033–0,060) und damit nur knapp über
+dem ε=0,9-Zufallslauf (0,047). Der ε=0,3-Kompass erreicht 0,177 und ist rund 3,3-mal
+wegeffizienter als das trainierte Modell; das MLP kommt auf 0,067, was wegen des
+Selektionseffekts bei niedriger SR nicht als bessere Wegfindung zu lesen ist. Das LSTM
+erkauft seine höhere Erfolgsquote durch mehr Herumlaufen, nicht durch bessere Wege.
+Quelle: `logs/eval_results/baselines.json` (die ältere
+`baselines_and_models.json` ist eine Einzelmessungs-Vorstufe, nicht zitieren).
 
 ### Historische Stände — nicht zitieren
 
@@ -440,8 +455,8 @@ Diese Dokumentation ist Grundlage der Projektarbeit.
 
 | Kriterium | Ziel | Stand v12 | Status |
 |-----------|------|-----------|--------|
-| Testset A (7000–7049) | ≥ 70 % SR | 65,7 % ± 12,4 | nicht erreicht |
-| Testset B (8000–8049) | ≥ 60 % SR | 66,9 % ± 12,8 | erreicht |
+| Testset A (7000–7049) | ≥ 70 % SR | 64,6 % ± 10,1 | nicht erreicht |
+| Testset B (8000–8049) | ≥ 60 % SR | 68,8 % ± 15,5 | erreicht |
 | Läufe pro Konfiguration | ≥ 3 | 7 | erfüllt |
 
 Pro Konfiguration sind Mittelwert und Standardabweichung anzugeben.
@@ -642,7 +657,11 @@ Der zweite und dritte Satz gehören in den Fließtext.
 
 - „somit", „folglich", „mithin"
 - KI-Floskeln: „Es ist wichtig zu beachten, dass", „Zusammenfassend lässt sich sagen",
-  „darüber hinaus", „grundlegend", „umfassend", „signifikant", „entscheidend"
+  „darüber hinaus", „grundlegend", „umfassend", „signifikant", „entscheidend".
+  Ausnahme: „signifikant" ist als statistischer Fachterm zulässig, wenn ein
+  Ergebnis tatsächlich auf einen Signifikanztest (p-Wert, Konfidenzintervall)
+  gestützt wird, etwa „der Unterschied ist signifikant (p = 0,016)". Als
+  bloßes Verstärkungswort („ein signifikanter Fortschritt") bleibt es verboten.
 - Gedankenstriche als Einschub; stattdessen Komma, Klammer oder ein zweiter Satz
 - Rhetorische Fragen, Leseransprache, Emojis, Superlative, Marketingsprache
 - Absätze mit mehr als fünf Sätzen

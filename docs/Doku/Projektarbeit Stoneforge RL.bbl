@@ -16,14 +16,14 @@ Yoshua Bengio, J{\'e}r{\^o}me Louradour, Ronan Collobert, and Jason Weston.
   Schulman, Tang, and Zaremba]{brockman2016openai}
 Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
   Jie Tang, and Wojciech Zaremba.
-\newblock Openai gym, 2016.
+\newblock {OpenAI Gym}, 2016.
 
-\bibitem[Chevalier-Boisvert et~al.(2023)Chevalier-Boisvert, Dai, Markese,
-  Willems, Pal, Castro, and Sogaard]{chevalier2023minigrid}
-Maxime Chevalier-Boisvert, Bolun Dai, Mark Markese, Lucas Willems, Suman Pal,
-  Pablo~Samuel Castro, and Anders Sogaard.
-\newblock Minigrid \& babyai: Core architectures for rl in environments with
-  sparse rewards and partial observability.
+\bibitem[Chevalier-Boisvert et~al.(2023)Chevalier-Boisvert, Dai, Towers,
+  de~Lazcano, Willems, Lahlou, Pal, Castro, and Terry]{chevalier2023minigrid}
+Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, Rodrigo de~Lazcano, Lucas
+  Willems, Salem Lahlou, Suman Pal, Pablo~Samuel Castro, and Jordan Terry.
+\newblock Minigrid \& {BabyAI}: Core architectures for {RL} in environments
+  with sparse rewards and partial observability.
 \newblock \emph{arXiv preprint arXiv:2306.13831}, 2023.
 \newblock URL \url{https://arxiv.org/abs/2306.13831}.
 
@@ -49,7 +49,7 @@ Danijar Hafner.
 
 \bibitem[Hausknecht and Stone(2015)]{hausknecht2015deep}
 Matthew Hausknecht and Peter Stone.
-\newblock Deep recurrent q-learning for partially observable mdps.
+\newblock Deep recurrent {Q}-learning for partially observable {MDPs}.
 \newblock In \emph{2015 AAAI Fall Symposium Series}, 2015.
 
 \bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter1997long}
@@ -75,7 +75,7 @@ Leslie~Pack Kaelbling, Michael~L. Littman, and Anthony~R. Cassandra.
 \bibitem[Khalifa et~al.(2020)Khalifa, Bontrager, Earle, and
   Togelius]{khalifa2020pcgrl}
 Ahmed Khalifa, Philip Bontrager, Sam Earle, and Julian Togelius.
-\newblock Pcgrl: Procedural content generation via reinforcement learning.
+\newblock {PCGRL}: Procedural content generation via reinforcement learning.
 \newblock In \emph{Proceedings of the AAAI Conference on Artificial
   Intelligence and Interactive Digital Entertainment (AIIDE)}, volume~16, pages
   95--101, 2020.
@@ -89,10 +89,11 @@ Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei~A Rusu, Joel Veness,
 \newblock Human-level control through deep reinforcement learning.
 \newblock \emph{Nature}, 518\penalty0 (7540):\penalty0 529--533, 2015.
 
-\bibitem[Morad et~al.(2023)Morad, Kortvelesy, Matteo, Li, and
-  Amor]{morad2023popgym}
-Steven Morad, Ryan Kortvelesy, V.~Matteo, S.~Li, and H.~Amor.
-\newblock Popgym: Benchmarking partially observable reinforcement learning.
+\bibitem[Morad et~al.(2023)Morad, Kortvelesy, Bettini, Liwicki, and
+  Prorok]{morad2023popgym}
+Steven Morad, Ryan Kortvelesy, Matteo Bettini, Stephan Liwicki, and Amanda
+  Prorok.
+\newblock {POPGym}: Benchmarking partially observable reinforcement learning.
 \newblock In \emph{International Conference on Learning Representations
   (ICLR)}, 2023.
 \newblock URL \url{https://arxiv.org/abs/2303.01859}.

@@ -2,6 +2,71 @@
 
 ---
 
+## v2026-08-14.2 — Kanonische LSTM-Zahl auf baselines.json vereinheitlicht (65,7 → 64,6), gemischte Messkampagnen im Architekturvergleich aufgelöst
+
+**Wer:** Florian.
+
+**Kontext:** Eine gründliche Konsistenzprüfung vor der Abgabe (Gutachten-Durchgang) deckte auf, was in `v2026-08-12.2` als offener Punkt vermerkt war: Die in der Arbeit berichteten LSTM-Werte (65,7 % ± 12,4 A / 66,9 % ± 12,8 B, Einzelwerte 62/84/76/74/58/50/56) stammten aus dem Einzelmessungs-Lauf vom 17.07.2026, die MLP-Werte dagegen aus der späteren 5-Wiederholungs-Kampagne (`baselines.json`). Anhang C stellte beide Reihen nebeneinander und behauptete in der Fußnote für alle Werte das 5-Wiederholungs-Protokoll — für die LSTM-Spalten sichtbar falsch (2-Prozent-Raster statt 0,4-Raster). Welch-Test, Effizienzvergleich und alle Folgezahlen verglichen damit Werte aus zwei verschiedenen Kampagnen.
+
+**Entscheidung:** Kanonisch ist ab jetzt für **alle** stochastischen Modellwerte `logs/eval_results/baselines.json` (5 Wiederholungen je 50 Seeds, bug-gefixtes Eval-Skript). Das ersetzt die bisherige Regel „kanonisch = Lauf vom 17.07.2026", weil nur die neue Kampagne beide Architekturen unter identischem Protokoll enthält. Die deterministische LSTM-Zusatzmessung (29,1/32,6, Einzelmessung) bleibt unverändert und wird als solche gekennzeichnet. `CLAUDE.md` (Berichtsfähiger Stand, Zielkriterium) entsprechend aktualisiert; `baselines_and_models.json` bleibt als Einzelmessungs-Vorstufe nicht zitierfähig.
+
+#### Änderung 1 — Zahlen und Statistik in der Arbeit
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Problem:** Siehe Kontext; zusätzlich waren abgeleitete Zahlen betroffen.
+**Lösung:** Anhang C (LSTM-Spalten und Mittelzeile), Kurzfassung, Abstract, 5.2.1–5.2.4 und Kapitel 6 auf die kanonischen Werte umgestellt. Statistik neu gerechnet:
+
+| Größe | vorher | nachher |
+|-------|--------|---------|
+| LSTM A stoch. | 65,7 % ± 12,4 (Spannweite 50,0–84,0) | 64,6 % ± 10,1 (51,6–76,8) |
+| LSTM B stoch. | 66,9 % ± 12,8 | 68,8 % ± 15,5 |
+| Welch A | t(8,7) = 3,00, p = 0,016 | t(7,8) = 2,99, p = 0,018 |
+| Mann-Whitney A | U = 41, p = 0,038 (signifikant) | U = 40, p = 0,053 (knapp darüber, Text angepasst) |
+| Welch / MW B | p = 0,038 / p = 0,053 | p = 0,031 / U = 41, p = 0,038 (beide signifikant) |
+| CI der Differenz A | [7,8; 56,6] | [7,0; 55,0] |
+| LSTM Pfadeffizienz / Schritte | 0,049 / 1429 | 0,053 / 1425 |
+| Folgezahlen | 36,6 Pp. Det-Lücke · 32 Pp. Vorsprung · 3,6-mal (ε=0,3) · knapp 14 Pp. | 35,5 Pp. · 31 Pp. · 3,3-mal · rund 13 Pp. |
+
+Kernaussagen unverändert: LSTM schlägt MLP (Welch signifikant auf A und B, d = 1,6), der ε=0,8-Kompass dominiert beide Modelle in beiden Metriken, Zielkriterium A verfehlt / B erreicht.
+
+#### Änderung 2 — Abbildungen aus der Messdatei statt hartkodiert
+**Dateien:** `scripts/plot_eval_results.py`, `scripts/plot_v12_endergebnis.py`
+**Problem:** Beide Skripte trugen die LSTM-Werte der alten Kampagne hartkodiert.
+**Lösung:** Stochastische Modell- und Referenzwerte werden jetzt direkt aus `baselines.json` gelesen (nur die det.-Zusatzmessung bleibt als dokumentierte Konstante). `eval_erfolgsquote.png`, `eval_pfadeffizienz.png`, `eval_zielkonflikt.png`, `eval_det_stoch.png`, `v12_zielkriterium.png` regeneriert.
+
+#### Änderung 3 — Kleinkorrekturen aus derselben Prüfung
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+- 4.2.6: Behauptung „Erfolgsquote **und Schrittzahl** steigen mit ε" widersprach Anhang C (Schrittzahl fällt von ε=0,3 auf 0,5); umformuliert auf Erfolgsquote steigt / Pfadeffizienz sinkt.
+- 4.2.3: „Framework-Standard von 256" war falsch (SB3-Default für PPO ist 64); Begründung jetzt über die Minibatch-Aufteilung.
+- Eidesstattliche Erklärung: Unterschriftszeile „Röseler" → „Rößler".
+- Kurzfassung/Abstract: Kapitelverweise entfernt (Abstracts müssen ohne Dokument lesbar sein); TODO-/Platzhalter-Kommentare gestrichen.
+- Fazit: knappe Antwortsätze zu Teilfrage 1 ergänzt, überzogene Pro-Lauf-Aussage zum LSTM-Vorsprung präzisiert, Schlussabsatz im Ausblick ergänzt.
+
+**Ergebnis:** Alle Werte in Text, Anhang C und Abbildungen stammen jetzt aus einer Kampagne beziehungsweise sind als Zusatzmessung gekennzeichnet; Greps auf Altwerte (65,7 · 66,9 · 0,049 · 1429 · 36,6 · p=0,016) liefern keine Treffer mehr.
+
+---
+
+## v2026-08-14.1 — Deterministische MLP-Werte aus Abbildungen und Text entfernt, einheitliche Messgrundlage hergestellt
+
+**Wer:** Florian.
+
+**Kontext:** Die Rückmeldung zur Zwischenbewertung nannte die uneinheitliche Messgrundlage im zentralen Architekturvergleich als offenen Punkt: Der deterministische MLP-Wert (0,0 %) stammte aus den trainingsbegleitenden Evaluationen auf den Validierungs-Seeds, der deterministische LSTM-Wert (29,1 %) aus einer eigenen Zusatzmessung auf den Testset-A-Seeds. Statt den Unterschied an mehreren Stellen zu erklaeren, berichten Abbildungen und Text jetzt nur noch Werte mit konsistenter Messgrundlage.
+
+#### Änderung 1 — Plots bereinigt
+**Datei:** `scripts/plot_eval_results.py`
+**Problem:** `eval_erfolgsquote.png` und `eval_det_stoch.png` mischten Testset-A-Messungen mit Werten aus trainingsbegleitenden Evaluationen (MLP det., als Schraffur gekennzeichnet). Zusaetzlich erzeugte `plot_zielkonflikt()` Pro-Seed-Effizienzpunkte aus Zufalls-Jitter um den Mittelwert — fabrizierte Datenpunkte, Verstoss gegen die Regel „Diagramme entstehen aus den tatsaechlichen Messdaten".
+**Lösung:** MLP-det.-Balken samt Schraffur-Legende aus `eval_erfolgsquote.png` entfernt; `eval_det_stoch.png` zeigt nur noch die sieben LSTM-Laeufe (Titel angepasst); im Zielkonflikt-Plot die gejitterten Pseudo-Punkte entfernt, es bleiben die real gemessenen Mittelwert-Diamanten; unerklaerte Schraffur auf dem MLP-Balken der Pfadeffizienz entfernt. `MLP_DET` aus dem Skript gestrichen. Alle vier PNGs neu generiert.
+
+#### Änderung 2 — Tex-Stellen nachgezogen
+**Datei:** `docs/Doku/Projektarbeit Stoneforge RL.tex`
+**Problem:** Sieben Stellen (Methodik-Protokoll, 5.2.1, 5.2.3 samt Bildunterschrift, Fazit-Teilfrage 2, Fazit-Beitragsliste, Anhang C) berichteten den deterministischen MLP-Wert und mussten seine abweichende Herkunft jeweils erklaeren.
+**Lösung:** Der deterministische Modus wird nur noch fuer das LSTM-PPO-Modell berichtet (einheitliche Messgrundlage: Zusatzmessung auf denselben Testset-Seeds wie die stochastische Hauptmessung). Der MLP-det.-Wert 0,0 % ist ueberall entfernt, ebenso jede Erwaehnung der Zwischenevaluationen als Wertquelle; der Begriff selbst bleibt nur als Beschreibung des Gating-Mechanismus (umbenannt in „trainingsbegleitende Evaluationen"). Der Architekturvergleich stuetzt sich jetzt allein auf die stochastischen Werte aus dem kanonischen Protokoll (65,7 % gegen 33,5 %, Welch-Test p = 0,016). Kein Messwert wurde geaendert, nur die Auswahl der berichteten Werte.
+
+**Hinweis fuer spaetere Arbeiten:** Der Befund „MLP loest deterministisch keine einzige Episode (70 Messpunkte, Phase-4-Selektion auf deterministischer SR)" bleibt hier im Changelog dokumentiert, wird in der Arbeit aber nicht mehr berichtet, da keine Testset-A/B-Messung existiert.
+
+**Ergebnis:** `latexmk -pdf` fehlerfrei, keine undefinierten Referenzen.
+
+---
+
 ## v2026-08-12.13 — Dateipfade aus dem Fließtext entfernt, Redundanz 3.1/4.1 dadurch entschärft
 
 **Wer:** Florian.

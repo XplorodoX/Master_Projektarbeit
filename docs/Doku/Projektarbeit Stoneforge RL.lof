@@ -1,29 +1,35 @@
 \babel@toc {ngerman}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Value Noise -- lineare gegen Smoothstep-Interpolation zwischen denselben Knotenwerten, eigene Darstellung.}}{5}{figure.caption.12}%
-\contentsline {figure}{\numberline {2.2}{\ignorespaces Domain Warping -- derselbe Rauschausschnitt unverzerrt und verzerrt, eigene Darstellung.}}{6}{figure.caption.14}%
-\contentsline {figure}{\numberline {2.3}{\ignorespaces Zellulärer Automat -- Rauschgitter vor und nach vier Glättungsiterationen, eigene Darstellung.}}{7}{figure.caption.15}%
-\contentsline {figure}{\numberline {2.4}{\ignorespaces Breitensuche -- Distanzfeld vom Startpunkt und daraus resultierender kürzester Pfad, eigene Darstellung.}}{8}{figure.caption.17}%
-\contentsline {figure}{\numberline {2.5}{\ignorespaces Interaktionsschleife zwischen Agent und Umgebung.}}{9}{figure.caption.19}%
-\contentsline {figure}{\numberline {2.6}{\ignorespaces Vergleich zwischen vollständiger und partieller Beobachtbarkeit.}}{9}{figure.caption.20}%
-\contentsline {figure}{\numberline {2.7}{\ignorespaces Veranschaulichung des Potentialfelds $\Phi (s)$ und der daraus resultierenden formenden Belohnung entlang eines Beispielpfads.}}{10}{figure.caption.21}%
-\contentsline {figure}{\numberline {2.8}{\ignorespaces Darstellung der Clipped Surrogate Objective von PPO.}}{11}{figure.caption.22}%
-\contentsline {figure}{\numberline {2.9}{\ignorespaces Funktionsweise einer rekurrenten Policy im Vergleich zu einer zustandslosen Policy.}}{12}{figure.caption.23}%
-\contentsline {figure}{\numberline {2.10}{\ignorespaces Zusammenspiel von Replay Buffer und Target Network in der DQN Architektur.}}{13}{figure.caption.24}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Value Noise -- lineare gegen Smoothstep-Interpolation zwischen denselben Knotenwerten, eigene Darstellung.}}{5}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Domain Warping -- derselbe Rauschausschnitt unverzerrt und verzerrt, eigene Darstellung.}}{6}{figure.caption.15}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Zellulärer Automat -- Rauschgitter vor und nach vier statt der konfigurierten zwei Glättungsiterationen, um den Effekt deutlicher zu zeigen, eigene Darstellung.}}{7}{figure.caption.16}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Breitensuche -- Distanzfeld vom Startpunkt und daraus resultierender kürzester Pfad, eigene Darstellung.}}{8}{figure.caption.18}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Interaktionsschleife zwischen Agent und Umgebung, eigene Darstellung.}}{9}{figure.caption.20}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Vergleich zwischen vollständiger und partieller Beobachtbarkeit, eigene Darstellung.}}{9}{figure.caption.21}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Veranschaulichung des Potentialfelds $\Phi (s)$ und der daraus resultierenden formenden Belohnung entlang eines Beispielpfads, eigene Darstellung.}}{10}{figure.caption.22}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Darstellung der Clipped Surrogate Objective von PPO, eigene Darstellung.}}{11}{figure.caption.23}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Funktionsweise einer rekurrenten Policy im Vergleich zu einer zustandslosen Policy, eigene Darstellung.}}{12}{figure.caption.24}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Zusammenspiel von Replay Buffer und Target Network in der DQN-Architektur, eigene Darstellung.}}{13}{figure.caption.25}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Struktur des vierphasigen Curriculum-Trainings mit Steigerung der Exit-Distanz}}{18}{figure.caption.32}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Entscheidungsregel und ausgewertete Parameter der $\varepsilon $-Kompass-Heuristik}}{19}{figure.caption.33}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Struktur des vierphasigen Curriculum-Trainings mit Steigerung der Exit-Distanz, eigene Darstellung.}}{20}{figure.caption.33}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Entscheidungsregel und ausgewertete Parameter der $\varepsilon $-Kompass-Heuristik, eigene Darstellung.}}{21}{figure.caption.34}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Nahaufnahme einer prozedural generierten Seenstruktur mit organischer, rauschbasierter Uferlinie und dynamisch abgeleitetem Strand-Overlay an den Begehbarkeitsgrenzen. Quelle: Eigene Darstellung (Screenshot des Prototyps).}}{29}{figure.caption.43}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Vergleichende Darstellung von vier der sieben implementierten Biome anhand von Screenshots des Prototyps. Die unterschiedlichen Untergrund-Farbpaletten sowie Objekt- und Hindernisdichten ergeben sich aus den biomspezifischen Schwellenwerten (\texttt {wallThreshold}, \texttt {oreThreshold}, \texttt {treeThreshold}) aus Abschnitt~\ref {sec:umsetzung_biome}. Quelle: Eigene Darstellung (Screenshots des Prototyps).}}{31}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Prozedural generierte Seenstruktur mit organischer Uferlinie und Strand-Overlay, eigene Darstellung (Screenshot des Prototyps).}}{33}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Vergleich von vier der sieben Biome, eigene Darstellung (Screenshots des Prototyps).}}{35}{figure.caption.47}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Aufbau des 229-dimensionalen Beobachtungsvektors, Konzeptdarstellung, eigene Darstellung.}}{44}{figure.caption.56}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Erfolgsquote der sieben v12-Läufe über die Trainingsschritte, je Curriculum-Phase, eigene Darstellung.}}{47}{figure.caption.57}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces Visualisierung der generierten Spielwelt mit dynamischer Beleuchtung/Sichtfeld, organischen Seenstrukturen, Strandbereichen und biomabhängigen Kacheltypen. Quelle: Eigene Darstellung (Screenshot des Prototyps, Debug-Overlay entfernt).}}{46}{figure.caption.54}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces Evaluation -- Erfolgsquote der trainierten Verfahren und der Referenzpunkte auf Testset A, eigene Darstellung.}}{51}{figure.caption.62}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces Evaluation -- Pfadeffizienz der Verfahren in derselben Achsenordnung, eigene Darstellung.}}{52}{figure.caption.63}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces Evaluation -- Erfolgsquote desselben Modellstands in deterministischer und stochastischer Auswertung, eigene Darstellung.}}{53}{figure.caption.64}%
-\contentsline {figure}{\numberline {5.5}{\ignorespaces Evaluation -- Erfolgsquote gegen Pfadeffizienz für alle Verfahren, eigene Darstellung.}}{54}{figure.caption.65}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Generierte Spielwelt mit dynamischer Beleuchtung, Seenstrukturen und biomabhängigen Kacheltypen, eigene Darstellung (Screenshot des Prototyps, Debug-Overlay entfernt).}}{52}{figure.caption.59}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Evaluation -- Erfolgsquote der trainierten Verfahren und der Referenzpunkte auf Testset A, eigene Darstellung.}}{57}{figure.caption.67}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Evaluation -- Pfadeffizienz der Verfahren in derselben Achsenordnung, eigene Darstellung.}}{58}{figure.caption.68}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Evaluation -- gelaufener Agentenpfad gegen BFS-Optimum auf Seed 7000 (Testset A), eigene Darstellung.}}{59}{figure.caption.69}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Evaluation -- Erfolgsquote der sieben LSTM-PPO-Läufe in deterministischer und stochastischer Auswertung, eigene Darstellung.}}{60}{figure.caption.70}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Evaluation -- Erfolgsquote gegen Pfadeffizienz für alle Verfahren, eigene Darstellung.}}{61}{figure.caption.71}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Erfolgsquote des LSTM-PPO-Modells (n=7) gegen das Zielkriterium, Testset A und Holdout B, eigene Darstellung.}}{67}{figure.caption.73}%
 \def \@chapapp {\appendixname }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
 \addvspace {10\p@ }
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

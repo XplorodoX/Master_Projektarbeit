@@ -1,11 +1,11 @@
 """Erzeugt die vier Evaluations-Abbildungen für Kapitel 5 aus den berichtsfähigen Zahlen.
 
-Datenquellen (siehe CHANGELOG v2026-08-12.3 und CLAUDE.md, Berichtsfähiger Stand):
-  * Random / Kompass-Referenzen: logs/eval_results/baselines.json (kanonisch).
-  * LSTM (Testset A, n=7): Changelog-Eintrag v2026-07-17, volle Seed-Tabelle,
-    die einzige laut CLAUDE.md-Regel 2 zitierfähige LSTM-Messung.
-  * MLP (Testset A, n=7): eigenständig neu gemessener, verifizierter Lauf aus
-    v2026-08-12.2 (bug-gefixtes eval_baselines.py, s8 ausgeschlossen).
+Datenquellen (siehe CHANGELOG v2026-08-14.1 und CLAUDE.md, Berichtsfähiger Stand):
+  * Random / Kompass-Referenzen sowie LSTM- und MLP-Stochastik (je Testset A,
+    n=7): logs/eval_results/baselines.json (kanonisch, 5-Wiederholungs-Protokoll).
+    Beide Modellreihen stammen damit aus derselben Messkampagne.
+  * LSTM deterministisch: einmalige Zusatzmessung auf den Testset-Seeds
+    (CHANGELOG v2026-07-17); im kanonischen Protokoll nicht enthalten.
 
 Kein bestehendes Erzeugungsskript für diese Abbildungen war im Repository auffindbar
 (vermutlich ad-hoc erzeugt) — dieses Skript ersetzt das und macht die vier Abbildungen
@@ -50,22 +50,30 @@ plt.rcParams.update({
 })
 
 # ---------------------------------------------------------------- Daten
-# Random / Kompass: logs/eval_results/baselines.json, Testset A
-RANDOM_SR, RANDOM_EFF = 5.2, 0.021
-COMPASS_SR = {0.3: 52.0, 0.4: 60.4, 0.5: 71.6, 0.6: 76.8, 0.8: 88.8, 0.9: 92.0}
-COMPASS_EFF = {0.3: 0.177, 0.4: 0.153, 0.5: 0.150, 0.6: 0.138, 0.8: 0.094, 0.9: 0.047}
+# Alles Stochastische kommt direkt aus der kanonischen Messdatei, damit
+# Abbildungen und Fliesstext nicht auseinanderlaufen koennen.
+import json
 
-# LSTM, Testset A, n=7 (CHANGELOG v2026-07-17, kanonisch laut CLAUDE.md)
-LSTM_STOCH = np.array([62, 84, 76, 74, 58, 50, 56], dtype=float)
+_DATA = json.loads(Path("logs/eval_results/baselines.json").read_text())
+
+RANDOM_SR = _DATA["random"]["A"]["sr_mean"]
+RANDOM_EFF = _DATA["random"]["A"]["efficiency"]
+_EPS = (0.3, 0.4, 0.5, 0.6, 0.8, 0.9)
+COMPASS_SR = {e: _DATA[f"compass_eps{e}"]["A"]["sr_mean"] for e in _EPS}
+COMPASS_EFF = {e: _DATA[f"compass_eps{e}"]["A"]["efficiency"] for e in _EPS}
+
+# LSTM / MLP, Testset A, n=7, 5-Wiederholungs-Protokoll (baselines.json)
+LSTM_STOCH = np.array([_DATA[f"v12_s{i}_stoch"]["A"]["sr_mean"] for i in range(1, 8)])
+LSTM_EFF = float(np.mean([_DATA[f"v12_s{i}_stoch"]["A"]["efficiency"] for i in range(1, 8)]))
+MLP_STOCH = np.array([_DATA[f"v12_mlp_s{i}_stoch"]["A"]["sr_mean"] for i in range(1, 8)])
+MLP_EFF = float(np.mean([_DATA[f"v12_mlp_s{i}_stoch"]["A"]["efficiency"] for i in range(1, 8)]))
+
+# LSTM deterministisch: einmalige Zusatzmessung auf den Testset-Seeds
+# (CHANGELOG v2026-07-17), nicht Teil des 5-Wiederholungs-Protokolls.
+# Deterministische MLP-Werte existieren nicht und werden nicht geplottet.
 LSTM_DET = np.array([38, 26, 32, 40, 20, 20, 28], dtype=float)
-LSTM_EFF = 0.049  # CLAUDE.md / Kapitel 5.2
 
-# MLP, Testset A, n=7 (CHANGELOG v2026-08-12.2, verifizierter Lauf nach Bugfix)
-MLP_STOCH = np.array([18.8, 53.6, 22.0, 4.0, 60.8, 10.4, 65.2])
-MLP_DET = np.zeros(7)
-MLP_EFF = 0.067
-
-assert abs(LSTM_STOCH.mean() - 65.7) < 0.1
+assert abs(LSTM_STOCH.mean() - 64.6) < 0.1
 assert abs(LSTM_DET.mean() - 29.1) < 0.1
 assert abs(MLP_STOCH.mean() - 33.5) < 0.1
 
@@ -80,29 +88,25 @@ def savefig(fig, name):
 
 # ---------------------------------------------------------------- Abbildung 1: Erfolgsquote
 def plot_erfolgsquote():
-    labels = ["Random", "MLP-PPO\ndet.", "MLP-PPO\nstoch.", "LSTM-PPO\ndet.",
+    labels = ["Random", "MLP-PPO\nstoch.", "LSTM-PPO\ndet.",
               "LSTM-PPO\nstoch.", "Kompass\nε=0,3", "Kompass\nε=0,5", "Kompass\nε=0,6",
               "Kompass\nε=0,8", "Kompass\nε=0,9"]
-    values = [RANDOM_SR, MLP_DET.mean(), MLP_STOCH.mean(), LSTM_DET.mean(),
+    values = [RANDOM_SR, MLP_STOCH.mean(), LSTM_DET.mean(),
               LSTM_STOCH.mean(), COMPASS_SR[0.3], COMPASS_SR[0.5], COMPASS_SR[0.6],
               COMPASS_SR[0.8], COMPASS_SR[0.9]]
-    errs = [0, MLP_DET.std(ddof=1), MLP_STOCH.std(ddof=1), LSTM_DET.std(ddof=1),
+    errs = [0, MLP_STOCH.std(ddof=1), LSTM_DET.std(ddof=1),
             LSTM_STOCH.std(ddof=1), 0, 0, 0, 0, 0]
-    colors = [C_RANDOM, C_MLP_LIGHT, C_MLP, C_LSTM_LIGHT, C_LSTM,
+    colors = [C_RANDOM, C_MLP, C_LSTM_LIGHT, C_LSTM,
               C_COMPASS[0.3], C_COMPASS[0.5], C_COMPASS[0.6], C_COMPASS[0.8], C_COMPASS[0.9]]
-    hatches = [None, "//", "//", None, None, None, None, None, None, None]
 
     fig, ax = plt.subplots(figsize=(16, 7.5))
     bars = ax.bar(labels, values, yerr=errs, color=colors, edgecolor="#333333",
                    linewidth=1.1, capsize=5, error_kw={"linewidth": 1.6, "ecolor": "#333333"},
                    width=0.72)
-    for bar, hatch in zip(bars, hatches):
-        if hatch:
-            bar.set_hatch(hatch)
     for bar, val, err in zip(bars, values, errs):
         ax.text(bar.get_x() + bar.get_width() / 2, val + err + 2.5, f"{val:.1f} %".replace(".", ","),
                 ha="center", va="bottom", fontsize=13)
-    ax.set_ylabel("Erfolgsquote auf Testset A (%)")
+    ax.set_ylabel("Erfolgsquote (%)")
     ax.set_ylim(0, 108)
     ax.set_title("Erfolgsquote der trainierten Verfahren und der ungelernten Referenzpunkte")
     ax.tick_params(axis="x", labelsize=13)
@@ -117,13 +121,8 @@ def plot_pfadeffizienz():
               COMPASS_EFF[0.6], COMPASS_EFF[0.8], COMPASS_EFF[0.9]]
     colors = [C_RANDOM, C_MLP, C_LSTM, C_COMPASS[0.3], C_COMPASS[0.5],
               C_COMPASS[0.6], C_COMPASS[0.8], C_COMPASS[0.9]]
-    hatches = [None, "//", None, None, None, None, None, None]
-
     fig, ax = plt.subplots(figsize=(12, 7.5))
     bars = ax.bar(labels, values, color=colors, edgecolor="#333333", linewidth=1.1)
-    for bar, hatch in zip(bars, hatches):
-        if hatch:
-            bar.set_hatch(hatch)
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, val + 0.003, f"{val:.3f}".replace(".", ","),
                 ha="center", va="bottom", fontsize=13)
@@ -150,20 +149,15 @@ def plot_zielkonflikt():
         ax.annotate(f"ε={e:g}".replace(".", ","), (COMPASS_SR[e], COMPASS_EFF[e]),
                     xytext=(8, 8), textcoords="offset points", fontsize=13)
 
-    # LSTM: 7 Einzelläufe + Mittelwert-Diamant
-    lstm_per_seed_eff = np.full(7, LSTM_EFF)  # keine Pro-Seed-Effizienz im kanonischen Lauf dokumentiert
-    ax.scatter(LSTM_STOCH, lstm_per_seed_eff + np.random.default_rng(0).normal(0, 0.006, 7),
-               s=55, color=C_LSTM, alpha=0.75, zorder=3)
+    # LSTM: Mittelwert-Diamant (keine Pro-Seed-Effizienz im kanonischen Lauf
+    # dokumentiert, daher keine Einzelpunkte)
     ax.scatter([LSTM_STOCH.mean()], [LSTM_EFF], marker="D", s=320, color=C_LSTM,
                edgecolor="#333333", linewidth=2, zorder=4)
     ax.annotate("LSTM-PPO\n(Mittel über 7 Läufe)", (LSTM_STOCH.mean(), LSTM_EFF),
                 xytext=(15, -55), textcoords="offset points", fontsize=14,
                 color=C_LSTM, fontweight="bold")
 
-    # MLP: 7 Einzelläufe + Mittelwert-Diamant
-    rng = np.random.default_rng(1)
-    mlp_per_seed_eff = MLP_EFF + rng.normal(0, 0.012, 7)
-    ax.scatter(MLP_STOCH, mlp_per_seed_eff, s=55, color=C_MLP, alpha=0.75, zorder=3)
+    # MLP: Mittelwert-Diamant (siehe LSTM-Kommentar)
     ax.scatter([MLP_STOCH.mean()], [MLP_EFF], marker="D", s=320, color=C_MLP,
                edgecolor="#333333", linewidth=2, zorder=4)
     ax.annotate("MLP-PPO\n(Mittel über 7 Läufe)", (MLP_STOCH.mean(), MLP_EFF),
@@ -185,13 +179,7 @@ def plot_determinismus():
     for det, stoch in zip(LSTM_DET, LSTM_STOCH):
         ax.plot(x, [det, stoch], "-", color=C_LSTM, linewidth=1.8, alpha=0.85, zorder=2)
         ax.scatter(x, [det, stoch], s=70, facecolor="white", edgecolor=C_LSTM, linewidth=2, zorder=3)
-    for det, stoch in zip(MLP_DET, MLP_STOCH):
-        ax.plot(x, [det, stoch], "--", color=C_MLP, linewidth=1.8, alpha=0.85, zorder=2)
-        ax.scatter(x, [det, stoch], marker="s", s=60, facecolor="white", edgecolor=C_MLP,
-                   linewidth=2, zorder=3)
-
     ax.plot([], [], "-o", color=C_LSTM, markerfacecolor="white", label="LSTM-PPO (7 Läufe)")
-    ax.plot([], [], "--s", color=C_MLP, markerfacecolor="white", label="MLP-PPO (7 Läufe)")
     ax.legend(loc="upper left", frameon=False, fontsize=14)
 
     ax.set_xticks(x)
@@ -199,7 +187,7 @@ def plot_determinismus():
     ax.set_ylabel("Erfolgsquote (%)")
     ax.set_ylim(0, 100)
     ax.set_xlim(-0.15, 1.15)
-    ax.set_title("Determinismus-Lücke: dasselbe Modell, zwei Auswertungsmodi")
+    ax.set_title("Determinismus-Lücke des LSTM-PPO: dasselbe Modell, zwei Auswertungsmodi")
     savefig(fig, "eval_det_stoch.png")
 
 

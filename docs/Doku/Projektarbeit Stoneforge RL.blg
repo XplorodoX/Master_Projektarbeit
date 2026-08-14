@@ -7,34 +7,34 @@ Warning--can't use both volume and number fields in khalifa2020pcgrl
 Warning--empty year in quilez_warp
 You've used 22 entries,
             2773 wiz_defined-function locations,
-            732 strings with 9879 characters,
-and the built_in function-call counts, 12612 in all, are:
-= -- 1072
-> -- 959
+            732 strings with 9953 characters,
+and the built_in function-call counts, 12712 in all, are:
+= -- 1078
+> -- 977
 < -- 13
-+ -- 322
-- -- 300
-* -- 1093
-:= -- 1952
++ -- 328
+- -- 306
+* -- 1105
+:= -- 1970
 add.period$ -- 78
 call.type$ -- 22
-change.case$ -- 165
+change.case$ -- 167
 chr.to.int$ -- 22
 cite$ -- 46
 duplicate$ -- 505
 empty$ -- 889
-format.name$ -- 328
-if$ -- 2622
+format.name$ -- 334
+if$ -- 2640
 int.to.chr$ -- 1
 int.to.str$ -- 1
 missing$ -- 21
 newline$ -- 127
 num.names$ -- 88
-pop$ -- 351
+pop$ -- 355
 preamble$ -- 1
-purify$ -- 143
+purify$ -- 145
 quote$ -- 0
-skip$ -- 427
+skip$ -- 429
 stack$ -- 0
 substring$ -- 346
 swap$ -- 76

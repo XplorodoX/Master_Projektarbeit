@@ -1,24 +1,32 @@
-"""Erzeugt docs/figures/fig_v12_endergebnis.pdf -- zentrales Endergebnis (v12, n=7).
+"""Erzeugt das Zielkriterium-Endergebnis (v12, n=7) fuer Kapitel 6.
 
-Bislang existierte fuer die Tabelle tab:v12 (Abschnitt sec:endergebnis) keine
-Abbildung; die dort ausfuehrlich diskutierte Streuung von rund +-12 Punkten
-war nur als Zahl sichtbar, nicht als Fehlerbalken. Diese Abbildung zeigt Mittel
-+- Stichproben-Std (ddof=1) je Bedingung, die sieben Einzellaeufe als
-Streupunkte und die vorab festgelegten Erfolgsschwellen aus Abschnitt sec:ziele.
+Zeigt Mittel +- Stichproben-Std (ddof=1) je Bedingung, die sieben Einzellaeufe
+als Streupunkte und die vorab festgelegten Erfolgsschwellen aus dem Ziel-
+kriterium (70 % / 60 %). Das Kriterium gilt laut Projektdokumentation nur fuer
+den stochastischen Modus (kanonisches Protokoll misst fuer Testset A/B
+ausschliesslich stochastisch); die Schwellenlinie ueberspannt deshalb nur den
+stochastischen Balken, nicht den nachrichtlich mitgezeigten deterministischen.
 
-Rohdaten identisch zu Tabelle tab:v12 in der Dokumentation.
+Rohdaten identisch zu den Tabellen in Anhang C der Dokumentation.
 """
+import json
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-OUT = "docs/figures/fig_v12_endergebnis.pdf"
+OUT = "docs/Doku/Bilder/v12_zielkriterium.png"
 
-# Rohdaten der sieben v12-Laeufe (Tabelle tab:v12)
-a_stoch = np.array([62, 84, 76, 74, 58, 50, 56])
+# Stochastik: kanonische Messdatei (5-Wiederholungs-Protokoll), damit die
+# Abbildung dieselbe Quelle nutzt wie Fliesstext und Anhang C.
+with open("logs/eval_results/baselines.json") as fh:
+    _DATA = json.load(fh)
+a_stoch = np.array([_DATA[f"v12_s{i}_stoch"]["A"]["sr_mean"] for i in range(1, 8)])
+b_stoch = np.array([_DATA[f"v12_s{i}_stoch"]["B"]["sr_mean"] for i in range(1, 8)])
+# Deterministisch: einmalige Zusatzmessung auf den Testset-Seeds
+# (CHANGELOG v2026-07-17), im kanonischen Protokoll nicht enthalten.
 a_det   = np.array([38, 26, 32, 40, 20, 20, 28])
-b_stoch = np.array([76, 76, 80, 74, 62, 50, 50])
 b_det   = np.array([46, 44, 36, 38, 34, 14, 16])
 
 groups = [
@@ -51,14 +59,17 @@ for gi, (name, stoch, det, threshold) in enumerate(groups):
         jitter = rng.uniform(-0.055, 0.055, size=len(data))
         ax.scatter(np.full(len(data), x) + jitter, data, s=16, facecolor="white",
                     edgecolor="black", linewidth=0.6, zorder=4, alpha=0.9)
-        ax.annotate(f"{mean:.1f}", (x, mean + std), textcoords="offset points",
+        ax.annotate(f"{mean:.1f}".replace(".", ","), (x, mean + std), textcoords="offset points",
                      xytext=(0, 5), ha="center", fontsize=9.5, fontweight="bold")
 
     # vorab festgelegte Erfolgsschwelle dieser Testmenge
-    ax.hlines(threshold, xc - bar_w - 0.12, xc + bar_w + 0.12, color="#2E2E2E",
-               linestyle="--", linewidth=1.3, zorder=5)
-    ax.annotate(f"Kriterium {threshold} %", (xc + bar_w + 0.14, threshold),
-                 va="center", fontsize=8.5, color="#2E2E2E")
+    stoch_x = xc - bar_w / 2 - 0.02
+    ax.hlines(threshold, stoch_x - bar_w / 2 - 0.03, stoch_x + bar_w / 2 + 0.03,
+               color="#2E2E2E", linestyle="--", linewidth=1.3, zorder=5)
+    ax.annotate(f"Kriterium {threshold} % (stoch.)",
+                 (stoch_x - bar_w / 2 - 0.04, threshold),
+                 textcoords="offset points", xytext=(-4, 0), ha="right",
+                 va="center", fontsize=8, color="#2E2E2E", zorder=6)
 
 ax.set_xticks(centers)
 ax.set_xticklabels([g[0] for g in groups], fontsize=11)

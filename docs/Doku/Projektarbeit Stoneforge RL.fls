@@ -436,6 +436,7 @@ INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmssbx10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmri10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmbx10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc
 INPUT ./Projektarbeit Stoneforge RL.toc
 INPUT ./Projektarbeit Stoneforge RL.toc
@@ -445,10 +446,6 @@ OUTPUT Projektarbeit Stoneforge RL.toc
 INPUT ./Projektarbeit Stoneforge RL.lof
 INPUT ./Projektarbeit Stoneforge RL.lof
 INPUT Projektarbeit Stoneforge RL.lof
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
-INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtt10.tfm
 OUTPUT Projektarbeit Stoneforge RL.lof
 INPUT ./Projektarbeit Stoneforge RL.lot
 INPUT ./Projektarbeit Stoneforge RL.lot
@@ -457,6 +454,10 @@ OUTPUT Projektarbeit Stoneforge RL.lot
 INPUT ./Projektarbeit Stoneforge RL.lol
 INPUT ./Projektarbeit Stoneforge RL.lol
 INPUT Projektarbeit Stoneforge RL.lol
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtt10.tfm
 OUTPUT Projektarbeit Stoneforge RL.lol
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmssbx10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/lm/ts1lmr.fd
@@ -471,7 +472,6 @@ INPUT ./Bilder/grundlagen_value_noise.png
 INPUT ./Bilder/grundlagen_value_noise.png
 INPUT ./Bilder/grundlagen_value_noise.png
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmbx10.tfm
-INPUT /usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmr8.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmr6.tfm
 INPUT ./Bilder/grundlagen_domain_warping.png
@@ -535,26 +535,26 @@ INPUT ./Bilder/dqn_architektur.png
 INPUT ./Bilder/dqn_architektur.png
 INPUT ./Bilder/dqn_architektur.png
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtk10.tfm
-INPUT ./Bilder/curriculum_phasen.png
-INPUT ./Bilder/curriculum_phasen.png
-INPUT ./Bilder/curriculum_phasen.png
-INPUT ./Bilder/curriculum_phasen.png
-INPUT ./Bilder/curriculum_phasen.png
-INPUT ./Bilder/epsilon_kompass_schema.png
-INPUT ./Bilder/epsilon_kompass_schema.png
-INPUT ./Bilder/epsilon_kompass_schema.png
-INPUT ./Bilder/epsilon_kompass_schema.png
-INPUT ./Bilder/epsilon_kompass_schema.png
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
-INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtt10.tfm
+INPUT ./Bilder/curriculum_phasen.png
+INPUT ./Bilder/curriculum_phasen.png
+INPUT ./Bilder/curriculum_phasen.png
+INPUT ./Bilder/curriculum_phasen.png
+INPUT ./Bilder/curriculum_phasen.png
+INPUT ./Bilder/epsilon_kompass_schema.png
+INPUT ./Bilder/epsilon_kompass_schema.png
+INPUT ./Bilder/epsilon_kompass_schema.png
+INPUT ./Bilder/epsilon_kompass_schema.png
+INPUT ./Bilder/epsilon_kompass_schema.png
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
+INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtk10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmtti10.tfm
 INPUT ./Bilder/lakes.PNG
@@ -562,11 +562,11 @@ INPUT ./Bilder/lakes.PNG
 INPUT ./Bilder/lakes.PNG
 INPUT ./Bilder/lakes.PNG
 INPUT ./Bilder/lakes.PNG
-INPUT ./Bilder/forest biome.PNG
-INPUT ./Bilder/forest biome.PNG
-INPUT ./Bilder/forest biome.PNG
-INPUT ./Bilder/forest biome.PNG
-INPUT ./Bilder/forest biome.PNG
+INPUT ./Bilder/forest_biome.PNG
+INPUT ./Bilder/forest_biome.PNG
+INPUT ./Bilder/forest_biome.PNG
+INPUT ./Bilder/forest_biome.PNG
+INPUT ./Bilder/forest_biome.PNG
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmr9.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmbx9.tfm
 INPUT ./Bilder/steppe.PNG
@@ -574,25 +574,38 @@ INPUT ./Bilder/steppe.PNG
 INPUT ./Bilder/steppe.PNG
 INPUT ./Bilder/steppe.PNG
 INPUT ./Bilder/steppe.PNG
-INPUT ./Bilder/mountain biome.PNG
-INPUT ./Bilder/mountain biome.PNG
-INPUT ./Bilder/mountain biome.PNG
-INPUT ./Bilder/mountain biome.PNG
-INPUT ./Bilder/mountain biome.PNG
-INPUT ./Bilder/biome desert.PNG
-INPUT ./Bilder/biome desert.PNG
-INPUT ./Bilder/biome desert.PNG
-INPUT ./Bilder/biome desert.PNG
-INPUT ./Bilder/biome desert.PNG
+INPUT ./Bilder/mountain_biome.PNG
+INPUT ./Bilder/mountain_biome.PNG
+INPUT ./Bilder/mountain_biome.PNG
+INPUT ./Bilder/mountain_biome.PNG
+INPUT ./Bilder/mountain_biome.PNG
+INPUT ./Bilder/biome_desert.PNG
+INPUT ./Bilder/biome_desert.PNG
+INPUT ./Bilder/biome_desert.PNG
+INPUT ./Bilder/biome_desert.PNG
+INPUT ./Bilder/biome_desert.PNG
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmbxi10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/local/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT ./Bilder/observation_schema.png
+INPUT ./Bilder/observation_schema.png
+INPUT ./Bilder/observation_schema.png
+INPUT ./Bilder/observation_schema.png
+INPUT ./Bilder/observation_schema.png
+INPUT ./Bilder/v12_lernkurven.png
+INPUT ./Bilder/v12_lernkurven.png
+INPUT ./Bilder/v12_lernkurven.png
+INPUT ./Bilder/v12_lernkurven.png
+INPUT ./Bilder/v12_lernkurven.png
 INPUT ./Bilder/game_preview_clean.png
 INPUT ./Bilder/game_preview_clean.png
 INPUT ./Bilder/game_preview_clean.png
 INPUT ./Bilder/game_preview_clean.png
 INPUT ./Bilder/game_preview_clean.png
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmr7.tfm
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmr5.tfm
+INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/lm/ec-lmri10.tfm
 INPUT ./Bilder/eval_erfolgsquote.png
 INPUT ./Bilder/eval_erfolgsquote.png
 INPUT ./Bilder/eval_erfolgsquote.png
@@ -603,6 +616,11 @@ INPUT ./Bilder/eval_pfadeffizienz.png
 INPUT ./Bilder/eval_pfadeffizienz.png
 INPUT ./Bilder/eval_pfadeffizienz.png
 INPUT ./Bilder/eval_pfadeffizienz.png
+INPUT ./Bilder/agent_pfad_vs_bfs.png
+INPUT ./Bilder/agent_pfad_vs_bfs.png
+INPUT ./Bilder/agent_pfad_vs_bfs.png
+INPUT ./Bilder/agent_pfad_vs_bfs.png
+INPUT ./Bilder/agent_pfad_vs_bfs.png
 INPUT ./Bilder/eval_det_stoch.png
 INPUT ./Bilder/eval_det_stoch.png
 INPUT ./Bilder/eval_det_stoch.png
@@ -613,6 +631,11 @@ INPUT ./Bilder/eval_zielkonflikt.png
 INPUT ./Bilder/eval_zielkonflikt.png
 INPUT ./Bilder/eval_zielkonflikt.png
 INPUT ./Bilder/eval_zielkonflikt.png
+INPUT ./Bilder/v12_zielkriterium.png
+INPUT ./Bilder/v12_zielkriterium.png
+INPUT ./Bilder/v12_zielkriterium.png
+INPUT ./Bilder/v12_zielkriterium.png
+INPUT ./Bilder/v12_zielkriterium.png
 INPUT ./Projektarbeit Stoneforge RL.bbl
 INPUT ./Projektarbeit Stoneforge RL.bbl
 INPUT Projektarbeit Stoneforge RL.bbl
