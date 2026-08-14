@@ -22,8 +22,8 @@ Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman,
   de~Lazcano, Willems, Lahlou, Pal, Castro, and Terry]{chevalier2023minigrid}
 Maxime Chevalier-Boisvert, Bolun Dai, Mark Towers, Rodrigo de~Lazcano, Lucas
   Willems, Salem Lahlou, Suman Pal, Pablo~Samuel Castro, and Jordan Terry.
-\newblock Minigrid \& {BabyAI}: Core architectures for {RL} in environments
-  with sparse rewards and partial observability.
+\newblock Minigrid \& {Miniworld}: Modular \& customizable reinforcement
+  learning environments for goal-oriented tasks.
 \newblock \emph{arXiv preprint arXiv:2306.13831}, 2023.
 \newblock URL \url{https://arxiv.org/abs/2306.13831}.
 
@@ -50,7 +50,8 @@ Danijar Hafner.
 \bibitem[Hausknecht and Stone(2015)]{hausknecht2015deep}
 Matthew Hausknecht and Peter Stone.
 \newblock Deep recurrent {Q}-learning for partially observable {MDPs}.
-\newblock In \emph{2015 AAAI Fall Symposium Series}, 2015.
+\newblock In \emph{2015 AAAI Fall Symposium on Sequential Decision Making for
+  Intelligent Agents}, 2015.
 
 \bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter1997long}
 Sepp Hochreiter and J{\"u}rgen Schmidhuber.
@@ -105,7 +106,7 @@ Sanmit Narvekar, Bei Peng, Matteo Leonetti, Jivko Sinapov, Matthew~E. Taylor,
 \newblock Curriculum learning for reinforcement learning domains: A framework
   and survey.
 \newblock \emph{The Journal of Machine Learning Research (JMLR)}, 21\penalty0
-  (1):\penalty0 7382--7431, 2020.
+  (181):\penalty0 1--50, 2020.
 
 \bibitem[Ng et~al.(1999)Ng, Harada, and Russell]{ng1999policy}
 Andrew~Y. Ng, Daishi Harada, and Stuart Russell.
@@ -127,10 +128,10 @@ Inigo Quilez.
 \newblock URL \url{https://iquilezles.org/articles/warp/}.
 \newblock Online-Artikel, ohne festes Publikationsdatum, Zugriff am 13.08.2026.
 
-\bibitem[Raffin et~al.(2021)Raffin, Hill, Gleave, Kanervisto, Ernest, and
+\bibitem[Raffin et~al.(2021)Raffin, Hill, Gleave, Kanervisto, Ernestus, and
   Dormann]{raffin2021stable}
-Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Scott Ernest, and
-  Noah Dormann.
+Antonin Raffin, Ashley Hill, Adam Gleave, Anssi Kanervisto, Maximilian
+  Ernestus, and Noah Dormann.
 \newblock Stable-baselines3: Reliable reinforcement learning implementations.
 \newblock \emph{Journal of Machine Learning Research}, 22\penalty0
   (268):\penalty0 1--8, 2021.
@@ -154,13 +155,13 @@ Richard~S. Sutton and Andrew~G. Barto.
 \newblock \emph{Reinforcement Learning: An Introduction}.
 \newblock MIT press, Cambridge, Massachusetts, 2 edition, 2018.
 
-\bibitem[Towers et~al.(2023)Towers, Terry, Kwiatkowski, Balis, Cola, Deleu,
+\bibitem[Towers et~al.(2023)Towers, Terry, Kwiatkowski, Balis, de~Cola, Deleu,
   Goulão, Kallinteris, KG, Krimmel, Perez-Vicente, Pierré, Schulhoff, Tai,
-  Shen, and Younis]{towers2023gymnasium}
-Mark Towers, J.~K. Terry, Ariel Kwiatkowski, John~U. Balis, Gianluca Cola,
+  Tan, and Younis]{towers2023gymnasium}
+Mark Towers, J.~K. Terry, Ariel Kwiatkowski, John~U. Balis, Gianluca de~Cola,
   Tristan Deleu, Manuel Goulão, Andreas Kallinteris, Arjun KG, Markus Krimmel,
-  Rodrigo Perez-Vicente, Andrea Pierré, Sander Schulhoff, Jun~Jet Tai, Andrew
-  Tan~Jin Shen, and Omar~G. Younis.
+  Rodrigo Perez-Vicente, Andrea Pierré, Sander Schulhoff, Jun~Jet Tai, Hannah
+  Jin~Shen Tan, and Omar~G. Younis.
 \newblock Gymnasium: A standard interface for reinforcement learning
   environments, 2023.
 \newblock URL \url{https://github.com/Farama-Foundation/Gymnasium}.

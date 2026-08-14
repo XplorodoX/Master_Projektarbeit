@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  14 AUG 2026 11:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.27)  14 AUG 2026 14:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1356,19 +1356,14 @@ Overfull \hbox (8.54666pt too wide) in paragraph at lines 23--23
 \tf@lof=\write5
 \openout5 = `"Projektarbeit Stoneforge RL.lof"'.
 
- [11] (./Projektarbeit Stoneforge RL.lot
-Overfull \hbox (3.30493pt too wide) in paragraph at lines 23--23
- [][] [][][]\T1/lmr/m/n/10.95 Ungelernte Re-fe-renz-ver-fah-ren: Er-folgs-quo-t
-e, mitt-le-re Schritt-zahl und Pfadef- 
- []
-
-)
+ [11] (./Projektarbeit Stoneforge RL.lot)
 \tf@lot=\write6
 \openout6 = `"Projektarbeit Stoneforge RL.lot"'.
 
  [12
 
-] (./Projektarbeit Stoneforge RL.lol
+]
+(./Projektarbeit Stoneforge RL.lol
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 6
 .
 
@@ -1968,42 +1963,44 @@ File: Bilder/eval_erfolgsquote.png Graphic file (type png)
 Package pdftex.def Info: Bilder/eval_erfolgsquote.png  used on input line 1961.
 
 (pdftex.def)             Requested size: 418.2537pt x 205.32321pt.
-[56] [57 <./Bilder/eval_erfolgsquote.png>]
-<Bilder/eval_pfadeffizienz.png, id=1396, 755.58286pt x 493.96545pt>
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <9> on input line 1966.
+[56]
+Underfull \vbox (badness 2293) has occurred while \output is active []
+
+ [57 <./Bilder/eval_erfolgsquote.png>]
+<Bilder/eval_pfadeffizienz.png, id=1399, 755.58286pt x 494.3268pt>
 File: Bilder/eval_pfadeffizienz.png Graphic file (type png)
 <use Bilder/eval_pfadeffizienz.png>
 Package pdftex.def Info: Bilder/eval_pfadeffizienz.png  used on input line 1982
 .
-(pdftex.def)             Requested size: 384.1096pt x 251.11255pt.
-<Bilder/agent_pfad_vs_bfs.png, id=1398, 787.38165pt x 652.95946pt>
+(pdftex.def)             Requested size: 384.1096pt x 251.29623pt.
+<Bilder/agent_pfad_vs_bfs.png, id=1401, 787.38165pt x 652.95946pt>
 File: Bilder/agent_pfad_vs_bfs.png Graphic file (type png)
 <use Bilder/agent_pfad_vs_bfs.png>
 Package pdftex.def Info: Bilder/agent_pfad_vs_bfs.png  used on input line 1991.
 
 (pdftex.def)             Requested size: 362.77525pt x 300.84323pt.
-
-Overfull \hbox (0.86589pt too wide) in paragraph at lines 1996--1997
-[]\T1/lmr/m/n/10.95 Der ab-ge-bil-de-te Lauf er-reicht mit 456 ge-gen-über 43 B
-FS-optimalen Schrit-ten ei-ne Pfadef-
- []
-
-[58 <./Bilder/eval_pfadeffizienz.png>]
-Underfull \vbox (badness 2080) has occurred while \output is active []
+ [58 <./Bilder/eval_pfadeffizienz.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [59 <./Bilder/agent_pfad_vs_bfs.png>]
-<Bilder/eval_det_stoch.png, id=1413, 992.62845pt x 549.9747pt>
+<Bilder/eval_det_stoch.png, id=1416, 992.62845pt x 549.9747pt>
 File: Bilder/eval_det_stoch.png Graphic file (type png)
 <use Bilder/eval_det_stoch.png>
 Package pdftex.def Info: Bilder/eval_det_stoch.png  used on input line 2010.
 (pdftex.def)             Requested size: 362.77525pt x 200.99504pt.
  [60 <./Bilder/eval_det_stoch.png>]
-<Bilder/eval_zielkonflikt.png, id=1422, 718.72514pt x 551.4201pt>
+<Bilder/eval_zielkonflikt.png, id=1425, 727.39755pt x 551.78145pt>
 File: Bilder/eval_zielkonflikt.png Graphic file (type png)
 <use Bilder/eval_zielkonflikt.png>
 Package pdftex.def Info: Bilder/eval_zielkonflikt.png  used on input line 2029.
 
-(pdftex.def)             Requested size: 384.1096pt x 294.69131pt.
- [61 <./Bilder/eval_zielkonflikt.png>]
+(pdftex.def)             Requested size: 384.1096pt x 291.38191pt.
+
+Underfull \vbox (badness 1048) has occurred while \output is active []
+
+ [61]
 Underfull \hbox (badness 3354) in paragraph at lines 2053--2054
 []|\T1/lmr/m/n/10.95 Bei $\OT1/lmr/m/n/10.95 512$ \T1/lmr/m/n/10.95 ver-schwan-
 den die Gra-di-en-ten im
@@ -2014,7 +2011,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 2053--2054
 \T1/lmr/m/n/10.95 Backpropagation-Through-Time-Verfahren
  []
 
-[62] [63]
+
+Underfull \vbox (badness 1803) has occurred while \output is active []
+
+ [62 <./Bilder/eval_zielkonflikt.png>] [63]
 chapter 6.
 
 Overfull \hbox (1.4227pt too wide) in paragraph at lines 2084--2086
@@ -2032,7 +2032,7 @@ tik
  []
 
 [66]
-<Bilder/v12_zielkriterium.png, id=1485, 534.798pt x 331.7193pt>
+<Bilder/v12_zielkriterium.png, id=1488, 534.798pt x 331.7193pt>
 File: Bilder/v12_zielkriterium.png Graphic file (type png)
 <use Bilder/v12_zielkriterium.png>
 Package pdftex.def Info: Bilder/v12_zielkriterium.png  used on input line 2136.
@@ -2048,7 +2048,7 @@ ded Car-ving\T1/lmr/bx/n/10.95 ): \T1/lmr/m/n/10.95 Der ak-tu-el-le Manhattan-
 
 
 ]
-Underfull \hbox (badness 1622) in paragraph at lines 125--129
+Underfull \hbox (badness 1622) in paragraph at lines 126--130
 \T1/lmtt/m/n/10.95 articles / warp/$[][]\T1/lmr/m/n/10.95 .  Online-Artikel, oh
 -ne fes-tes Pu-bli-ka-ti-ons-da-tum, Zu-griff am
  []
@@ -2081,11 +2081,11 @@ L3 programming layer <2026-01-19>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 45249 strings out of 467525
- 1028280 string characters out of 5418982
- 2129369 words of memory out of 5000000
- 72646 multiletter control sequences out of 15000+600000
- 727726 words of font info for 104 fonts, out of 8000000 for 9000
+ 45270 strings out of 467525
+ 1028634 string characters out of 5418982
+ 2129349 words of memory out of 5000000
+ 72662 multiletter control sequences out of 15000+600000
+ 732059 words of font info for 110 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  108i,20n,107p,11232b,2262s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
@@ -2104,12 +2104,13 @@ lmssbx10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy10.p
 fb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2026/tex
-mf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/f
-onts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on "Projektarbeit Stoneforge RL.pdf" (90 pages, 4106986 bytes).
+mf-dist/fonts/type1/public/lm/lmtt9.pfb></usr/local/texlive/2026/texmf-dist/fon
+ts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/
+public/amsfonts/symbols/msbm10.pfb>
+Output written on "Projektarbeit Stoneforge RL.pdf" (90 pages, 4138205 bytes).
 PDF statistics:
- 2121 PDF objects out of 2487 (max. 8388607)
- 1911 compressed objects within 20 object streams
- 837 named destinations out of 1000 (max. 500000)
+ 2128 PDF objects out of 2487 (max. 8388607)
+ 1916 compressed objects within 20 object streams
+ 838 named destinations out of 1000 (max. 500000)
  852 words of extra memory for PDF output out of 10000 (max. 10000000)
 

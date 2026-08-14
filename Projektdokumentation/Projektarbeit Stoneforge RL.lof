@@ -22,10 +22,10 @@
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {5.1}{\ignorespaces Generierte Spielwelt mit dynamischer Beleuchtung, Seenstrukturen und biomabhängigen Kacheltypen, eigene Darstellung (Screenshot des Prototyps, Debug-Overlay entfernt).}}{52}{figure.caption.59}%
 \contentsline {figure}{\numberline {5.2}{\ignorespaces Evaluation -- Erfolgsquote der trainierten Verfahren und der Referenzpunkte auf Testset A, eigene Darstellung.}}{57}{figure.caption.67}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces Evaluation -- Pfadeffizienz der Verfahren in derselben Achsenordnung, eigene Darstellung.}}{58}{figure.caption.68}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Evaluation -- Wegverhältnis der Verfahren in derselben Achsenordnung, eigene Darstellung.}}{58}{figure.caption.68}%
 \contentsline {figure}{\numberline {5.4}{\ignorespaces Evaluation -- gelaufener Agentenpfad gegen BFS-Optimum auf Seed 7000 (Testset A), eigene Darstellung.}}{59}{figure.caption.69}%
 \contentsline {figure}{\numberline {5.5}{\ignorespaces Evaluation -- Erfolgsquote der sieben LSTM-PPO-Läufe in deterministischer und stochastischer Auswertung, eigene Darstellung.}}{60}{figure.caption.70}%
-\contentsline {figure}{\numberline {5.6}{\ignorespaces Evaluation -- Erfolgsquote gegen Pfadeffizienz für alle Verfahren, eigene Darstellung.}}{61}{figure.caption.71}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Evaluation -- Erfolgsquote gegen Wegverhältnis für alle Verfahren, eigene Darstellung.}}{62}{figure.caption.71}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {6.1}{\ignorespaces Erfolgsquote des LSTM-PPO-Modells (n=7) gegen das Zielkriterium, Testset A und Holdout B, eigene Darstellung.}}{67}{figure.caption.73}%
 \def \@chapapp {\appendixname }

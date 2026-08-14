@@ -209,7 +209,7 @@ Technik und Wirtschaft\par}
 
 \begin{tabular}{ll}
 Vorgelegt von: & Florian Merlau, 81775\\
-               & Laurin Rößler, 3017947\\
+               & Laurin Röseler, 3017947\\
 \\
 Betreuer: & Prof.\ Lecon\\
 \\
@@ -272,13 +272,6 @@ veröffentlichten oder unveröffentlichten Quellen entnommen sind, werden als
 solche kenntlich gemacht. Die Arbeit wurde bisher in gleicher oder ähnlicher
 Form keiner anderen Prüfungsbehörde vorgelegt.
 
-\bigskip
-Da die Arbeit von zwei Personen gemeinsam erstellt wurde, wird zusätzlich
-erklärt, dass die Abschnitte~3.1, 4.1 und~5.1 von Laurin~Rößler und die
-Abschnitte~3.2, 4.2 und~5.2 von Florian~Merlau verfasst wurden; die
-Kapitel~1 und~2 entstanden vollständig gemeinsam. Die
-Zuordnung von Kapitel~6 und der Anhänge ist Anhang~B zu entnehmen.
-
 \vspace{2.5cm}
 
 \begin{minipage}[t]{0.45\textwidth}
@@ -290,20 +283,11 @@ Florian Merlau
 \begin{minipage}[t]{0.45\textwidth}
 Aalen, den 14.\,08.\,2026\\[1.4cm]
 \rule{0.8\textwidth}{0.4pt}\\
-Laurin Rößler
+Laurin Röseler
 \end{minipage}
 
 \clearpage
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% BEGIN: kurzfassung.tex
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ============================================================
-% kurzfassung.tex — Kurzfassung / Abstract
-% Zahlen abgeglichen mit Kapitel 5 / Anhang C (kanonischer Stand
-% baselines.json, 5-Wiederholungs-Protokoll, siehe CHANGELOG
-% v2026-08-14.2).
-% ============================================================
 \chapter*{Kurzfassung}
 \addcontentsline{toc}{chapter}{Kurzfassung}
 \thispagestyle{empty}
@@ -312,8 +296,8 @@ Die vorliegende Arbeit untersucht in zwei aufeinander aufbauenden Teilen, wie
 eine prozedural generierte, partiell beobachtbare 2D-Welt aufgebaut sein muss,
 damit sie für einen Reinforcement-Learning-Agenten fair und lösbar ist, und
 welches Trainingsverfahren darin die besten Navigationsergebnisse liefert,
-gemessen primär an der Erfolgsquote unter Berücksichtigung der resultierenden
-Pfadeffizienz. Dazu wird eine C++-basierte Simulationsumgebung mit
+gemessen primär an der Erfolgsquote unter Berücksichtigung des resultierenden
+Wegverhältnisses. Dazu wird eine C++-basierte Simulationsumgebung mit
 angebundenem Python-Interface entwickelt, in der der Ausgang jeder Welt
 ausschließlich über eine Breitensuche vom Spawnpunkt aus platziert wird;
 unlösbare Weltinstanzen werden dadurch strukturell ausgeschlossen, unabhängig
@@ -324,10 +308,10 @@ $\varepsilon$-Kompass-Heuristik eingeordnet. Über sieben unabhängige Läufe
 erreicht das LSTM-PPO-Modell eine mittlere Erfolgsquote von 64,6\,\%
 ($\pm$ 10,1) auf Testset A und 68,8\,\% ($\pm$ 15,5) auf Holdout B und
 übertrifft damit das MLP-PPO-Modell (33,5\,\% $\pm$ 25,5 auf Testset A)
-statistisch signifikant. Die Pfadeffizienz bleibt bei beiden Verfahren
+statistisch signifikant. Das Wegverhältnis bleibt bei beiden Verfahren
 niedrig. Die $\varepsilon$-Kompass-Heuristik übertrifft bei
 $\varepsilon = 0{,}8$ dennoch beide trainierten Modelle sowohl in der
-Erfolgsquote als auch in der Pfadeffizienz. Dieser Befund wird methodisch
+Erfolgsquote als auch im Wegverhältnis. Dieser Befund wird methodisch
 eingeordnet; als mögliche Teilerklärung wird herausgearbeitet, dass die auf
 Erreichbarkeit optimierte Weltgenerierung selbst die einfache Wegstruktur
 begünstigen könnte, die das ungelernte Verfahren ausnutzt.
@@ -335,38 +319,6 @@ begünstigen könnte, die das ungelernte Verfahren ausnutzt.
 \bigskip
 \noindent\textbf{Schlagwörter:} Reinforcement Learning, Proximal Policy
 Optimization, POMDP, Curriculum Learning, prozedurale Weltgenerierung
-
-\clearpage
-
-\chapter*{Abstract}
-\addcontentsline{toc}{chapter}{Abstract}
-\thispagestyle{empty}
-
-This work investigates, in two consecutive and mutually dependent parts, how a
-procedurally generated, partially observable 2D world must be structured to
-be fair and solvable for a reinforcement learning agent, and which training
-procedure yields the best navigation results within it, measured primarily by
-success rate while accounting for the resulting path efficiency. A custom
-simulation environment implemented in C++ with a Python interface places the
-exit of every world exclusively at positions confirmed reachable from the
-spawn point by a breadth-first search, which structurally excludes unsolvable
-world instances regardless of wall density. Recurrent and non-recurrent
-Proximal Policy Optimization (PPO) agents are trained on this environment
-through a performance-based curriculum and compared against an untrained
-$\varepsilon$-compass heuristic baseline. Across seven independent runs, the
-LSTM-PPO model reaches a mean success rate of 64.6\,\% ($\pm$ 10.1) on
-Testset A and 68.8\,\% ($\pm$ 15.5) on Holdout B, statistically
-significantly outperforming the MLP-PPO model (33.5\,\% $\pm$ 25.5 on
-Testset A). Path efficiency remains low for both trained models. The
-$\varepsilon$-compass heuristic at $\varepsilon = 0.8$ nonetheless
-outperforms both trained models in success rate and path efficiency alike.
-This finding is placed in a broader methodological context: the
-reachability-optimized world generation itself may favor exactly the simple
-path structure that the untrained heuristic exploits.
-
-\bigskip
-\noindent\textbf{Keywords:} Reinforcement Learning, Proximal Policy
-Optimization, POMDP, Curriculum Learning, Procedural World Generation
 
 \clearpage
 
@@ -478,7 +430,7 @@ Das Vorgehen gliedert sich in vier Schritte:
     \item \textbf{Recherche zu Weltgenerierung und RL-Algorithmen:} Zunächst wird recherchiert, wie eine prozedurale Generierung sinnvoll aufgebaut sein sollte und welche Algorithmen sich eignen, um zufällige, aber immer lösbare 2D-Welten zu erzeugen. Parallel dazu wird untersucht, welche RL-Algorithmen für Navigationsaufgaben mit eingeschränkter Sicht überhaupt infrage kommen.
     \item \textbf{Prototyping der Spielumgebung:} Auf dieser Basis entsteht ein erster Prototyp der Spielwelt. Dieser wird iterativ verbessert, bis Parameter wie Exit-Distanz, Wanddichte und die Sichtweite des Agenten gut zusammenpassen und die Level fair bleiben.
     \item \textbf{Training der RL-Agenten:} Sobald die Spielumgebung stabil steht, werden die ausgewählten RL-Algorithmen darauf trainiert und die Hyperparameter Schritt für Schritt angepasst.
-    \item \textbf{Evaluation und Auswertung:} Zum Schluss werden die fertig trainierten Agenten auf vielen neu generierten Leveln getestet. Die Ergebnisse, etwa Erfolgsquote und Pfadeffizienz, werden systematisch erfasst und die Verfahren miteinander verglichen.
+    \item \textbf{Evaluation und Auswertung:} Zum Schluss werden die fertig trainierten Agenten auf vielen neu generierten Leveln getestet. Die Ergebnisse, etwa Erfolgsquote und Wegverhältnis, werden systematisch erfasst und die Verfahren miteinander verglichen.
 \end{enumerate}
 
 \section{Abgrenzung}
@@ -600,7 +552,7 @@ Ein zentrales Kriterium prozeduraler Welten ist die Sicherstellung der Spielbark
 \label{sec:grundlagen_bfs}
 Zur Analyse der Konnektivität wird das Zellgitter als ungerichteter Graph interpretiert, in dem begehbare Zellen als Knoten und Nachbarschaftsbeziehungen als Kanten dargestellt werden. Die Breitensuche (BFS) traversiert den Graphen ebenenweise vom Startknoten aus \citep{clrs2009algorithms}. Sie eignet sich zur Prüfung der Erreichbarkeit eines Zielknotens sowie zur Bestimmung des kürzesten Pfades auf ungewichteten Gittern. Abbildung~\ref{fig:grundlagen_bfs} veranschaulicht das resultierende Distanzfeld an einem Beispielgitter: Jede Ebene entspricht einem BFS-Schritt vom Start aus, der kürzeste Pfad zum Ziel ergibt sich durch Rückverfolgung der jeweils näher liegenden Nachbarzelle.
 
-Im ausgelieferten Konfigurationsstand dient die Breitensuche nicht mehr der nachträglichen Erreichbarkeitsprüfung bei der Weltgenerierung (siehe Tabelle~\ref{tab:config_status}); diese Validierung ist deaktiviert. Lösbarkeit wird stattdessen vorgelagert erzwungen, indem der Ausgang selbst nur unter Positionen gewählt wird, die eine Breitensuche vom Spawnpunkt aus als erreichbar bestätigt (siehe Abschnitt~\ref{sec:umsetzung_pathing}). Die Breitensuche bleibt damit an mehreren Stellen aktiv: bei der Ausgangsplatzierung, als Distanzfeld für das Reward Shaping im RL-Training (Abschnitt~\ref{sec:impl_rl_reward}) und als Bezugsgröße der Pfadeffizienz-Metrik in der Evaluation (Abschnitt~\ref{sec:eval_eff}).
+Im ausgelieferten Konfigurationsstand dient die Breitensuche nicht mehr der nachträglichen Erreichbarkeitsprüfung bei der Weltgenerierung (siehe Tabelle~\ref{tab:config_status}); diese Validierung ist deaktiviert. Lösbarkeit wird stattdessen vorgelagert erzwungen, indem der Ausgang selbst nur unter Positionen gewählt wird, die eine Breitensuche vom Spawnpunkt aus als erreichbar bestätigt (siehe Abschnitt~\ref{sec:umsetzung_pathing}). Die Breitensuche bleibt damit an mehreren Stellen aktiv: bei der Ausgangsplatzierung, als Distanzfeld für das Reward Shaping im RL-Training (Abschnitt~\ref{sec:impl_rl_reward}) und als Bezugsgröße der Wegverhältnis-Metrik in der Evaluation (Abschnitt~\ref{sec:eval_eff}).
 
 \begin{figure}[htbp]
     \centering
@@ -1764,7 +1716,7 @@ Das Herzstück bildet jedoch das \textbf{Potential Based Reward Shaping (PBRS)},
 
 \begin{itemize}
     \item \textbf{Potenzialfunktion $\Phi$:} Definiert als $-\text{BFS-Distanz}(s) / 128{,}0$. Da $\gamma$ passend zum restlichen RL-Setup bei $0{,}999$ liegt und der Faktor $\beta$ auf $2{,}5$ skaliert ist, ergibt sich ein reines Shaping-Signal von $+0{,}0203$ je Feld Fortschritt (bei einer Distanz von 40), was inklusive der Schrittkosten von $-0{,}01$ einen Nettoeffekt von $+0{,}01$ ergibt. Der Diskontierungsfaktor $\gamma$ liegt damit deutlich über dem in der PPO-Literatur gebräuchlichen Standardwert von $0{,}99$: Bei den bis zu 4000 Schritte langen Episoden dieser Arbeit würde der niedrigere Standardwert das Terminal-Reward über den Episodenverlauf auf einen verschwindend kleinen Diskontfaktor in der Größenordnung von $10^{-18}$ drücken, während bei $\gamma = 0{,}999$ noch rund $0{,}018$ verbleiben. Der höhere Wert verhindert damit, dass der spärliche Erfolgs-Reward am Episodenende gegenüber den dichten PBRS-Zwischensignalen praktisch bedeutungslos wird.
-    \item \textbf{Das Trainings-Distanzfeld (BFS):} Hier müssen zwei Systeme auseinandergehalten werden. Die nachträgliche Erreichbarkeitsprüfung bei der \textit{Weltgenerierung} ist deaktiviert (die Lösbarkeit wird dort bereits durch die BFS-basierte Ausgangsplatzierung garantiert, siehe Abschnitt~\ref{sec:umsetzung_pathing}). Das Distanzfeld für das \textit{Training} ist jedoch hochaktiv: Es wird bei jedem Episoden-Reset ausgehend vom Ausgang berechnet. Es dient sowohl dem Shaping als auch als Nenner für die spätere Pfadeffizienz-Metrik.
+    \item \textbf{Das Trainings-Distanzfeld (BFS):} Hier müssen zwei Systeme auseinandergehalten werden. Die nachträgliche Erreichbarkeitsprüfung bei der \textit{Weltgenerierung} ist deaktiviert (die Lösbarkeit wird dort bereits durch die BFS-basierte Ausgangsplatzierung garantiert, siehe Abschnitt~\ref{sec:umsetzung_pathing}). Das Distanzfeld für das \textit{Training} ist jedoch hochaktiv: Es wird bei jedem Episoden-Reset ausgehend vom Ausgang berechnet. Es dient sowohl dem Shaping als auch als Nenner für die spätere Wegverhältnis-Metrik.
     \item \textbf{Puffergröße:} Die BFS berechnet eine Bounding-Box aus Spawn und Exit, erweitert um einen Puffer von 80 Feldern. Historisch führte ein kleinerer Puffer (20) kombiniert mit einem aggressiveren $\beta$ (5,0) dazu, dass der Agent am Puffer-Rand falsches Shaping erhielt; $\beta$ wurde daher nach dem Puffer-Fix im Code auf 2,5 halbiert.
 \end{itemize}
 
@@ -1796,12 +1748,12 @@ class CompassPolicy:
 Die Baselines aus Listing~\ref{lst:baselines} offenbaren ein wichtiges technisches Detail:
 
 \begin{itemize}
-    \item \textbf{BFS-Optimum:} Dient nur der Messung der absoluten Mindestschritte (Pfadeffizienz) und wird nicht als Policy ausgeführt.
+    \item \textbf{BFS-Optimum:} Dient nur der Messung der absoluten Mindestschritte (Wegverhältnis) und wird nicht als Policy ausgeführt.
     \item \textbf{Random-Agent:} Wählt komplett blind und gleichverteilt eine der vier Richtungen.
     \item \textbf{$\varepsilon$-Kompass:} Mit der Wahrscheinlichkeit $\varepsilon$ verhält er sich wie der Random-Agent. Andernfalls liest er schlicht die beiden Luftlinien-Richtungen (\texttt{dx}, \texttt{dy}) aus dem Beobachtungsvektor und geht einen Schritt auf der längeren Achse.
 \end{itemize}
 
-Dies macht die Kompass-Heuristik de facto \textbf{wandblind}. Sie nutzt keine Pfadfindungs-Logik (wie etwa den BFS-Gradienten) und kennt keine Hindernisse. Sie rennt stumpf gegen Wände, bis der Zufallsanteil $\varepsilon$ sie wieder löst. Dass ein komplett kartenblindes Verfahren in der Evaluation derart stark abschneidet, ist eine zentrale Erkenntnis für die spätere Auswertung und erklärt zugleich, warum bei dieser Baseline im getesteten Bereich $\varepsilon \in [0{,}3; 0{,}9]$ mit steigendem Zufallswert $\varepsilon$ die Erfolgsquote steigt und die Pfadeffizienz zugleich sinkt. Dieser Zusammenhang gilt jedoch nicht uneingeschränkt: Bei $\varepsilon=1$ entspricht die Heuristik exakt dem Random-Agent, dessen Erfolgsquote von 5,2\,\% (siehe Abbildung~\ref{fig:eval_sr}) weit unter dem Wert bei $\varepsilon=0{,}9$ liegt, sodass die Kurve zwischen beiden Randwerten einbrechen muss.
+Dies macht die Kompass-Heuristik de facto \textbf{wandblind}. Sie nutzt keine Pfadfindungs-Logik (wie etwa den BFS-Gradienten) und kennt keine Hindernisse. Sie rennt stumpf gegen Wände, bis der Zufallsanteil $\varepsilon$ sie wieder löst. Dass ein komplett kartenblindes Verfahren in der Evaluation derart stark abschneidet, ist eine zentrale Erkenntnis für die spätere Auswertung und erklärt zugleich, warum bei dieser Baseline im getesteten Bereich $\varepsilon \in [0{,}3; 0{,}9]$ mit steigendem Zufallswert $\varepsilon$ die Erfolgsquote steigt und das Wegverhältnis zugleich sinkt. Dieser Zusammenhang gilt jedoch nicht uneingeschränkt: Bei $\varepsilon=1$ entspricht die Heuristik exakt dem Random-Agent, dessen Erfolgsquote von 5,2\,\% (siehe Abbildung~\ref{fig:eval_sr}) weit unter dem Wert bei $\varepsilon=0{,}9$ liegt, sodass die Kurve zwischen beiden Randwerten einbrechen muss.
 
 \subsection{Vollständige Hyperparameter-Konfiguration}
 \label{sec:impl_rl_parameter}
@@ -1950,7 +1902,7 @@ Die empirischen und visuellen Befunde belegen, dass die entwickelte Architektur 
 \section{Evaluation des RL-Trainings}
 \label{sec:evalRL}
 
-Dieser Abschnitt evaluiert die trainierten RL-Verfahren hinsichtlich Erfolgsquote, Pfadeffizienz und Robustheit gegenüber den ungelernten Referenzpunkten aus Abschnitt~\ref{sec:methodik_baselines}. Datengrundlage sind sieben unabhängige Trainingsläufe je Modell, ausgewertet auf dem in Abschnitt~\ref{sec:methodik_protokoll} definierten Testset A.
+Dieser Abschnitt evaluiert die trainierten RL-Verfahren hinsichtlich Erfolgsquote, Wegverhältnis und Robustheit gegenüber den ungelernten Referenzpunkten aus Abschnitt~\ref{sec:methodik_baselines}. Datengrundlage sind sieben unabhängige Trainingsläufe je Modell, ausgewertet auf dem in Abschnitt~\ref{sec:methodik_protokoll} definierten Testset A.
 
 \subsection{Erfolgsquote der trainierten Verfahren}
 \label{sec:eval_sr}
@@ -1963,7 +1915,7 @@ Die Erfolgsquote ist die zentrale Metrik zur Beurteilung, ob ein Verfahren die N
     \label{fig:eval_sr}
 \end{figure}
 
-Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 64,6\,\% auf Testset A. Über die sieben Durchläufe hinweg liegt die Standardabweichung bei 10,1 Prozentpunkten, die Einzelwerte schwanken zwischen 51,6\,\% und 76,8\,\%. Auf Holdout B fällt das Ergebnis mit 68,8\,\% $\pm$ 15,5 höher aus, was für eine gute Generalisierung auf ungesehene Seeds spricht. Im deterministischen Modus bricht die Leistung massiv ein: Die Quote fällt auf magere 29,1\,\% $\pm$ 8,0 auf Testset A und 32,6\,\% $\pm$ 12,7 auf Holdout B. Diese Werte stammen aus einer eigens auf denselben Testset-Seeds durchgeführten, einmaligen deterministischen Zusatzauswertung; das kanonische Eval-Skript reproduziert diesen Modus allerdings nicht mehr, weshalb die Ergebnisse hier nachrichtlich referenziert werden.
+Das LSTM-PPO-Modell erreicht in der stochastischen Auswertung eine mittlere Erfolgsquote von 64,6\,\% auf Testset A. Über die sieben Durchläufe hinweg liegt die Standardabweichung bei 10,1 Prozentpunkten, die Einzelwerte schwanken zwischen 51,6\,\% und 76,8\,\%. Auf Holdout B fällt das Ergebnis mit 68,8\,\% $\pm$ 15,5 höher aus, was für eine gute Generalisierung auf ungesehene Seeds spricht. Im deterministischen Modus bricht die Leistung massiv ein: Die Quote fällt auf magere 29,1\,\% $\pm$ 8,0 auf Testset A und 32,6\,\% $\pm$ 12,7 auf Holdout B. Diese Werte stammen aus einer eigens auf denselben Testset-Seeds durchgeführten, einmaligen deterministischen Zusatzauswertung; das kanonische Eval-Skript reproduziert diesen Modus allerdings nicht mehr, weshalb die Ergebnisse hier nachrichtlich referenziert werden.\footnote{Der kanonische \texttt{-{}-models}-Sweep in \texttt{scripts/eval\_baselines.py} instanziiert Modelle aktuell ausschließlich mit \texttt{deterministic=False}; ein eigener CLI-Schalter für den deterministischen Modus existiert im aktuellen Skriptstand nicht mehr. Die hier berichteten Werte stammen aus einem früheren, gesondert durchgeführten Lauf; die vollständige Mess- und Änderungshistorie dazu ist in \texttt{CHANGELOG.md} dokumentiert.}
 
 Beim MLP-PPO-Verfahren fällt das Bild schwächer aus als beim LSTM. Unter dem identischen Standardprotokoll (siehe Abschnitt~\ref{sec:methodik_protokoll}) erreicht das Modell stochastisch ausgewertet auf Testset A 33,5\,\% $\pm$ 25,5 und auf Holdout B 35,8\,\% $\pm$ 30,5. Die Streuung zwischen den sieben Seeds fällt damit mehr als doppelt so hoch aus wie beim LSTM, die Einzelwerte auf Testset A reichen von 4,0\,\% bis 65,2\,\%. Eine deterministische Zusatzmessung auf den Testset-Seeds liegt für das MLP-PPO-Modell nicht vor; der deterministische Modus wird daher nur für das LSTM-PPO-Modell berichtet (siehe Abschnitt~\ref{sec:methodik_protokoll}).
 
@@ -1973,18 +1925,18 @@ Bei nur sieben Läufen je Architektur und einer Standardabweichung von 25,5 Proz
 
 Auf Holdout B liegen beide Tests im statistisch signifikanten Bereich (Welch: $p = 0{,}031$; Mann-Whitney: $U = 41$, $p = 0{,}038$). Die einzelnen 95\,\%-Konfidenzintervalle auf Testset A überschneiden sich zwar teilweise (LSTM: $[55{,}3; 73{,}9]$, MLP: $[9{,}9; 57{,}1]$), was bei einem Vergleich zweier einzelner Intervalle leicht als Beleg gegen Signifikanz gelesen werden könnte; das Konfidenzintervall der Differenz selbst schließt die Null jedoch nicht ein ($[7{,}0; 55{,}0]$). Der gemessene Vorsprung des LSTM ist damit trotz der geringen Stichprobengröße nach gängigen Kriterien statistisch abgesichert; einzig der verteilungsfreie Test auf Testset A bleibt knapp oberhalb der 5-Prozent-Schwelle.
 
-\subsection{Pfadeffizienz derselben Verfahren}
+\subsection{Wegverhältnis derselben Verfahren}
 \label{sec:eval_eff}
-Nur am Ausgang anzukommen, reicht als Bewertungskriterium nicht aus, wichtig ist auch der Weg dorthin. Abbildung~\ref{fig:eval_eff} zeigt daher die Pfadeffizienz. Sie wird pro erfolgreicher Episode als Verhältnis zwischen dem per Breitensuche (siehe Abschnitt~\ref{sec:grundlagen_bfs}) ermittelten kürzesten Weg dieser Episode und den vom Agenten tatsächlich gelaufenen Schritten berechnet und anschließend über alle erfolgreichen Episoden gemittelt. Da dieser Mittelwert der Verhältnisse nicht dem Verhältnis der Mittelwerte entspricht, lässt sich die berichtete Pfadeffizienz nicht durch Division der weiter unten genannten Durchschnittswerte für BFS-Optimum und Schrittzahl nachrechnen. Ein Wert von 1,0 markiert das Optimum.
+Nur am Ausgang anzukommen, reicht als Bewertungskriterium nicht aus, wichtig ist auch der Weg dorthin. Abbildung~\ref{fig:eval_eff} zeigt daher das Wegverhältnis. Es wird pro erfolgreicher Episode als Verhältnis zwischen dem per Breitensuche (siehe Abschnitt~\ref{sec:grundlagen_bfs}) ermittelten kürzesten Weg dieser Episode und den vom Agenten tatsächlich gelaufenen Schritten berechnet und anschließend über alle erfolgreichen Episoden gemittelt. Da dieser Mittelwert der Verhältnisse nicht dem Verhältnis der Mittelwerte entspricht, lässt sich das berichtete Wegverhältnis nicht durch Division der weiter unten genannten Durchschnittswerte für BFS-Optimum und Schrittzahl nachrechnen. Ein Wert von 1,0 markiert das Optimum.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{Bilder/eval_pfadeffizienz.png}
-    \caption{Evaluation -- Pfadeffizienz der Verfahren in derselben Achsenordnung, eigene Darstellung.}
+    \caption{Evaluation -- Wegverhältnis der Verfahren in derselben Achsenordnung, eigene Darstellung.}
     \label{fig:eval_eff}
 \end{figure}
 
-Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten. Das trainierte LSTM-Modell benötigt für eine erfolgreiche Episode dagegen durchschnittlich 1425 Schritte, bei einer gemittelten Pfadeffizienz von lediglich 0,053. Der Agent läuft damit im Schnitt einen Weg, der mehr als 35-mal so lang ist wie nötig. Abbildung~\ref{fig:pfad_vs_bfs} macht diesen Unterschied an einer einzelnen Episode aus Testset A sichtbar.
+Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten. Das trainierte LSTM-Modell benötigt für eine erfolgreiche Episode dagegen durchschnittlich 1425 Schritte, bei einem gemittelten Wegverhältnis von lediglich 0,053. Der Agent läuft damit im Schnitt einen Weg, der mehr als 35-mal so lang ist wie nötig. Abbildung~\ref{fig:pfad_vs_bfs} macht diesen Unterschied an einer einzelnen Episode aus Testset A sichtbar.
 
 \begin{figure}[htbp]
     \centering
@@ -1993,13 +1945,13 @@ Das BFS-Optimum liegt auf dem verwendeten Testset im Schnitt bei 40,1 Schritten.
     \label{fig:pfad_vs_bfs}
 \end{figure}
 
-Der abgebildete Lauf erreicht mit 456 gegenüber 43 BFS-optimalen Schritten eine Pfadeffizienz von 0,094 und liegt damit über dem berichteten Mittel von 0,053; die wiederholten Schleifen im eingezeichneten Pfad zeigen aber bereits an dieser einzelnen, vergleichsweise günstigen Episode das charakteristische Herumirren, das die niedrige mittlere Pfadeffizienz erklärt. Für das MLP-Modell liegt ein vergleichbarer Wert vor: Bei durchschnittlich 1084 Schritten je erfolgreicher Episode liegt die gemittelte Pfadeffizienz bei 0,067 und damit höher als beim LSTM. Dieser Befund ist mit Vorsicht zu lesen, da die Kennzahl nur über die erfolgreichen Episoden gemittelt wird, wie der folgende Absatz zum Selektionseffekt zeigt: Bei einer Erfolgsquote von nur 33,5\,\% löst das MLP-Modell bevorzugt die leichten Seeds, was die Effizienz künstlich anhebt.
+Der abgebildete Lauf erreicht mit 456 gegenüber 43 BFS-optimalen Schritten ein Wegverhältnis von 0,094 und liegt damit über dem berichteten Mittel von 0,053; die wiederholten Schleifen im eingezeichneten Pfad zeigen aber bereits an dieser einzelnen, vergleichsweise günstigen Episode das charakteristische Herumirren, das das niedrige mittlere Wegverhältnis erklärt. Für das MLP-Modell liegt ein vergleichbarer Wert vor: Bei durchschnittlich 1084 Schritten je erfolgreicher Episode liegt das gemittelte Wegverhältnis bei 0,067 und damit höher als beim LSTM. Dieser Befund ist mit Vorsicht zu lesen, da die Kennzahl nur über die erfolgreichen Episoden gemittelt wird, wie der folgende Absatz zum Selektionseffekt zeigt: Bei einer Erfolgsquote von nur 33,5\,\% löst das MLP-Modell bevorzugt die leichten Seeds, was das Wegverhältnis künstlich anhebt.
 
-Aufschlussreich wird der Blick auf die Referenzverfahren aus Abschnitt~\ref{sec:methodik_baselines}, deren vollständige Ergebnistabelle in Anhang~C aufgeführt ist. Der vollständig zufällig agierende Random-Agent benötigt in seinen seltenen erfolgreichen Episoden im Schnitt 2251,9 Schritte, bei einer gemittelten Pfadeffizienz von lediglich 0,021. Der ungelernte Kompass-Agent mit einem Zufallsanteil von $\varepsilon=0{,}3$ erreicht eine Effizienz von 0,177 und ist damit rund 3,3-mal so wegeffizient wie das trainierte LSTM-Netz, auch wenn er dabei eine rund 13 Prozentpunkte niedrigere Erfolgsquote in Kauf nimmt. Das überraschendere Ergebnis liefert der $\varepsilon=0{,}8$-Kompass: Er übertrifft das trainierte Modell nicht nur bei der Erfolgsquote, sondern mit einer Pfadeffizienz von 0,094 gleichzeitig auch bei der Weglänge.
+Aufschlussreich wird der Blick auf die Referenzverfahren aus Abschnitt~\ref{sec:methodik_baselines}, deren vollständige Ergebnistabelle in Anhang~C aufgeführt ist. Der vollständig zufällig agierende Random-Agent benötigt in seinen seltenen erfolgreichen Episoden im Schnitt 2251,9 Schritte, bei einem gemittelten Wegverhältnis von lediglich 0,021. Der ungelernte Kompass-Agent mit einem Zufallsanteil von $\varepsilon=0{,}3$ erreicht ein Wegverhältnis von 0,177 und hat damit ein rund 3,3-mal so hohes Wegverhältnis wie das trainierte LSTM-Netz, auch wenn er dabei eine rund 13 Prozentpunkte niedrigere Erfolgsquote in Kauf nimmt. Das überraschendere Ergebnis liefert der $\varepsilon=0{,}8$-Kompass: Er übertrifft das trainierte Modell nicht nur bei der Erfolgsquote, sondern mit einem Wegverhältnis von 0,094 gleichzeitig auch bei der Weglänge.
 
-Ein leichter Selektionseffekt ist hierbei zu berücksichtigen: In die Pfadeffizienz fließen nur jene Episoden ein, bei denen der Ausgang gefunden wurde. Verfahren, die oft scheitern, wobei die gescheiterten Versuche meist sehr lange Irrwege sind, stehen dadurch statistisch etwas besser da, als sie eigentlich sind. Das erklärt den starken Kompass jedoch nicht vollständig. Die bittere Erkenntnis bleibt: Das Training führt zwar ans Ziel, aber alles andere als auf direktem Weg.
+Ein leichter Selektionseffekt ist hierbei zu berücksichtigen: In das Wegverhältnis fließen nur jene Episoden ein, bei denen der Ausgang gefunden wurde. Verfahren, die oft scheitern, wobei die gescheiterten Versuche meist sehr lange Irrwege sind, stehen dadurch statistisch etwas besser da, als sie eigentlich sind. Das erklärt den starken Kompass jedoch nicht vollständig. Die bittere Erkenntnis bleibt: Das Training führt zwar ans Ziel, aber alles andere als auf direktem Weg.
 
-Ein plausibler Mitverursacher liegt in der Reward-Struktur selbst: Der Neuland-Bonus von $+0{,}02$ übersteigt die Schrittkosten von $-0{,}01$ (siehe Abschnitt~\ref{sec:impl_rl_reward}), sodass das Betreten einer noch unbesuchten Kachel unabhängig von ihrer Richtung zum Ziel netto positiv entlohnt wird. Dieser Anreiz zum flächigen Erkunden könnte die stark unterdurchschnittliche Wegeffizienz des LSTM mit erklären, ist im Rahmen dieser Arbeit jedoch nicht durch eine eigene Ablationsstudie belegt.
+Ein plausibler Mitverursacher liegt in der Reward-Struktur selbst: Der Neuland-Bonus von $+0{,}02$ übersteigt die Schrittkosten von $-0{,}01$ (siehe Abschnitt~\ref{sec:impl_rl_reward}), sodass das Betreten einer noch unbesuchten Kachel unabhängig von ihrer Richtung zum Ziel netto positiv entlohnt wird. Dieser Anreiz zum flächigen Erkunden könnte das stark unterdurchschnittliche Wegverhältnis des LSTM mit erklären, ist im Rahmen dieser Arbeit jedoch nicht durch eine eigene Ablationsstudie belegt. Ein einzelner Retraining-Lauf mit einem auf unter $0{,}01$ gesenkten Neuland-Bonus, ausgewertet auf denselben Testset-Seeds, hätte diese Hypothese direkt und mit vertretbarem Aufwand testen können; dieser gezielte Eingriff bleibt als konkret benannter nächster Schritt offen.
 
 \subsection{Die Determinismus-Lücke}
 \label{sec:eval_determinismus}
@@ -2022,18 +1974,18 @@ Einzelne Positionen werden dabei extrem häufig erneut besucht, in einem Fall 16
 
 \subsection{Einordnung gegenüber den Referenzpunkten}
 \label{sec:eval_einordnung}
-Um das Geleistete ins Verhältnis zu setzen, trägt Abbildung~\ref{fig:eval_tradeoff} die beiden Hauptmetriken, Erfolgsquote und Pfadeffizienz, gegeneinander auf.
+Um das Geleistete ins Verhältnis zu setzen, trägt Abbildung~\ref{fig:eval_tradeoff} die beiden Hauptmetriken, Erfolgsquote und Wegverhältnis, gegeneinander auf.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{Bilder/eval_zielkonflikt.png}
-    \caption{Evaluation -- Erfolgsquote gegen Pfadeffizienz für alle Verfahren, eigene Darstellung.}
+    \caption{Evaluation -- Erfolgsquote gegen Wegverhältnis für alle Verfahren, eigene Darstellung.}
     \label{fig:eval_tradeoff}
 \end{figure}
 
-Die fünf Varianten der Kompass-Heuristik aus Abschnitt~\ref{sec:methodik_baselines} ziehen im Diagramm eine zusammenhängende Kurve: Im getesteten Bereich steigt mit höherem Zufallsanteil $\varepsilon$ die Erfolgsquote, während die Pfadeffizienz sinkt. Bei $\varepsilon=0{,}9$ steigt die Erfolgsquote noch einmal auf 92,0\,\%, die Pfadeffizienz sinkt dabei jedoch auf 0,047 und bleibt damit unter dem LSTM-Wert von 0,053. Auffällig ist die Position des trainierten Modells: Es liegt vollständig unterhalb dieser Heuristik-Kurve.
+Die fünf Varianten der Kompass-Heuristik aus Abschnitt~\ref{sec:methodik_baselines} ziehen im Diagramm eine zusammenhängende Kurve: Im getesteten Bereich steigt mit höherem Zufallsanteil $\varepsilon$ die Erfolgsquote, während das Wegverhältnis sinkt. Bei $\varepsilon=0{,}9$ steigt die Erfolgsquote noch einmal auf 92,0\,\%, das Wegverhältnis sinkt dabei jedoch auf 0,047 und bleibt damit unter dem LSTM-Wert von 0,053. Auffällig ist die Position des trainierten Modells: Es liegt vollständig unterhalb dieser Heuristik-Kurve.
 
-Besonders hart fällt der Vergleich mit der Kompass-Kurve insgesamt aus. Von den fünf getesteten Varianten schlagen $\varepsilon=0{,}5$, $0{,}6$ und $0{,}8$ das LSTM-Netzwerk in \emph{beiden} Metriken gleichzeitig: bei $\varepsilon=0{,}8$ mit der größten Differenz, einer Erfolgsquote von 88,8\,\% gegenüber 64,6\,\% und einer Effizienz von 0,094 gegenüber 0,053. Nur bei $\varepsilon=0{,}9$ reicht es, wie in Abbildung~\ref{fig:eval_tradeoff} zu sehen, wegen der knapp unterschrittenen Effizienz nicht zur Dominanz in beiden Metriken (siehe Abschnitt~\ref{sec:eval_eff}). Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
+Besonders hart fällt der Vergleich mit der Kompass-Kurve insgesamt aus. Von den fünf getesteten Varianten schlagen $\varepsilon=0{,}5$, $0{,}6$ und $0{,}8$ das LSTM-Netzwerk in \emph{beiden} Metriken gleichzeitig: bei $\varepsilon=0{,}8$ mit der größten Differenz, einer Erfolgsquote von 88,8\,\% gegenüber 64,6\,\% und einem Wegverhältnis von 0,094 gegenüber 0,053. Nur bei $\varepsilon=0{,}9$ reicht es, wie in Abbildung~\ref{fig:eval_tradeoff} zu sehen, wegen des knapp unterschrittenen Wegverhältnisses nicht zur Dominanz in beiden Metriken (siehe Abschnitt~\ref{sec:eval_eff}). Das wiegt umso schwerer angesichts dessen, was der Kompass eigentlich ist: eine primitive Heuristik, die nur Luftlinien-Richtungen kennt, Wände ignoriert und stumpf gegen Hindernisse rennt, bis der Zufall sie befreit.
 
 Dass ein kartenblindes Verfahren ohne Trainingsphase zuverlässiger und direkter ins Ziel findet als ein Agent, der über bis zu 2,2 Millionen Zeitschritte hinweg optimiert wurde, ist die zentrale Pointe dieser Auswertung. Das ändert nichts daran, dass das LSTM besser lernt als das MLP. Für die Beurteilung, wie leistungsfähig Reinforcement Learning für dieses spezifische Problem tatsächlich ist, bleibt es jedoch ein starker Dämpfer.
 
@@ -2063,7 +2015,7 @@ Aus diesen Daten lassen sich zwei Erkenntnisse ableiten. Erstens wird das Traini
 
 Eine Leerstelle bleibt die Netzgröße (siehe Abschnitt~\ref{sec:impl_rl_netze}). Die rekurrente Schicht mit 256 Einheiten wurde nie in einer sauberen Ablationsstudie gegen andere Größen getestet. Ein Versuch mit 512 Einheiten sah zwischenzeitlich vielversprechend aus, lief jedoch nie durch das Testset. Welche Größe hier tatsächlich optimal wäre, lässt sich aus den vorliegenden Daten nicht seriös beantworten.
 
-Damit eng verwandt ist eine Einschränkung der Vergleichbarkeit zwischen den beiden Architekturen selbst. Wie in Abschnitt~\ref{sec:impl_rl_netze} dargestellt, besitzt das LSTM-Modell mit 1.038.917 Parametern gut viermal so viele trainierbare Gewichte wie das MLP-Modell mit 250.629 Parametern, da beide Netze mit dem in der Bibliothek vorgesehenen Standardaufbau trainiert wurden und nicht mit kapazitätsangeglichenen Architekturen. Der in Abschnitt~\ref{sec:eval_sr} gemessene Vorsprung des LSTM ließe sich daher nicht allein auf die Rekurrenz zurückführen, sondern könnte teilweise auch aus der schlicht größeren Netzkapazität stammen. Ein Modellvergleich mit angeglichener Parameterzahl müsste in einer eigenen Ablationsstudie erfolgen, was im Rahmen dieser Arbeit aus Zeitgründen ausgeklammert werden soll. Der zentrale Befund, dass die Kompass-Heuristik beide trainierten Verfahren bei Erfolgsquote und Pfadeffizienz übertrifft (siehe Abschnitt~\ref{sec:eval_einordnung}), bleibt von dieser Einschränkung unberührt, da er unabhängig vom internen Architekturvergleich zwischen LSTM und MLP gilt.
+Damit eng verwandt ist eine Einschränkung der Vergleichbarkeit zwischen den beiden Architekturen selbst. Wie in Abschnitt~\ref{sec:impl_rl_netze} dargestellt, besitzt das LSTM-Modell mit 1.038.917 Parametern gut viermal so viele trainierbare Gewichte wie das MLP-Modell mit 250.629 Parametern, da beide Netze mit dem in der Bibliothek vorgesehenen Standardaufbau trainiert wurden und nicht mit kapazitätsangeglichenen Architekturen. Der in Abschnitt~\ref{sec:eval_sr} gemessene Vorsprung des LSTM ließe sich daher nicht allein auf die Rekurrenz zurückführen, sondern könnte teilweise auch aus der schlicht größeren Netzkapazität stammen. Ein Modellvergleich mit angeglichener Parameterzahl müsste in einer eigenen Ablationsstudie erfolgen, was im Rahmen dieser Arbeit aus Zeitgründen ausgeklammert werden soll. Der zentrale Befund, dass die Kompass-Heuristik beide trainierten Verfahren bei Erfolgsquote und Wegverhältnis übertrifft (siehe Abschnitt~\ref{sec:eval_einordnung}), bleibt von dieser Einschränkung unberührt, da er unabhängig vom internen Architekturvergleich zwischen LSTM und MLP gilt.
 
 Zum Schluss zeigt das Curriculum (siehe Abschnitt~\ref{sec:impl_rl_pipeline}) ungeschminkt die Grenzen des Modells: In den Trainingsphasen 3 und 4 sollte der Agent bestimmte Erfolgsquoten von 70\,\% und 60\,\% erreichen, um die Phase regulär abzuschließen. In keinem der sieben Läufe ist das gelungen. Die Phasen endeten ausschließlich, weil das feste Schrittbudget aufgebraucht war. Die gewünschte Zielleistung lag außerhalb dessen, was die Architektur auf dieser Distanz leisten konnte.
 
@@ -2098,7 +2050,7 @@ Die zweite Teilfrage suchte die Kombination aus Policy-Architektur und Trainings
 
 Einen Dämpfer setzt die Determinismus-Lücke: Ohne Zufallsanteil fällt das LSTM-PPO-Modell von 64,6\,\% auf 29,1\,\% zurück, und zwar in jedem einzelnen der sieben Läufe (siehe Abbildung~\ref{fig:eval_det}). Daran hat auch die vierte Curriculum-Phase nichts geändert, deren Greedy Fine-Tuning genau diese Lücke schließen sollte (siehe Abschnitt~\ref{sec:methodik_curriculum}). Wie in Abschnitt~\ref{sec:eval_hyperparameter} eingeordnet, ist der Vorsprung gegenüber dem MLP zudem nicht sauber von der reinen Netzkapazität zu trennen, da das LSTM gut viermal so viele Parameter besitzt wie das MLP.
 
-Die zweite Hälfte der Frage, die nach den besten Wegen zum Ausgang, muss dagegen negativ beantwortet werden: Keine der trainierten Kombinationen findet gute Wege (siehe Abbildung~\ref{fig:eval_eff}). Für eine erfolgreiche Episode braucht das beste trainierte Modell im Schnitt 1425 Schritte, das rechnerische Optimum liegt bei 40,1 Schritten. Die gemittelte Pfadeffizienz von 0,053 wird selbst von trivialen Referenzheuristiken um mehr als das Dreifache übertroffen. Die gesuchte Kombination gewinnt also die Erfolgsquote, die besten Wege findet sie nicht.
+Die zweite Hälfte der Frage, die nach den besten Wegen zum Ausgang, muss dagegen negativ beantwortet werden: Keine der trainierten Kombinationen findet gute Wege (siehe Abbildung~\ref{fig:eval_eff}). Für eine erfolgreiche Episode braucht das beste trainierte Modell im Schnitt 1425 Schritte, das rechnerische Optimum liegt bei 40,1 Schritten. Das gemittelte Wegverhältnis von 0,053 wird selbst von trivialen Referenzheuristiken um mehr als das Dreifache übertroffen. Die gesuchte Kombination gewinnt also die Erfolgsquote, die besten Wege findet sie nicht.
 
 Auf der Seite des Trainingsverfahrens dominieren wenige Einstellungen das gesamte Training (siehe Abschnitt~\ref{sec:eval_hyperparameter}). Der Entropie-Koeffizient entscheidet darüber, ob der Agent das Ziel überhaupt jemals sieht: Ein zu niedriger Wert lässt ihn das Navigieren komplett verlernen. Ausschlaggebend waren durchgehend Exploration und Gradientenstabilität, nicht die Kapazität oder Tiefe der neuronalen Netze.
 
@@ -2126,7 +2078,7 @@ Im Rahmen dieser Arbeit wurde eine vollständige Trainings- und Evaluationspipel
     \item \textbf{Funktionierendes Curriculum mit dualem Gate:} Sieben unabhängige LSTM-PPO- und sieben unabhängige MLP-PPO-Läufe wurden über bis zu $2{,}2$ Millionen Zeitschritte hinweg leistungs- und budgetbasiert trainiert und unter einem einheitlichen, reproduzierbaren Protokoll ausgewertet (siehe Abschnitt~\ref{sec:methodik_protokoll}).
     \item \textbf{Rekurrenz-Vorteil statistisch abgesichert:} LSTM-PPO übertrifft MLP-PPO in der Erfolgsquote statistisch signifikant (Welch-Test, Mann-Whitney-U-Test, Cohens $d = 1{,}6$), auch wenn sich dieser Vorsprung nicht sauber von der höheren Parameterzahl des LSTM trennen lässt (siehe Abschnitt~\ref{sec:eval_hyperparameter}).
     \item \textbf{Determinismus-Lücke identifiziert:} Das LSTM-PPO-Modell verliert im deterministischen Modus einen Großteil seiner Erfolgsquote und fällt von 64,6\,\% auf 29,1\,\%. Der gelernte Vorteil beruht damit teilweise auf stochastischem Sampling und nicht allein auf einer verlässlichen Route (siehe Abschnitt~\ref{sec:eval_determinismus}).
-    \item \textbf{Baseline-Vergleich als methodischer Befund:} Die einfache $\varepsilon$-Kompass-Heuristik übertrifft beide trainierten Modelle bei $\varepsilon=0{,}8$ in Erfolgsquote und Pfadeffizienz gleichzeitig, was die Grenzen des gewählten RL-Ansatzes auf dieser konkreten Aufgabenstellung offenlegt (siehe Abschnitt~\ref{sec:eval_einordnung}).
+    \item \textbf{Baseline-Vergleich als methodischer Befund:} Die einfache $\varepsilon$-Kompass-Heuristik übertrifft beide trainierten Modelle bei $\varepsilon=0{,}8$ in Erfolgsquote und Wegverhältnis gleichzeitig, was die Grenzen des gewählten RL-Ansatzes auf dieser konkreten Aufgabenstellung offenlegt (siehe Abschnitt~\ref{sec:eval_einordnung}).
 \end{itemize}
 
 Abbildung~\ref{fig:v12_zielkriterium} stellt das LSTM-PPO-Endergebnis den vorab festgelegten Zielkriterien von mindestens 70\,\% auf Testset A und mindestens 60\,\% auf Holdout B gegenüber, deren Zahlenwerte aus den in Abschnitt~\ref{sec:impl_rl_pipeline} beschriebenen Ziel-Erfolgsquoten der Phasen 3 und 4 übernommen wurden. Dort galten sie als deterministische Gate-Kriterien auf den Validierungs-Seeds; hier werden sie als nominale Schwellen auf die stochastische Hauptmetrik aus Abschnitt~\ref{sec:methodik_protokoll} angelegt, unabhängig von der ursprünglichen Gate-Modalität der Phasen.
@@ -2146,7 +2098,7 @@ Die Zielsetzung, verschiedene RL-Verfahren auf der Navigationsaufgabe zu trainie
 \label{sec:fazit_gesamtbild}
 Beide Projektteile, die Entwicklung der prozeduralen Welt und das Training der Agenten, sind für sich genommen funktional und abgeschlossen. Der eigentliche Ertrag der Arbeit liegt jedoch nicht in diesen Einzelergebnissen, sondern in ihrem Zusammenspiel.
 
-Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 88,8\,\% Erfolgsquote gegenüber 64,6\,\% und eine Pfadeffizienz von 0,094 gegenüber 0,053 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
+Der auffälligste Befund der Evaluation ist, dass eine ungelernte, primitive Heuristik das aufwendig trainierte RL-Modell in beiden Metriken deklassiert: Der $\varepsilon=0{,}8$-Kompass erreicht 88,8\,\% Erfolgsquote gegenüber 64,6\,\% und ein Wegverhältnis von 0,094 gegenüber 0,053 (siehe Abbildung~\ref{fig:eval_tradeoff}). Diese Heuristik wertet lediglich die Richtungskomponenten zum Ziel aus und geht einen Schritt auf der längeren Achse (siehe Abschnitt~\ref{sec:methodik_baselines}). Sie ist \glqq wandblind\grqq, nutzt keine Pfadfindung und kennt das Layout der Welt nicht.
 
 Genau hier greifen die beiden Teile der Arbeit ineinander. Der Ausgang wird stets über eine Breitensuche vom Spawnpunkt aus platziert, wodurch die generierte Welt strukturell auf kurze, direkte Wegverbindungen hin ausgelegt ist (siehe Abschnitt~\ref{sec:umsetzung_pathing}). Die simple Kompass-Heuristik bewegt sich rein richtungsbasiert auf das Ziel zu. Naheliegend, aber noch nicht experimentell belegt, ist die Vermutung, dass die auf Erreichbarkeit optimierte Weltgenerierung genau diejenige einfache Wegstruktur begünstigt, die das ungelernte Verfahren instinktiv ausnutzt (siehe Abschnitt~\ref{sec:ausblick_rl}).
 
@@ -2317,12 +2269,12 @@ Dieser Anhang stellt die Einzelwerte bereit, auf denen die in Kapitel~5.2 berich
 \begin{table}[H]
     \centering
     \small
-    \caption{Ungelernte Referenzverfahren: Erfolgsquote, mittlere Schrittzahl und Pfadeffizienz, Testset A und Holdout B}
+    \caption{Ungelernte Referenzverfahren: Erfolgsquote, mittlere Schrittzahl und Wegverhältnis, Testset A und Holdout B}
     \label{tab:rohdaten_referenz}
     \begin{tabular}{lrrrrrr}
         \toprule
         & \multicolumn{3}{c}{\textbf{Testset A}} & \multicolumn{3}{c}{\textbf{Holdout B}} \\
-        \textbf{Verfahren} & \textbf{SR (\%)} & \textbf{Schritte} & \textbf{Effizienz} & \textbf{SR (\%)} & \textbf{Schritte} & \textbf{Effizienz} \\
+        \textbf{Verfahren} & \textbf{SR (\%)} & \textbf{Schritte} & \textbf{Wegverh.} & \textbf{SR (\%)} & \textbf{Schritte} & \textbf{Wegverh.} \\
         \midrule
         Random & 5,2 $\pm$ 2,7 & 2251,9 & 0,021 & 10,4 $\pm$ 1,7 & 2031,2 & 0,025 \\
         Kompass $\varepsilon=0{,}3$ & 52,0 $\pm$ 4,2 & 481,0 & 0,177 & 50,4 $\pm$ 2,6 & 583,9 & 0,156 \\

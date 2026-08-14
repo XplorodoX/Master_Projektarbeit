@@ -126,9 +126,9 @@ def plot_pfadeffizienz():
     for bar, val in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, val + 0.003, f"{val:.3f}".replace(".", ","),
                 ha="center", va="bottom", fontsize=13)
-    ax.set_ylabel("Pfadeffizienz (BFS-Optimum / gelaufene Schritte)")
+    ax.set_ylabel("Wegverhältnis (BFS-Optimum / gelaufene Schritte)")
     ax.set_ylim(0, 0.20)
-    ax.set_title("Pfadeffizienz derselben Verfahren")
+    ax.set_title("Wegverhältnis derselben Verfahren")
     savefig(fig, "eval_pfadeffizienz.png")
 
 
@@ -165,10 +165,10 @@ def plot_zielkonflikt():
                 color="#6A6A5A", fontweight="bold")
 
     ax.set_xlabel("Erfolgsquote auf Testset A (%)")
-    ax.set_ylabel("Pfadeffizienz")
+    ax.set_ylabel("Wegverhältnis")
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 0.19)
-    ax.set_title("Zielkonflikt zwischen Erfolgsquote und Pfadeffizienz")
+    ax.set_title("Zielkonflikt zwischen Erfolgsquote und Wegverhältnis")
     savefig(fig, "eval_zielkonflikt.png")
 
 

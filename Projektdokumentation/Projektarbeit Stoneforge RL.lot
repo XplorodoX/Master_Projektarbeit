@@ -11,7 +11,7 @@
 \contentsline {table}{\numberline {4.3}{\ignorespaces Allgemeine Hyperparameter des PPO-Optimierers}}{51}{table.caption.58}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {5.1}{\ignorespaces Übersicht der Performancemessungen und Benchmarks des Generierungs- und Simulationssystems.}}{54}{table.caption.60}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Belegte Wirkung einzelner Parameterentscheidungen}}{62}{table.caption.72}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Belegte Wirkung einzelner Parameterentscheidungen}}{63}{table.caption.72}%
 \addvspace {10\p@ }
 \def \@chapapp {\appendixname }
 \addvspace {10\p@ }
@@ -20,5 +20,5 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {C.1}{\ignorespaces LSTM-PPO: Erfolgsquote je Lauf, Testset A und Holdout B, stochastisch und deterministisch}}{75}{table.caption.77}%
 \contentsline {table}{\numberline {C.2}{\ignorespaces MLP-PPO: Erfolgsquote je Lauf, Testset A und Holdout B, stochastisch}}{75}{table.caption.78}%
-\contentsline {table}{\numberline {C.3}{\ignorespaces Ungelernte Referenzverfahren: Erfolgsquote, mittlere Schrittzahl und Pfadeffizienz, Testset A und Holdout B}}{76}{table.caption.79}%
+\contentsline {table}{\numberline {C.3}{\ignorespaces Ungelernte Referenzverfahren: Erfolgsquote, mittlere Schrittzahl und Wegverhältnis, Testset A und Holdout B}}{76}{table.caption.79}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
