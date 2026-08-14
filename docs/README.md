@@ -1,38 +1,28 @@
 # docs/ — Projektdokumentation
 
-## Hauptdokumente
+## Hauptdokument
+
+Die schriftliche Ausarbeitung liegt vollständig in [`Doku/`](Doku/):
 
 | Datei | Beschreibung |
 |-------|-------------|
-| `Expose.pdf` | Projekthexposé (Aufgabenstellung, Ziele) |
-| `Expose.tex` | LaTeX-Quellcode des Exposés |
-| `Projektarbeit_RL_Dokumentation.md` | Vollständige Projektdokumentation (Markdown) |
-| `gpu_and_cloud_training.md` | Anleitung zur Beschleunigung des Trainings auf GPU und Cloud (Kaggle) |
-| `report.html` | HTML-Report mit Experimentergebnissen |
-| `references.bib` | BibTeX-Literaturreferenzen |
+| `Doku/Projektarbeit Stoneforge RL.pdf` | fertige Projektarbeit (PDF) |
+| `Doku/Projektarbeit Stoneforge RL.tex` | LaTeX-Quellcode |
+| `Doku/literatur.bib` | BibTeX-Literaturreferenzen der Arbeit |
+| `Doku/Bilder/` | alle Abbildungen, größtenteils aus `scripts/plot_*.py` erzeugt |
 
-## Forschungsliteratur  (`papers/`)
+Kompilieren mit `latexmk -pdf "Doku/Projektarbeit Stoneforge RL.tex"` (siehe
+Kommentar am Kopf der `.tex`-Datei für Details zu Texifier/TexpadTeX).
 
-| Datei | Inhalt |
-|-------|--------|
-| `2312.09906v1.pdf` | RL / Navigation Paper |
-| `2410.03618v3.pdf` | RL / Navigation Paper |
-| `2604.10812v1.pdf` | RL / Navigation Paper |
+## Forschungsliteratur (`papers/`)
+
+Referenzpapiere, auf die in der Arbeit verwiesen wird (siehe `Doku/literatur.bib`
+für die vollständigen bibliografischen Angaben).
 
 ## Experiment-Changelog
 
-Der laufende Experiment-Changelog liegt im Projektwurzel:
+Der vollständige Experiment-Changelog liegt im Projektwurzelverzeichnis:
 
 ```
-../CHANGELOG.md     ← Alle Experimente, Ergebnisse, Änderungen
-```
-
-## Projektdokumentation als PDF erstellen
-
-```bash
-# Markdown → PDF (benötigt pandoc + LaTeX)
-pandoc docs/Projektarbeit_RL_Dokumentation.md -o docs/Projektdokumentation.pdf
-
-# Alternativ mit wkhtmltopdf
-wkhtmltopdf docs/report.html docs/report.pdf
+../CHANGELOG.md     ← alle Experimente, Ergebnisse, Änderungen
 ```
